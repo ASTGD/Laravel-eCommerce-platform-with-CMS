@@ -30,3 +30,15 @@ Do not bootstrap this repository on PHP `8.5.x` until upstream Bagisto `2.4.x` d
 - admin login works
 - storefront loads
 - homepage CMS seed renders
+
+## Related Developer Ops Doc
+
+For day-to-day local development details, including:
+
+- how to start the PHP dev server
+- how to start the Vite dev server
+- LAN access setup
+- admin login URLs and credentials behavior
+- daily smoke-test URLs
+
+see `Doc/13-development-workflow.md`.

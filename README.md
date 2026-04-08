@@ -157,6 +157,7 @@ Project docs live in:
 - `Doc/10-coding-standards.md`
 - `Doc/11-milestones.md`
 - `Doc/12-acceptance-criteria.md`
+- `Doc/13-development-workflow.md`
 
 ## Initial priorities
 
