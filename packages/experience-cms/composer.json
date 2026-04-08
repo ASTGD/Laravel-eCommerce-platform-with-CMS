@@ -1,0 +1,10 @@
+{
+    "name": "platform/experience-cms",
+    "description": "Structured CMS package for pages, sections, components, menus, and publish workflow.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "ExperienceCms\\": "src/"
+        }
+    }
+}

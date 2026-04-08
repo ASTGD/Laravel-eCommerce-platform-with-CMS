@@ -1,0 +1,10 @@
+{
+    "name": "platform/theme-core",
+    "description": "Theme contracts, rendering support, and preset resolution for the reusable platform.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "ThemeCore\\": "src/"
+        }
+    }
+}

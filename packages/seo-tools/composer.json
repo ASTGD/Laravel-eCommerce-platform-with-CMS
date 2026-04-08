@@ -1,0 +1,10 @@
+{
+    "name": "platform/seo-tools",
+    "description": "SEO metadata support for the reusable commerce platform.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "SeoTools\\": "src/"
+        }
+    }
+}

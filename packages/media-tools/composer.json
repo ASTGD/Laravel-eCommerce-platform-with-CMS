@@ -1,0 +1,10 @@
+{
+    "name": "platform/media-tools",
+    "description": "Media abstraction package for uploads and responsive asset handling.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "MediaTools\\": "src/"
+        }
+    }
+}

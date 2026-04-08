@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ExperienceCms\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class MenuItem extends Model
+{
+    protected $fillable = [
+        'menu_id',
+        'parent_id',
+        'title',
+        'type',
+        'target',
+        'sort_order',
+        'settings_json',
+        'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'settings_json' => 'array',
+            'is_active' => 'bool',
+        ];
+    }
+
+    public function menu(): BelongsTo
+    {
+        return $this->belongsTo(Menu::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id')->orderBy('sort_order');
+    }
+}

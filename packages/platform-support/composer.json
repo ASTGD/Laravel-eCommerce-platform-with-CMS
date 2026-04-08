@@ -1,0 +1,10 @@
+{
+    "name": "platform/platform-support",
+    "description": "Shared platform support types, audit logging, and bootstrap helpers.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "PlatformSupport\\": "src/"
+        }
+    }
+}

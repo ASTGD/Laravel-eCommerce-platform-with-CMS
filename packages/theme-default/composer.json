@@ -1,0 +1,10 @@
+{
+    "name": "platform/theme-default",
+    "description": "Default storefront theme for the reusable commerce platform.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "ThemeDefault\\": "src/"
+        }
+    }
+}
