@@ -1,33 +1,40 @@
 <?php
 
-declare(strict_types=1);
+namespace Platform\ExperienceCms\Http\Requests\Admin;
 
-namespace ExperienceCms\Http\Requests\Admin;
+use Illuminate\Support\Str;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class MenuRequest extends FormRequest
+class MenuRequest extends JsonFormRequest
 {
     public function authorize(): bool
     {
         return true;
     }
 
-    protected function prepareForValidation(): void
-    {
-        $this->merge(['is_active' => $this->boolean('is_active')]);
-    }
-
     public function rules(): array
     {
-        $menuId = $this->route('menu');
-
         return [
-            'name' => ['required', 'string', 'max:120'],
-            'code' => ['required', 'string', 'max:120', Rule::unique('menus', 'code')->ignore($menuId)],
-            'location' => ['nullable', 'string', 'max:80'],
-            'is_active' => ['required', 'boolean'],
+            'name'      => ['required', 'string', 'max:255'],
+            'code'      => ['nullable', 'string', 'max:255'],
+            'location'  => ['required', 'string', 'max:100'],
+            'is_active' => ['nullable', 'boolean'],
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'code' => $this->input('code') ?: Str::slug((string) $this->input('name'), '_'),
+        ]);
+    }
+
+    public function payload(): array
+    {
+        return [
+            'name'      => $this->validated('name'),
+            'code'      => $this->validated('code'),
+            'location'  => $this->validated('location'),
+            'is_active' => $this->boolean('is_active', true),
         ];
     }
 }

@@ -1,9 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
-use ExperienceCms\Http\Controllers\Storefront\StorefrontController;
 use Illuminate\Support\Facades\Route;
+use Platform\ExperienceCms\Http\Controllers\StorefrontPageController;
 
-Route::get('/', [StorefrontController::class, 'home'])->name('storefront.home');
-Route::get('/pages/{slug}', [StorefrontController::class, 'show'])->name('storefront.pages.show');
+Route::controller(StorefrontPageController::class)->group(function () {
+    Route::get('/pages/{page:slug}', 'show')->name('platform.storefront.pages.show');
+    Route::get('/preview/pages/{page:slug}', 'preview')->name('platform.storefront.pages.preview');
+    Route::get('/home-preview', 'home')->name('platform.storefront.home_preview');
+});

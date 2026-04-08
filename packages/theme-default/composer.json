@@ -1,10 +1,22 @@
 {
     "name": "platform/theme-default",
-    "description": "Default storefront theme for the reusable commerce platform.",
+    "version": "0.1.0",
+    "description": "Default storefront theme for the reusable platform",
     "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3"
+    },
     "autoload": {
         "psr-4": {
-            "ThemeDefault\\": "src/"
+            "Platform\\ThemeDefault\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Platform\\ThemeDefault\\Providers\\ThemeDefaultServiceProvider"
+            ]
         }
     }
 }

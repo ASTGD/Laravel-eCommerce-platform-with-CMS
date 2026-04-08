@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\SectionTypes;
+namespace Platform\ExperienceCms\SectionTypes;
 
 class FlashSaleProductsSectionType extends AbstractSectionType
 {
@@ -11,7 +9,7 @@ class FlashSaleProductsSectionType extends AbstractSectionType
         return 'flash_sale_products';
     }
 
-    public function name(): string
+    public function label(): string
     {
         return 'Flash Sale Products';
     }
@@ -21,28 +19,28 @@ class FlashSaleProductsSectionType extends AbstractSectionType
         return 'catalog';
     }
 
-    public function view(): string
-    {
-        return 'theme-default::storefront.sections.generic-section';
-    }
-
     public function configSchema(): array
     {
-        return [['key' => 'headline', 'label' => 'Headline', 'type' => 'text']];
+        return ['limit' => 'integer'];
     }
 
-    public function defaultSettings(): array
+    public function defaultConfig(): array
     {
-        return ['headline' => 'Flash sale products'];
+        return ['limit' => 8];
     }
 
     public function validationRules(): array
     {
-        return ['headline' => ['required', 'string', 'max:120']];
+        return ['limit' => ['integer', 'min:1', 'max:24']];
     }
 
-    public function supportedDataSources(): array
+    public function allowedDataSources(): array
     {
         return ['discounted_products'];
+    }
+
+    public function rendererView(): string
+    {
+        return 'theme-default::storefront.sections.featured-products';
     }
 }

@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Models;
+namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +23,7 @@ class MenuItem extends Model
     {
         return [
             'settings_json' => 'array',
-            'is_active' => 'bool',
+            'is_active'     => 'boolean',
         ];
     }
 

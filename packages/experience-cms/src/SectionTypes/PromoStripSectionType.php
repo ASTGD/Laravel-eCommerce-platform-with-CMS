@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\SectionTypes;
+namespace Platform\ExperienceCms\SectionTypes;
 
 class PromoStripSectionType extends AbstractSectionType
 {
@@ -11,42 +9,38 @@ class PromoStripSectionType extends AbstractSectionType
         return 'promo_strip';
     }
 
-    public function name(): string
+    public function label(): string
     {
         return 'Promo Strip';
     }
 
     public function category(): string
     {
-        return 'announcement';
-    }
-
-    public function view(): string
-    {
-        return 'theme-default::storefront.sections.generic-section';
+        return 'merchandising';
     }
 
     public function configSchema(): array
     {
-        return [
-            ['key' => 'message', 'label' => 'Message', 'type' => 'text'],
-            ['key' => 'link_label', 'label' => 'Link Label', 'type' => 'text'],
-            ['key' => 'link_url', 'label' => 'Link URL', 'type' => 'text'],
-        ];
+        return ['content' => 'string'];
     }
 
-    public function defaultSettings(): array
+    public function defaultConfig(): array
     {
-        return ['message' => 'Fast launch. Repeatable installs. Structured content.', 'link_label' => 'Explore', 'link_url' => '#'];
+        return ['content' => 'Limited-time offer'];
     }
 
     public function validationRules(): array
     {
-        return ['message' => ['required', 'string', 'max:160'], 'link_label' => ['nullable', 'string', 'max:50'], 'link_url' => ['nullable', 'string', 'max:255']];
+        return ['content' => ['required', 'string']];
     }
 
-    public function supportedDataSources(): array
+    public function allowedDataSources(): array
     {
         return [];
+    }
+
+    public function rendererView(): string
+    {
+        return 'theme-default::storefront.sections.generic-section';
     }
 }

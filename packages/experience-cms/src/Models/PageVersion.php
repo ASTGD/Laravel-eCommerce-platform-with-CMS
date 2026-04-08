@@ -1,10 +1,7 @@
 <?php
 
-declare(strict_types=1);
+namespace Platform\ExperienceCms\Models;
 
-namespace ExperienceCms\Models;
-
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -28,10 +25,5 @@ class PageVersion extends Model
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);
-    }
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
     }
 }

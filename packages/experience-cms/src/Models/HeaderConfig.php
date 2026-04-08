@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Models;
+namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,7 +16,7 @@ class HeaderConfig extends Model
     {
         return [
             'settings_json' => 'array',
-            'is_default' => 'bool',
+            'is_default'    => 'boolean',
         ];
     }
 }

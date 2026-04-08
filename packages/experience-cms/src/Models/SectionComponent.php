@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Models;
+namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +12,7 @@ class SectionComponent extends Model
         'component_type_id',
         'sort_order',
         'settings_json',
+        'visibility_rules_json',
         'data_source_type',
         'data_source_payload_json',
         'is_active',
@@ -22,9 +21,10 @@ class SectionComponent extends Model
     protected function casts(): array
     {
         return [
-            'settings_json' => 'array',
+            'settings_json'            => 'array',
+            'visibility_rules_json'    => 'array',
             'data_source_payload_json' => 'array',
-            'is_active' => 'bool',
+            'is_active'                => 'boolean',
         ];
     }
 

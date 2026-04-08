@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\SectionTypes;
+namespace Platform\ExperienceCms\SectionTypes;
 
 class CategoryGridSectionType extends AbstractSectionType
 {
@@ -11,7 +9,7 @@ class CategoryGridSectionType extends AbstractSectionType
         return 'category_grid';
     }
 
-    public function name(): string
+    public function label(): string
     {
         return 'Category Grid';
     }
@@ -21,28 +19,28 @@ class CategoryGridSectionType extends AbstractSectionType
         return 'catalog';
     }
 
-    public function view(): string
-    {
-        return 'theme-default::storefront.sections.generic-section';
-    }
-
     public function configSchema(): array
     {
-        return [['key' => 'headline', 'label' => 'Headline', 'type' => 'text'], ['key' => 'items', 'label' => 'Category Items JSON', 'type' => 'json']];
+        return ['columns' => 'integer'];
     }
 
-    public function defaultSettings(): array
+    public function defaultConfig(): array
     {
-        return ['headline' => 'Browse categories', 'items' => []];
+        return ['columns' => 4];
     }
 
     public function validationRules(): array
     {
-        return ['headline' => ['required', 'string', 'max:120'], 'items' => ['nullable', 'array']];
+        return ['columns' => ['integer', 'min:2', 'max:6']];
     }
 
-    public function supportedDataSources(): array
+    public function allowedDataSources(): array
     {
         return ['manual_categories'];
+    }
+
+    public function rendererView(): string
+    {
+        return 'theme-default::storefront.sections.generic-section';
     }
 }

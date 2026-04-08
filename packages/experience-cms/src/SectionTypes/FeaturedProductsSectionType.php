@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\SectionTypes;
+namespace Platform\ExperienceCms\SectionTypes;
 
 class FeaturedProductsSectionType extends AbstractSectionType
 {
@@ -11,7 +9,7 @@ class FeaturedProductsSectionType extends AbstractSectionType
         return 'featured_products';
     }
 
-    public function name(): string
+    public function label(): string
     {
         return 'Featured Products';
     }
@@ -21,40 +19,28 @@ class FeaturedProductsSectionType extends AbstractSectionType
         return 'catalog';
     }
 
-    public function view(): string
-    {
-        return 'theme-default::storefront.sections.featured-products';
-    }
-
     public function configSchema(): array
     {
-        return [
-            ['key' => 'headline', 'label' => 'Headline', 'type' => 'text'],
-            ['key' => 'body', 'label' => 'Body', 'type' => 'textarea'],
-            ['key' => 'items', 'label' => 'Manual Product Items JSON', 'type' => 'json'],
-        ];
+        return ['eyebrow' => 'string', 'limit' => 'integer'];
     }
 
-    public function defaultSettings(): array
+    public function defaultConfig(): array
     {
-        return [
-            'headline' => 'Featured products',
-            'body' => 'A curated selection that proves the section and preview pipeline.',
-            'items' => [],
-        ];
+        return ['eyebrow' => 'Featured Products', 'limit' => 8];
     }
 
     public function validationRules(): array
     {
-        return [
-            'headline' => ['required', 'string', 'max:120'],
-            'body' => ['nullable', 'string'],
-            'items' => ['nullable', 'array'],
-        ];
+        return ['limit' => ['integer', 'min:1', 'max:24']];
     }
 
-    public function supportedDataSources(): array
+    public function allowedDataSources(): array
     {
-        return ['manual_products', 'featured_products', 'best_sellers', 'new_arrivals', 'discounted_products'];
+        return ['featured_products', 'manual_products', 'category_products'];
+    }
+
+    public function rendererView(): string
+    {
+        return 'theme-default::storefront.sections.featured-products';
     }
 }

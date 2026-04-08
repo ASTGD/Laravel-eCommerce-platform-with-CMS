@@ -1,56 +1,58 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Http\Controllers\Admin;
+namespace Platform\ExperienceCms\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use ExperienceCms\Http\Requests\Admin\TemplateRequest;
-use ExperienceCms\Models\Template;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Platform\ExperienceCms\Http\Requests\Admin\TemplateRequest;
+use Platform\ExperienceCms\Models\Template;
 
 class TemplateController extends Controller
 {
     public function index(): View
     {
         return view('experience-cms::admin.templates.index', [
-            'templates' => Template::query()->latest()->get(),
+            'templates' => Template::query()->orderBy('name')->get(),
         ]);
     }
 
     public function create(): View
     {
-        return view('experience-cms::admin.templates.form', ['template' => new Template(['is_active' => true]), 'mode' => 'create']);
+        return view('experience-cms::admin.templates.form', [
+            'template' => new Template(['is_active' => true]),
+        ]);
     }
 
     public function store(TemplateRequest $request): RedirectResponse
     {
-        $template = Template::query()->create($request->validated());
+        $template = Template::query()->create($request->payload());
 
-        return redirect()->route('admin.templates.edit', $template)->with('status', 'Template created.');
+        return redirect()
+            ->route('admin.cms.templates.edit', $template)
+            ->with('success', 'Template created.');
     }
 
-    public function edit(string $template): View
+    public function edit(Template $template): View
     {
-        $template = Template::query()->findOrFail($template);
-
-        return view('experience-cms::admin.templates.form', ['template' => $template, 'mode' => 'edit']);
+        return view('experience-cms::admin.templates.form', compact('template'));
     }
 
-    public function update(TemplateRequest $request, string $template): RedirectResponse
+    public function update(TemplateRequest $request, Template $template): RedirectResponse
     {
-        $template = Template::query()->findOrFail($template);
-        $template->update($request->validated());
+        $template->update($request->payload());
 
-        return redirect()->route('admin.templates.edit', $template)->with('status', 'Template updated.');
+        return redirect()
+            ->route('admin.cms.templates.edit', $template)
+            ->with('success', 'Template updated.');
     }
 
-    public function destroy(string $template): RedirectResponse
+    public function destroy(Template $template): RedirectResponse
     {
-        $template = Template::query()->findOrFail($template);
         $template->delete();
 
-        return redirect()->route('admin.templates.index')->with('status', 'Template deleted.');
+        return redirect()
+            ->route('admin.cms.templates.index')
+            ->with('success', 'Template deleted.');
     }
 }

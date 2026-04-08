@@ -1,119 +1,64 @@
-@extends('experience-cms::admin.layout')
+<x-admin::layouts>
+    <x-slot:title>{{ $page->exists ? 'Edit Page' : 'Create Page' }}</x-slot:title>
 
-@section('title', 'Page')
-@section('heading', $mode === 'create' ? 'Create Page' : 'Edit Page')
+    <div class="pb-6">
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $page->exists ? 'Edit Page' : 'Create Page' }}</h1>
+    </div>
 
-@section('content')
-    <form method="POST" action="{{ $mode === 'create' ? route('admin.pages.store') : route('admin.pages.update', $page) }}" class="stack-lg">
+    <form method="POST" action="{{ $page->exists ? route('admin.cms.pages.update', $page) : route('admin.cms.pages.store') }}" class="space-y-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         @csrf
-        @if ($mode === 'edit')
+        @if ($page->exists)
             @method('PUT')
         @endif
 
-        <section class="panel form-grid">
-            <label class="field">
-                <span>Title</span>
-                <input type="text" name="title" value="{{ old('title', $page->title) }}" required>
-                @error('title')<small class="field-error">{{ $message }}</small>@enderror
+        <div class="grid gap-6 md:grid-cols-2">
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Title</span>
+                <input name="title" value="{{ old('title', $page->title) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white" required>
             </label>
 
-            <label class="field">
-                <span>Slug</span>
-                <input type="text" name="slug" value="{{ old('slug', $page->slug) }}" required>
-                @error('slug')<small class="field-error">{{ $message }}</small>@enderror
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Slug</span>
+                <input name="slug" value="{{ old('slug', $page->slug) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono dark:border-gray-700 dark:bg-gray-950 dark:text-white">
             </label>
+        </div>
 
-            <label class="field">
-                <span>Page Type</span>
-                <select name="type">
-                    @foreach (\ExperienceCms\Enums\PageType::cases() as $case)
-                        <option value="{{ $case->value }}" @selected(old('type', $page->type?->value ?? $page->type) === $case->value)>{{ str($case->value)->replace('_', ' ')->title() }}</option>
+        <div class="grid gap-6 md:grid-cols-2">
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Type</span>
+                <select name="type" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                    @foreach (['homepage', 'content_page', 'campaign_page', 'category_page', 'product_page'] as $type)
+                        <option value="{{ $type }}" @selected(old('type', $page->type) === $type)>{{ $type }}</option>
                     @endforeach
                 </select>
-                @error('type')<small class="field-error">{{ $message }}</small>@enderror
             </label>
 
-            <label class="field">
-                <span>Template</span>
-                <select name="template_id">
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Template</span>
+                <select name="template_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                    <option value="">No template</option>
                     @foreach ($templates as $template)
-                        <option value="{{ $template->id }}" @selected((int) old('template_id', $page->template_id) === $template->id)>{{ $template->name }}</option>
+                        <option value="{{ $template->id }}" @selected((string) old('template_id', $page->template_id) === (string) $template->id)>{{ $template->name }}</option>
                     @endforeach
                 </select>
-                @error('template_id')<small class="field-error">{{ $message }}</small>@enderror
             </label>
+        </div>
 
-            <label class="field">
-                <span>Status</span>
-                <select name="status">
-                    @foreach (\ExperienceCms\Enums\PageStatus::cases() as $case)
-                        <option value="{{ $case->value }}" @selected(old('status', $page->status?->value ?? $page->status) === $case->value)>{{ str($case->value)->replace('_', ' ')->title() }}</option>
-                    @endforeach
-                </select>
-                @error('status')<small class="field-error">{{ $message }}</small>@enderror
-            </label>
-        </section>
+        @if ($page->exists)
+            <div class="rounded-lg bg-slate-50 p-4 text-sm text-slate-600 dark:bg-gray-950 dark:text-slate-300">
+                Status: <strong>{{ ucfirst($page->status) }}</strong>
+                @if ($page->published_at)
+                    <span class="ml-2">Published at {{ $page->published_at->toDateTimeString() }}</span>
+                @endif
+            </div>
+        @endif
 
-        <div class="toolbar">
-            <button type="submit" class="button button-primary">{{ $mode === 'create' ? 'Create page' : 'Save page' }}</button>
+        <div class="flex items-center gap-3">
+            <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-gray-900">Save Page</button>
 
-            @if ($mode === 'edit')
-                <a href="{{ route('admin.pages.preview', $page) }}" class="button button-secondary" target="_blank" rel="noreferrer">Preview</a>
+            @if ($page->exists)
+                <a href="{{ route('admin.cms.pages.preview', $page) }}" class="text-sm text-blue-600 hover:underline">Preview</a>
             @endif
         </div>
     </form>
-
-    @if ($mode === 'edit')
-        <div class="toolbar">
-            <form method="POST" action="{{ route('admin.pages.publish', $page) }}">
-                @csrf
-                <button type="submit" class="button button-secondary">Publish</button>
-            </form>
-
-            <form method="POST" action="{{ route('admin.pages.unpublish', $page) }}">
-                @csrf
-                <button type="submit" class="button button-secondary">Unpublish</button>
-            </form>
-        </div>
-    @endif
-
-    @if ($mode === 'edit')
-        <section class="panel stack-md">
-            <div class="toolbar">
-                <div>
-                    <span class="eyebrow">Page Sections</span>
-                    <h2>{{ $page->sections->count() }} configured</h2>
-                </div>
-                <a href="{{ route('admin.pages.sections.create', [$page, 'section_type_id' => optional($page->sections->first()?->sectionType)->id]) }}" class="button button-primary">Add section</a>
-            </div>
-
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Order</th>
-                        <th>Title</th>
-                        <th>Type</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($page->sections as $section)
-                        <tr>
-                            <td>{{ $section->sort_order }}</td>
-                            <td>{{ $section->title ?: 'Untitled section' }}</td>
-                            <td>{{ $section->sectionType?->name ?? 'Unknown type' }}</td>
-                            <td class="table-actions">
-                                <a href="{{ route('admin.pages.sections.edit', [$page, $section]) }}">Edit</a>
-                                <form method="POST" action="{{ route('admin.pages.sections.destroy', [$page, $section]) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="button-link">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </section>
-    @endif
-@endsection
+</x-admin::layouts>

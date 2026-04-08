@@ -1,10 +1,22 @@
 {
     "name": "platform/media-tools",
-    "description": "Media abstraction package for uploads and responsive asset handling.",
+    "version": "0.1.0",
+    "description": "Media support hooks for the reusable platform",
     "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3"
+    },
     "autoload": {
         "psr-4": {
-            "MediaTools\\": "src/"
+            "Platform\\MediaTools\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Platform\\MediaTools\\Providers\\MediaToolsServiceProvider"
+            ]
         }
     }
 }

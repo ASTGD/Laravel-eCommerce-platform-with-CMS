@@ -1,15 +1,8 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ThemeCore\Contracts;
-
-use ExperienceCms\Models\PageSection;
-use Illuminate\Contracts\View\View;
+namespace Platform\ThemeCore\Contracts;
 
 interface SectionRendererContract
 {
-    public function make(PageSection $section, array $context = []): View;
-
-    public function payload(PageSection $section, array $context = []): array;
+    public function render(string $view, array $data = []): string;
 }

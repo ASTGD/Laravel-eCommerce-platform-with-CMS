@@ -1,24 +1,24 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Database\Seeders;
 
-use ExperienceCms\Database\Seeders\ExperienceCmsSeeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use PlatformSupport\Database\Seeders\PlatformSupportSeeder;
-use ThemeDefault\Database\Seeders\ThemeDefaultSeeder;
+use Platform\ExperienceCms\Database\Seeders\ExperienceCmsSeeder;
+use Platform\ThemeCore\Database\Seeders\ThemeCoreSeeder;
+use Webkul\Installer\Database\Seeders\DatabaseSeeder as BagistoDatabaseSeeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    public function run(): void
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
     {
         $this->call([
-            PlatformSupportSeeder::class,
-            ThemeDefaultSeeder::class,
+            BagistoDatabaseSeeder::class,
+            ThemeCoreSeeder::class,
             ExperienceCmsSeeder::class,
         ]);
     }

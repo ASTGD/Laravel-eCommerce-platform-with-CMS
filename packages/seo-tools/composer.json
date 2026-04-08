@@ -1,10 +1,22 @@
 {
     "name": "platform/seo-tools",
-    "description": "SEO metadata support for the reusable commerce platform.",
+    "version": "0.1.0",
+    "description": "SEO support package for the reusable platform",
     "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3"
+    },
     "autoload": {
         "psr-4": {
-            "SeoTools\\": "src/"
+            "Platform\\SeoTools\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Platform\\SeoTools\\Providers\\SeoToolsServiceProvider"
+            ]
         }
     }
 }

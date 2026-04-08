@@ -1,56 +1,58 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Http\Controllers\Admin;
+namespace Platform\ExperienceCms\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use ExperienceCms\Http\Requests\Admin\SectionTypeRequest;
-use ExperienceCms\Models\SectionType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Platform\ExperienceCms\Http\Requests\Admin\SectionTypeRequest;
+use Platform\ExperienceCms\Models\SectionType;
 
 class SectionTypeController extends Controller
 {
     public function index(): View
     {
         return view('experience-cms::admin.section-types.index', [
-            'sectionTypes' => SectionType::query()->orderBy('name')->get(),
+            'sectionTypes' => SectionType::query()->orderBy('category')->orderBy('name')->get(),
         ]);
     }
 
     public function create(): View
     {
-        return view('experience-cms::admin.section-types.form', ['sectionType' => new SectionType(['is_active' => true]), 'mode' => 'create']);
+        return view('experience-cms::admin.section-types.form', [
+            'sectionType' => new SectionType(['is_active' => true]),
+        ]);
     }
 
     public function store(SectionTypeRequest $request): RedirectResponse
     {
-        $sectionType = SectionType::query()->create($request->validated());
+        $sectionType = SectionType::query()->create($request->payload());
 
-        return redirect()->route('admin.section-types.edit', $sectionType)->with('status', 'Section type created.');
+        return redirect()
+            ->route('admin.cms.section-types.edit', $sectionType)
+            ->with('success', 'Section type created.');
     }
 
-    public function edit(string $section_type): View
+    public function edit(SectionType $sectionType): View
     {
-        $sectionType = SectionType::query()->findOrFail($section_type);
-
-        return view('experience-cms::admin.section-types.form', ['sectionType' => $sectionType, 'mode' => 'edit']);
+        return view('experience-cms::admin.section-types.form', compact('sectionType'));
     }
 
-    public function update(SectionTypeRequest $request, string $section_type): RedirectResponse
+    public function update(SectionTypeRequest $request, SectionType $sectionType): RedirectResponse
     {
-        $sectionType = SectionType::query()->findOrFail($section_type);
-        $sectionType->update($request->validated());
+        $sectionType->update($request->payload());
 
-        return redirect()->route('admin.section-types.edit', $sectionType)->with('status', 'Section type updated.');
+        return redirect()
+            ->route('admin.cms.section-types.edit', $sectionType)
+            ->with('success', 'Section type updated.');
     }
 
-    public function destroy(string $section_type): RedirectResponse
+    public function destroy(SectionType $sectionType): RedirectResponse
     {
-        $sectionType = SectionType::query()->findOrFail($section_type);
         $sectionType->delete();
 
-        return redirect()->route('admin.section-types.index')->with('status', 'Section type deleted.');
+        return redirect()
+            ->route('admin.cms.section-types.index')
+            ->with('success', 'Section type deleted.');
     }
 }

@@ -1,95 +1,86 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Http\Controllers\Admin;
+namespace Platform\ExperienceCms\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use ExperienceCms\Actions\PublishPageAction;
-use ExperienceCms\Enums\PageStatus;
-use ExperienceCms\Http\Requests\Admin\PageRequest;
-use ExperienceCms\Models\Page;
-use ExperienceCms\Models\Template;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Platform\ExperienceCms\Contracts\PagePreviewServiceContract;
+use Platform\ExperienceCms\Contracts\PublishWorkflowContract;
+use Platform\ExperienceCms\Http\Requests\Admin\PageRequest;
+use Platform\ExperienceCms\Models\Page;
+use Platform\ExperienceCms\Models\Template;
 
 class PageController extends Controller
 {
+    public function __construct(
+        protected PagePreviewServiceContract $previewService,
+        protected PublishWorkflowContract $publishWorkflow,
+    ) {}
+
     public function index(): View
     {
         return view('experience-cms::admin.pages.index', [
-            'pages' => Page::query()->with('template')->latest()->get(),
+            'pages' => Page::query()->with('template')->orderBy('title')->get(),
         ]);
     }
 
     public function create(): View
     {
         return view('experience-cms::admin.pages.form', [
-            'page' => new Page(['status' => PageStatus::Draft]),
+            'page' => new Page(['type' => 'homepage']),
             'templates' => Template::query()->where('is_active', true)->orderBy('name')->get(),
-            'mode' => 'create',
         ]);
     }
 
     public function store(PageRequest $request): RedirectResponse
     {
-        $page = Page::query()->create([
-            ...$request->validated(),
-            'created_by' => $request->user()?->id,
-            'updated_by' => $request->user()?->id,
+        $page = Page::query()->create($request->payload() + [
+            'status' => 'draft',
         ]);
 
-        return redirect()->route('admin.pages.edit', $page)->with('status', 'Page created.');
+        return redirect()
+            ->route('admin.cms.pages.edit', $page)
+            ->with('success', 'Page created.');
     }
 
-    public function edit(string $page): View
+    public function edit(Page $page): View
     {
-        $page = Page::query()->with('template', 'sections.sectionType')->findOrFail($page);
-        $page->load('template', 'sections.sectionType');
-
         return view('experience-cms::admin.pages.form', [
             'page' => $page,
             'templates' => Template::query()->where('is_active', true)->orderBy('name')->get(),
-            'mode' => 'edit',
         ]);
     }
 
-    public function update(PageRequest $request, string $page): RedirectResponse
+    public function update(PageRequest $request, Page $page): RedirectResponse
     {
-        $page = Page::query()->findOrFail($page);
-        $page->update([
-            ...$request->validated(),
-            'updated_by' => $request->user()?->id,
-        ]);
+        $page->update($request->payload());
 
-        return redirect()->route('admin.pages.edit', $page)->with('status', 'Page updated.');
+        return redirect()
+            ->route('admin.cms.pages.edit', $page)
+            ->with('success', 'Page updated.');
     }
 
-    public function destroy(string $page): RedirectResponse
+    public function destroy(Page $page): RedirectResponse
     {
-        $page = Page::query()->findOrFail($page);
         $page->delete();
 
-        return redirect()->route('admin.pages.index')->with('status', 'Page deleted.');
+        return redirect()
+            ->route('admin.cms.pages.index')
+            ->with('success', 'Page deleted.');
     }
 
-    public function publish(string $page): RedirectResponse
+    public function preview(Page $page): View
     {
-        $page = Page::query()->findOrFail($page);
-        $publishPageAction = app(PublishPageAction::class);
-        $publishPageAction->execute($page, auth()->id(), 'Published from admin');
-
-        return redirect()->route('admin.pages.edit', $page)->with('status', 'Page published.');
+        return view('theme-default::storefront.page', $this->previewService->build($page));
     }
 
-    public function unpublish(string $page): RedirectResponse
+    public function publish(Page $page): RedirectResponse
     {
-        $page = Page::query()->findOrFail($page);
-        $page->update([
-            'status' => PageStatus::Unpublished,
-            'updated_by' => auth()->id(),
-        ]);
+        $this->publishWorkflow->publish($page);
 
-        return redirect()->route('admin.pages.edit', $page)->with('status', 'Page unpublished.');
+        return redirect()
+            ->route('admin.cms.pages.edit', $page)
+            ->with('success', 'Page published.');
     }
 }

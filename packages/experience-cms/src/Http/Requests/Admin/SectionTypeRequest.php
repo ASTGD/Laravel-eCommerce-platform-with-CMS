@@ -1,43 +1,48 @@
 <?php
 
-declare(strict_types=1);
+namespace Platform\ExperienceCms\Http\Requests\Admin;
 
-namespace ExperienceCms\Http\Requests\Admin;
+use Illuminate\Support\Str;
 
-use ExperienceCms\Support\ParsesJsonFields;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class SectionTypeRequest extends FormRequest
+class SectionTypeRequest extends JsonFormRequest
 {
-    use ParsesJsonFields;
-
     public function authorize(): bool
     {
         return true;
     }
 
+    public function rules(): array
+    {
+        return [
+            'name'                      => ['required', 'string', 'max:255'],
+            'code'                      => ['nullable', 'string', 'max:255'],
+            'category'                  => ['required', 'string', 'max:100'],
+            'config_schema_json'        => ['nullable', 'string', 'json'],
+            'supports_components'       => ['nullable', 'boolean'],
+            'allowed_data_sources_json' => ['nullable', 'string', 'json'],
+            'renderer_class'            => ['nullable', 'string', 'max:255'],
+            'is_active'                 => ['nullable', 'boolean'],
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
-        $this->parseJsonFields(['config_schema_json', 'allowed_data_sources_json']);
         $this->merge([
-            'supports_components' => $this->boolean('supports_components'),
-            'is_active' => $this->boolean('is_active'),
+            'code' => $this->input('code') ?: Str::slug((string) $this->input('name'), '_'),
         ]);
     }
 
-    public function rules(): array
+    public function payload(): array
     {
-        $sectionTypeId = $this->route('section_type');
-
         return [
-            'name' => ['required', 'string', 'max:120'],
-            'code' => ['required', 'string', 'max:120', Rule::unique('section_types', 'code')->ignore($sectionTypeId)],
-            'category' => ['required', 'string', 'max:80'],
-            'config_schema_json' => ['nullable', 'array'],
-            'supports_components' => ['required', 'boolean'],
-            'allowed_data_sources_json' => ['nullable', 'array'],
-            'is_active' => ['required', 'boolean'],
+            'name'                      => $this->validated('name'),
+            'code'                      => $this->validated('code'),
+            'category'                  => $this->validated('category'),
+            'config_schema_json'        => $this->decoded('config_schema_json'),
+            'supports_components'       => $this->boolean('supports_components'),
+            'allowed_data_sources_json' => $this->decoded('allowed_data_sources_json'),
+            'renderer_class'            => $this->validated('renderer_class'),
+            'is_active'                 => $this->boolean('is_active', true),
         ];
     }
 }

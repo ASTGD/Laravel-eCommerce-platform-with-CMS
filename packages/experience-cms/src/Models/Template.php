@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Models;
+namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,12 +19,12 @@ class Template extends Model
     {
         return [
             'schema_json' => 'array',
-            'is_active' => 'bool',
+            'is_active'   => 'boolean',
         ];
     }
 
-    public function pages(): HasMany
+    public function areas(): HasMany
     {
-        return $this->hasMany(Page::class);
+        return $this->hasMany(TemplateArea::class)->orderBy('sort_order');
     }
 }

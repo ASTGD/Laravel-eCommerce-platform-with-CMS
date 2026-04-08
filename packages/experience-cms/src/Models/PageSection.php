@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Models;
+namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +10,7 @@ class PageSection extends Model
 {
     protected $fillable = [
         'page_id',
+        'template_area_id',
         'section_type_id',
         'sort_order',
         'title',
@@ -25,10 +24,10 @@ class PageSection extends Model
     protected function casts(): array
     {
         return [
-            'settings_json' => 'array',
-            'visibility_rules_json' => 'array',
+            'settings_json'            => 'array',
+            'visibility_rules_json'    => 'array',
             'data_source_payload_json' => 'array',
-            'is_active' => 'bool',
+            'is_active'                => 'boolean',
         ];
     }
 

@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace SeoTools\Models;
+namespace Platform\SeoTools\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,10 +11,16 @@ class SeoMeta extends Model
     protected $fillable = [
         'title',
         'description',
-        'canonical_url',
-        'open_graph_title',
-        'open_graph_description',
-        'open_graph_image_url',
+        'keywords',
         'robots',
+        'og_json',
+        'canonical_url',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'og_json' => 'array',
+        ];
+    }
 }

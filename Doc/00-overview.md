@@ -1,93 +1,58 @@
-# 00 Overview
-
-## Product Summary
-
-This repository contains one reusable commerce product that is intended to be deployed multiple times as separate installations. Each installation is operationally isolated with its own domain, storage, database, admin users, catalog, content, and credentials, while still sharing the same engineered codebase and release process.
-
-The platform combines two bounded capabilities:
-
-- `commerce-core`: product, pricing, inventory, cart, checkout, order, promotion, and merchandising integration points
-- `experience-cms`: structured content composition with templates, sections, components, menus, global areas, preview, and publish
-
-The storefront is server-rendered and intentionally structured. Admins can control layout through approved templates, sections, components, and theme presets. They cannot inject arbitrary frontend code or break the design system by bypassing rendering contracts.
+# Overview
 
 ## Mission
 
-Build a deployable product, not a one-off website:
+Build one reusable e-commerce product on Laravel 12 with Bagisto as the commerce core.
 
-- one reusable platform
-- one default storefront
-- one internal admin and CMS
-- one documented delivery package
-- many independent downstream installations
+The product is delivered once and installed many times on separate hosts and domains. Each installation must remain fully standalone at the infrastructure, data, admin, and integration layers.
 
-## Deployment Model
+## Product Model
 
-The platform follows a single-product, many-installations model:
+This repository is:
 
-- one source repository
-- one release stream
-- one platform architecture
-- many separate deployments
+- one reusable product
+- many independent installations
+- one shared codebase with configuration-driven variation
 
-Every installation owns:
+This repository is not:
 
-- environment configuration
-- database
-- media storage
-- admin users
-- payment credentials
-- shipping settings
-- tax settings
-- content
-- visual configuration
+- a centralized multi-tenant runtime
+- a shared admin for many domains
+- a freeform page-builder product
+- five separate storefront codebases
 
-There is no shared runtime tenancy layer in v1.
+## Main Surfaces
 
-## Structured CMS Positioning
+### Admin / Back Office
 
-This is a mid-range structured CMS. It provides:
+Used by staff to manage catalog, orders, customers, promotions, CMS content, menus, header/footer, theme presets, SEO, media, and users/roles.
 
-- page templates
-- section catalogs
-- component catalogs
-- schema-backed settings
-- global header/footer management
-- menu management
-- theme presets and tokens
-- preview and publish workflow
-- basic version snapshots
+### Public Storefront
 
-This is intentionally not a drag-anything-anywhere visual builder.
+Used by shoppers for homepage, category pages, product pages, campaign pages, cart, checkout, and structured content pages.
+
+### Customer Portal
+
+Part of the storefront, not a second admin. Used for sign-in, profile, addresses, password reset, and order history/detail.
 
 ## Non-Goals
 
-Version 1 explicitly excludes:
+- Headless storefront in v1
+- Filament-driven main admin
+- Marketplace or multi-vendor behavior
+- Shared runtime multi-store model
+- Drag-anything-anywhere page builder
+- One-off client-specific architecture in the core product
 
-- freeform page building
-- centralized multi-site runtime administration
-- marketplace or multi-vendor behavior
-- recommendation engines
-- loyalty systems
-- arbitrary theme code editing from admin
-- unrelated bespoke theme implementations
+## Install Model
 
-## Initial Deliverables
+Each install must have:
 
-The first implementation wave delivers:
-
-- modular repository and package structure
-- structured documentation in `Doc/`
-- CMS entities and migrations
-- section registry with built-in v1 sections
-- theme contracts and default theme
-- admin CRUD for the first CMS entities
-- homepage preview and publish foundation
-
-## Architecture Guardrails
-
-- Keep custom logic inside isolated packages/modules.
-- Avoid business logic in Blade templates.
-- Prefer schema-backed configuration to ad hoc JSON blobs.
-- Preserve stable contracts between stored CMS data and renderers.
-- Treat each installation as an independent product deployment.
+- its own domain
+- its own `.env`
+- its own database
+- its own storage/media
+- its own admin users
+- its own catalog and CMS data
+- its own payment and shipping credentials
+- its own theme preset selection

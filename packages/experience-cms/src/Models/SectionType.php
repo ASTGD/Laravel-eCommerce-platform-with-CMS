@@ -1,11 +1,8 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\Models;
+namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SectionType extends Model
 {
@@ -16,21 +13,17 @@ class SectionType extends Model
         'config_schema_json',
         'supports_components',
         'allowed_data_sources_json',
+        'renderer_class',
         'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'config_schema_json' => 'array',
-            'supports_components' => 'bool',
+            'config_schema_json'        => 'array',
+            'supports_components'       => 'boolean',
             'allowed_data_sources_json' => 'array',
-            'is_active' => 'bool',
+            'is_active'                 => 'boolean',
         ];
-    }
-
-    public function sections(): HasMany
-    {
-        return $this->hasMany(PageSection::class);
     }
 }

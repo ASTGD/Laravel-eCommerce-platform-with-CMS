@@ -1,24 +1,17 @@
-<header class="storefront-header">
-    <div class="announcement">{{ $header?->settings_json['announcement'] ?? config('app.name') }}</div>
-    <div class="header-bar">
-        <a href="{{ route('storefront.home') }}" class="brand-mark">{{ config('platform.brand_name') }}</a>
+@php($settings = $header?->settings_json ?? [])
+<header class="border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div>
+            <p class="text-xs uppercase tracking-[0.3em] text-slate-500">{{ $settings['announcement'] ?? 'Reusable Commerce Platform' }}</p>
+            <a href="{{ url('/') }}" class="text-2xl font-semibold text-slate-900">
+                {{ $settings['brand_name'] ?? config('app.name') }}
+            </a>
+        </div>
 
-        <nav class="primary-nav">
-            @foreach ($primaryMenu?->items ?? [] as $item)
-                <a href="{{ $item->target }}">{{ $item->title }}</a>
+        <nav class="hidden gap-6 text-sm text-slate-600 md:flex">
+            @foreach (($settings['links'] ?? [['label' => 'Catalog', 'url' => '/'], ['label' => 'Contact', 'url' => '/contact-us']]) as $link)
+                <a href="{{ $link['url'] ?? '#' }}" class="hover:text-slate-900">{{ $link['label'] ?? 'Link' }}</a>
             @endforeach
         </nav>
-
-        <div class="header-tools">
-            @if ($header?->settings_json['show_search'] ?? false)
-                <span>Search</span>
-            @endif
-            @if ($header?->settings_json['show_account'] ?? false)
-                <span>Account</span>
-            @endif
-            @if ($header?->settings_json['show_cart'] ?? false)
-                <span>Cart</span>
-            @endif
-        </div>
     </div>
 </header>

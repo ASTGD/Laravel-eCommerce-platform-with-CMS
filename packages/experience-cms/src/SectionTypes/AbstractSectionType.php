@@ -1,10 +1,8 @@
 <?php
 
-declare(strict_types=1);
+namespace Platform\ExperienceCms\SectionTypes;
 
-namespace ExperienceCms\SectionTypes;
-
-use ExperienceCms\Contracts\SectionTypeContract;
+use Platform\ExperienceCms\Contracts\SectionTypeContract;
 
 abstract class AbstractSectionType implements SectionTypeContract
 {
@@ -13,8 +11,22 @@ abstract class AbstractSectionType implements SectionTypeContract
         return false;
     }
 
-    public function previewData(): array
+    public function previewView(): ?string
     {
-        return [];
+        return $this->rendererView();
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'name'                      => $this->label(),
+            'code'                      => $this->code(),
+            'category'                  => $this->category(),
+            'config_schema_json'        => $this->configSchema(),
+            'supports_components'       => $this->supportsComponents(),
+            'allowed_data_sources_json' => $this->allowedDataSources(),
+            'renderer_class'            => static::class,
+            'is_active'                 => true,
+        ];
     }
 }

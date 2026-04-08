@@ -1,25 +1,43 @@
-@extends('experience-cms::admin.layout')
+<x-admin::layouts>
+    <x-slot:title>{{ $template->exists ? 'Edit Template' : 'Create Template' }}</x-slot:title>
 
-@section('title', 'Template')
-@section('heading', $mode === 'create' ? 'Create Template' : 'Edit Template')
+    <div class="pb-6">
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $template->exists ? 'Edit Template' : 'Create Template' }}</h1>
+    </div>
 
-@section('content')
-    <form method="POST" action="{{ $mode === 'create' ? route('admin.templates.store') : route('admin.templates.update', $template) }}" class="stack-lg">
+    <form method="POST" action="{{ $template->exists ? route('admin.cms.templates.update', $template) : route('admin.cms.templates.store') }}" class="space-y-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         @csrf
-        @if ($mode === 'edit') @method('PUT') @endif
+        @if ($template->exists)
+            @method('PUT')
+        @endif
 
-        <section class="panel form-grid">
-            <label class="field"><span>Name</span><input type="text" name="name" value="{{ old('name', $template->name) }}">@error('name')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="field"><span>Code</span><input type="text" name="code" value="{{ old('code', $template->code) }}">@error('code')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="field"><span>Page Type</span><input type="text" name="page_type" value="{{ old('page_type', $template->page_type) }}">@error('page_type')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="field"><span>Active</span><select name="is_active"><option value="1" @selected(old('is_active', $template->is_active ?? true))>Yes</option><option value="0" @selected(! old('is_active', $template->is_active ?? true))>No</option></select></label>
-            <label class="field field-span-2">
-                <span>Schema JSON</span>
-                <textarea name="schema_json" rows="12">{{ is_array(old('schema_json', $template->schema_json)) ? json_encode(old('schema_json', $template->schema_json), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : old('schema_json', json_encode($template->schema_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
-                @error('schema_json')<small class="field-error">{{ $message }}</small>@enderror
+        <div class="grid gap-6 md:grid-cols-3">
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium">Name</span>
+                <input name="name" value="{{ old('name', $template->name) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white" required>
             </label>
-        </section>
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium">Code</span>
+                <input name="code" value="{{ old('code', $template->code) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+            </label>
+            <label class="block">
+                <span class="mb-2 block text-sm font-medium">Page Type</span>
+                <input name="page_type" value="{{ old('page_type', $template->page_type) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white" required>
+            </label>
+        </div>
 
-        <div class="toolbar"><button type="submit" class="button button-primary">{{ $mode === 'create' ? 'Create template' : 'Save template' }}</button></div>
+        <label class="block">
+            <span class="mb-2 block text-sm font-medium">Schema JSON</span>
+            <textarea name="schema_json" rows="12" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ old('schema_json', json_encode($template->schema_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
+        </label>
+
+        <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" name="is_active" value="1" {{ old('is_active', $template->exists ? $template->is_active : true) ? 'checked' : '' }}>
+            Active
+        </label>
+
+        <div>
+            <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-gray-900">Save Template</button>
+        </div>
     </form>
-@endsection
+</x-admin::layouts>

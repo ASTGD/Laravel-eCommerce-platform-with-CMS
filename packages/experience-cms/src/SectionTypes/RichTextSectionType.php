@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\SectionTypes;
+namespace Platform\ExperienceCms\SectionTypes;
 
 class RichTextSectionType extends AbstractSectionType
 {
@@ -11,7 +9,7 @@ class RichTextSectionType extends AbstractSectionType
         return 'rich_text';
     }
 
-    public function name(): string
+    public function label(): string
     {
         return 'Rich Text';
     }
@@ -21,40 +19,28 @@ class RichTextSectionType extends AbstractSectionType
         return 'content';
     }
 
-    public function view(): string
-    {
-        return 'theme-default::storefront.sections.rich-text';
-    }
-
     public function configSchema(): array
     {
-        return [
-            ['key' => 'eyebrow', 'label' => 'Eyebrow', 'type' => 'text'],
-            ['key' => 'headline', 'label' => 'Headline', 'type' => 'text'],
-            ['key' => 'body', 'label' => 'Body HTML', 'type' => 'textarea'],
-        ];
+        return ['content' => 'text'];
     }
 
-    public function defaultSettings(): array
+    public function defaultConfig(): array
     {
-        return [
-            'eyebrow' => 'Structured content',
-            'headline' => 'Bounded flexibility keeps installs maintainable.',
-            'body' => '<p>Templates, sections, presets, and global areas provide repeatable control without handing layout internals to admins.</p>',
-        ];
+        return ['content' => 'Structured rich text content.'];
     }
 
     public function validationRules(): array
     {
-        return [
-            'eyebrow' => ['nullable', 'string', 'max:100'],
-            'headline' => ['required', 'string', 'max:140'],
-            'body' => ['required', 'string'],
-        ];
+        return ['content' => ['required', 'string']];
     }
 
-    public function supportedDataSources(): array
+    public function allowedDataSources(): array
     {
-        return ['selected_content_entries'];
+        return [];
+    }
+
+    public function rendererView(): string
+    {
+        return 'theme-default::storefront.sections.rich-text';
     }
 }

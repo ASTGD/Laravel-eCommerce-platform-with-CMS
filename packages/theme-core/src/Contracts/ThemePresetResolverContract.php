@@ -1,14 +1,10 @@
 <?php
 
-declare(strict_types=1);
+namespace Platform\ThemeCore\Contracts;
 
-namespace ThemeCore\Contracts;
-
-use ExperienceCms\Models\ThemePreset;
+use Platform\ThemeCore\Models\ThemePreset;
 
 interface ThemePresetResolverContract
 {
-    public function resolve(?string $code = null): ThemePreset;
-
-    public function tokenMap(?string $code = null): array;
+    public function resolve(?string $code = null): ?ThemePreset;
 }

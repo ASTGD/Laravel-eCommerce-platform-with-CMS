@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace ExperienceCms\SectionTypes;
+namespace Platform\ExperienceCms\SectionTypes;
 
 class HeroBannerSectionType extends AbstractSectionType
 {
@@ -11,7 +9,7 @@ class HeroBannerSectionType extends AbstractSectionType
         return 'hero_banner';
     }
 
-    public function name(): string
+    public function label(): string
     {
         return 'Hero Banner';
     }
@@ -21,55 +19,46 @@ class HeroBannerSectionType extends AbstractSectionType
         return 'hero';
     }
 
-    public function view(): string
-    {
-        return 'theme-default::storefront.sections.hero-banner';
-    }
-
     public function configSchema(): array
     {
         return [
-            ['key' => 'eyebrow', 'label' => 'Eyebrow', 'type' => 'text'],
-            ['key' => 'headline', 'label' => 'Headline', 'type' => 'text'],
-            ['key' => 'body', 'label' => 'Body', 'type' => 'textarea'],
-            ['key' => 'primary_label', 'label' => 'Primary Button Label', 'type' => 'text'],
-            ['key' => 'primary_url', 'label' => 'Primary Button URL', 'type' => 'text'],
-            ['key' => 'secondary_label', 'label' => 'Secondary Button Label', 'type' => 'text'],
-            ['key' => 'secondary_url', 'label' => 'Secondary Button URL', 'type' => 'text'],
-            ['key' => 'image_url', 'label' => 'Image URL', 'type' => 'text'],
+            'eyebrow' => 'string',
+            'headline' => 'string',
+            'body' => 'text',
+            'primary_cta_label' => 'string',
+            'primary_cta_url' => 'string',
+            'secondary_cta_label' => 'string',
+            'secondary_cta_url' => 'string',
         ];
     }
 
-    public function defaultSettings(): array
+    public function defaultConfig(): array
     {
         return [
-            'eyebrow' => 'Structured commerce platform',
-            'headline' => 'Launch a standalone storefront without rebuilding the platform.',
-            'body' => 'Compose homepage content from approved sections, keep visual variation inside presets, and ship repeatable installs.',
-            'primary_label' => 'Browse featured products',
-            'primary_url' => '#featured-products',
-            'secondary_label' => 'Read the platform brief',
-            'secondary_url' => '/pages/about',
-            'image_url' => 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1200&q=80',
+            'eyebrow' => 'Structured Commerce',
+            'headline' => 'Launch a reusable storefront product.',
+            'body' => 'A structured CMS and theme system layered on the commerce foundation.',
+            'primary_cta_label' => 'Shop now',
+            'primary_cta_url' => '/catalog',
+            'secondary_cta_label' => 'Learn more',
+            'secondary_cta_url' => '/pages/about',
         ];
     }
 
     public function validationRules(): array
     {
         return [
-            'eyebrow' => ['nullable', 'string', 'max:100'],
-            'headline' => ['required', 'string', 'max:160'],
-            'body' => ['nullable', 'string'],
-            'primary_label' => ['nullable', 'string', 'max:60'],
-            'primary_url' => ['nullable', 'string', 'max:255'],
-            'secondary_label' => ['nullable', 'string', 'max:60'],
-            'secondary_url' => ['nullable', 'string', 'max:255'],
-            'image_url' => ['nullable', 'string', 'max:255'],
+            'headline' => ['required', 'string', 'max:255'],
         ];
     }
 
-    public function supportedDataSources(): array
+    public function allowedDataSources(): array
     {
         return [];
+    }
+
+    public function rendererView(): string
+    {
+        return 'theme-default::storefront.sections.hero-banner';
     }
 }

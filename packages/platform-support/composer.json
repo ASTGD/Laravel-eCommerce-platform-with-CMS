@@ -1,10 +1,22 @@
 {
     "name": "platform/platform-support",
-    "description": "Shared platform support types, audit logging, and bootstrap helpers.",
+    "version": "0.1.0",
+    "description": "Shared support tooling for the reusable platform",
     "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3"
+    },
     "autoload": {
         "psr-4": {
-            "PlatformSupport\\": "src/"
+            "Platform\\PlatformSupport\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Platform\\PlatformSupport\\Providers\\PlatformSupportServiceProvider"
+            ]
         }
     }
 }

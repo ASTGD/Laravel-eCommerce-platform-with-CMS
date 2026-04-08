@@ -1,59 +1,24 @@
-@extends('experience-cms::admin.layout')
+<x-admin::layouts>
+    <x-slot:title>{{ $menu->exists ? 'Edit Menu' : 'Create Menu' }}</x-slot:title>
 
-@section('title', 'Menu')
-@section('heading', $mode === 'create' ? 'Create Menu' : 'Edit Menu')
+    <div class="pb-6">
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $menu->exists ? 'Edit Menu' : 'Create Menu' }}</h1>
+    </div>
 
-@section('content')
-    <form method="POST" action="{{ $mode === 'create' ? route('admin.menus.store') : route('admin.menus.update', $menu) }}" class="stack-lg">
+    <form method="POST" action="{{ $menu->exists ? route('admin.cms.menus.update', $menu) : route('admin.cms.menus.store') }}" class="space-y-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
         @csrf
-        @if ($mode === 'edit') @method('PUT') @endif
+        @if ($menu->exists)
+            @method('PUT')
+        @endif
 
-        <section class="panel form-grid">
-            <label class="field"><span>Name</span><input type="text" name="name" value="{{ old('name', $menu->name) }}">@error('name')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="field"><span>Code</span><input type="text" name="code" value="{{ old('code', $menu->code) }}">@error('code')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="field"><span>Location</span><input type="text" name="location" value="{{ old('location', $menu->location) }}">@error('location')<small class="field-error">{{ $message }}</small>@enderror</label>
-            <label class="field"><span>Active</span><select name="is_active"><option value="1" @selected(old('is_active', $menu->is_active ?? true))>Yes</option><option value="0" @selected(! old('is_active', $menu->is_active ?? true))>No</option></select></label>
-        </section>
-
-        <div class="toolbar">
-            <button type="submit" class="button button-primary">{{ $mode === 'create' ? 'Create menu' : 'Save menu' }}</button>
-            @if ($mode === 'edit')
-                <a href="{{ route('admin.menus.items.create', $menu) }}" class="button button-secondary">Add item</a>
-            @endif
+        <div class="grid gap-6 md:grid-cols-3">
+            <label class="block"><span class="mb-2 block text-sm font-medium">Name</span><input name="name" value="{{ old('name', $menu->name) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white" required></label>
+            <label class="block"><span class="mb-2 block text-sm font-medium">Code</span><input name="code" value="{{ old('code', $menu->code) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono dark:border-gray-700 dark:bg-gray-950 dark:text-white"></label>
+            <label class="block"><span class="mb-2 block text-sm font-medium">Location</span><input name="location" value="{{ old('location', $menu->location) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white" required></label>
         </div>
+
+        <label class="inline-flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" value="1" {{ old('is_active', $menu->exists ? $menu->is_active : true) ? 'checked' : '' }}> Active</label>
+
+        <div><button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-gray-900">Save Menu</button></div>
     </form>
-
-    @if ($mode === 'edit')
-        <section class="panel stack-md">
-            <h2>Menu items</h2>
-
-            <table class="data-table">
-                <thead>
-                    <tr><th>Title</th><th>Target</th><th>Order</th><th></th></tr>
-                </thead>
-                <tbody>
-                    @foreach ($menu->items as $item)
-                        <tr>
-                            <td>
-                                <strong>{{ $item->title }}</strong>
-                                @if ($item->children->isNotEmpty())
-                                    <div class="table-meta">{{ $item->children->pluck('title')->join(', ') }}</div>
-                                @endif
-                            </td>
-                            <td>{{ $item->target }}</td>
-                            <td>{{ $item->sort_order }}</td>
-                            <td class="table-actions">
-                                <a href="{{ route('admin.menus.items.edit', [$menu, $item]) }}">Edit</a>
-                                <form method="POST" action="{{ route('admin.menus.items.destroy', [$menu, $item]) }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="button-link">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </section>
-    @endif
-@endsection
+</x-admin::layouts>
