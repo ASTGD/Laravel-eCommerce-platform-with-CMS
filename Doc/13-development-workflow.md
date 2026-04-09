@@ -11,6 +11,61 @@ This document covers practical local development operations for this repository:
 - how to expose the app on a LAN
 - what to check during smoke testing
 
+## Codex Workspace Split
+
+This repository is worked on through two Codex workspaces inside the app:
+
+- backend workspace
+- frontend workspace
+
+This split is for task ownership only. It does not mean there are two applications in the repository.
+
+### Backend Workspace
+
+Use the backend workspace for:
+
+- architecture
+- commerce-core integration
+- CMS data model
+- contracts and services
+- admin workflows
+- migrations and seeders
+- validation
+- tests
+- render pipeline and view models
+
+### Frontend Workspace
+
+Use the frontend workspace for:
+
+- storefront UI only
+- `packages/theme-core`
+- `packages/theme-default`
+- responsive behavior
+- accessibility
+- visual polish
+- implementation of approved Figma Make storefront designs
+
+The frontend workspace should not invent a separate app or a new top-level `frontend/` folder. The storefront theme layer stays inside this Laravel application.
+
+## Figma Workflow
+
+Figma Make is the visual source of truth for storefront exploration.
+
+Workflow:
+
+1. Approved storefront concepts are designed in Figma Make.
+2. Codex receives the approved Figma file or node links through the Figma MCP workflow.
+3. The design context is used as the reference for storefront implementation.
+4. Codex implements the UI in `packages/theme-core` and `packages/theme-default`.
+
+Rules:
+
+- Do not invent a major new storefront direction before approved Figma guidance exists.
+- If visual work implies new data or behavior, define the contract in the backend workspace first.
+- Keep Bagisto admin mostly native. Extend it only where a specific CMS/admin screen requires it.
+- Do not move business logic into Blade templates.
+
 ## Verified Runtime
 
 The current verified local bootstrap used:
@@ -35,13 +90,15 @@ PHP `8.4.x` is also supported by the repository policy. Do not use PHP `8.5.x` y
 
 ## Asset Workspaces
 
-This repository does not use only one frontend workspace.
+This repository has multiple asset workspaces, but it is still one Laravel application with one storefront theme surface.
 
 Use the correct package depending on what you are changing:
 
 - root `package.json`
   Use for the custom `theme-default` storefront shell
   Output: `public/build`
+
+  This is part of the Laravel application, not a separate frontend app.
 
 - `packages/Webkul/Shop/package.json`
   Use for upstream storefront assets
@@ -54,6 +111,13 @@ Use the correct package depending on what you are changing:
 - `packages/Webkul/Installer/package.json`
   Use for installer UI assets
   Output: `public/themes/installer/default/build`
+
+For storefront feature work in this repository, the Codex frontend workspace should stay focused on:
+
+- `packages/theme-core`
+- `packages/theme-default`
+
+Shared rendering contracts live in `theme-core`. Visual presentation and responsive storefront implementation live in `theme-default`.
 
 ## Install Flow
 

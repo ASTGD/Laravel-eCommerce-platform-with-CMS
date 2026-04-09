@@ -101,6 +101,52 @@ Do not reimplement built-in commerce capabilities unless there is a clear and do
 
 Prefer extending through package/module boundaries.
 
+## Codex Workspace Split
+
+This repository is operated through two Codex workspaces inside the app:
+
+- `Backend workspace`
+- `Frontend workspace`
+
+This split is operational only. It does not create a second application or a separate frontend app.
+
+### Backend Workspace
+
+Use the backend workspace for:
+
+- architecture
+- commerce-core integration
+- CMS data model
+- contracts and services
+- admin workflows
+- migrations and seeders
+- validation
+- tests
+- render pipeline and view models
+- any non-visual platform work
+
+### Frontend Workspace
+
+Use the frontend workspace for:
+
+- storefront presentation only
+- `packages/theme-core`
+- `packages/theme-default`
+- responsive behavior
+- accessibility
+- visual polish
+- implementation of approved Figma Make storefront designs
+
+### Workflow Rules
+
+- Do not create a top-level `frontend/` folder or a separate frontend application.
+- Keep Bagisto admin mostly native. Extend it only where a specific CMS/admin screen requires it.
+- Do not redesign the full admin panel.
+- Storefront customization belongs in the theme packages, not in ad hoc application code.
+- Do not move business logic into Blade templates.
+- Figma Make is the source of truth for storefront UI/UX exploration. Approved Figma links and node selections should be provided through the Figma MCP workflow before storefront UI details are implemented.
+- When a feature touches both workspaces, backend work defines the contracts and data flow first, then frontend work implements presentation against those contracts.
+
 ---
 
 ## Package structure
