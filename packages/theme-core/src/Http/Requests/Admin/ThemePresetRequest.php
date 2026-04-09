@@ -4,6 +4,7 @@ namespace Platform\ThemeCore\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ThemePresetRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class ThemePresetRequest extends FormRequest
     {
         return [
             'name'         => ['required', 'string', 'max:255'],
-            'code'         => ['nullable', 'string', 'max:255'],
+            'code'         => ['nullable', 'string', 'max:255', Rule::unique('theme_presets', 'code')->ignore($this->route('platformThemePreset'))],
             'tokens_json'  => ['nullable', 'string', 'json'],
             'settings_json'=> ['nullable', 'string', 'json'],
             'is_default'   => ['nullable', 'boolean'],

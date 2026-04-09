@@ -41,6 +41,11 @@ class PageSection extends Model
         return $this->belongsTo(SectionType::class);
     }
 
+    public function templateArea(): BelongsTo
+    {
+        return $this->belongsTo(TemplateArea::class);
+    }
+
     public function components(): HasMany
     {
         return $this->hasMany(SectionComponent::class)->orderBy('sort_order');

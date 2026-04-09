@@ -3,6 +3,7 @@
 namespace Platform\ExperienceCms\Http\Requests\Admin;
 
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SectionTypeRequest extends JsonFormRequest
 {
@@ -15,7 +16,7 @@ class SectionTypeRequest extends JsonFormRequest
     {
         return [
             'name'                      => ['required', 'string', 'max:255'],
-            'code'                      => ['nullable', 'string', 'max:255'],
+            'code'                      => ['nullable', 'string', 'max:255', Rule::unique('section_types', 'code')->ignore($this->route('platformSectionType'))],
             'category'                  => ['required', 'string', 'max:100'],
             'config_schema_json'        => ['nullable', 'string', 'json'],
             'supports_components'       => ['nullable', 'boolean'],

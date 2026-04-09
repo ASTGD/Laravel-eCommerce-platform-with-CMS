@@ -40,27 +40,27 @@ class ThemePresetController extends Controller
             ->with('success', 'Theme preset created.');
     }
 
-    public function edit(ThemePreset $themePreset): View
+    public function edit(ThemePreset $platformThemePreset): View
     {
         return view('theme-core::admin.theme-presets.form', [
-            'preset' => $themePreset,
+            'preset' => $platformThemePreset,
         ]);
     }
 
-    public function update(ThemePresetRequest $request, ThemePreset $themePreset): RedirectResponse
+    public function update(ThemePresetRequest $request, ThemePreset $platformThemePreset): RedirectResponse
     {
-        $themePreset->update($request->payload());
+        $platformThemePreset->update($request->payload());
 
-        $this->syncDefaultPreset($themePreset);
+        $this->syncDefaultPreset($platformThemePreset);
 
         return redirect()
-            ->route('admin.theme.presets.edit', $themePreset)
+            ->route('admin.theme.presets.edit', $platformThemePreset)
             ->with('success', 'Theme preset updated.');
     }
 
-    public function destroy(ThemePreset $themePreset): RedirectResponse
+    public function destroy(ThemePreset $platformThemePreset): RedirectResponse
     {
-        $themePreset->delete();
+        $platformThemePreset->delete();
 
         return redirect()
             ->route('admin.theme.presets.index')

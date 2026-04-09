@@ -33,23 +33,25 @@ class SectionTypeController extends Controller
             ->with('success', 'Section type created.');
     }
 
-    public function edit(SectionType $sectionType): View
+    public function edit(SectionType $platformSectionType): View
     {
-        return view('experience-cms::admin.section-types.form', compact('sectionType'));
+        return view('experience-cms::admin.section-types.form', [
+            'sectionType' => $platformSectionType,
+        ]);
     }
 
-    public function update(SectionTypeRequest $request, SectionType $sectionType): RedirectResponse
+    public function update(SectionTypeRequest $request, SectionType $platformSectionType): RedirectResponse
     {
-        $sectionType->update($request->payload());
+        $platformSectionType->update($request->payload());
 
         return redirect()
-            ->route('admin.cms.section-types.edit', $sectionType)
+            ->route('admin.cms.section-types.edit', $platformSectionType)
             ->with('success', 'Section type updated.');
     }
 
-    public function destroy(SectionType $sectionType): RedirectResponse
+    public function destroy(SectionType $platformSectionType): RedirectResponse
     {
-        $sectionType->delete();
+        $platformSectionType->delete();
 
         return redirect()
             ->route('admin.cms.section-types.index')

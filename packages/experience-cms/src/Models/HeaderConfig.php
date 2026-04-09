@@ -3,6 +3,7 @@
 namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class HeaderConfig extends Model
 {
@@ -18,5 +19,10 @@ class HeaderConfig extends Model
             'settings_json' => 'array',
             'is_default'    => 'boolean',
         ];
+    }
+
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class);
     }
 }

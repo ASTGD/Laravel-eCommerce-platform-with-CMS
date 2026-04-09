@@ -26,4 +26,8 @@
             </div>
         </div>
     </div>
+
+    @foreach (($section['components'] ?? []) as $component)
+        <div class="mx-auto max-w-6xl px-6 pb-12">{!! $component['html'] !!}</div>
+    @endforeach
 </section>

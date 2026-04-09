@@ -27,4 +27,9 @@ class Template extends Model
     {
         return $this->hasMany(TemplateArea::class)->orderBy('sort_order');
     }
+
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class);
+    }
 }

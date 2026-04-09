@@ -16,4 +16,9 @@ class ComponentTypeRegistry
     {
         return collect($this->definitions);
     }
+
+    public function find(string $code): ?ComponentTypeContract
+    {
+        return $this->all()->first(fn (ComponentTypeContract $definition) => $definition->code() === $code);
+    }
 }

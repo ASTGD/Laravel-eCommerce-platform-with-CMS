@@ -3,6 +3,7 @@
 namespace Platform\ExperienceCms\Http\Requests\Admin;
 
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class FooterConfigRequest extends JsonFormRequest
 {
@@ -14,7 +15,7 @@ class FooterConfigRequest extends JsonFormRequest
     public function rules(): array
     {
         return [
-            'code'          => ['nullable', 'string', 'max:255'],
+            'code'          => ['nullable', 'string', 'max:255', Rule::unique('footer_configs', 'code')->ignore($this->route('platformFooterConfig'))],
             'settings_json' => ['nullable', 'string', 'json'],
             'is_default'    => ['nullable', 'boolean'],
         ];

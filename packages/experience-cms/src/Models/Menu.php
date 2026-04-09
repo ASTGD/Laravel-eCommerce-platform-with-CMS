@@ -25,4 +25,9 @@ class Menu extends Model
     {
         return $this->hasMany(MenuItem::class)->orderBy('sort_order');
     }
+
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class);
+    }
 }

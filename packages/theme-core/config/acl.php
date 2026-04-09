@@ -14,12 +14,12 @@ return [
     ], [
         'key'   => 'theme.presets.create',
         'name'  => 'Create',
-        'route' => 'admin.theme.presets.store',
+        'route' => 'admin.theme.presets.create',
         'sort'  => 1,
     ], [
         'key'   => 'theme.presets.edit',
         'name'  => 'Edit',
-        'route' => 'admin.theme.presets.update',
+        'route' => 'admin.theme.presets.edit',
         'sort'  => 2,
     ], [
         'key'   => 'theme.presets.delete',

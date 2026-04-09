@@ -35,25 +35,27 @@ class HeaderConfigController extends Controller
             ->with('success', 'Header config created.');
     }
 
-    public function edit(HeaderConfig $headerConfig): View
+    public function edit(HeaderConfig $platformHeaderConfig): View
     {
-        return view('experience-cms::admin.header-configs.form', compact('headerConfig'));
+        return view('experience-cms::admin.header-configs.form', [
+            'headerConfig' => $platformHeaderConfig,
+        ]);
     }
 
-    public function update(HeaderConfigRequest $request, HeaderConfig $headerConfig): RedirectResponse
+    public function update(HeaderConfigRequest $request, HeaderConfig $platformHeaderConfig): RedirectResponse
     {
-        $headerConfig->update($request->payload());
+        $platformHeaderConfig->update($request->payload());
 
-        $this->syncDefault($headerConfig);
+        $this->syncDefault($platformHeaderConfig);
 
         return redirect()
-            ->route('admin.cms.header-configs.edit', $headerConfig)
+            ->route('admin.cms.header-configs.edit', $platformHeaderConfig)
             ->with('success', 'Header config updated.');
     }
 
-    public function destroy(HeaderConfig $headerConfig): RedirectResponse
+    public function destroy(HeaderConfig $platformHeaderConfig): RedirectResponse
     {
-        $headerConfig->delete();
+        $platformHeaderConfig->delete();
 
         return redirect()
             ->route('admin.cms.header-configs.index')

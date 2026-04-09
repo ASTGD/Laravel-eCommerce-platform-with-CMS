@@ -35,25 +35,27 @@ class FooterConfigController extends Controller
             ->with('success', 'Footer config created.');
     }
 
-    public function edit(FooterConfig $footerConfig): View
+    public function edit(FooterConfig $platformFooterConfig): View
     {
-        return view('experience-cms::admin.footer-configs.form', compact('footerConfig'));
+        return view('experience-cms::admin.footer-configs.form', [
+            'footerConfig' => $platformFooterConfig,
+        ]);
     }
 
-    public function update(FooterConfigRequest $request, FooterConfig $footerConfig): RedirectResponse
+    public function update(FooterConfigRequest $request, FooterConfig $platformFooterConfig): RedirectResponse
     {
-        $footerConfig->update($request->payload());
+        $platformFooterConfig->update($request->payload());
 
-        $this->syncDefault($footerConfig);
+        $this->syncDefault($platformFooterConfig);
 
         return redirect()
-            ->route('admin.cms.footer-configs.edit', $footerConfig)
+            ->route('admin.cms.footer-configs.edit', $platformFooterConfig)
             ->with('success', 'Footer config updated.');
     }
 
-    public function destroy(FooterConfig $footerConfig): RedirectResponse
+    public function destroy(FooterConfig $platformFooterConfig): RedirectResponse
     {
-        $footerConfig->delete();
+        $platformFooterConfig->delete();
 
         return redirect()
             ->route('admin.cms.footer-configs.index')

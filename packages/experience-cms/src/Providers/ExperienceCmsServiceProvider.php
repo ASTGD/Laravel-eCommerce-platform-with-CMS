@@ -4,12 +4,12 @@ namespace Platform\ExperienceCms\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Platform\ExperienceCms\Contracts\ComponentTypeContract;
 use Platform\ExperienceCms\Contracts\FooterResolverContract;
 use Platform\ExperienceCms\Contracts\HeaderResolverContract;
 use Platform\ExperienceCms\Contracts\MenuResolverContract;
 use Platform\ExperienceCms\Contracts\PagePreviewServiceContract;
 use Platform\ExperienceCms\Contracts\PublishWorkflowContract;
+use Platform\ExperienceCms\Http\Controllers\CmsAwareHomeController;
 use Platform\ExperienceCms\SectionTypes\BestSellersSectionType;
 use Platform\ExperienceCms\SectionTypes\CategoryGridSectionType;
 use Platform\ExperienceCms\SectionTypes\FeaturedProductsSectionType;
@@ -26,6 +26,7 @@ use Platform\ExperienceCms\Services\PagePreviewService;
 use Platform\ExperienceCms\Services\PublishWorkflow;
 use Platform\ExperienceCms\Services\SectionTypeRegistry;
 use Webkul\Core\Http\Middleware\PreventRequestsDuringMaintenance;
+use Webkul\Shop\Http\Controllers\HomeController;
 
 class ExperienceCmsServiceProvider extends ServiceProvider
 {
@@ -54,6 +55,7 @@ class ExperienceCmsServiceProvider extends ServiceProvider
         $this->app->bind(MenuResolverContract::class, MenuResolver::class);
         $this->app->bind(HeaderResolverContract::class, HeaderResolver::class);
         $this->app->bind(FooterResolverContract::class, FooterResolver::class);
+        $this->app->bind(HomeController::class, CmsAwareHomeController::class);
     }
 
     public function boot(): void
@@ -63,6 +65,9 @@ class ExperienceCmsServiceProvider extends ServiceProvider
 
         Route::middleware(['web', PreventRequestsDuringMaintenance::class])
             ->group(__DIR__.'/../../routes/storefront.php');
+
+        Route::getRoutes()->refreshNameLookups();
+        Route::getRoutes()->refreshActionLookups();
 
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'experience-cms');

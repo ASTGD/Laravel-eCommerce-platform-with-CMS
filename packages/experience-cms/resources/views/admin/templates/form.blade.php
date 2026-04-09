@@ -29,7 +29,21 @@
         <label class="block">
             <span class="mb-2 block text-sm font-medium">Schema JSON</span>
             <textarea name="schema_json" rows="12" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ old('schema_json', json_encode($template->schema_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Define areas in `schema_json.areas[]` with `code`, `name`, optional `rules`, and optional `sort_order`. Saving will sync `template_areas` automatically.</p>
         </label>
+
+        @if ($template->exists && $template->relationLoaded('areas'))
+            <div class="rounded-lg bg-slate-50 p-4 text-sm text-slate-600 dark:bg-gray-950 dark:text-slate-300">
+                <p class="font-medium text-slate-900 dark:text-white">Synced Areas</p>
+                <div class="mt-3 space-y-2">
+                    @forelse ($template->areas as $area)
+                        <p><span class="font-mono text-xs">{{ $area->code }}</span> {{ $area->name }}</p>
+                    @empty
+                        <p>No template areas synced yet.</p>
+                    @endforelse
+                </div>
+            </div>
+        @endif
 
         <label class="inline-flex items-center gap-2 text-sm">
             <input type="checkbox" name="is_active" value="1" {{ old('is_active', $template->exists ? $template->is_active : true) ? 'checked' : '' }}>

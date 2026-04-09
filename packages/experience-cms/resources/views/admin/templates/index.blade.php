@@ -13,6 +13,7 @@
                     <th class="px-4 py-3">Name</th>
                     <th class="px-4 py-3">Code</th>
                     <th class="px-4 py-3">Page Type</th>
+                    <th class="px-4 py-3">Areas</th>
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
@@ -22,6 +23,7 @@
                         <td class="px-4 py-3">{{ $template->name }}</td>
                         <td class="px-4 py-3 font-mono text-xs">{{ $template->code }}</td>
                         <td class="px-4 py-3">{{ $template->page_type }}</td>
+                        <td class="px-4 py-3">{{ $template->areas_count }}</td>
                         <td class="px-4 py-3 text-right"><a href="{{ route('admin.cms.templates.edit', $template) }}" class="text-blue-600 hover:underline">Edit</a></td>
                     </tr>
                 @endforeach

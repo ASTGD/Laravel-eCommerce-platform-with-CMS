@@ -4,6 +4,7 @@ namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TemplateArea extends Model
 {
@@ -25,5 +26,10 @@ class TemplateArea extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(Template::class);
+    }
+
+    public function pageSections(): HasMany
+    {
+        return $this->hasMany(PageSection::class);
     }
 }

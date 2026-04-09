@@ -9,4 +9,8 @@
             {!! nl2br(e($settings['content'] ?? 'Structured content block.')) !!}
         </div>
     </div>
+
+    @foreach (($section['components'] ?? []) as $component)
+        <div class="mt-6">{!! $component['html'] !!}</div>
+    @endforeach
 </section>

@@ -6,12 +6,14 @@ use Illuminate\Database\Seeder;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
+use Platform\ExperienceCms\Models\MenuItem;
 use Platform\ExperienceCms\Models\Page;
 use Platform\ExperienceCms\Models\PageSection;
 use Platform\ExperienceCms\Models\SectionType;
 use Platform\ExperienceCms\Models\Template;
 use Platform\ExperienceCms\Models\TemplateArea;
 use Platform\ExperienceCms\Services\SectionTypeRegistry;
+use Platform\ThemeCore\Models\ThemePreset;
 
 class ExperienceCmsSeeder extends Seeder
 {
@@ -52,7 +54,7 @@ class ExperienceCmsSeeder extends Seeder
             ['name' => 'Content', 'rules_json' => ['max_sections' => 12], 'sort_order' => 2]
         );
 
-        HeaderConfig::query()->updateOrCreate(
+        $header = HeaderConfig::query()->updateOrCreate(
             ['code' => 'default_header'],
             [
                 'settings_json' => [
@@ -60,14 +62,14 @@ class ExperienceCmsSeeder extends Seeder
                     'announcement' => 'Reusable commerce platform',
                     'links' => [
                         ['label' => 'Catalog', 'url' => '/'],
-                        ['label' => 'Home Preview', 'url' => '/home-preview'],
+                        ['label' => 'Account', 'url' => '/customer/login'],
                     ],
                 ],
                 'is_default' => true,
             ]
         );
 
-        FooterConfig::query()->updateOrCreate(
+        $footer = FooterConfig::query()->updateOrCreate(
             ['code' => 'default_footer'],
             [
                 'settings_json' => [
@@ -78,10 +80,25 @@ class ExperienceCmsSeeder extends Seeder
             ]
         );
 
-        Menu::query()->updateOrCreate(
+        $menu = Menu::query()->updateOrCreate(
             ['code' => 'primary_navigation'],
             ['name' => 'Primary Navigation', 'location' => 'primary', 'is_active' => true]
         );
+
+        foreach ([
+            ['title' => 'Catalog', 'type' => 'url', 'target' => '/', 'sort_order' => 1],
+            ['title' => 'Account', 'type' => 'url', 'target' => '/customer/login', 'sort_order' => 2],
+        ] as $item) {
+            MenuItem::query()->updateOrCreate(
+                ['menu_id' => $menu->id, 'title' => $item['title']],
+                $item + ['is_active' => true, 'settings_json' => []]
+            );
+        }
+
+        $preset = ThemePreset::query()
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->first();
 
         $page = Page::query()->updateOrCreate(
             ['slug' => 'home'],
@@ -89,6 +106,10 @@ class ExperienceCmsSeeder extends Seeder
                 'title' => 'Homepage',
                 'type' => 'homepage',
                 'template_id' => $template->id,
+                'header_config_id' => $header->id,
+                'footer_config_id' => $footer->id,
+                'menu_id' => $menu->id,
+                'theme_preset_id' => $preset?->id,
                 'status' => 'published',
                 'published_at' => now(),
             ]

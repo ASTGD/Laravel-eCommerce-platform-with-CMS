@@ -4,10 +4,11 @@ namespace Platform\CommerceCore\Services;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Enums\DataSourceType;
 use Webkul\Category\Models\Category;
-use Webkul\Product\Models\Product;
+use Webkul\Product\Models\ProductFlat;
 
 class DataSourceResolver implements DataSourceResolverContract
 {
@@ -17,10 +18,10 @@ class DataSourceResolver implements DataSourceResolverContract
             DataSourceType::ManualProducts->value => $this->manualProducts($payload),
             DataSourceType::CategoryProducts->value => $this->categoryProducts($payload),
             DataSourceType::ManualCategories->value => $this->manualCategories($payload),
-            DataSourceType::FeaturedProducts->value,
-            DataSourceType::NewArrivals->value,
-            DataSourceType::BestSellers->value,
-            DataSourceType::DiscountedProducts->value => $this->latestProducts($payload),
+            DataSourceType::FeaturedProducts->value => $this->flaggedProducts('featured', $payload),
+            DataSourceType::NewArrivals->value => $this->flaggedProducts('new', $payload),
+            DataSourceType::BestSellers->value => $this->bestSellers($payload),
+            DataSourceType::DiscountedProducts->value => $this->discountedProducts($payload),
             default => collect(),
         };
     }
@@ -36,10 +37,10 @@ class DataSourceResolver implements DataSourceResolverContract
             return collect();
         }
 
-        return Product::query()
-            ->whereIn('id', $ids->all())
+        return $this->baseProductQuery()
+            ->whereIn('product_id', $ids->all())
             ->get()
-            ->sortBy(fn (Product $product) => $ids->search($product->id))
+            ->sortBy(fn (ProductFlat $product) => $ids->search($product->product_id))
             ->values();
     }
 
@@ -52,8 +53,13 @@ class DataSourceResolver implements DataSourceResolverContract
             return collect();
         }
 
-        return Product::query()
-            ->whereHas('categories', fn (Builder $query) => $query->where('id', $categoryId))
+        return $this->baseProductQuery()
+            ->whereExists(function ($query) use ($categoryId) {
+                $query->selectRaw('1')
+                    ->from('product_categories')
+                    ->whereColumn('product_categories.product_id', 'product_flat.product_id')
+                    ->where('product_categories.category_id', $categoryId);
+            })
             ->limit($limit)
             ->get();
     }
@@ -76,13 +82,61 @@ class DataSourceResolver implements DataSourceResolverContract
             ->values();
     }
 
-    protected function latestProducts(array $payload): Collection
+    protected function flaggedProducts(string $column, array $payload): Collection
     {
         $limit = max(1, min(24, (int) ($payload['limit'] ?? 8)));
 
-        return Product::query()
-            ->latest('id')
+        return $this->baseProductQuery()
+            ->where($column, 1)
+            ->orderByDesc('product_id')
             ->limit($limit)
             ->get();
+    }
+
+    protected function bestSellers(array $payload): Collection
+    {
+        $limit = max(1, min(24, (int) ($payload['limit'] ?? 8)));
+
+        $productIds = DB::table('sales_order_items')
+            ->select('product_id')
+            ->whereNotNull('product_id')
+            ->groupBy('product_id')
+            ->orderByRaw('COUNT(*) DESC')
+            ->limit($limit)
+            ->pluck('product_id');
+
+        if ($productIds->isEmpty()) {
+            return collect();
+        }
+
+        return $this->baseProductQuery()
+            ->whereIn('product_id', $productIds->all())
+            ->get()
+            ->sortBy(fn (ProductFlat $product) => $productIds->search($product->product_id))
+            ->values();
+    }
+
+    protected function discountedProducts(array $payload): Collection
+    {
+        $limit = max(1, min(24, (int) ($payload['limit'] ?? 8)));
+
+        return $this->baseProductQuery()
+            ->whereNotNull('special_price')
+            ->where('special_price', '>', 0)
+            ->orderByDesc('product_id')
+            ->limit($limit)
+            ->get();
+    }
+
+    protected function baseProductQuery(): Builder
+    {
+        $channelCode = core()->getRequestedChannelCode();
+        $localeCode = core()->getRequestedLocaleCode();
+
+        return ProductFlat::query()
+            ->where('channel', $channelCode)
+            ->where('locale', $localeCode)
+            ->where('status', 1)
+            ->where('visible_individually', 1);
     }
 }

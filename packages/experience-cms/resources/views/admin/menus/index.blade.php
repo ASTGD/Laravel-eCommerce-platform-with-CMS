@@ -13,6 +13,7 @@
                     <th class="px-4 py-3">Name</th>
                     <th class="px-4 py-3">Code</th>
                     <th class="px-4 py-3">Location</th>
+                    <th class="px-4 py-3">Items</th>
                     <th class="px-4 py-3"></th>
                 </tr>
             </thead>
@@ -22,6 +23,7 @@
                         <td class="px-4 py-3">{{ $menu->name }}</td>
                         <td class="px-4 py-3 font-mono text-xs">{{ $menu->code }}</td>
                         <td class="px-4 py-3">{{ $menu->location }}</td>
+                        <td class="px-4 py-3">{{ $menu->items_count }}</td>
                         <td class="px-4 py-3 text-right"><a href="{{ route('admin.cms.menus.edit', $menu) }}" class="text-blue-600 hover:underline">Edit</a></td>
                     </tr>
                 @endforeach

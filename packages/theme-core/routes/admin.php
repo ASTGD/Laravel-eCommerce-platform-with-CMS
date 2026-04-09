@@ -14,8 +14,8 @@ Route::group([
             Route::get('', 'index')->name('admin.theme.presets.index');
             Route::get('create', 'create')->name('admin.theme.presets.create');
             Route::post('', 'store')->name('admin.theme.presets.store');
-            Route::get('{themePreset}/edit', 'edit')->name('admin.theme.presets.edit');
-            Route::put('{themePreset}', 'update')->name('admin.theme.presets.update');
-            Route::delete('{themePreset}', 'destroy')->name('admin.theme.presets.destroy');
+            Route::get('{platformThemePreset}/edit', 'edit')->name('admin.theme.presets.edit');
+            Route::put('{platformThemePreset}', 'update')->name('admin.theme.presets.update');
+            Route::delete('{platformThemePreset}', 'destroy')->name('admin.theme.presets.destroy');
         });
 });

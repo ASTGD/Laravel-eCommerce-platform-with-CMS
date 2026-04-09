@@ -20,4 +20,8 @@
             </div>
         @endforelse
     </div>
+
+    @foreach (($section['components'] ?? []) as $component)
+        <div class="mt-6">{!! $component['html'] !!}</div>
+    @endforeach
 </section>

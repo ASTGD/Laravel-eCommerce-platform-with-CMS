@@ -3,6 +3,7 @@
 namespace Platform\ExperienceCms\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SectionType extends Model
 {
@@ -25,5 +26,10 @@ class SectionType extends Model
             'allowed_data_sources_json' => 'array',
             'is_active'                 => 'boolean',
         ];
+    }
+
+    public function pageSections(): HasMany
+    {
+        return $this->hasMany(PageSection::class);
     }
 }

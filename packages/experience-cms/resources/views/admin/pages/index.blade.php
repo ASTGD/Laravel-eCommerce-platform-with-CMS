@@ -18,6 +18,7 @@
                 <tr class="text-left text-gray-600 dark:text-gray-300">
                     <th class="px-4 py-3">Title</th>
                     <th class="px-4 py-3">Slug</th>
+                    <th class="px-4 py-3">Template</th>
                     <th class="px-4 py-3">Type</th>
                     <th class="px-4 py-3">Status</th>
                     <th class="px-4 py-3"></th>
@@ -28,22 +29,30 @@
                     <tr class="text-gray-700 dark:text-gray-200">
                         <td class="px-4 py-3">{{ $page->title }}</td>
                         <td class="px-4 py-3 font-mono text-xs">{{ $page->slug }}</td>
+                        <td class="px-4 py-3">{{ $page->template?->name ?? 'None' }}</td>
                         <td class="px-4 py-3">{{ $page->type }}</td>
                         <td class="px-4 py-3">{{ ucfirst($page->status) }}</td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-3">
-                                <a href="{{ route('admin.cms.pages.preview', $page) }}" class="text-slate-600 hover:underline">Preview</a>
+                                <a href="{{ route('admin.cms.pages.preview', $page) }}" target="_blank" class="text-slate-600 hover:underline">Preview</a>
                                 <a href="{{ route('admin.cms.pages.edit', $page) }}" class="text-blue-600 hover:underline">Edit</a>
-                                <form method="POST" action="{{ route('admin.cms.pages.publish', $page) }}">
-                                    @csrf
-                                    <button type="submit" class="text-emerald-600 hover:underline">Publish</button>
-                                </form>
+                                @if ($page->isPublished())
+                                    <form method="POST" action="{{ route('admin.cms.pages.unpublish', $page) }}">
+                                        @csrf
+                                        <button type="submit" class="text-amber-600 hover:underline">Unpublish</button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('admin.cms.pages.publish', $page) }}">
+                                        @csrf
+                                        <button type="submit" class="text-emerald-600 hover:underline">Publish</button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No pages created yet.</td>
+                        <td colspan="6" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No pages created yet.</td>
                     </tr>
                 @endforelse
             </tbody>

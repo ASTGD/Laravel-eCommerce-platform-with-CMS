@@ -7,13 +7,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Platform\ExperienceCms\Http\Requests\Admin\MenuRequest;
 use Platform\ExperienceCms\Models\Menu;
+use Platform\ExperienceCms\Services\MenuEditor;
 
 class MenuController extends Controller
 {
+    public function __construct(protected MenuEditor $menuEditor) {}
+
     public function index(): View
     {
         return view('experience-cms::admin.menus.index', [
-            'menus' => Menu::query()->orderBy('location')->orderBy('name')->get(),
+            'menus' => Menu::query()->withCount('items')->orderBy('location')->orderBy('name')->get(),
         ]);
     }
 
@@ -26,30 +29,32 @@ class MenuController extends Controller
 
     public function store(MenuRequest $request): RedirectResponse
     {
-        $menu = Menu::query()->create($request->payload());
+        $menu = $this->menuEditor->create($request->payload(), $request->itemsPayload());
 
         return redirect()
             ->route('admin.cms.menus.edit', $menu)
             ->with('success', 'Menu created.');
     }
 
-    public function edit(Menu $menu): View
+    public function edit(Menu $platformMenu): View
     {
-        return view('experience-cms::admin.menus.form', compact('menu'));
+        return view('experience-cms::admin.menus.form', [
+            'menu' => $platformMenu->load('items'),
+        ]);
     }
 
-    public function update(MenuRequest $request, Menu $menu): RedirectResponse
+    public function update(MenuRequest $request, Menu $platformMenu): RedirectResponse
     {
-        $menu->update($request->payload());
+        $platformMenu = $this->menuEditor->update($platformMenu, $request->payload(), $request->itemsPayload());
 
         return redirect()
-            ->route('admin.cms.menus.edit', $menu)
+            ->route('admin.cms.menus.edit', $platformMenu)
             ->with('success', 'Menu updated.');
     }
 
-    public function destroy(Menu $menu): RedirectResponse
+    public function destroy(Menu $platformMenu): RedirectResponse
     {
-        $menu->delete();
+        $platformMenu->delete();
 
         return redirect()
             ->route('admin.cms.menus.index')
