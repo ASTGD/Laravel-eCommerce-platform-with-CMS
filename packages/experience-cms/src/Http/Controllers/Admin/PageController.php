@@ -8,14 +8,20 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 use Platform\ExperienceCms\Contracts\PublishWorkflowContract;
 use Platform\ExperienceCms\Http\Requests\Admin\PageRequest;
+use Platform\ExperienceCms\Models\ComponentType;
+use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
 use Platform\ExperienceCms\Models\Page;
+use Platform\ExperienceCms\Models\PageAssignment;
 use Platform\ExperienceCms\Models\SectionType;
+use Platform\ExperienceCms\Models\SiteSetting;
 use Platform\ExperienceCms\Models\Template;
 use Platform\ExperienceCms\Services\PageEditor;
 use Platform\ThemeCore\Models\ThemePreset;
+use Webkul\Category\Models\Category;
+use Webkul\Product\Models\ProductFlat;
 
 class PageController extends Controller
 {
@@ -59,10 +65,13 @@ class PageController extends Controller
             'template.areas',
             'sections.sectionType',
             'sections.templateArea',
+            'sections.components.componentType',
             'headerConfig',
             'footerConfig',
             'menu.items',
             'themePreset',
+            'assignments',
+            'versions',
         ]));
     }
 
@@ -128,13 +137,17 @@ class PageController extends Controller
                     'id' => $area->id,
                     'code' => $area->code,
                     'name' => $area->name,
+                    'rules' => $area->rules_json ?? [],
                 ])->values()->all()]
             ),
             'sectionTypes' => SectionType::query()->where('is_active', true)->orderBy('category')->orderBy('name')->get(),
+            'componentTypes' => ComponentType::query()->where('is_active', true)->orderBy('name')->get(),
             'headerConfigs' => HeaderConfig::query()->orderByDesc('is_default')->orderBy('code')->get(),
             'footerConfigs' => FooterConfig::query()->orderByDesc('is_default')->orderBy('code')->get(),
             'menus' => Menu::query()->where('is_active', true)->orderBy('location')->orderBy('name')->get(),
             'themePresets' => ThemePreset::query()->where('is_active', true)->orderByDesc('is_default')->orderBy('name')->get(),
+            'contentEntries' => ContentEntry::query()->orderBy('title')->get(),
+            'siteSettings' => SiteSetting::query()->orderBy('group')->orderBy('key')->get(),
         ]);
     }
 
@@ -144,6 +157,38 @@ class PageController extends Controller
 
         if ($page->slug === 'home') {
             return URL::temporarySignedRoute('platform.storefront.home_preview', $expiresAt);
+        }
+
+        if ($page->type === 'category_page') {
+            $assignment = $page->assignments()->where('page_type', 'category_page')->where('is_active', true)->orderByDesc('priority')->first();
+            $category = $assignment?->entity_id
+                ? Category::query()->find($assignment->entity_id)
+                : Category::query()->orderBy('id')->first();
+
+            if ($category) {
+                return URL::temporarySignedRoute('platform.storefront.category-pages.preview', $expiresAt, [
+                    'platformPage' => $page->slug,
+                    'categorySlug' => $category->slug,
+                ]);
+            }
+        }
+
+        if ($page->type === 'product_page') {
+            $assignment = $page->assignments()->where('page_type', 'product_page')->where('is_active', true)->orderByDesc('priority')->first();
+            $product = $assignment?->entity_id
+                ? ProductFlat::query()->where('product_id', $assignment->entity_id)->first()
+                : ProductFlat::query()
+                    ->where('channel', core()->getRequestedChannelCode())
+                    ->where('locale', core()->getRequestedLocaleCode())
+                    ->orderBy('product_id')
+                    ->first();
+
+            if ($product) {
+                return URL::temporarySignedRoute('platform.storefront.product-pages.preview', $expiresAt, [
+                    'platformPage' => $page->slug,
+                    'productSlug' => $product->url_key,
+                ]);
+            }
         }
 
         return URL::temporarySignedRoute('platform.storefront.pages.preview', $expiresAt, [

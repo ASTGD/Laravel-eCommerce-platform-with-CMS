@@ -1,17 +1,29 @@
 <?php
 
 use Platform\ExperienceCms\Models\ComponentType;
+use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
 use Platform\ExperienceCms\Models\Page;
+use Platform\ExperienceCms\Models\PageAssignment;
 use Platform\ExperienceCms\Models\PageSection;
 use Platform\ExperienceCms\Models\SectionType;
+use Platform\ExperienceCms\Models\SiteSetting;
 use Platform\ExperienceCms\Models\Template;
 use Platform\ThemeCore\Models\ThemePreset;
+use Webkul\Category\Models\Category;
 use Webkul\Admin\Tests\AdminTestCase;
+use Webkul\Faker\Helpers\Category as CategoryFaker;
+use Webkul\Product\Models\ProductFlat;
 
 uses(AdminTestCase::class);
+
+function cmsAdminCategory(): Category
+{
+    return Category::query()->whereNotNull('parent_id')->where('parent_id', '!=', 0)->first()
+        ?: (new CategoryFaker)->factory()->create();
+}
 
 it('renders the CMS admin screens without fatal errors', function () {
     $this->loginAsAdmin();
@@ -30,6 +42,28 @@ it('renders the CMS admin screens without fatal errors', function () {
     $header = HeaderConfig::query()->firstOrFail();
     $footer = FooterConfig::query()->firstOrFail();
     $preset = ThemePreset::query()->firstOrFail();
+    $contentEntry = ContentEntry::query()->first() ?: ContentEntry::query()->create([
+        'type' => 'marketing_copy',
+        'title' => 'Screen Smoke Entry',
+        'slug' => 'screen-smoke-entry',
+        'body_json' => ['content' => 'Screen smoke body'],
+        'status' => 'published',
+    ]);
+    $siteSetting = SiteSetting::query()->first() ?: SiteSetting::query()->create([
+        'key' => 'store.identity',
+        'group' => 'store',
+        'value_json' => ['brand_name' => 'Smoke'],
+    ]);
+    $category = cmsAdminCategory();
+    $assignment = PageAssignment::query()->first() ?: PageAssignment::query()->create([
+        'page_id' => Page::query()->where('type', 'category_page')->value('id'),
+        'page_type' => 'category_page',
+        'scope_type' => 'entity',
+        'entity_type' => 'category',
+        'entity_id' => $category->id,
+        'priority' => 10,
+        'is_active' => true,
+    ]);
 
     foreach ([
         ['admin.cms.pages.index', []],
@@ -44,6 +78,9 @@ it('renders the CMS admin screens without fatal errors', function () {
         ['admin.cms.component-types.index', []],
         ['admin.cms.component-types.create', []],
         ['admin.cms.component-types.edit', $componentType],
+        ['admin.cms.assignments.index', []],
+        ['admin.cms.assignments.create', []],
+        ['admin.cms.assignments.edit', $assignment],
         ['admin.cms.menus.index', []],
         ['admin.cms.menus.create', []],
         ['admin.cms.menus.edit', $menu],
@@ -53,6 +90,12 @@ it('renders the CMS admin screens without fatal errors', function () {
         ['admin.cms.footer-configs.index', []],
         ['admin.cms.footer-configs.create', []],
         ['admin.cms.footer-configs.edit', $footer],
+        ['admin.cms.content-entries.index', []],
+        ['admin.cms.content-entries.create', []],
+        ['admin.cms.content-entries.edit', $contentEntry],
+        ['admin.cms.site-settings.index', []],
+        ['admin.cms.site-settings.create', []],
+        ['admin.cms.site-settings.edit', $siteSetting],
         ['admin.theme.presets.index', []],
         ['admin.theme.presets.create', []],
         ['admin.theme.presets.edit', $preset],
@@ -147,6 +190,26 @@ it('creates supporting CMS records from the admin forms', function () {
 
     $presetResponse->assertRedirect(route('admin.theme.presets.edit', $preset));
 
+    $contentEntryResponse = $this->post(route('admin.cms.content-entries.store'), [
+        'type' => 'marketing_copy',
+        'title' => 'Admin Workflow Entry',
+        'slug' => 'admin-workflow-entry',
+        'body_json' => json_encode(['headline' => 'Workflow Entry', 'content' => 'Structured entry body']),
+        'status' => 'published',
+    ]);
+
+    $contentEntry = ContentEntry::query()->where('slug', 'admin-workflow-entry')->first();
+    $contentEntryResponse->assertRedirect(route('admin.cms.content-entries.edit', $contentEntry));
+
+    $siteSettingResponse = $this->post(route('admin.cms.site-settings.store'), [
+        'key' => 'store.product_page',
+        'group' => 'store',
+        'value_json' => json_encode(['shipping_note' => 'Workflow shipping note']),
+    ]);
+
+    $siteSetting = SiteSetting::query()->where('key', 'store.product_page')->first();
+    $siteSettingResponse->assertRedirect(route('admin.cms.site-settings.edit', $siteSetting));
+
     expect($template)->not->toBeNull()
         ->and($template->areas()->count())->toBe(2)
         ->and($sectionType)->not->toBeNull()
@@ -154,7 +217,9 @@ it('creates supporting CMS records from the admin forms', function () {
         ->and($menu->items()->count())->toBe(1)
         ->and($header)->not->toBeNull()
         ->and($footer)->not->toBeNull()
-        ->and($preset)->not->toBeNull();
+        ->and($preset)->not->toBeNull()
+        ->and($contentEntry)->not->toBeNull()
+        ->and($siteSetting)->not->toBeNull();
 });
 
 it('creates a structured homepage draft from the admin screen', function () {
@@ -236,6 +301,32 @@ it('creates a structured homepage draft from the admin screen', function () {
         ->and($page->theme_preset_id)->toBe($preset->id)
         ->and($page->seoMeta)->not->toBeNull()
         ->and($page->sections()->count())->toBe(3);
+});
+
+it('creates a category page assignment from the admin screen', function () {
+    $this->loginAsAdmin();
+
+    $page = Page::query()->where('type', 'category_page')->firstOrFail();
+    $category = cmsAdminCategory();
+
+    $response = $this->post(route('admin.cms.assignments.store'), [
+        'page_id' => $page->id,
+        'page_type' => 'category_page',
+        'scope_type' => 'entity',
+        'entity_id' => $category->id,
+        'priority' => 50,
+        'is_active' => 1,
+    ]);
+
+    $assignment = PageAssignment::query()
+        ->where('page_id', $page->id)
+        ->where('entity_id', $category->id)
+        ->first();
+
+    $response->assertRedirect(route('admin.cms.assignments.edit', $assignment));
+
+    expect($assignment)->not->toBeNull()
+        ->and($assignment->priority)->toBe(50);
 });
 
 it('redirects admin preview to a signed storefront preview URL and records publish transitions', function () {

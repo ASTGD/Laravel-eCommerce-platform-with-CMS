@@ -1,4 +1,4 @@
-@php($settings = $footer?->settings_json ?? [])
+@php($settings = array_replace($siteSettings['store.contact'] ?? [], $footer?->settings_json ?? []))
 <footer class="mt-16 bg-slate-950 text-slate-100">
     <div class="mx-auto max-w-6xl px-6 py-12">
         <div class="grid gap-8 md:grid-cols-2">

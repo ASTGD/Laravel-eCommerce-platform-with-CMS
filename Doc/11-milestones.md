@@ -42,32 +42,55 @@ Validation completed during this milestone:
 - focused CMS feature tests
 - live HTTP checks for published homepage, signed homepage preview, admin login, and customer login
 
-## Milestone 3: Theme Core And Default Theme
+## Backend Completion Pass: Commerce-Aware CMS And Frontend Readiness
+
+Status: implemented and validated.
+
+Validated deliverables:
+
+- deterministic page assignment resolution exists for category pages and product pages
+- category pages can resolve a CMS layout around the native commerce listing flow
+- product detail pages can resolve controlled CMS blocks around native commerce product data
+- content entries are active in page composition through approved data sources
+- site settings are active in shared storefront payload resolution
+- nested section components can be authored, validated, persisted, rendered, and snapshotted
+- page version history can be restored deterministically
+- published and preview homepage, category page, and product page routes render through the CMS/theme layer
+- the layout asset path is stable under Bagisto theming middleware in live HTTP requests
+
+Validation completed during this pass:
+
+- `php artisan package:discover --ansi`
+- `php artisan migrate --force`
+- `php artisan db:seed --force`
+- focused CMS feature tests for relationships, admin workflows, assignments, preview, restore, homepage render, category render, PDP render, nested component validation, content entry resolution, and site settings resolution
+- live HTTP checks for published homepage, published category page, published product page, signed homepage preview, signed category preview, signed product preview, admin login, and customer login
+
+## Milestone 3: Frontend Theme Implementation
 
 Next target.
 
 Planned deliverables:
 
-- stronger render contracts and view models
-- broader preset token application
-- improved section/component render separation
-- static content page rendering parity
-- global area presentation hardening
+- implement approved storefront UI in `packages/theme-core` and `packages/theme-default`
+- map the stable backend payload contracts into production storefront views
+- apply preset tokens and variants consistently across homepage, category page, and PDP
+- harden accessibility and responsive behavior across the custom storefront
+- keep the Bagisto admin mostly native while extending only the required CMS screens
 
-## Milestone 4: Commerce-Aware CMS
-
-Planned deliverables:
-
-- category-aware CMS sections
-- richer merchandising sources
-- configurable category listing presentation
-- controlled PDP block composition
-
-## Milestone 5: Customer Portal And Hardening
+## Milestone 4: Customer Portal And Remaining Storefront Surfaces
 
 Planned deliverables:
 
 - storefront account area completion
+- customer page styling aligned with the active theme system
+- richer merchandising sources where needed
+- additional structured content page parity
+
+## Milestone 5: Hardening
+
+Planned deliverables:
+
 - ACL refinement
 - SEO/media admin hardening
 - broader automated coverage
@@ -75,9 +98,13 @@ Planned deliverables:
 
 ## Next Recommended Milestone
 
-Proceed to Milestone 3 while preserving the Milestone 2 vertical slice as the reference path for:
+Proceed to Milestone 3 while preserving the current backend-complete CMS model as the reference path for:
 
 - structured page composition
 - preview/publish workflow
+- assignment resolution
 - homepage resolution
+- category page resolution
+- product page resolution
 - theme assignment resolution
+- shared site settings and content entry usage

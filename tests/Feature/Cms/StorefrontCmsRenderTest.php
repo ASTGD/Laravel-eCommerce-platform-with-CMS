@@ -8,6 +8,10 @@ use Webkul\Shop\Tests\ShopTestCase;
 
 uses(ShopTestCase::class);
 
+beforeEach(function () {
+    $this->withoutVite();
+});
+
 it('protects unsigned preview routes while allowing signed preview access', function () {
     $page = Page::query()->where('slug', 'home')->firstOrFail();
 

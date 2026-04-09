@@ -39,6 +39,11 @@ class FeaturedProductsSectionType extends AbstractSectionType
         return ['featured_products', 'manual_products', 'category_products'];
     }
 
+    public function supportsComponents(): bool
+    {
+        return true;
+    }
+
     public function rendererView(): string
     {
         return 'theme-default::storefront.sections.featured-products';

@@ -97,10 +97,30 @@ return [
         'route' => 'admin.cms.component-types.destroy',
         'sort'  => 3,
     ], [
+        'key'   => 'cms.platform.assignments',
+        'name'  => 'Assignments',
+        'route' => 'admin.cms.assignments.index',
+        'sort'  => 5,
+    ], [
+        'key'   => 'cms.platform.assignments.create',
+        'name'  => 'Create',
+        'route' => 'admin.cms.assignments.create',
+        'sort'  => 1,
+    ], [
+        'key'   => 'cms.platform.assignments.edit',
+        'name'  => 'Edit',
+        'route' => 'admin.cms.assignments.edit',
+        'sort'  => 2,
+    ], [
+        'key'   => 'cms.platform.assignments.delete',
+        'name'  => 'Delete',
+        'route' => 'admin.cms.assignments.destroy',
+        'sort'  => 3,
+    ], [
         'key'   => 'cms.platform.menus',
         'name'  => 'Menus',
         'route' => 'admin.cms.menus.index',
-        'sort'  => 5,
+        'sort'  => 6,
     ], [
         'key'   => 'cms.platform.menus.create',
         'name'  => 'Create',
@@ -120,7 +140,7 @@ return [
         'key'   => 'cms.platform.header_configs',
         'name'  => 'Header',
         'route' => 'admin.cms.header-configs.index',
-        'sort'  => 6,
+        'sort'  => 7,
     ], [
         'key'   => 'cms.platform.header_configs.create',
         'name'  => 'Create',
@@ -140,7 +160,7 @@ return [
         'key'   => 'cms.platform.footer_configs',
         'name'  => 'Footer',
         'route' => 'admin.cms.footer-configs.index',
-        'sort'  => 7,
+        'sort'  => 8,
     ], [
         'key'   => 'cms.platform.footer_configs.create',
         'name'  => 'Create',
@@ -156,5 +176,40 @@ return [
         'name'  => 'Delete',
         'route' => 'admin.cms.footer-configs.destroy',
         'sort'  => 3,
+    ], [
+        'key'   => 'cms.platform.content_entries',
+        'name'  => 'Content Entries',
+        'route' => 'admin.cms.content-entries.index',
+        'sort'  => 9,
+    ], [
+        'key'   => 'cms.platform.content_entries.create',
+        'name'  => 'Create',
+        'route' => 'admin.cms.content-entries.create',
+        'sort'  => 1,
+    ], [
+        'key'   => 'cms.platform.content_entries.edit',
+        'name'  => 'Edit',
+        'route' => 'admin.cms.content-entries.edit',
+        'sort'  => 2,
+    ], [
+        'key'   => 'cms.platform.content_entries.delete',
+        'name'  => 'Delete',
+        'route' => 'admin.cms.content-entries.destroy',
+        'sort'  => 3,
+    ], [
+        'key'   => 'cms.platform.site_settings',
+        'name'  => 'Site Settings',
+        'route' => 'admin.cms.site-settings.index',
+        'sort'  => 10,
+    ], [
+        'key'   => 'cms.platform.site_settings.create',
+        'name'  => 'Create',
+        'route' => 'admin.cms.site-settings.create',
+        'sort'  => 1,
+    ], [
+        'key'   => 'cms.platform.site_settings.edit',
+        'name'  => 'Edit',
+        'route' => 'admin.cms.site-settings.edit',
+        'sort'  => 2,
     ],
 ];

@@ -10,7 +10,10 @@ use Platform\SeoTools\Models\SeoMeta;
 
 class PageEditor
 {
-    public function __construct(protected SectionTypeRegistry $sectionTypes) {}
+    public function __construct(
+        protected SectionTypeRegistry $sectionTypes,
+        protected NestedComponentSynchronizer $components,
+    ) {}
 
     public function create(array $attributes, array $seoPayload = [], array $sections = []): Page
     {
@@ -49,10 +52,13 @@ class PageEditor
                 'template.areas',
                 'sections.sectionType',
                 'sections.templateArea',
+                'sections.components.componentType',
                 'headerConfig',
                 'footerConfig',
                 'menu.items.children',
                 'themePreset',
+                'versions',
+                'assignments',
             ]);
         });
     }
@@ -111,6 +117,8 @@ class PageEditor
                 'data_source_payload_json' => $sectionData['data_source_payload_json'],
                 'is_active' => $sectionData['is_active'],
             ])->save();
+
+            $this->components->sync($section, $sectionData['components'] ?? []);
 
             $seenIds[] = $section->getKey();
         }

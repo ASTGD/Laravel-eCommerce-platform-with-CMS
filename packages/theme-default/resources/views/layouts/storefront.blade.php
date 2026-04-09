@@ -11,7 +11,11 @@
     @if ($seo?->canonical_url)
         <link rel="canonical" href="{{ $seo->canonical_url }}">
     @endif
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {!! app(\Illuminate\Foundation\Vite::class)
+        ->useHotFile('hot')
+        ->useBuildDirectory('build')
+        ->withEntryPoints(['resources/css/app.css', 'resources/js/app.js'])
+        ->toHtml() !!}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
     @yield('content')

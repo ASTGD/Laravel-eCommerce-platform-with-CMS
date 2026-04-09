@@ -1,4 +1,4 @@
-@php($settings = $header?->settings_json ?? [])
+@php($settings = array_replace($siteSettings['store.identity'] ?? [], $header?->settings_json ?? []))
 @php($menuItems = ($menu?->items ?? collect())->whereNull('parent_id')->sortBy('sort_order')->values())
 <header class="border-b border-slate-200 bg-white/95 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">

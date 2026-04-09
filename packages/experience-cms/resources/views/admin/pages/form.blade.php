@@ -1,4 +1,6 @@
 @php
+    $pageSettingsJson = old('settings_json', json_encode($page->settings_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
     $sectionRows = old('sections', $page->exists
         ? $page->sections->map(fn ($section) => [
             'id' => $section->id,
@@ -10,6 +12,15 @@
             'settings_json' => json_encode($section->settings_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
             'data_source_type' => $section->data_source_type,
             'data_source_payload_json' => json_encode($section->data_source_payload_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'components' => $section->components->map(fn ($component) => [
+                'id' => $component->id,
+                'component_type_id' => $component->component_type_id,
+                'sort_order' => $component->sort_order,
+                'is_active' => $component->is_active,
+                'settings_json' => json_encode($component->settings_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+                'data_source_type' => $component->data_source_type,
+                'data_source_payload_json' => json_encode($component->data_source_payload_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            ])->all(),
         ])->all()
         : []);
 
@@ -24,10 +35,9 @@
             'settings_json' => '{}',
             'data_source_type' => null,
             'data_source_payload_json' => '{}',
+            'components' => [],
         ]];
     }
-
-    $sectionRows = array_values($sectionRows);
 @endphp
 
 <x-admin::layouts>
@@ -36,7 +46,7 @@
     <div class="flex items-start justify-between gap-4 pb-6">
         <div>
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $page->exists ? 'Edit Page' : 'Create Page' }}</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage the page definition, structured sections, preview, and publish state from one screen.</p>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage page structure, nested components, preview, publish state, assignments, and version recovery from one screen.</p>
         </div>
 
         @if ($page->exists)
@@ -45,6 +55,7 @@
                 @if ($page->published_at)
                     <p class="mt-1">Published {{ $page->published_at->toDateTimeString() }}</p>
                 @endif
+                <p class="mt-1">{{ $page->versions->count() }} version(s)</p>
             </div>
         @endif
     </div>
@@ -86,7 +97,7 @@
                     <select name="template_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-template-select>
                         <option value="">Select template</option>
                         @foreach ($templates as $template)
-                            <option value="{{ $template->id }}" @selected((string) old('template_id', $page->template_id) === (string) $template->id)>{{ $template->name }}</option>
+                            <option value="{{ $template->id }}" @selected((string) old('template_id', $page->template_id) === (string) $template->id)>{{ $template->name }} ({{ str_replace('_', ' ', $template->page_type) }})</option>
                         @endforeach
                     </select>
                     @error('template_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -104,8 +115,8 @@
                 </label>
 
                 <div class="rounded-lg bg-slate-50 p-4 text-sm text-slate-600 dark:bg-gray-950 dark:text-slate-300">
-                    <p class="font-medium text-slate-900 dark:text-white">Publish workflow</p>
-                    <p class="mt-2">Pages save as draft until you publish them. Publishing creates a version snapshot for rollback visibility.</p>
+                    <p class="font-medium text-slate-900 dark:text-white">Commerce-aware preview</p>
+                    <p class="mt-2">Homepage and content pages preview directly. Category and product pages preview against the first active assignment or the first matching catalog entity available.</p>
                 </div>
             </div>
         </section>
@@ -120,7 +131,6 @@
                             <option value="{{ $headerConfig->id }}" @selected((string) old('header_config_id', $page->header_config_id) === (string) $headerConfig->id)>{{ $headerConfig->code }}</option>
                         @endforeach
                     </select>
-                    @error('header_config_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                 </label>
 
                 <label class="block">
@@ -131,7 +141,6 @@
                             <option value="{{ $footerConfig->id }}" @selected((string) old('footer_config_id', $page->footer_config_id) === (string) $footerConfig->id)>{{ $footerConfig->code }}</option>
                         @endforeach
                     </select>
-                    @error('footer_config_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                 </label>
 
                 <label class="block">
@@ -142,7 +151,6 @@
                             <option value="{{ $menu->id }}" @selected((string) old('menu_id', $page->menu_id) === (string) $menu->id)>{{ $menu->name }} ({{ $menu->location }})</option>
                         @endforeach
                     </select>
-                    @error('menu_id') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
                 </label>
             </div>
         </section>
@@ -150,8 +158,25 @@
         <section class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <div class="flex items-center justify-between gap-4">
                 <div>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Page Settings</h2>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Use page-level settings for listing defaults and PDP-wide configuration. Template and section structure still controls the layout.</p>
+                </div>
+
+                <a href="{{ route('admin.cms.site-settings.index') }}" class="text-sm text-blue-600 hover:underline">Manage Site Settings</a>
+            </div>
+
+            <label class="mt-6 block">
+                <span class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Settings JSON</span>
+                <textarea name="settings_json" rows="10" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $pageSettingsJson }}</textarea>
+                @error('settings_json') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
+            </label>
+        </section>
+
+        <section class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+            <div class="flex items-start justify-between gap-4">
+                <div>
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Sections</h2>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Approved section rows define the homepage composition. Ordering is controlled with `sort_order`.</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Template areas and section definitions keep page composition structured. Nested components are only allowed on section types that explicitly support them.</p>
                 </div>
 
                 <button type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-950" data-add-section>
@@ -159,29 +184,28 @@
                 </button>
             </div>
 
-            @error('sections') <p class="mt-4 text-sm text-red-600">{{ $message }}</p> @enderror
-
-            <div class="mt-6 space-y-4" data-section-list>
-                @foreach ($sectionRows as $index => $sectionRow)
-                    <div class="rounded-xl border border-slate-200 p-4 dark:border-gray-700" data-section-row>
-                        <input type="hidden" name="sections[{{ $index }}][id]" value="{{ $sectionRow['id'] ?? '' }}">
+            <div class="mt-6 space-y-5" data-section-list>
+                @foreach ($sectionRows as $sectionIndex => $sectionRow)
+                    <div class="rounded-xl border border-slate-200 p-4 dark:border-gray-700" data-section-row data-section-index="{{ $sectionIndex }}">
+                        <input type="hidden" name="sections[{{ $sectionIndex }}][id]" value="{{ $sectionRow['id'] ?? '' }}">
 
                         <div class="grid gap-4 lg:grid-cols-5">
                             <label class="block">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Area</span>
-                                <select name="sections[{{ $index }}][template_area_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-area-select data-selected-value="{{ $sectionRow['template_area_id'] ?? '' }}">
+                                <select name="sections[{{ $sectionIndex }}][template_area_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-area-select data-selected-value="{{ $sectionRow['template_area_id'] ?? '' }}">
                                     <option value="">Select area</option>
                                 </select>
                             </label>
 
                             <label class="block lg:col-span-2">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Section Type</span>
-                                <select name="sections[{{ $index }}][section_type_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-section-type-select>
+                                <select name="sections[{{ $sectionIndex }}][section_type_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-section-type-select>
                                     <option value="">Select section type</option>
                                     @foreach ($sectionTypes as $sectionType)
                                         <option
                                             value="{{ $sectionType->id }}"
                                             data-sources='@json($sectionType->allowed_data_sources_json ?? [])'
+                                            data-supports-components="{{ $sectionType->supports_components ? '1' : '0' }}"
                                             @selected((string) ($sectionRow['section_type_id'] ?? '') === (string) $sectionType->id)
                                         >
                                             {{ $sectionType->name }} ({{ $sectionType->code }})
@@ -192,27 +216,27 @@
 
                             <label class="block lg:col-span-2">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Title</span>
-                                <input name="sections[{{ $index }}][title]" value="{{ $sectionRow['title'] ?? '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                <input name="sections[{{ $sectionIndex }}][title]" value="{{ $sectionRow['title'] ?? '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                             </label>
                         </div>
 
                         <div class="mt-4 grid gap-4 lg:grid-cols-[160px_minmax(0,1fr)_auto]">
                             <label class="block">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Sort Order</span>
-                                <input type="number" min="0" name="sections[{{ $index }}][sort_order]" value="{{ $sectionRow['sort_order'] ?? 0 }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                <input type="number" min="0" name="sections[{{ $sectionIndex }}][sort_order]" value="{{ $sectionRow['sort_order'] ?? 0 }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                             </label>
 
                             <label class="block">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Data Source</span>
-                                <select name="sections[{{ $index }}][data_source_type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-data-source-select data-selected-value="{{ $sectionRow['data_source_type'] ?? '' }}">
+                                <select name="sections[{{ $sectionIndex }}][data_source_type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-data-source-select data-selected-value="{{ $sectionRow['data_source_type'] ?? '' }}">
                                     <option value="">No data source</option>
                                 </select>
                             </label>
 
                             <div class="flex items-end justify-between gap-4">
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                                    <input type="hidden" name="sections[{{ $index }}][is_active]" value="0">
-                                    <input type="checkbox" name="sections[{{ $index }}][is_active]" value="1" @checked(($sectionRow['is_active'] ?? false))>
+                                    <input type="hidden" name="sections[{{ $sectionIndex }}][is_active]" value="0">
+                                    <input type="checkbox" name="sections[{{ $sectionIndex }}][is_active]" value="1" @checked(($sectionRow['is_active'] ?? false))>
                                     Active
                                 </label>
 
@@ -223,16 +247,69 @@
                         <div class="mt-4 grid gap-4 lg:grid-cols-2">
                             <label class="block">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Settings JSON</span>
-                                <textarea name="sections[{{ $index }}][settings_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $sectionRow['settings_json'] ?? '{}' }}</textarea>
+                                <textarea name="sections[{{ $sectionIndex }}][settings_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $sectionRow['settings_json'] ?? '{}' }}</textarea>
                             </label>
 
                             <label class="block">
                                 <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Data Source Payload JSON</span>
-                                <textarea name="sections[{{ $index }}][data_source_payload_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $sectionRow['data_source_payload_json'] ?? '{}' }}</textarea>
+                                <textarea name="sections[{{ $sectionIndex }}][data_source_payload_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $sectionRow['data_source_payload_json'] ?? '{}' }}</textarea>
                             </label>
                         </div>
 
-                        @foreach ($errors->get("sections.$index.*") as $messages)
+                        <div class="mt-5 rounded-xl border border-dashed border-slate-300 p-4 dark:border-gray-700" data-component-wrap>
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Nested Components</h3>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Use nested components only when the selected section type supports them.</p>
+                                </div>
+
+                                <button type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-950" data-add-component>
+                                    Add Component
+                                </button>
+                            </div>
+
+                            <div class="mt-4 space-y-4" data-component-list>
+                                @foreach ($sectionRow['components'] ?? [] as $componentIndex => $componentRow)
+                                    <div class="rounded-lg border border-slate-200 p-4 dark:border-gray-700" data-component-row>
+                                        <input type="hidden" name="sections[{{ $sectionIndex }}][components][{{ $componentIndex }}][id]" value="{{ $componentRow['id'] ?? '' }}">
+
+                                        <div class="grid gap-4 lg:grid-cols-4">
+                                            <label class="block lg:col-span-2">
+                                                <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Component Type</span>
+                                                <select name="sections[{{ $sectionIndex }}][components][{{ $componentIndex }}][component_type_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                                    <option value="">Select component type</option>
+                                                    @foreach ($componentTypes as $componentType)
+                                                        <option value="{{ $componentType->id }}" @selected((string) ($componentRow['component_type_id'] ?? '') === (string) $componentType->id)>{{ $componentType->name }} ({{ $componentType->code }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Sort Order</span>
+                                                <input type="number" min="0" name="sections[{{ $sectionIndex }}][components][{{ $componentIndex }}][sort_order]" value="{{ $componentRow['sort_order'] ?? 0 }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                            </label>
+
+                                            <div class="flex items-end justify-between gap-4">
+                                                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                                    <input type="hidden" name="sections[{{ $sectionIndex }}][components][{{ $componentIndex }}][is_active]" value="0">
+                                                    <input type="checkbox" name="sections[{{ $sectionIndex }}][components][{{ $componentIndex }}][is_active]" value="1" @checked(($componentRow['is_active'] ?? false))>
+                                                    Active
+                                                </label>
+
+                                                <button type="button" class="text-sm text-red-600 hover:underline" data-remove-component>Remove</button>
+                                            </div>
+                                        </div>
+
+                                        <label class="mt-4 block">
+                                            <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Settings JSON</span>
+                                            <textarea name="sections[{{ $sectionIndex }}][components][{{ $componentIndex }}][settings_json]" rows="6" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $componentRow['settings_json'] ?? '{}' }}</textarea>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        @foreach ($errors->get("sections.$sectionIndex.*") as $messages)
                             @foreach ($messages as $message)
                                 <p class="mt-3 text-xs text-red-600">{{ $message }}</p>
                             @endforeach
@@ -242,23 +319,23 @@
             </div>
 
             <template data-section-template>
-                <div class="rounded-xl border border-slate-200 p-4 dark:border-gray-700" data-section-row>
-                    <input type="hidden" name="sections[__INDEX__][id]" value="">
+                <div class="rounded-xl border border-slate-200 p-4 dark:border-gray-700" data-section-row data-section-index="__SECTION__">
+                    <input type="hidden" name="sections[__SECTION__][id]" value="">
 
                     <div class="grid gap-4 lg:grid-cols-5">
                         <label class="block">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Area</span>
-                            <select name="sections[__INDEX__][template_area_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-area-select data-selected-value="">
+                            <select name="sections[__SECTION__][template_area_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-area-select data-selected-value="">
                                 <option value="">Select area</option>
                             </select>
                         </label>
 
                         <label class="block lg:col-span-2">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Section Type</span>
-                            <select name="sections[__INDEX__][section_type_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-section-type-select>
+                            <select name="sections[__SECTION__][section_type_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-section-type-select>
                                 <option value="">Select section type</option>
                                 @foreach ($sectionTypes as $sectionType)
-                                    <option value="{{ $sectionType->id }}" data-sources='@json($sectionType->allowed_data_sources_json ?? [])'>
+                                    <option value="{{ $sectionType->id }}" data-sources='@json($sectionType->allowed_data_sources_json ?? [])' data-supports-components="{{ $sectionType->supports_components ? '1' : '0' }}">
                                         {{ $sectionType->name }} ({{ $sectionType->code }})
                                     </option>
                                 @endforeach
@@ -267,27 +344,27 @@
 
                         <label class="block lg:col-span-2">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Title</span>
-                            <input name="sections[__INDEX__][title]" value="" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                            <input name="sections[__SECTION__][title]" value="" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                         </label>
                     </div>
 
                     <div class="mt-4 grid gap-4 lg:grid-cols-[160px_minmax(0,1fr)_auto]">
                         <label class="block">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Sort Order</span>
-                            <input type="number" min="0" name="sections[__INDEX__][sort_order]" value="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                            <input type="number" min="0" name="sections[__SECTION__][sort_order]" value="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
                         </label>
 
                         <label class="block">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Data Source</span>
-                            <select name="sections[__INDEX__][data_source_type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-data-source-select data-selected-value="">
+                            <select name="sections[__SECTION__][data_source_type]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white" data-data-source-select data-selected-value="">
                                 <option value="">No data source</option>
                             </select>
                         </label>
 
                         <div class="flex items-end justify-between gap-4">
                             <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                                <input type="hidden" name="sections[__INDEX__][is_active]" value="0">
-                                <input type="checkbox" name="sections[__INDEX__][is_active]" value="1" checked>
+                                <input type="hidden" name="sections[__SECTION__][is_active]" value="0">
+                                <input type="checkbox" name="sections[__SECTION__][is_active]" value="1" checked>
                                 Active
                             </label>
 
@@ -298,17 +375,128 @@
                     <div class="mt-4 grid gap-4 lg:grid-cols-2">
                         <label class="block">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Settings JSON</span>
-                            <textarea name="sections[__INDEX__][settings_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{}</textarea>
+                            <textarea name="sections[__SECTION__][settings_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{}</textarea>
                         </label>
 
                         <label class="block">
                             <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Data Source Payload JSON</span>
-                            <textarea name="sections[__INDEX__][data_source_payload_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{}</textarea>
+                            <textarea name="sections[__SECTION__][data_source_payload_json]" rows="8" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{}</textarea>
                         </label>
+                    </div>
+
+                    <div class="mt-5 rounded-xl border border-dashed border-slate-300 p-4 dark:border-gray-700" data-component-wrap>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Nested Components</h3>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Components remain schema-backed and ordered by `sort_order`.</p>
+                            </div>
+
+                            <button type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-950" data-add-component>
+                                Add Component
+                            </button>
+                        </div>
+
+                        <div class="mt-4 space-y-4" data-component-list></div>
                     </div>
                 </div>
             </template>
+
+            <template data-component-template>
+                <div class="rounded-lg border border-slate-200 p-4 dark:border-gray-700" data-component-row>
+                    <input type="hidden" name="sections[__SECTION__][components][__COMPONENT__][id]" value="">
+
+                    <div class="grid gap-4 lg:grid-cols-4">
+                        <label class="block lg:col-span-2">
+                            <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Component Type</span>
+                            <select name="sections[__SECTION__][components][__COMPONENT__][component_type_id]" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                                <option value="">Select component type</option>
+                                @foreach ($componentTypes as $componentType)
+                                    <option value="{{ $componentType->id }}">{{ $componentType->name }} ({{ $componentType->code }})</option>
+                                @endforeach
+                            </select>
+                        </label>
+
+                        <label class="block">
+                            <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Sort Order</span>
+                            <input type="number" min="0" name="sections[__SECTION__][components][__COMPONENT__][sort_order]" value="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+                        </label>
+
+                        <div class="flex items-end justify-between gap-4">
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                <input type="hidden" name="sections[__SECTION__][components][__COMPONENT__][is_active]" value="0">
+                                <input type="checkbox" name="sections[__SECTION__][components][__COMPONENT__][is_active]" value="1" checked>
+                                Active
+                            </label>
+
+                            <button type="button" class="text-sm text-red-600 hover:underline" data-remove-component>Remove</button>
+                        </div>
+                    </div>
+
+                    <label class="mt-4 block">
+                        <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Settings JSON</span>
+                        <textarea name="sections[__SECTION__][components][__COMPONENT__][settings_json]" rows="6" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-700 dark:bg-gray-950 dark:text-white">{}</textarea>
+                    </label>
+                </div>
+            </template>
         </section>
+
+        @if ($page->exists)
+            <section class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Assignments</h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Assignments control where category and product pages apply. They are managed separately so the same page can serve multiple entities.</p>
+                    </div>
+
+                    <a href="{{ route('admin.cms.assignments.create') }}" class="text-sm text-blue-600 hover:underline">Create Assignment</a>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    @forelse ($page->assignments as $assignment)
+                        <div class="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-sm dark:border-gray-700">
+                            <div>
+                                <p class="font-medium text-gray-900 dark:text-white">{{ str_replace('_', ' ', $assignment->page_type) }} / {{ $assignment->scope_type }}</p>
+                                <p class="text-gray-500 dark:text-gray-400">
+                                    {{ $assignment->entity_type ? sprintf('%s #%s', $assignment->entity_type, $assignment->entity_id ?: 'default') : 'default' }}
+                                </p>
+                            </div>
+
+                            <a href="{{ route('admin.cms.assignments.edit', $assignment) }}" class="text-sm text-blue-600 hover:underline">Edit Assignment</a>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500 dark:text-gray-400">No assignments configured for this page yet.</p>
+                    @endforelse
+                </div>
+            </section>
+
+            <section class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Versions</h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Restoring a version replaces the page draft state, SEO payload, sections, and nested components. Shared headers, footers, menus, and assignments are not mutated.</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    @forelse ($page->versions as $version)
+                        <div class="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-sm dark:border-gray-700">
+                            <div>
+                                <p class="font-medium text-gray-900 dark:text-white">Version {{ $version->version_number }}</p>
+                                <p class="text-gray-500 dark:text-gray-400">{{ $version->note ?: 'No note provided.' }}</p>
+                                <p class="mt-1 text-xs text-gray-400">{{ $version->created_at->toDateTimeString() }}</p>
+                            </div>
+
+                            <form method="POST" action="{{ route('admin.cms.pages.versions.restore', [$page, $version]) }}">
+                                @csrf
+                                <button type="submit" class="text-sm text-blue-600 hover:underline">Restore</button>
+                            </form>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500 dark:text-gray-400">No versions saved yet. Publishing and restoring both create snapshots.</p>
+                    @endforelse
+                </div>
+            </section>
+        @endif
 
         <section class="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">SEO</h2>
@@ -382,9 +570,10 @@
             const templateAreasByTemplate = JSON.parse(editor.dataset.templateAreas || '{}');
             const templateSelect = editor.querySelector('[data-template-select]');
             const sectionList = editor.querySelector('[data-section-list]');
-            const template = editor.querySelector('[data-section-template]');
-            const addButton = editor.querySelector('[data-add-section]');
-            let nextIndex = sectionList.querySelectorAll('[data-section-row]').length;
+            const sectionTemplate = editor.querySelector('[data-section-template]');
+            const componentTemplate = editor.querySelector('[data-component-template]');
+            const addSectionButton = editor.querySelector('[data-add-section]');
+            let nextSectionIndex = sectionList.querySelectorAll('[data-section-row]').length;
 
             const populateAreaOptions = (row) => {
                 const select = row.querySelector('[data-area-select]');
@@ -429,35 +618,65 @@
                 });
             };
 
-            const bindRow = (row) => {
-                const areaSelect = row.querySelector('[data-area-select]');
-                const dataSourceSelect = row.querySelector('[data-data-source-select]');
+            const syncComponentState = (row) => {
+                const selectedOption = row.querySelector('[data-section-type-select]').selectedOptions[0];
+                const supportsComponents = selectedOption?.dataset.supportsComponents === '1';
+                const componentWrap = row.querySelector('[data-component-wrap]');
 
+                componentWrap.style.display = supportsComponents ? 'block' : 'none';
+            };
+
+            const addComponent = (row) => {
+                const sectionIndex = row.dataset.sectionIndex;
+                const componentList = row.querySelector('[data-component-list]');
+                const componentIndex = componentList.querySelectorAll('[data-component-row]').length;
+                const html = componentTemplate.innerHTML
+                    .replaceAll('__SECTION__', sectionIndex)
+                    .replaceAll('__COMPONENT__', componentIndex);
+
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html.trim();
+
+                const componentRow = wrapper.firstElementChild;
+                componentList.appendChild(componentRow);
+                bindComponentRow(componentRow);
+            };
+
+            const bindComponentRow = (componentRow) => {
+                componentRow.querySelector('[data-remove-component]').addEventListener('click', () => componentRow.remove());
+            };
+
+            const bindSectionRow = (row) => {
                 populateAreaOptions(row);
                 populateDataSources(row);
+                syncComponentState(row);
 
-                row.querySelector('[data-section-type-select]').addEventListener('change', () => populateDataSources(row));
+                row.querySelector('[data-section-type-select]').addEventListener('change', () => {
+                    populateDataSources(row);
+                    syncComponentState(row);
+                });
+
                 row.querySelector('[data-remove-section]').addEventListener('click', () => row.remove());
+                row.querySelector('[data-add-component]').addEventListener('click', () => addComponent(row));
+                row.querySelectorAll('[data-component-row]').forEach(bindComponentRow);
             };
 
             templateSelect.addEventListener('change', () => {
                 sectionList.querySelectorAll('[data-section-row]').forEach((row) => populateAreaOptions(row));
             });
 
-            addButton.addEventListener('click', () => {
-                const index = nextIndex++;
-                const html = template.innerHTML.replaceAll('__INDEX__', index);
+            addSectionButton.addEventListener('click', () => {
+                const sectionIndex = nextSectionIndex++;
+                const html = sectionTemplate.innerHTML.replaceAll('__SECTION__', sectionIndex);
                 const wrapper = document.createElement('div');
-
                 wrapper.innerHTML = html.trim();
 
                 const row = wrapper.firstElementChild;
-
                 sectionList.appendChild(row);
-                bindRow(row);
+                bindSectionRow(row);
             });
 
-            sectionList.querySelectorAll('[data-section-row]').forEach(bindRow);
+            sectionList.querySelectorAll('[data-section-row]').forEach(bindSectionRow);
         })();
     </script>
 </x-admin::layouts>

@@ -1,12 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\ExperienceCms\Http\Controllers\Admin\ContentEntryController;
 use Platform\ExperienceCms\Http\Controllers\Admin\ComponentTypeController;
 use Platform\ExperienceCms\Http\Controllers\Admin\FooterConfigController;
 use Platform\ExperienceCms\Http\Controllers\Admin\HeaderConfigController;
 use Platform\ExperienceCms\Http\Controllers\Admin\MenuController;
+use Platform\ExperienceCms\Http\Controllers\Admin\PageAssignmentController;
 use Platform\ExperienceCms\Http\Controllers\Admin\PageController;
+use Platform\ExperienceCms\Http\Controllers\Admin\PageVersionController;
 use Platform\ExperienceCms\Http\Controllers\Admin\SectionTypeController;
+use Platform\ExperienceCms\Http\Controllers\Admin\SiteSettingController;
 use Platform\ExperienceCms\Http\Controllers\Admin\TemplateController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
@@ -27,6 +31,9 @@ Route::group([
             Route::post('{platformPage}/publish', 'publish')->name('admin.cms.pages.publish');
             Route::post('{platformPage}/unpublish', 'unpublish')->name('admin.cms.pages.unpublish');
         });
+
+    Route::post('cms/pages/{platformPage}/versions/{platformVersion}/restore', [PageVersionController::class, 'restore'])
+        ->name('admin.cms.pages.versions.restore');
 
     Route::prefix('cms/templates')
         ->controller(TemplateController::class)
@@ -59,6 +66,39 @@ Route::group([
             Route::get('{platformMenu}/edit', 'edit')->name('admin.cms.menus.edit');
             Route::put('{platformMenu}', 'update')->name('admin.cms.menus.update');
             Route::delete('{platformMenu}', 'destroy')->name('admin.cms.menus.destroy');
+        });
+
+    Route::prefix('cms/assignments')
+        ->controller(PageAssignmentController::class)
+        ->group(function () {
+            Route::get('', 'index')->name('admin.cms.assignments.index');
+            Route::get('create', 'create')->name('admin.cms.assignments.create');
+            Route::post('', 'store')->name('admin.cms.assignments.store');
+            Route::get('{platformAssignment}/edit', 'edit')->name('admin.cms.assignments.edit');
+            Route::put('{platformAssignment}', 'update')->name('admin.cms.assignments.update');
+            Route::delete('{platformAssignment}', 'destroy')->name('admin.cms.assignments.destroy');
+            Route::get('{platformAssignment}/preview', 'preview')->name('admin.cms.assignments.preview');
+        });
+
+    Route::prefix('cms/content-entries')
+        ->controller(ContentEntryController::class)
+        ->group(function () {
+            Route::get('', 'index')->name('admin.cms.content-entries.index');
+            Route::get('create', 'create')->name('admin.cms.content-entries.create');
+            Route::post('', 'store')->name('admin.cms.content-entries.store');
+            Route::get('{platformContentEntry}/edit', 'edit')->name('admin.cms.content-entries.edit');
+            Route::put('{platformContentEntry}', 'update')->name('admin.cms.content-entries.update');
+            Route::delete('{platformContentEntry}', 'destroy')->name('admin.cms.content-entries.destroy');
+        });
+
+    Route::prefix('cms/site-settings')
+        ->controller(SiteSettingController::class)
+        ->group(function () {
+            Route::get('', 'index')->name('admin.cms.site-settings.index');
+            Route::get('create', 'create')->name('admin.cms.site-settings.create');
+            Route::post('', 'store')->name('admin.cms.site-settings.store');
+            Route::get('{platformSiteSetting}/edit', 'edit')->name('admin.cms.site-settings.edit');
+            Route::put('{platformSiteSetting}', 'update')->name('admin.cms.site-settings.update');
         });
 
     Route::prefix('cms/component-types')
