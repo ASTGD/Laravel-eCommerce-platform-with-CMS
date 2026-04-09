@@ -12,6 +12,16 @@
 - Tailwind CSS
 - Server-rendered storefront
 
+Verified foundation versions in this repository:
+
+- Laravel `12.56.0`
+- PHP `8.3.30` for the completed verification pass
+- Composer `2.9.5`
+- MySQL `8.4`
+- Redis `7`
+- Node.js `24.11.1`
+- npm `11.6.2`
+
 ## Package Layout
 
 Custom product code lives in neutral packages:
@@ -24,6 +34,35 @@ Custom product code lives in neutral packages:
 - `packages/media-tools`
 - `packages/platform-support`
 
+Upstream commerce packages live in-repo under `packages/Webkul/*` and are autoloaded from the root `composer.json`.
+
+## Frontend Build Topology
+
+The frontend stack is split into multiple Vite workspaces:
+
+- root `package.json`
+  Purpose: custom `theme-default` storefront shell
+  Stack: Vite 5, Tailwind CSS 3, PostCSS, Axios
+
+- `packages/Webkul/Shop/package.json`
+  Purpose: upstream storefront asset workspace
+  Stack: Vite 5, Vue 3, Tailwind CSS 3, PostCSS
+
+- `packages/Webkul/Admin/package.json`
+  Purpose: upstream admin asset workspace
+  Stack: Vite 5, Vue 3, Tailwind CSS 3, PostCSS
+
+- `packages/Webkul/Installer/package.json`
+  Purpose: installer asset workspace
+  Stack: Vite 5, Vue 3, Tailwind CSS 3, PostCSS
+
+The custom storefront shell now has a real Tailwind build at the root level through:
+
+- `tailwind.config.js`
+- `postcss.config.cjs`
+- `resources/css/app.css`
+- `vite.config.js`
+
 ## Runtime Assumptions
 
 ### Local Development
@@ -34,6 +73,7 @@ Custom product code lives in neutral packages:
 - Redis
 - Node.js LTS
 - npm or pnpm
+- optional Docker + Sail for containerized local work
 
 ### Production
 
@@ -45,8 +85,21 @@ Custom product code lives in neutral packages:
 - scheduler
 - SSL
 
-## Current Bootstrap Status
+## Current Verification Status
 
-- Repository foundation source is based on Bagisto `2.4.0`.
-- Composer dependency installation is blocked on this machine because the active PHP runtime is `8.5.x` while the upstream lock file includes `phpoffice/phpspreadsheet 1.30.2`, which only supports `<8.5.0`.
-- Full install verification must be completed under PHP `8.4.x` or `8.3.x`.
+- `composer install` succeeds on PHP `8.3.30`
+- Composer package discovery succeeds
+- `php artisan bagisto:install --skip-env-check --skip-github-star --no-interaction` succeeds when the required env keys are prefilled
+- `php artisan db:seed --force` now runs only the neutral platform seeders after installation
+- `php artisan about`, `php artisan migrate:status`, and `php artisan route:list` succeed
+- live HTTP requests to `/`, `/admin/login`, `/customer/login`, and `/home-preview` returned `200 OK`
+- the root storefront build now emits both JS and CSS assets via `npm run build`
+
+## Docker Tooling
+
+`laravel/sail` is installed as a dev dependency and the checked-in `docker-compose.yml` now resolves correctly.
+
+For a fresh clone, Composer must still run first so that:
+
+- `vendor/bin/sail` exists
+- `vendor/laravel/sail/runtimes/8.3` exists for the Docker build context

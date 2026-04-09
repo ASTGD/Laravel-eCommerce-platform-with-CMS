@@ -11,11 +11,18 @@ This document covers practical local development operations for this repository:
 - how to expose the app on a LAN
 - what to check during smoke testing
 
-## Important Runtime Constraint
+## Verified Runtime
 
-Use PHP `8.4.x` or `8.3.x` for this project.
+The current verified local bootstrap used:
 
-Do not try to complete the Bagisto `2.4.x` install on PHP `8.5.x` until upstream dependencies are updated. The current lock file includes `phpoffice/phpspreadsheet 1.30.2`, which requires PHP `<8.5.0`.
+- PHP `8.3.30`
+- Composer `2.9.5`
+- MySQL `8.4`
+- Redis `7`
+- Node `24.11.1`
+- npm `11.6.2`
+
+PHP `8.4.x` is also supported by the repository policy. Do not use PHP `8.5.x` yet for the initial bootstrap.
 
 ## Local Requirements
 
@@ -25,6 +32,28 @@ Do not try to complete the Bagisto `2.4.x` install on PHP `8.5.x` until upstream
 - Redis
 - Node.js LTS
 - npm or pnpm
+
+## Asset Workspaces
+
+This repository does not use only one frontend workspace.
+
+Use the correct package depending on what you are changing:
+
+- root `package.json`
+  Use for the custom `theme-default` storefront shell
+  Output: `public/build`
+
+- `packages/Webkul/Shop/package.json`
+  Use for upstream storefront assets
+  Output: `public/themes/shop/default/build`
+
+- `packages/Webkul/Admin/package.json`
+  Use for upstream admin assets
+  Output: `public/themes/admin/default/build`
+
+- `packages/Webkul/Installer/package.json`
+  Use for installer UI assets
+  Output: `public/themes/installer/default/build`
 
 ## Install Flow
 
@@ -38,8 +67,14 @@ cp .env.example .env
 
 - `APP_URL`
 - `APP_ADMIN_URL`
+- `APP_TIMEZONE`
+- `APP_CURRENCY`
 - `DB_*`
+- `DB_PREFIX`
 - `REDIS_*`
+- `CACHE_STORE=redis`
+- `SESSION_DRIVER=redis`
+- `QUEUE_CONNECTION=redis`
 
 3. Install PHP dependencies:
 
@@ -47,25 +82,40 @@ cp .env.example .env
 composer install
 ```
 
-4. Generate the app key:
-
-```bash
-php artisan key:generate
-```
-
-5. Run the commerce installer:
+4. Run the commerce installer:
 
 ```bash
 php artisan bagisto:install
 ```
 
-6. Install frontend dependencies:
+If `.env` is already complete and you want a non-interactive run:
+
+```bash
+php artisan bagisto:install --skip-env-check --skip-github-star --no-interaction
+```
+
+5. Seed the neutral platform packages:
+
+```bash
+php artisan db:seed --force
+```
+
+6. Install and build the root storefront shell:
 
 ```bash
 npm install
+npm run build
 ```
 
-7. Start the PHP server and asset server.
+7. If you are changing upstream Bagisto assets, install those workspaces too:
+
+```bash
+npm --prefix packages/Webkul/Shop install
+npm --prefix packages/Webkul/Admin install
+npm --prefix packages/Webkul/Installer install
+```
+
+8. Start the PHP server and any Vite servers you need.
 
 ## Recommended `.env` Values For Local Dev
 
@@ -77,6 +127,8 @@ APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://127.0.0.1:8000
 APP_ADMIN_URL=admin
+APP_TIMEZONE=UTC
+APP_CURRENCY=USD
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -84,8 +136,14 @@ DB_PORT=3306
 DB_DATABASE=reusable_commerce
 DB_USERNAME=root
 DB_PASSWORD=secret
+DB_PREFIX=
 
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+CACHE_STORE=redis
+REDIS_CLIENT=predis
 REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
 REDIS_PORT=6379
 ```
 
@@ -102,7 +160,7 @@ With the example above:
 
 ## How To Start The Dev Server
 
-### Option A: Native PHP + npm
+### Option A: Native PHP + root storefront shell
 
 Start the Laravel app:
 
@@ -110,7 +168,7 @@ Start the Laravel app:
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-Start Vite in another terminal:
+Start the root storefront shell Vite server in another terminal:
 
 ```bash
 npm run dev
@@ -120,10 +178,31 @@ Open:
 
 - storefront: `http://127.0.0.1:8000`
 - admin login: `http://127.0.0.1:8000/admin/login`
+- customer login: `http://127.0.0.1:8000/customer/login`
+
+If you are editing upstream Bagisto assets, run those Vite servers separately:
+
+```bash
+npm --prefix packages/Webkul/Shop run dev
+npm --prefix packages/Webkul/Admin run dev
+```
+
+Use the installer Vite server only when you are changing installer UI:
+
+```bash
+npm --prefix packages/Webkul/Installer run dev
+```
 
 ### Option B: Sail / Docker
 
-This repository includes a `docker-compose.yml`, but it depends on Composer-installed vendor files. Use this only after `composer install`.
+This repository now includes a working Sail dependency, but Composer must run first so `vendor/bin/sail` and the Sail runtime files exist.
+
+Before starting Sail, set these in `.env` for the containerized path:
+
+- `DB_HOST=mysql`
+- `REDIS_HOST=redis`
+- `WWWUSER`
+- `WWWGROUP`
 
 Start containers:
 
@@ -134,10 +213,12 @@ Start containers:
 Then run setup commands through Sail:
 
 ```bash
-./vendor/bin/sail artisan key:generate
 ./vendor/bin/sail artisan bagisto:install
+./vendor/bin/sail artisan db:seed --force
 ./vendor/bin/sail npm install
 ./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5173
+./vendor/bin/sail npm --prefix packages/Webkul/Shop install
+./vendor/bin/sail npm --prefix packages/Webkul/Admin install
 ```
 
 Default exposed ports from `docker-compose.yml`:
@@ -180,6 +261,8 @@ Example:
 ```dotenv
 APP_URL=http://192.168.1.25:8000
 APP_ADMIN_URL=admin
+VITE_HOST=0.0.0.0
+VITE_PORT=5173
 ```
 
 ### 3. Bind Laravel to all interfaces
@@ -194,10 +277,12 @@ php artisan serve --host=0.0.0.0 --port=8000
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Important:
+If you are working on upstream Bagisto assets, do the same for the relevant workspace:
 
-- the current `vite.config.js` does not read `VITE_HOST` to change the bind host
-- use the CLI flags above for LAN access
+```bash
+npm --prefix packages/Webkul/Shop run dev -- --host 0.0.0.0 --port 5173
+npm --prefix packages/Webkul/Admin run dev -- --host 0.0.0.0 --port 5174
+```
 
 ### 5. Open from another device
 
@@ -244,7 +329,7 @@ At the end of the install, it prints:
 
 If you accept the installer defaults unchanged, the upstream installer fallback values are:
 
-- name: `Admin`
+- name: `Example`
 - email: `admin@example.com`
 - password: `admin123`
 
@@ -267,10 +352,9 @@ The most useful local URLs are:
 - customer account: `http://127.0.0.1:8000/customer/account`
 - contact page: `http://127.0.0.1:8000/contact-us`
 
-After the custom CMS migrations and seeders are run, these platform-specific URLs are also useful:
+After `php artisan db:seed --force`, these platform-specific URLs are also useful:
 
 - homepage seed preview: `http://127.0.0.1:8000/home-preview`
-- structured CMS page route: `http://127.0.0.1:8000/pages/{slug}`
 - structured CMS preview route: `http://127.0.0.1:8000/preview/pages/{slug}`
 
 ## Daily Developer Startup Checklist
@@ -284,13 +368,14 @@ After the custom CMS migrations and seeders are run, these platform-specific URL
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
-5. Start Vite:
+5. Start the root storefront shell Vite server if you need hot reload:
 
 ```bash
 npm run dev
 ```
 
-6. Open:
+6. Start upstream asset Vite servers only if you are editing those assets.
+7. Open:
 
 - storefront home
 - admin login
@@ -320,11 +405,25 @@ Fix:
 
 - switch to PHP `8.4.x` or `8.3.x`
 
+### `php artisan bagisto:install --skip-env-check` fails before migration
+
+Cause:
+
+- the upstream installer expects these keys to exist in `.env` before it skips prompts:
+  - `APP_TIMEZONE`
+  - `APP_CURRENCY`
+  - `DB_PREFIX`
+
+Fix:
+
+- make sure your `.env` starts from the current `.env.example`
+- do not remove those keys even if you keep the default values
+
 ### App loads but CSS/JS does not refresh
 
 Cause:
 
-- Vite dev server is not running, or is not bound correctly for LAN use
+- the matching Vite workspace is not running, or is not bound correctly for LAN use
 
 Fix:
 

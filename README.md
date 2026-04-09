@@ -72,6 +72,12 @@ Used by customers for:
 - Vite
 - Tailwind CSS
 
+Frontend assets are split across:
+- the root app for the custom `theme-default` storefront shell
+- `packages/Webkul/Shop` for upstream storefront assets
+- `packages/Webkul/Admin` for upstream admin assets
+- `packages/Webkul/Installer` for installer assets
+
 ### Important architectural rule
 The commerce foundation must come from the upstream commerce engine.
 
@@ -158,6 +164,7 @@ Project docs live in:
 - `Doc/11-milestones.md`
 - `Doc/12-acceptance-criteria.md`
 - `Doc/13-development-workflow.md`
+- `Doc/14-foundation-verification.md`
 
 ## Initial priorities
 
@@ -179,3 +186,10 @@ Before implementing major features, confirm:
 - the commerce foundation is installed correctly
 - custom packages are isolated cleanly
 - docs in `Doc/` reflect actual implementation
+
+Current verified foundation state:
+- Laravel `12.56.0` is installed
+- Bagisto `2.4.x` source packages are present in-repo under `packages/Webkul/*`
+- `composer.lock` is synchronized with `composer.json`, including the neutral custom packages
+- a clean local bootstrap was verified on PHP `8.3.30` with MySQL `8.4` and Redis `7`
+- the full verification record lives in `Doc/14-foundation-verification.md`
