@@ -22,7 +22,8 @@ Every decision must optimize for:
 ### Technical foundation
 Use and preserve this stack:
 
-- PHP 8.3+
+- PHP 8.3 is the verified minimum
+- PHP 8.4 is the recommended production target
 - Laravel 12.x
 - Bagisto as the commerce core
 - MySQL 8+
@@ -335,3 +336,23 @@ Always verify these first in a fresh setup:
 - docs exist and match reality
 
 Do not proceed with major custom CMS work until the correct commerce foundation is confirmed.
+
+---
+
+## Verified foundation baseline
+
+The foundation verification pass is complete and should be treated as the current stable baseline.
+
+Verified baseline:
+- Laravel 12.56.0
+- Bagisto 2.4.x as the commerce core
+- PHP 8.3.30 verified
+- MySQL 8.4 verified
+- Redis 7 verified
+- package discovery verified
+- install, migrate, and seed verified
+- storefront and admin/customer login routes verified
+- Tailwind wired for the custom storefront layer
+
+Do not re-platform or replace the commerce foundation unless explicitly requested.
+Proceed with feature development on top of this verified baseline.
