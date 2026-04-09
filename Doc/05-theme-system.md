@@ -2,7 +2,7 @@
 
 ## Scope
 
-Milestone 2 completes the minimum theme-driven rendering path required for a CMS-authored homepage. The output is intentionally plain, but the runtime path is structured and reusable.
+The backend-complete theme layer now supports homepage, category page, and product detail page rendering through one structured payload pipeline. The output remains intentionally plain, but the contracts are now stable enough for frontend implementation work.
 
 ## Principles
 
@@ -14,22 +14,26 @@ Milestone 2 completes the minimum theme-driven rendering path required for a CMS
 
 ## Runtime Render Pipeline
 
-The homepage now renders through these layers:
+The storefront now renders through these layers:
 
-1. storefront route resolves the target page
-2. `PagePreviewService` loads the page, sections, assignments, and SEO data
-3. `DataSourceResolverContract` resolves commerce-backed section data where needed
-4. theme preset, header, footer, and menu resolvers normalize presentation assignments
-5. section payloads are built from validated settings plus resolved data
-6. `theme-default` Blade views render the final page
+1. storefront route resolves the target surface
+2. CMS-aware controllers or preview routes resolve the relevant `Page`
+3. `PagePreviewService` delegates to the correct payload builder for homepage, category page, or product page
+4. `StructuredPagePayloadBuilder` composes the common shell payload
+5. commerce-aware builders add category listing or PDP-specific payload data
+6. `DataSourceResolverContract`, `ContentEntryResolverContract`, and `SiteSettingsResolverContract` resolve structured content dependencies
+7. header, footer, menu, and preset resolvers normalize shared presentation assignments
+8. section and nested component payloads are rendered through `theme-default` views
 
 This same pipeline is used for:
 
 - published homepage rendering
+- published category page rendering
+- published product page rendering
 - signed preview rendering
 - explicit CMS page rendering routes
 
-## Upstream Commerce Touchpoint
+## Upstream Commerce Touchpoints
 
 The storefront root route still belongs to the commerce core. The CMS homepage is injected by binding the upstream shop home controller to a CMS-aware wrapper that:
 
@@ -39,7 +43,16 @@ The storefront root route still belongs to the commerce core. The CMS homepage i
 
 This keeps the Bagisto storefront route in place while allowing the product homepage to become CMS-driven.
 
-## Theme Assignments
+Category and product route ownership also stays with the commerce core. The CMS integrates by binding the upstream product/category proxy controller to a CMS-aware wrapper that:
+
+- checks for a matching category or product
+- resolves an active page assignment
+- renders the CMS-composed category or PDP layout when an assignment exists
+- falls back to the native Bagisto commerce surface when no assignment exists
+
+No upstream core files are modified. The integration point is controller binding plus commerce repository usage.
+
+## Theme Assignments And Shared Payload
 
 Pages can now assign:
 
@@ -49,6 +62,14 @@ Pages can now assign:
 - one menu
 
 These are persisted on the page and resolved by dedicated services rather than hardcoded view logic.
+
+Shared render payload also includes resolved site settings so storefront surfaces can consume:
+
+- store identity
+- contact data
+- social links
+- trust badges
+- page-level defaults for category and product surfaces
 
 ## Preset Model
 
@@ -60,9 +81,9 @@ Current preset responsibilities:
 - token payload resolution
 - default/fallback preset handling
 
-Future milestones can expand this into stronger token usage for product cards, category lists, and account surfaces without changing the page composition model.
+Future frontend work can expand this into stronger token usage for product cards, category lists, account surfaces, and richer component styling without changing the page composition model.
 
-## Section Rendering
+## Section And Component Rendering
 
 Current section rendering follows a stable contract:
 
@@ -70,15 +91,34 @@ Current section rendering follows a stable contract:
 - authored section settings are merged with registry defaults
 - supported data source output is attached to the section payload
 - the view renders only prepared payload data
+- nested components are validated, normalized, and rendered from prepared payloads
 
 The current default theme includes explicit section views for:
 
 - hero banner
 - featured products
 - rich text
+- promo strip
+- category intro
+- product gallery
+- product summary
+- product price
+- product options
+- add to cart
+- stock and shipping info
+- product details
+- FAQ block
+- related products
+- trust badges
 - generic section fallback
 
-Generic component output is also supported for preview-safe nested component rendering.
+The current default theme includes explicit nested component views for:
+
+- headline
+- body text
+- CTA button group
+- badge list
+- link list
 
 ## Header, Footer, And Menu Rendering
 
@@ -90,6 +130,33 @@ The render path now uses dedicated services for global areas:
 
 The header partial prefers resolved menu items and only falls back to static link settings when no menu is assigned.
 
+Category and product templates receive the same shared shell payload as the homepage, so frontend implementation can assume one header/footer/menu/preset model across storefront surfaces.
+
+## Commerce-Aware Payload Builders
+
+The theme layer now receives stable payload shapes from dedicated backend services:
+
+- `StructuredPagePayloadBuilder`
+- `CategoryPagePayloadBuilder`
+- `ProductPagePayloadBuilder`
+
+Current category-specific payload areas:
+
+- `heroSections`
+- `preListingSections`
+- `listing`
+- `postListingSections`
+- `category`
+
+Current product-specific payload areas:
+
+- `gallerySections`
+- `summarySections`
+- `detailsSections`
+- `relatedSections`
+- `product`
+- `productData`
+
 ## SEO Output
 
 The storefront layout now renders CMS-owned SEO fields where available:
@@ -100,9 +167,13 @@ The storefront layout now renders CMS-owned SEO fields where available:
 
 This is enough for the current homepage slice and keeps the view layer aligned with persisted CMS metadata.
 
-## Limitations Before Milestone 3 And 4
+## Asset Loading Rule
+
+The custom storefront layout now targets the root application Vite build directory explicitly instead of relying on the Bagisto theme Vite singleton state. This avoids runtime manifest collisions between Bagisto theme assets and the custom storefront shell.
+
+## Remaining Gaps Before Frontend Polish
 
 - the default theme is still intentionally minimal
-- preset tokens are resolved but not yet exhaustively applied across all commerce surfaces
-- category page variants and PDP block rendering are not yet implemented
-- section-specific view models can be expanded further once more section types are activated
+- preset tokens are resolved but not yet exhaustively applied across all storefront surfaces
+- category and PDP payloads are stable, but the final visual implementation is still pending
+- customer account pages are not yet moved onto the same structured theme implementation

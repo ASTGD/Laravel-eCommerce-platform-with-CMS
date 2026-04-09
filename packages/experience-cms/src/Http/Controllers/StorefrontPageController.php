@@ -7,11 +7,17 @@ use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Platform\ExperienceCms\Contracts\PagePreviewServiceContract;
 use Platform\ExperienceCms\Models\Page;
+use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Product\Repositories\ProductRepository;
 use Webkul\Shop\Http\Controllers\HomeController;
 
 class StorefrontPageController extends Controller
 {
-    public function __construct(protected PagePreviewServiceContract $previewService) {}
+    public function __construct(
+        protected PagePreviewServiceContract $previewService,
+        protected CategoryRepository $categories,
+        protected ProductRepository $products,
+    ) {}
 
     public function home(): View
     {
@@ -31,7 +37,7 @@ class StorefrontPageController extends Controller
     {
         $page = Page::query()->where('slug', 'home')->firstOrFail();
 
-        return view('theme-default::storefront.page', $this->previewService->build($page));
+        return view('theme-default::storefront.page', $this->previewService->build($page, ['preview' => true]));
     }
 
     public function show(Page $platformPage): View|Response
@@ -47,6 +53,34 @@ class StorefrontPageController extends Controller
     {
         $page = $platformPage;
 
-        return view('theme-default::storefront.page', $this->previewService->build($page));
+        return view('theme-default::storefront.page', $this->previewService->build($page, ['preview' => true]));
+    }
+
+    public function previewCategory(Page $platformPage, string $categorySlug): View
+    {
+        $category = $this->categories->findBySlugOrFail($categorySlug);
+
+        return view('theme-default::storefront.category-page', $this->previewService->build($platformPage, [
+            'category' => $category,
+            'query' => request()->query(),
+            'preview' => true,
+        ]));
+    }
+
+    public function previewProduct(Page $platformPage, string $productSlug): View
+    {
+        $searchEngine = core()->getConfigData('catalog.products.search.engine') === 'elastic'
+            ? core()->getConfigData('catalog.products.search.storefront_mode')
+            : 'database';
+
+        $product = $this->products
+            ->setSearchEngine($searchEngine ?: 'database')
+            ->findBySlugOrFail($productSlug);
+
+        return view('theme-default::storefront.product-page', $this->previewService->build($platformPage, [
+            'product' => $product,
+            'query' => request()->query(),
+            'preview' => true,
+        ]));
     }
 }

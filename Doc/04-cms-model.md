@@ -2,7 +2,18 @@
 
 ## Scope
 
-Milestone 2 delivers a structured CMS vertical slice for the homepage. Admin users can manage pages, templates, sections, menus, header/footer configs, component types, and theme preset assignments without introducing a freeform page builder.
+The CMS now covers the backend-complete authoring model needed before frontend-focused implementation begins. The system remains structured and schema-backed.
+
+Implemented authoring surfaces:
+
+- homepage pages
+- static and campaign pages
+- category page layouts
+- product detail page layouts
+- content entries used by page composition
+- site settings used by render payload resolution
+- page version restore
+- nested section component authoring
 
 ## Persisted Entities
 
@@ -21,6 +32,7 @@ Milestone 2 delivers a structured CMS vertical slice for the homepage. Admin use
 - `footer_config_id`
 - `menu_id`
 - `theme_preset_id`
+- `settings_json`
 
 Current page statuses are:
 
@@ -29,7 +41,7 @@ Current page statuses are:
 
 ### Page Versions
 
-`page_versions` capture publish workflow snapshots. Each snapshot stores the authored page payload plus the resolved structural assignments in `snapshot_json`:
+`page_versions` capture snapshot history for publish, unpublish, and restore workflows. Each snapshot stores the authored page payload plus the structural composition state in `snapshot_json`:
 
 - template
 - template areas
@@ -38,19 +50,40 @@ Current page statuses are:
 - footer config
 - menu
 - theme preset
+- page settings
 - page sections
 - section components
 
-The publish workflow writes a snapshot on both publish and unpublish transitions so page history remains auditable.
+The workflow now records snapshots for:
+
+- publish
+- unpublish
+- restore pre-state, so a restore is itself undoable
 
 ### Templates And Areas
 
 `templates` define the structured layout contract for a page type. `template_areas` are synchronized from the template schema and define where sections may be placed.
 
-The current homepage slice ships with `homepage_default` and these areas:
+Current seeded templates:
 
-- `hero`
-- `content`
+- `homepage_default`
+- `category_default`
+- `product_default`
+
+Current area structure:
+
+- homepage
+  - `hero`
+  - `content`
+- category page
+  - `hero`
+  - `pre_listing`
+  - `post_listing`
+- product page
+  - `gallery`
+  - `summary`
+  - `details`
+  - `related`
 
 ### Section Types
 
@@ -64,7 +97,7 @@ The current homepage slice ships with `homepage_default` and these areas:
 
 The registry is authoritative for defaults, validation rules, preview support, and supported data source modes.
 
-Built-in section types for the current slice:
+Built-in section types now active:
 
 - `hero_banner`
 - `promo_strip`
@@ -74,8 +107,19 @@ Built-in section types for the current slice:
 - `best_sellers`
 - `new_arrivals`
 - `rich_text`
+- `category_intro`
+- `product_gallery`
+- `product_summary`
+- `product_price`
+- `product_options`
+- `add_to_cart`
+- `stock_shipping_info`
+- `product_details`
+- `faq_block`
+- `related_products`
+- `trust_badges`
 
-Only `hero_banner`, `featured_products`, and `rich_text` are used in the seeded homepage flow.
+These are used across the seeded homepage, category page, and PDP layouts.
 
 ### Page Sections
 
@@ -100,18 +144,26 @@ Validation is performed before persistence. The request layer checks that:
 
 `component_types` store approved nested component definitions. `section_components` store per-section component instances.
 
-Milestone 2 includes:
+Active nested component model:
 
 - component type CRUD
-- component persistence in the schema and relationships
-- component snapshot capture
-- generic component preview rendering support
+- per-section nested component persistence
+- nested component validation through the component registry
+- nested component snapshot capture
+- nested component authoring in the page editor
+- nested component payload rendering in the theme layer
 
-The admin page editor does not yet expose nested component composition. That becomes relevant in later milestones when richer section internals are introduced.
+Current built-in component definitions:
+
+- `headline`
+- `body_text`
+- `cta_button_group`
+- `badge_list`
+- `link_list`
 
 ### Navigation And Layout Assignments
 
-The homepage vertical slice uses first-class assignments instead of hidden conventions:
+The CMS now uses first-class layout assignments instead of hidden conventions:
 
 - `menus` and `menu_items`
 - `header_configs`
@@ -119,8 +171,26 @@ The homepage vertical slice uses first-class assignments instead of hidden conve
 - `theme_presets`
 - `seo_meta`
 - `site_settings`
+- `page_assignments`
+- `content_entries`
 
-Pages can now explicitly reference their active header, footer, menu, and theme preset.
+Pages can explicitly reference their active header, footer, menu, and theme preset.
+
+`page_assignments` map a page layout to a commerce-aware surface:
+
+- `page_type`
+- `scope_type`
+- `entity_type`
+- `entity_id`
+- `priority`
+- `is_active`
+
+Current supported assignment targets:
+
+- global category page fallback
+- exact category override
+- global product page fallback
+- exact product override
 
 ## Relationships
 
@@ -132,6 +202,7 @@ Key relationships in the current slice:
 - `Page` belongs to `FooterConfig`
 - `Page` belongs to `Menu`
 - `Page` belongs to `ThemePreset`
+- `Page` has many `PageAssignment`
 - `Page` has many `PageSection`
 - `Page` has many `PageVersion`
 - `Template` has many `TemplateArea`
@@ -140,6 +211,8 @@ Key relationships in the current slice:
 - `PageSection` has many `SectionComponent`
 - `SectionComponent` belongs to `ComponentType`
 - `Menu` has many `MenuItem`
+- `ContentEntry` is resolved into sections through explicit data-source payloads
+- `SiteSetting` is resolved into shared render payloads through a dedicated resolver
 
 ## Validation Model
 
@@ -148,22 +221,38 @@ All authored JSON in the current slice is schema-backed at the request or regist
 - Template schema is entered as JSON and synchronized into `template_areas`.
 - Section settings are validated through the section registry.
 - Data source payloads are validated against the supported source contract of the selected section type.
+- Template area rules can restrict allowed section codes.
+- Nested component settings are validated through the component registry.
+- Page settings are validated by page type.
 - SEO Open Graph payloads and menu item settings are decoded and normalized before save.
 
 The CMS does not allow arbitrary layout logic or arbitrary JSON blobs to bypass section definitions.
+
+Current supported content-aware data source modes:
+
+- `featured_products`
+- `best_sellers`
+- `new_arrivals`
+- `discounted_products`
+- `category_products`
+- `manual_products`
+- `manual_categories`
+- `selected_content_entries`
 
 ## Preview And Publish Workflow
 
 ### Preview
 
-Preview is available from the admin page editor. The admin action redirects to a signed storefront preview URL.
+Preview is available from the admin page editor and from assignment records. Admin actions redirect to signed storefront preview URLs.
 
 Preview characteristics:
 
 - draft content is visible
 - unpublished pages remain private
 - the route is signed
-- rendering flows through the same theme layer used by the published homepage
+- rendering flows through the same theme layer used by the published storefront routes
+- category page preview requires a concrete category slug
+- product page preview requires a concrete product slug
 
 ### Publish
 
@@ -181,9 +270,31 @@ Unpublish performs these steps:
 2. return the page to `draft`
 3. clear `published_at`
 
-## Current Vertical Slice
+### Restore
 
-The seeded homepage proves the end-to-end model:
+Restore performs these steps:
+
+1. capture the current authored state as a new version snapshot
+2. restore the selected snapshot into the page, SEO meta, sections, and nested components
+3. preserve shared assignment records and shared header/footer/menu/theme entities
+
+Restore affects the selected page record and its owned composition only. It does not rewrite global shared definitions.
+
+## Assignment Resolution
+
+Assignment resolution is deterministic and reusable.
+
+Current precedence:
+
+1. exact active entity assignment with highest priority
+2. active global assignment for the same page type with highest priority
+3. no CMS assignment, so the storefront falls back to native commerce rendering
+
+This model is shared by category pages and product pages and is designed to extend to future commerce-aware surfaces.
+
+## Active Authoring Flows
+
+The seeded homepage still proves the original Milestone 2 flow:
 
 - one homepage page record
 - one template
@@ -196,10 +307,29 @@ The seeded homepage proves the end-to-end model:
 - one rich text section
 - preview and publish workflow
 
-## Limitations Before Category And PDP CMS
+The backend completion pass adds two more active seeded flows:
 
-- category listing pages are not yet composed through CMS templates
-- product detail pages are not yet composed through controlled PDP blocks
-- nested section component authoring UI is not yet exposed in admin
-- content entries are not yet wired into page composition workflows
-- page version restore UX is not yet implemented
+- category page
+  - one global category page assignment
+  - promo strip before listing
+  - structured intro block using a content entry
+  - featured products after listing
+- product page
+  - one global PDP assignment
+  - controlled gallery, summary, price, options, add-to-cart, stock, details, FAQ, related, and trust-badge blocks
+  - FAQ block backed by a content entry
+  - shipping note and trust badges backed by site settings
+
+## Current Usage Boundaries
+
+Content entries and site settings are active, but intentionally bounded:
+
+- content entries are for reusable structured content snippets consumed by approved sections
+- site settings are for shared storefront payload values such as store identity, contact data, trust badges, and page defaults
+- neither is a freeform escape hatch for arbitrary layouts
+
+## Remaining Backend Gaps
+
+- customer portal pages are not yet moved into the same assignment model
+- richer merchandising sources can still be added, but the resolver contract is already in place
+- version history has restore support, but no diff view or compare screen yet

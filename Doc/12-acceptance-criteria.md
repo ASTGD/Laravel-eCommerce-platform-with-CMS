@@ -34,10 +34,28 @@ Milestone 2 is complete when all of the following are true:
 
 Current status: complete for the homepage vertical slice.
 
-Still deferred beyond Milestone 2:
+## Backend Completion Pass Acceptance
 
-- category page CMS
-- PDP block composition
-- nested section component authoring UI
-- content entry-driven page composition
-- version restore UX
+The backend completion pass is complete when all of the following are true:
+
+1. Category pages can resolve CMS assignments with deterministic precedence and still keep native commerce listing ownership in the commerce core.
+2. Product detail pages can resolve CMS assignments with controlled block composition while keeping native commerce product ownership in the commerce core.
+3. Category and product page previews are available through signed routes.
+4. Content entries are active in approved CMS section data sources.
+5. Site settings are active in shared storefront payload resolution.
+6. Nested section components can be authored, validated, persisted, and rendered.
+7. Page versions can be listed and restored with deterministic restore semantics.
+8. Homepage rendering continues to work after category and PDP support is added.
+9. Published homepage, category page, and product page routes all render through the CMS/theme layer without bypassing the commerce core.
+10. Focused tests cover assignment resolution, render smoke checks, nested component validation, content entry resolution, site settings resolution, restore behavior, and homepage regression.
+
+## Backend Completion Pass Status
+
+Current status: complete and validated.
+
+Remaining items after this pass:
+
+- storefront visual implementation and polish
+- customer portal theme implementation
+- richer customer-facing surfaces and merchandising presentation
+- diff/compare tooling for version history

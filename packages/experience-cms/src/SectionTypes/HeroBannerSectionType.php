@@ -57,6 +57,11 @@ class HeroBannerSectionType extends AbstractSectionType
         return [];
     }
 
+    public function supportsComponents(): bool
+    {
+        return true;
+    }
+
     public function rendererView(): string
     {
         return 'theme-default::storefront.sections.hero-banner';

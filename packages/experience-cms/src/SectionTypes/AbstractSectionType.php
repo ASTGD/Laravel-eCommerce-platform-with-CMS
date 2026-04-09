@@ -6,6 +6,11 @@ use Platform\ExperienceCms\Contracts\SectionTypeContract;
 
 abstract class AbstractSectionType implements SectionTypeContract
 {
+    public function allowedDataSources(): array
+    {
+        return [];
+    }
+
     public function supportsComponents(): bool
     {
         return false;

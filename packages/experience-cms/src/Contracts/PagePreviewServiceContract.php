@@ -6,5 +6,5 @@ use Platform\ExperienceCms\Models\Page;
 
 interface PagePreviewServiceContract
 {
-    public function build(Page $page): array;
+    public function build(Page $page, array $context = []): array;
 }

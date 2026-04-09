@@ -23,6 +23,7 @@ class Page extends Model
         'footer_config_id',
         'menu_id',
         'theme_preset_id',
+        'settings_json',
         'status',
         'seo_meta_id',
         'published_at',
@@ -33,6 +34,7 @@ class Page extends Model
     protected function casts(): array
     {
         return [
+            'settings_json' => 'array',
             'published_at' => 'datetime',
         ];
     }
@@ -75,6 +77,11 @@ class Page extends Model
     public function versions(): HasMany
     {
         return $this->hasMany(PageVersion::class)->orderByDesc('version_number');
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(PageAssignment::class)->orderByDesc('priority');
     }
 
     public function scopePublished($query)

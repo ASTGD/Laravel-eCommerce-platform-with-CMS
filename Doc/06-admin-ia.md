@@ -2,7 +2,7 @@
 
 ## Scope
 
-Milestone 2 implements the minimum maintainable admin workflows needed to author and manage a structured homepage vertical slice.
+The admin now exposes the minimum maintainable workflows required to manage the backend-complete CMS authoring model before frontend-focused implementation begins.
 
 ## Navigation
 
@@ -29,9 +29,12 @@ Implemented CMS screens:
 - Templates
 - Section Types
 - Component Types
+- Assignments
 - Menus
 - Header Configs
 - Footer Configs
+- Content Entries
+- Site Settings
 
 Implemented page workflow from the CMS area:
 
@@ -42,10 +45,22 @@ Implemented page workflow from the CMS area:
 - assign footer config
 - assign menu
 - assign theme preset
+- edit page settings JSON for page-type-specific behavior
 - manage page status
 - preview draft content
 - publish page
 - unpublish page
+- review version history
+- restore a previous version
+- manage nested section components
+
+Implemented assignment workflow:
+
+- create category page assignments
+- create product page assignments
+- set global fallback assignments
+- set exact entity overrides
+- preview assignment targets when the assignment is entity-scoped
 
 ## Theme Area
 
@@ -69,8 +84,10 @@ The editor currently supports:
 - footer assignment
 - menu assignment
 - theme preset assignment
+- page settings JSON
 - SEO fields
 - ordered page sections
+- ordered nested components within supported sections
 
 Each section row includes:
 
@@ -82,8 +99,17 @@ Each section row includes:
 - section settings JSON
 - data source type
 - data source payload JSON
+- nested components when the section type supports them
 
-This keeps the slice operable without introducing a drag-and-drop builder.
+Each nested component row includes:
+
+- component type
+- sort order
+- active toggle
+- component settings JSON
+- component data source payload JSON
+
+This keeps the CMS operable without introducing a drag-and-drop builder.
 
 ## Template Editing Workflow
 
@@ -107,6 +133,38 @@ Menus are managed with:
 
 Nested tree editing is not yet implemented. Parent relationships already exist in the schema for future expansion.
 
+## Content Entries And Site Settings
+
+Content entries are managed as reusable structured content records for approved CMS sections.
+
+Site settings are managed as shared structured payload records for:
+
+- store identity
+- contact data
+- social links
+- trust badges
+- category page defaults
+- product page defaults
+
+These screens are intentionally constrained. They are not general freeform page builders.
+
+## Versions
+
+The page edit screen now includes:
+
+- version list
+- version note visibility
+- restore action
+
+Restore semantics are limited to the selected page and its owned composition:
+
+- page fields
+- SEO meta
+- sections
+- nested components
+
+Shared entities such as menus, header configs, footer configs, and theme presets are not rewritten by a restore action.
+
 ## ACL
 
 CMS ACL entries now cover:
@@ -120,15 +178,17 @@ CMS ACL entries now cover:
 - template create/edit
 - section types
 - component types
+- assignments
 - menus
 - header configs
 - footer configs
+- content entries
+- site settings
 
 Theme ACL remains centered on preset management in the current slice.
 
 ## Current Limitations
 
-- page editing does not yet expose nested section component authoring
 - menu authoring is flat-form only
-- content entries and site settings do not yet have admin screens
-- category page and PDP configuration screens are intentionally deferred to later milestones
+- version comparison and diff UX are not yet implemented
+- customer portal page authoring is still deferred to a later workstream
