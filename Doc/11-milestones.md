@@ -78,6 +78,20 @@ Planned deliverables:
 - harden accessibility and responsive behavior across the custom storefront
 - keep the Bagisto admin mostly native while extending only the required CMS screens
 
+## Pre-Frontend Hardening Track
+
+Optional hardening work that can run before or alongside Milestone 3 is tracked in [Doc/17-backend-pre-frontend-checklist.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/17-backend-pre-frontend-checklist.md).
+
+This track should remain limited to:
+
+- ACL hardening
+- regression coverage
+- dev workflow cleanup
+- runtime verification
+- SEO and media hardening
+
+It should not reopen the now-stable CMS architecture.
+
 ## Milestone 4: Customer Portal And Remaining Storefront Surfaces
 
 Planned deliverables:

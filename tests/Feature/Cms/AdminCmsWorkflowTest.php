@@ -12,6 +12,8 @@ use Platform\ExperienceCms\Models\SectionType;
 use Platform\ExperienceCms\Models\SiteSetting;
 use Platform\ExperienceCms\Models\Template;
 use Platform\ThemeCore\Models\ThemePreset;
+use Webkul\User\Models\Admin as AdminModel;
+use Webkul\User\Models\Role;
 use Webkul\Category\Models\Category;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Faker\Helpers\Category as CategoryFaker;
@@ -23,6 +25,20 @@ function cmsAdminCategory(): Category
 {
     return Category::query()->whereNotNull('parent_id')->where('parent_id', '!=', 0)->first()
         ?: (new CategoryFaker)->factory()->create();
+}
+
+function cmsAdminWithPermissions(array $permissions): AdminModel
+{
+    $role = Role::query()->create([
+        'name' => 'CMS ACL '.uniqid(),
+        'description' => 'CMS ACL test role',
+        'permission_type' => 'custom',
+        'permissions' => $permissions,
+    ]);
+
+    return AdminModel::factory()->create([
+        'role_id' => $role->id,
+    ]);
 }
 
 it('renders the CMS admin screens without fatal errors', function () {
@@ -220,6 +236,53 @@ it('creates supporting CMS records from the admin forms', function () {
         ->and($preset)->not->toBeNull()
         ->and($contentEntry)->not->toBeNull()
         ->and($siteSetting)->not->toBeNull();
+});
+
+it('requires explicit page create permission for CMS authoring routes', function () {
+    $admin = cmsAdminWithPermissions(['cms.platform.pages']);
+
+    $this->loginAsAdmin($admin);
+
+    $template = Template::query()->where('code', 'homepage_default')->firstOrFail();
+    $area = $template->areas()->firstOrFail();
+    $sectionType = SectionType::query()->where('code', 'hero_banner')->firstOrFail();
+
+    $this->get(route('admin.cms.pages.create'))->assertStatus(401);
+
+    $this->post(route('admin.cms.pages.store'), [
+        'title' => 'ACL Blocked Homepage',
+        'slug' => 'acl-blocked-homepage',
+        'type' => 'homepage',
+        'template_id' => $template->id,
+        'sections' => [[
+            'template_area_id' => $area->id,
+            'section_type_id' => $sectionType->id,
+            'title' => 'Blocked Hero',
+            'sort_order' => 1,
+            'is_active' => 1,
+            'settings_json' => json_encode(['headline' => 'Blocked by ACL']),
+        ]],
+    ])->assertStatus(401);
+});
+
+it('requires explicit page publish permission for CMS state changes', function () {
+    $admin = cmsAdminWithPermissions(['cms.platform.pages', 'cms.platform.pages.edit']);
+
+    $this->loginAsAdmin($admin);
+
+    $page = Page::query()->where('slug', 'home')->firstOrFail();
+
+    $this->post(route('admin.cms.pages.publish', $page))->assertStatus(401);
+    $this->post(route('admin.cms.pages.unpublish', $page))->assertStatus(401);
+});
+
+it('requires explicit theme preset permission for theme admin routes', function () {
+    $admin = cmsAdminWithPermissions(['cms.platform.pages']);
+
+    $this->loginAsAdmin($admin);
+
+    $this->get(route('admin.theme.presets.index'))->assertStatus(401);
+    $this->get(route('admin.theme.presets.create'))->assertStatus(401);
 });
 
 it('creates a structured homepage draft from the admin screen', function () {

@@ -11,11 +11,11 @@ Route::group([
     Route::prefix('theme/presets')
         ->controller(ThemePresetController::class)
         ->group(function () {
-            Route::get('', 'index')->name('admin.theme.presets.index');
-            Route::get('create', 'create')->name('admin.theme.presets.create');
-            Route::post('', 'store')->name('admin.theme.presets.store');
-            Route::get('{platformThemePreset}/edit', 'edit')->name('admin.theme.presets.edit');
-            Route::put('{platformThemePreset}', 'update')->name('admin.theme.presets.update');
-            Route::delete('{platformThemePreset}', 'destroy')->name('admin.theme.presets.destroy');
+            Route::get('', 'index')->middleware('platform.acl:theme.presets')->name('admin.theme.presets.index');
+            Route::get('create', 'create')->middleware('platform.acl:theme.presets.create')->name('admin.theme.presets.create');
+            Route::post('', 'store')->middleware('platform.acl:theme.presets.create')->name('admin.theme.presets.store');
+            Route::get('{platformThemePreset}/edit', 'edit')->middleware('platform.acl:theme.presets.edit')->name('admin.theme.presets.edit');
+            Route::put('{platformThemePreset}', 'update')->middleware('platform.acl:theme.presets.edit')->name('admin.theme.presets.update');
+            Route::delete('{platformThemePreset}', 'destroy')->middleware('platform.acl:theme.presets.delete')->name('admin.theme.presets.destroy');
         });
 });

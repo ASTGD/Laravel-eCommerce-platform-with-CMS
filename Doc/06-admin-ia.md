@@ -187,6 +187,22 @@ CMS ACL entries now cover:
 
 Theme ACL remains centered on preset management in the current slice.
 
+Custom CMS and theme routes no longer rely only on route-name ACL matches. They now apply explicit permission middleware so the following route pairs share the same intended permission key:
+
+- create and store
+- edit and update
+- edit and preview
+
+This closes the gap where custom POST or PUT routes could otherwise miss ACL enforcement if their route names were not represented directly in the ACL tree.
+
+Recommended role split before frontend work begins:
+
+- Super Admin: full access
+- Content Manager: pages, assignments, menus, header/footer, content entries
+- Theme Manager: theme presets and site settings
+- Catalog Manager: Bagisto catalog ownership only
+- SEO Manager: SEO and metadata workflows when that surface is hardened further
+
 ## Current Limitations
 
 - menu authoring is flat-form only
