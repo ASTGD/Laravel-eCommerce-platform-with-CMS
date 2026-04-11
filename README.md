@@ -64,7 +64,7 @@ Used by customers for:
 ### Core stack
 - PHP 8.3+
 - Laravel 12.x
-- Bagisto as the commerce core
+- Commerce core
 - MySQL 8+
 - Redis
 - Nginx + PHP-FPM
