@@ -1,2 +1,7 @@
 *
 !.gitignore
+!admin/
+!admin/**
+!vendor/
+!vendor/admin/
+!vendor/admin/**
