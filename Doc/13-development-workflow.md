@@ -121,13 +121,37 @@ Shared rendering contracts live in `theme-core`. Visual presentation and respons
 
 ## Install Flow
 
+The canonical local path for this repository is Sail. Native PHP plus local MySQL and Redis is still possible, but it is not the preferred day-to-day path for this codebase.
+
 1. Copy the environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Update `.env` at minimum:
+2. Keep the Sail defaults from `.env.example` unless you intentionally need a native stack.
+
+The verified Sail baseline expects:
+
+- `APP_URL=http://127.0.0.1:8001`
+- `APP_PORT=8001`
+- `VITE_HOST=0.0.0.0`
+- `VITE_PORT=5174`
+- `DB_HOST=mysql`
+- `DB_PORT=3306`
+- `DB_DATABASE=reusable_commerce`
+- `DB_USERNAME=sail`
+- `DB_PASSWORD=password`
+- `REDIS_HOST=redis`
+- `REDIS_PORT=6379`
+- `FORWARD_DB_PORT=3309`
+- `FORWARD_REDIS_PORT=6381`
+- `FORWARD_MAILPIT_PORT=1026`
+- `FORWARD_MAILPIT_DASHBOARD_PORT=8026`
+
+3. Update `.env` only where your machine or network requires it.
+
+At minimum confirm:
 
 - `APP_URL`
 - `APP_ADMIN_URL`
@@ -140,46 +164,51 @@ cp .env.example .env
 - `SESSION_DRIVER=redis`
 - `QUEUE_CONNECTION=redis`
 
-3. Install PHP dependencies:
+4. Install PHP dependencies:
 
 ```bash
 composer install
 ```
 
-4. Run the commerce installer:
+5. Start the containers:
 
 ```bash
-php artisan bagisto:install
+composer run dev:sail-up
+```
+
+6. Run the commerce installer:
+
+```bash
+./vendor/bin/sail artisan bagisto:install
 ```
 
 If `.env` is already complete and you want a non-interactive run:
 
 ```bash
-php artisan bagisto:install --skip-env-check --skip-github-star --no-interaction
+./vendor/bin/sail artisan bagisto:install --skip-env-check --skip-github-star --no-interaction
 ```
 
-5. Seed the neutral platform packages:
+7. Seed the neutral platform packages:
 
 ```bash
-php artisan db:seed --force
+./vendor/bin/sail artisan db:seed --force
 ```
 
-6. Install and build the root storefront shell:
+8. Install the root storefront shell dependencies:
 
 ```bash
-npm install
-npm run build
+./vendor/bin/sail npm install
 ```
 
-7. If you are changing upstream Bagisto assets, install those workspaces too:
+9. If you are changing upstream Bagisto assets, install those workspaces too:
 
 ```bash
-npm --prefix packages/Webkul/Shop install
-npm --prefix packages/Webkul/Admin install
-npm --prefix packages/Webkul/Installer install
+./vendor/bin/sail npm --prefix packages/Webkul/Shop install
+./vendor/bin/sail npm --prefix packages/Webkul/Admin install
+./vendor/bin/sail npm --prefix packages/Webkul/Installer install
 ```
 
-8. Start the PHP server and any Vite servers you need.
+10. Start Vite only for the workspace you are actively editing.
 
 ## Recommended `.env` Values For Local Dev
 
@@ -224,75 +253,88 @@ With the example above:
 
 ## How To Start The Dev Server
 
-### Option A: Native PHP + root storefront shell
-
-Start the Laravel app:
+### Recommended: Sail / Docker
 
 ```bash
-php artisan serve --host=127.0.0.1 --port=8000
+composer run dev:sail-up
 ```
 
-Start the root storefront shell Vite server in another terminal:
+Then run app setup through Sail:
 
 ```bash
-npm run dev
-```
-
-Open:
-
-- storefront: `http://127.0.0.1:8000`
-- admin login: `http://127.0.0.1:8000/admin/login`
-- customer login: `http://127.0.0.1:8000/customer/login`
-
-If you are editing upstream Bagisto assets, run those Vite servers separately:
-
-```bash
-npm --prefix packages/Webkul/Shop run dev
-npm --prefix packages/Webkul/Admin run dev
-```
-
-Use the installer Vite server only when you are changing installer UI:
-
-```bash
-npm --prefix packages/Webkul/Installer run dev
-```
-
-### Option B: Sail / Docker
-
-This repository now includes a working Sail dependency, but Composer must run first so `vendor/bin/sail` and the Sail runtime files exist.
-
-Before starting Sail, set these in `.env` for the containerized path:
-
-- `DB_HOST=mysql`
-- `REDIS_HOST=redis`
-- `WWWUSER`
-- `WWWGROUP`
-
-Start containers:
-
-```bash
-./vendor/bin/sail up -d
-```
-
-Then run setup commands through Sail:
-
-```bash
-./vendor/bin/sail artisan bagisto:install
-./vendor/bin/sail artisan db:seed --force
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5173
-./vendor/bin/sail npm --prefix packages/Webkul/Shop install
-./vendor/bin/sail npm --prefix packages/Webkul/Admin install
+composer run dev:sail-install
+composer run dev:sail-vite
 ```
 
 Default exposed ports from `docker-compose.yml`:
 
-- app: `${APP_PORT:-80}`
-- Vite: `${VITE_PORT:-5173}`
-- MySQL: `${FORWARD_DB_PORT:-3306}`
-- Redis: `${FORWARD_REDIS_PORT:-6379}`
-- Mailpit SMTP: `${FORWARD_MAILPIT_PORT:-1025}`
-- Mailpit UI: `${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}`
+- app: `${APP_PORT:-8001}`
+- Vite: `${VITE_PORT:-5174}`
+- MySQL: `${FORWARD_DB_PORT:-3309}`
+- Redis: `${FORWARD_REDIS_PORT:-6381}`
+- Mailpit SMTP: `${FORWARD_MAILPIT_PORT:-1026}`
+- Mailpit UI: `${FORWARD_MAILPIT_DASHBOARD_PORT:-8026}`
+
+### Native PHP + Local Services
+
+Use this only if you intentionally want to run the application outside Docker.
+
+If you do, switch these in `.env` first:
+
+- `DB_HOST=127.0.0.1`
+- `REDIS_HOST=127.0.0.1`
+- `APP_URL=http://127.0.0.1:8000`
+- `APP_PORT=8000`
+- `VITE_HOST=127.0.0.1`
+- `VITE_PORT=5173`
+
+Then start:
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8000
+npm run dev
+```
+
+This path is secondary. Do not mix it with Sail service hostnames.
+
+## Known Good Daily Startup
+
+Use separate terminals:
+
+Terminal 1:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-up
+```
+
+Terminal 2:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-vite
+```
+
+Optional terminal for queued work:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-worker
+```
+
+Optional terminal for scheduled work:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-schedule
+```
+
+Daily stop:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-down
+```
 
 ## LAN Access
 

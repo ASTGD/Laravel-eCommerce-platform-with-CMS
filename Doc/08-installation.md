@@ -24,10 +24,14 @@ Do not bootstrap this repository on PHP `8.5.x` until upstream Bagisto `2.4.x` d
 
 ## Setup Flow
 
+The recommended local path for this repository is Sail.
+
 1. Install PHP 8.4.x or 8.3.x.
 2. Install Composer 2.5+.
-3. Copy `.env.example` to `.env`.
-4. Configure these minimum `.env` values before running the installer:
+3. Install Docker Desktop.
+4. Copy `.env.example` to `.env`.
+5. Use the Sail-oriented defaults from `.env.example` unless you have a concrete reason to change them.
+6. Configure these minimum `.env` values before running the installer:
    - `APP_URL`
    - `APP_ADMIN_URL`
    - `APP_TIMEZONE`
@@ -46,54 +50,83 @@ Do not bootstrap this repository on PHP `8.5.x` until upstream Bagisto `2.4.x` d
    - `CACHE_STORE=redis`
    - `SESSION_DRIVER=redis`
    - `QUEUE_CONNECTION=redis`
-5. Run `composer install`.
-6. Run the commerce installer:
+7. Run `composer install`.
+8. Start the containers:
 
 ```bash
-php artisan bagisto:install
+composer run dev:sail-up
+```
+
+9. Run the commerce installer through Sail:
+
+```bash
+./vendor/bin/sail artisan bagisto:install
 ```
 
 If you want a fully prefilled non-interactive run, use:
 
 ```bash
-php artisan bagisto:install --skip-env-check --skip-github-star --no-interaction
+./vendor/bin/sail artisan bagisto:install --skip-env-check --skip-github-star --no-interaction
 ```
 
 Important:
 - the non-interactive `--skip-env-check` path expects the env keys above to already exist
 - `APP_TIMEZONE`, `APP_CURRENCY`, and `DB_PREFIX` must be present, even if they use the defaults from `.env.example`
 
-7. Run the neutral platform seeders:
+10. Run the neutral platform seeders:
 
 ```bash
-php artisan db:seed --force
+./vendor/bin/sail artisan db:seed --force
 ```
 
-8. Build the custom storefront shell assets:
+11. Install frontend dependencies:
 
 ```bash
-npm install
-npm run build
+./vendor/bin/sail npm install
 ```
 
-9. If you plan to modify upstream Bagisto assets directly, install their workspace dependencies too:
+12. If you plan to modify upstream Bagisto assets directly, install their workspace dependencies too:
 
 ```bash
-npm --prefix packages/Webkul/Shop install
-npm --prefix packages/Webkul/Admin install
-npm --prefix packages/Webkul/Installer install
+./vendor/bin/sail npm --prefix packages/Webkul/Shop install
+./vendor/bin/sail npm --prefix packages/Webkul/Admin install
+./vendor/bin/sail npm --prefix packages/Webkul/Installer install
 ```
+
+13. Build the root storefront shell if you are not using Vite watch mode:
+
+```bash
+./vendor/bin/sail npm run build
+```
+
+## Known Good Local Commands
+
+Use these exact commands for the verified containerized path:
+
+```bash
+composer run dev:sail-up
+composer run dev:sail-install
+composer run dev:sail-vite
+composer run dev:sail-worker
+composer run dev:sail-schedule
+composer run dev:sail-down
+```
+
+Important:
+
+- once `.env` uses `DB_HOST=mysql` and `REDIS_HOST=redis`, prefer `./vendor/bin/sail artisan ...` over host `php artisan ...`
+- host artisan commands can fail because the service hostnames only resolve inside the Docker network
 
 ## Verification
 
-- `php artisan about` succeeds
-- `php artisan migrate:status` shows all migrations as ran
+- `./vendor/bin/sail artisan about` succeeds
+- `./vendor/bin/sail artisan migrate:status` shows all migrations as ran
 - storefront home returns `200`
 - admin login returns `200`
 - customer login returns `200`
 - `home-preview` returns `200`
-- `php artisan db:seed --force` succeeds after install
-- `npm run build` emits `public/build/assets/*.css` and `public/build/assets/*.js`
+- `./vendor/bin/sail artisan db:seed --force` succeeds after install
+- `./vendor/bin/sail npm run build` emits `public/build/assets/*.css` and `public/build/assets/*.js`
 
 ## Related Developer Ops Doc
 

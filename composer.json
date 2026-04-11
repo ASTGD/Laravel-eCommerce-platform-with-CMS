@@ -141,6 +141,25 @@
         "post-create-project-cmd": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate --ansi"
+        ],
+        "dev:sail-up": [
+            "vendor/bin/sail up -d"
+        ],
+        "dev:sail-down": [
+            "vendor/bin/sail down"
+        ],
+        "dev:sail-install": [
+            "vendor/bin/sail artisan bagisto:install",
+            "vendor/bin/sail artisan db:seed --force"
+        ],
+        "dev:sail-vite": [
+            "vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174"
+        ],
+        "dev:sail-worker": [
+            "vendor/bin/sail artisan queue:work --queue=default,broadcastable"
+        ],
+        "dev:sail-schedule": [
+            "vendor/bin/sail artisan schedule:work"
         ]
     },
     "extra": {
