@@ -79,6 +79,8 @@ Important:
 ./vendor/bin/sail artisan db:seed --force
 ```
 
+In `local` environment this also seeds a small ASTGD demo catalog and an AliExpress shirt sample through `database/seeders/SampleCatalogSeeder.php`, so you have usable sample products, image swatches, and a demo category for smoke testing. The seeded category is `/mens-shirts`.
+
 11. Install frontend dependencies:
 
 ```bash
@@ -124,7 +126,7 @@ Important:
 - storefront home returns `200`
 - admin login returns `200`
 - customer login returns `200`
-- `home-preview` returns `200`
+- `home-preview` returns `200` when `EXPERIENCE_CMS_STOREFRONT_MODE=cms`
 - `./vendor/bin/sail artisan db:seed --force` succeeds after install
 - `./vendor/bin/sail npm run build` emits `public/build/assets/*.css` and `public/build/assets/*.js`
 
