@@ -4,6 +4,8 @@
 
 This note records the final major backend architecture pass completed after the homepage CMS vertical slice and before frontend-focused storefront implementation.
 
+The CMS storefront remains opt-in. The public store stays Bagisto-native by default until `EXPERIENCE_CMS_STOREFRONT_MODE=cms` is enabled.
+
 ## Category Page Assignment Model
 
 Category pages use `page_assignments` with deterministic precedence:
@@ -112,7 +114,7 @@ This remains form-driven and schema-backed. There is no drag-and-drop visual bui
 
 ## What Frontend Can Safely Assume
 
-Frontend work in `packages/theme-core` and `packages/theme-default` can now assume:
+Frontend work in `packages/theme-core` and `packages/theme-default` can now assume, once CMS storefront mode is enabled:
 
 - homepage, category page, and PDP payload contracts are stable
 - header, footer, menu, preset, site settings, and SEO metadata are consistently available in the render payload
@@ -137,7 +139,7 @@ Still pending after this backend pass:
 
 No upstream core files were modified during this pass.
 
-The main integration touchpoints are controller bindings around Bagisto-owned storefront routes:
+The main integration touchpoints are controller bindings around Bagisto-owned storefront routes when CMS storefront mode is enabled:
 
 - CMS-aware home controller binding
 - CMS-aware product/category proxy controller binding

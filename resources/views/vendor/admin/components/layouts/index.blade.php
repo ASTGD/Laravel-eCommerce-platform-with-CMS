@@ -35,7 +35,7 @@
     >
     <meta 
         name="generator" 
-        content="ASTGD Ecommerce"
+        content="ASTGD ECommerce"
     >
 
     @stack('meta')
@@ -124,7 +124,7 @@
                 <!-- Admin Footer -->
                 <div class="mt-auto">
                     <div class="border-t bg-white py-2 text-center text-xs text-gray-500 sm:text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-                        ASTGD Ecommerce Admin
+                        ASTGD ECommerce Admin
                     </div>
                 </div>
             </div>

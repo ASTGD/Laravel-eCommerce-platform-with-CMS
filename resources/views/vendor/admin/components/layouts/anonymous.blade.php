@@ -29,7 +29,7 @@
     >
     <meta
         name="generator"
-        content="ASTGD Ecommerce"
+        content="ASTGD ECommerce"
     >
 
     @stack('meta')

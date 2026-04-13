@@ -5,6 +5,7 @@ namespace Webkul\Attribute\Models;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Attribute\Contracts\AttributeOption as AttributeOptionContract;
 use Webkul\Attribute\Database\Factories\AttributeOptionFactory;
 use Webkul\Core\Eloquent\TranslatableModel;
@@ -50,7 +51,7 @@ class AttributeOption extends TranslatableModel implements AttributeOptionContra
             $this->swatch_value
             && $this->attribute->swatch_type == 'image'
         ) {
-            return url('cache/small/'.$this->swatch_value);
+            return Storage::disk('public')->url($this->swatch_value);
         }
 
         return null;

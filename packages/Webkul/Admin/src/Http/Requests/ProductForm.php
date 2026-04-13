@@ -103,6 +103,20 @@ class ProductForm extends FormRequest
 
         $this->productEditableAttributes = $this->product->getEditableAttributes();
 
+        if (
+            $this->product->type === 'configurable'
+            && $this->filled('super_attribute_codes')
+        ) {
+            $selectedSuperAttributeCodes = collect($this->input('super_attribute_codes'))
+                ->filter()
+                ->map(fn ($code) => (string) $code)
+                ->all();
+
+            $this->productEditableAttributes = $this->productEditableAttributes->reject(
+                fn ($attribute) => in_array($attribute->code, $selectedSuperAttributeCodes, true)
+            );
+        }
+
         foreach ($this->productEditableAttributes as $attribute) {
             if (
                 in_array($attribute->code, ['sku', 'url_key'])

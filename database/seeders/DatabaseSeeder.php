@@ -26,5 +26,9 @@ class DatabaseSeeder extends Seeder
             ThemeCoreSeeder::class,
             ExperienceCmsSeeder::class,
         ]);
+
+        if (app()->environment('local')) {
+            $this->call(SampleCatalogSeeder::class);
+        }
     }
 }

@@ -2,7 +2,9 @@
 
 ## Scope
 
-The backend-complete theme layer now supports homepage, category page, and product detail page rendering through one structured payload pipeline. The output remains intentionally plain, but the contracts are now stable enough for frontend implementation work.
+The backend-complete theme layer supports homepage, category page, and product detail page rendering through one structured payload pipeline. The output remains intentionally plain, but the contracts are now stable enough for frontend implementation work.
+
+The public storefront remains Bagisto-native by default. The CMS/theme storefront pipeline is opt-in and becomes active only when `EXPERIENCE_CMS_STOREFRONT_MODE=cms` is set.
 
 ## Principles
 
@@ -35,22 +37,22 @@ This same pipeline is used for:
 
 ## Upstream Commerce Touchpoints
 
-The storefront root route still belongs to the commerce core. The CMS homepage is injected by binding the upstream shop home controller to a CMS-aware wrapper that:
+The storefront root route belongs to the commerce core by default. In native mode, Bagisto serves the storefront directly. When CMS storefront mode is enabled, the CMS homepage is injected by binding the upstream shop home controller to a CMS-aware wrapper that:
 
 - checks for a published CMS page with slug `home`
 - renders the page through the CMS preview service when present
 - falls back to the upstream commerce homepage when no published CMS homepage exists
 
-This keeps the Bagisto storefront route in place while allowing the product homepage to become CMS-driven.
+This keeps the Bagisto storefront route in place while allowing the product homepage to become CMS-driven when explicitly enabled.
 
-Category and product route ownership also stays with the commerce core. The CMS integrates by binding the upstream product/category proxy controller to a CMS-aware wrapper that:
+Category and product route ownership also stays with the commerce core by default. When CMS storefront mode is enabled, the CMS integrates by binding the upstream product/category proxy controller to a CMS-aware wrapper that:
 
 - checks for a matching category or product
 - resolves an active page assignment
 - renders the CMS-composed category or PDP layout when an assignment exists
 - falls back to the native Bagisto commerce surface when no assignment exists
 
-No upstream core files are modified. The integration point is controller binding plus commerce repository usage.
+No upstream core files are modified. The integration point is controller binding plus commerce repository usage, gated behind the storefront mode switch.
 
 ## Theme Assignments And Shared Payload
 

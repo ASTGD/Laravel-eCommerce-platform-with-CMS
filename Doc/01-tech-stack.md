@@ -92,7 +92,7 @@ The custom storefront shell now has a real Tailwind build at the root level thro
 - `php artisan bagisto:install --skip-env-check --skip-github-star --no-interaction` succeeds when the required env keys are prefilled
 - `php artisan db:seed --force` now runs only the neutral platform seeders after installation
 - `php artisan about`, `php artisan migrate:status`, and `php artisan route:list` succeed
-- live HTTP requests to `/`, `/admin/login`, `/customer/login`, and `/home-preview` returned `200 OK`
+- live HTTP requests to `/`, `/admin/login`, and `/customer/login` returned `200 OK`; `/home-preview` returns `200 OK` when `EXPERIENCE_CMS_STOREFRONT_MODE=cms`
 - the root storefront build now emits both JS and CSS assets via `npm run build`
 
 ## Docker Tooling

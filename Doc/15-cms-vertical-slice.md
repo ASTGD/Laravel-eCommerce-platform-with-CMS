@@ -14,6 +14,8 @@ Milestone 2 now provides one coherent CMS-authored homepage path:
 - theme-layer rendering for the published homepage
 - one live commerce-backed featured products section
 
+This CMS-authored storefront path is opt-in. The live public storefront remains Bagisto-native by default until `EXPERIENCE_CMS_STOREFRONT_MODE=cms` is set.
+
 The reference homepage uses:
 
 - `homepage_default` template
@@ -34,11 +36,11 @@ The slice was validated with:
 - `php artisan migrate --force`
 - `php artisan db:seed --force`
 - `php artisan test tests/Feature/Cms --stop-on-failure`
-- live HTTP `200` checks for `/`, `/home-preview` with a signed URL, `/admin/login`, and `/customer/login`
+- live HTTP `200` checks for `/`, `/home-preview` with a signed URL, `/admin/login`, and `/customer/login` when CMS storefront mode is enabled
 
 ## Important Touchpoint
 
-The storefront root route remains part of the commerce core. The CMS homepage is enabled through a CMS-aware wrapper bound to the upstream home controller, which preserves the commerce route while allowing a published CMS homepage to take over when present.
+The storefront root route remains part of the commerce core. The CMS homepage is enabled through a CMS-aware wrapper bound to the upstream home controller only when CMS storefront mode is enabled, which preserves the commerce route while allowing a published CMS homepage to take over when present.
 
 ## Remaining Limitations
 

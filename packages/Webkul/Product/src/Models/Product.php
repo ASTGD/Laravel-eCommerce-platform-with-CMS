@@ -329,6 +329,22 @@ class Product extends Model implements ProductContract
     }
 
     /**
+     * Get the price that should be displayed in admin/storefront listings.
+     */
+    public function getFormattedPriceAttribute(): string
+    {
+        try {
+            $prices = $this->getTypeInstance()->getProductPrices();
+
+            return $prices['final']['formatted_price']
+                ?? $prices['regular']['formatted_price']
+                ?? core()->formatPrice($this->price);
+        } catch (Exception) {
+            return core()->formatPrice($this->price);
+        }
+    }
+
+    /**
      * Have sufficient quantity.
      *
      *

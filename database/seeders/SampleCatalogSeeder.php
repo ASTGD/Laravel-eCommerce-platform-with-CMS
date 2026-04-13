@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Platform\PlatformSupport\Services\SquareCanvasImageService;
 use Webkul\Attribute\Models\Attribute;
 use Webkul\Attribute\Repositories\AttributeFamilyRepository;
 use Webkul\Category\Models\Category;
@@ -831,7 +832,7 @@ class SampleCatalogSeeder extends Seeder
     {
         $attributeId = $this->resolveAttributeId($attributeCode);
         $now = now();
-        $swatchValue = $swatchUrl ? $this->downloadRemoteMediaFile($swatchUrl) : null;
+        $swatchValue = $swatchUrl ? $this->downloadRemoteSquareCanvasMediaFile($swatchUrl) : null;
 
         $option = DB::table('attribute_options')
             ->where('attribute_id', $attributeId)
@@ -896,10 +897,18 @@ class SampleCatalogSeeder extends Seeder
 
         $product->super_attributes()->sync([$colorAttributeId, $sizeAttributeId]);
 
-        $this->persistCatalogProduct(
-            $product,
-            [
-                'name' => 'Mens Summer Solid Color Short Sleeve Tees and Premium Breathable Elegant Casual Shirts Hawaiian Inspired Cotton Linen Tops',
+        $galleryImages = [
+            'https://ae-pic-a1.aliexpress-media.com/kf/S9d0a462a7035491d9ccd6940fdc1cedc0.jpg_480x480q75.jpg_.avif',
+            'https://ae-pic-a1.aliexpress-media.com/kf/Sd9daab5604014997af9d9dfc8aa45dbcn.jpg_480x480q75.jpg_.avif',
+            'https://ae-pic-a1.aliexpress-media.com/kf/S3a8302b2775c449a8e8ac9eb4e45d309V.jpg_480x480q75.jpg_.avif',
+            'https://ae-pic-a1.aliexpress-media.com/kf/Sb5cd3bb87d264f8f8f25bb06e050e04f1.jpg_480x480q75.jpg_.avif',
+            'https://ae-pic-a1.aliexpress-media.com/kf/See5126c7b00f45978f21cc120adba697H.jpg_480x480q75.jpg_.avif',
+        ];
+
+            $this->persistCatalogProduct(
+                $product,
+                [
+                    'name' => 'Mens Summer Solid Color Short Sleeve Tees and Premium Breathable Elegant Casual Shirts Hawaiian Inspired Cotton Linen Tops',
                 'product_number' => 'ALIEXPRESS-SHIRT-001',
                 'url_key' => 'mens-summer-solid-color-short-sleeve-shirt',
                 'short_description' => 'A breathable AliExpress shirt sample with image swatches, sizes, and product gallery media.',
@@ -912,19 +921,17 @@ class SampleCatalogSeeder extends Seeder
                 'visible_individually' => 1,
                 'manage_stock' => 0,
                 'brand' => $brandOptionId,
-            ],
-            [
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/S9d0a462a7035491d9ccd6940fdc1cedc0.jpg_480x480q75.jpg_.avif'),
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/Sd9daab5604014997af9d9dfc8aa45dbcn.jpg_480x480q75.jpg_.avif'),
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/S3a8302b2775c449a8e8ac9eb4e45d309V.jpg_480x480q75.jpg_.avif'),
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/Sb5cd3bb87d264f8f8f25bb06e050e04f1.jpg_480x480q75.jpg_.avif'),
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/See5126c7b00f45978f21cc120adba697H.jpg_480x480q75.jpg_.avif'),
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/S98dfce130d2a43078de8992bc83f4b15A.jpg_480x480q75.jpg_.avif'),
-                $this->downloadRemoteMediaFile('https://ae-pic-a1.aliexpress-media.com/kf/S9d0a462a7035491d9ccd6940fdc1cedc0.jpg_960x960q75.jpg_.avif'),
-            ],
-            [
-                $inventorySourceId => 0,
-            ],
+                ],
+                [
+                    $this->downloadRemoteMediaFile($galleryImages[0]),
+                    $this->downloadRemoteMediaFile($galleryImages[1]),
+                    $this->downloadRemoteMediaFile($galleryImages[2]),
+                    $this->downloadRemoteMediaFile($galleryImages[3]),
+                    $this->downloadRemoteMediaFile($galleryImages[4]),
+                ],
+                [
+                    $inventorySourceId => 0,
+                ],
             'ae_color',
             'ae_size'
         );
@@ -933,32 +940,32 @@ class SampleCatalogSeeder extends Seeder
             [
                 'label' => 'Dark Blue',
                 'slug' => 'dark-blue',
-                'swatch_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S9f94fafe8077415d80bb4626c8b6ce95K.jpg_220x220q75.jpg_.avif',
-                'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S9d0a462a7035491d9ccd6940fdc1cedc0.jpg_480x480q75.jpg_.avif',
+                'gallery_url' => $galleryImages[0],
+                'swatch_url' => $galleryImages[0],
             ],
             [
                 'label' => 'Gray',
                 'slug' => 'gray',
-                'swatch_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Sac9a3b2810b84f119c2be8b92366362bx.jpg_220x220q75.jpg_.avif',
-                'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Sd9daab5604014997af9d9dfc8aa45dbcn.jpg_480x480q75.jpg_.avif',
+                'gallery_url' => $galleryImages[1],
+                'swatch_url' => $galleryImages[1],
             ],
             [
                 'label' => 'Khaki',
                 'slug' => 'khaki',
-                'swatch_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S4b909a119f514e9d9063e7148cb8072fj.jpg_220x220q75.jpg_.avif',
-                'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S3a8302b2775c449a8e8ac9eb4e45d309V.jpg_480x480q75.jpg_.avif',
+                'gallery_url' => $galleryImages[2],
+                'swatch_url' => $galleryImages[2],
             ],
             [
                 'label' => 'White',
                 'slug' => 'white',
-                'swatch_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Saf1bfe95145e45f696f723b0a35e3709K.jpg_220x220q75.jpg_.avif',
-                'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/Sb5cd3bb87d264f8f8f25bb06e050e04f1.jpg_480x480q75.jpg_.avif',
+                'gallery_url' => $galleryImages[3],
+                'swatch_url' => $galleryImages[3],
             ],
             [
                 'label' => 'Light Blue',
                 'slug' => 'light-blue',
-                'swatch_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/S676978f5d03246c89be6de49521b7971N.jpg_220x220q75.jpg_.avif',
-                'image_url' => 'https://ae-pic-a1.aliexpress-media.com/kf/See5126c7b00f45978f21cc120adba697H.jpg_480x480q75.jpg_.avif',
+                'gallery_url' => $galleryImages[4],
+                'swatch_url' => $galleryImages[4],
             ],
         ];
 
@@ -992,7 +999,7 @@ class SampleCatalogSeeder extends Seeder
                         'ae_size' => $sizeOptionId,
                     ],
                     [
-                        $color['image_url'],
+                        $this->downloadRemoteMediaFile($color['gallery_url']),
                     ],
                     'ae_color',
                     'ae_size'
@@ -1027,6 +1034,17 @@ class SampleCatalogSeeder extends Seeder
         $disk->put($relativePath, $response->body());
 
         return $relativePath;
+    }
+
+    private function downloadRemoteSquareCanvasMediaFile(string $url, int $size = 220): string
+    {
+        $sourceRelativePath = $this->downloadRemoteMediaFile($url);
+
+        return app(SquareCanvasImageService::class)->fromRelativePath(
+            $sourceRelativePath,
+            'sample-catalog/aliexpress/swatches',
+            $size
+        );
     }
 
     private function storeDemoMediaFile(string $targetPath, string $relativePath): ?string

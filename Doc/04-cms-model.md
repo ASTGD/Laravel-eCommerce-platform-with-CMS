@@ -15,6 +15,8 @@ Implemented authoring surfaces:
 - page version restore
 - nested section component authoring
 
+The public storefront uses these structures only when `EXPERIENCE_CMS_STOREFRONT_MODE=cms` is enabled. Native Bagisto storefront routing remains the default runtime mode.
+
 ## Persisted Entities
 
 ### Pages

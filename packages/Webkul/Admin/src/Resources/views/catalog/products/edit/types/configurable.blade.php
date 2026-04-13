@@ -31,6 +31,13 @@
                 <div class="flex items-center gap-x-1">
                     <div
                         class="secondary-button"
+                        @click="generateVariants"
+                    >
+                        Generate Variants
+                    </div>
+
+                    <div
+                        class="secondary-button"
                         @click="$refs.variantCreateModal.open()"
                     >
                         @lang('admin::app.catalog.products.edit.types.configurable.add-btn')
@@ -391,7 +398,7 @@
                                                         <x-admin::form.control-group.control
                                                             type="text"
                                                             name="weight"
-                                                            ::rules="{ required: true, regex: /^([0-9]*[1-9][0-9]*(\.[0-9]+)?|[0]+\.[0-9]*[1-9][0-9]*)$/ }"
+                                                            ::rules="{ required: true, decimal: true, min_value: 0 }"
                                                             value="0"
                                                             :label="trans('admin::app.catalog.products.edit.types.configurable.mass-edit.weight')"
                                                         />
@@ -1002,7 +1009,7 @@
                                             <x-admin::form.control-group.control
                                                 type="text"
                                                 name="weight"
-                                                ::rules="{ required: true, regex: /^([0-9]*[1-9][0-9]*(\.[0-9]+)?|[0]+\.[0-9]*[1-9][0-9]*)$/ }"
+                                                ::rules="{ required: true, decimal: true, min_value: 0 }"
                                                 ::value="variant.weight"
                                                 :label="trans('admin::app.catalog.products.edit.types.configurable.edit.weight')"
                                             />
@@ -1097,6 +1104,8 @@
                 return {
                     defaultId: parseInt('{{ $product->additional['default_variant_id'] ?? null }}'),
 
+                    variantGenerationSequence: 0,
+
                     variants: @json($product->variants()->with(['attribute_family', 'images', 'inventories'])->get()),
 
                     superAttributes: @json($product->super_attributes()->with(['options', 'options.attribute', 'options.translations'])->get()),
@@ -1134,17 +1143,16 @@
                         return;
                     }
 
-                    const optionIds = Object.values(params);
+                    const sku = this.generateVariantSku(params);
+                    const name = this.generateVariantName(params);
 
                     this.variants.push(Object.assign({
-                        id: 'variant_' + this.variants.length,
-                        sku: '{{ $product->sku }}' + '-variant-' + optionIds.join('-'),
-                        name: '',
-                        price: 0,
-                        status: 1,
-                        weight: 0,
-                        inventories: {},
-                        images: []
+                        id: this.generateTemporaryVariantId(),
+                        sku,
+                        name,
+                    }, this.getGeneratedVariantDefaults(params), {
+                        openEditorOnMount: true,
+                        selected: false,
                     }, params));
 
                     resetForm();
@@ -1152,11 +1160,220 @@
                     this.$refs.variantCreateModal.close();
                 },
 
+                generateVariants() {
+                    if (! this.superAttributes.length) {
+                        this.$emitter.emit('add-flash', {
+                            type: 'warning',
+                            message: 'Select configurable attributes first.',
+                        });
+
+                        return;
+                    }
+
+                    const combinations = this.generateCombinations(
+                        this.superAttributes.map((attribute) => {
+                            return attribute.options.map((option) => ({
+                                [attribute.code]: option.id,
+                            }));
+                        })
+                    );
+
+                    let createdCount = 0;
+
+                    combinations.forEach((combination) => {
+                        const alreadyExists = this.variants.some((variant) => {
+                            return this.superAttributes.every((attribute) => {
+                                return String(variant[attribute.code] ?? '') === String(combination[attribute.code] ?? '');
+                            });
+                        });
+
+                        if (alreadyExists) {
+                            return;
+                        }
+
+                        this.variants.push({
+                            id: this.generateTemporaryVariantId(),
+                            sku: this.generateVariantSku(combination),
+                            name: this.generateVariantName(combination),
+                            ...this.getGeneratedVariantDefaults(combination),
+                            openEditorOnMount: false,
+                            selected: false,
+                            ...combination,
+                        });
+
+                        createdCount++;
+                    });
+
+                    const incompleteVariantCount = this.variants.filter((variant) => {
+                        return ! this.isVariantCombinationComplete(variant);
+                    }).length;
+
+                    if (! createdCount) {
+                        this.$emitter.emit('add-flash', {
+                            type: 'warning',
+                            message: 'All variant combinations already exist.',
+                        });
+
+                        return;
+                    }
+
+                    this.$emitter.emit('add-flash', {
+                        type: 'success',
+                        message: `Generated ${createdCount} variant combination${createdCount === 1 ? '' : 's'}.`,
+                    });
+
+                    if (incompleteVariantCount) {
+                        this.$emitter.emit('add-flash', {
+                            type: 'warning',
+                            message: 'Some existing variants still do not match the current configurable attributes. Remove or update them before saving.',
+                        });
+                    }
+                },
+
+                generateCombinations(optionGroups, current = {}, index = 0) {
+                    if (! optionGroups.length) {
+                        return [];
+                    }
+
+                    if (index >= optionGroups.length) {
+                        return [current];
+                    }
+
+                    return optionGroups[index].flatMap((option) => {
+                        return this.generateCombinations(optionGroups, {
+                            ...current,
+                            ...option,
+                        }, index + 1);
+                    });
+                },
+
                 removeVariant(variant) {
                     this.$emitter.emit('open-confirm-modal', {
                         agree: () => {
                             this.variants.splice(this.variants.indexOf(variant), 1);
                         },
+                    });
+                },
+
+                generateTemporaryVariantId() {
+                    this.variantGenerationSequence += 1;
+
+                    return `variant_${Date.now()}_${this.variantGenerationSequence}`;
+                },
+
+                getGeneratedVariantDefaults(params) {
+                    const sourceVariant = this.findClosestVariant(params);
+
+                    return {
+                        price: this.normalizeVariantNumericValue(sourceVariant?.price, 0),
+                        status: sourceVariant?.status ?? 1,
+                        weight: this.normalizeVariantNumericValue(sourceVariant?.weight, 0),
+                        inventories: this.cloneVariantInventories(sourceVariant?.inventories ?? {}),
+                        images: [],
+                    };
+                },
+
+                findClosestVariant(params) {
+                    if (! this.variants.length) {
+                        return null;
+                    }
+
+                    const rankedVariants = this.variants
+                        .map((variant) => {
+                            let score = 0;
+
+                            this.superAttributes.forEach((attribute) => {
+                                const requestedValue = params?.[attribute.code];
+                                const currentValue = variant?.[attribute.code];
+
+                                if (
+                                    requestedValue === undefined
+                                    || requestedValue === null
+                                    || requestedValue === ''
+                                    || currentValue === undefined
+                                    || currentValue === null
+                                    || currentValue === ''
+                                ) {
+                                    return;
+                                }
+
+                                if (String(requestedValue) === String(currentValue)) {
+                                    score++;
+                                }
+                            });
+
+                            return { variant, score };
+                        })
+                        .filter(({ score }) => score > 0)
+                        .sort((left, right) => right.score - left.score);
+
+                    return rankedVariants[0]?.variant ?? this.variants.find((variant) => typeof variant.id !== 'string') ?? this.variants[0];
+                },
+
+                normalizeVariantNumericValue(value, fallback = 0) {
+                    if (value === undefined || value === null || value === '') {
+                        return fallback;
+                    }
+
+                    return value;
+                },
+
+                cloneVariantInventories(inventories) {
+                    return JSON.parse(JSON.stringify(inventories));
+                },
+
+                generateVariantSku(params, existingVariant = null) {
+                    const skuParts = ['{{ $product->sku }}'];
+
+                    this.superAttributes.forEach((attribute) => {
+                        const optionId = params?.[attribute.code] ?? existingVariant?.[attribute.code];
+
+                        if (! optionId) {
+                            return;
+                        }
+
+                        const option = attribute.options.find((item) => String(item.id) === String(optionId));
+
+                        if (option?.admin_name) {
+                            skuParts.push(option.admin_name);
+                        }
+                    });
+
+                    return skuParts
+                        .join('-')
+                        .replace(/[^A-Za-z0-9-]+/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/^-|-$/g, '')
+                        .toUpperCase();
+                },
+
+                generateVariantName(params, existingVariant = null) {
+                    const optionLabels = [];
+
+                    this.superAttributes.forEach((attribute) => {
+                        const optionId = params?.[attribute.code] ?? existingVariant?.[attribute.code];
+
+                        if (! optionId) {
+                            return;
+                        }
+
+                        const option = attribute.options.find((item) => String(item.id) === String(optionId));
+
+                        if (option?.admin_name) {
+                            optionLabels.push(option.admin_name);
+                        }
+                    });
+
+                    if (! optionLabels.length) {
+                        return '{{ addslashes($product->name) }}';
+                    }
+
+                    return `{{ addslashes($product->name) }} - ${optionLabels.join(' / ')}`;
+                },
+
+                isVariantCombinationComplete(variant) {
+                    return this.superAttributes.every((attribute) => {
+                        return Boolean(variant[attribute.code]);
                     });
                 },
             }
@@ -1511,8 +1728,10 @@
             },
 
             mounted() {
-                if (typeof this.variant.id === 'string' || this.variant.id instanceof String) {
+                if (this.variant.openEditorOnMount) {
                     this.$refs.editVariantDrawer.open();
+
+                    this.variant.openEditorOnMount = false;
                 }
             },
 
@@ -1535,6 +1754,10 @@
             watch: {
                 variant: {
                     handler(newValue) {
+                        if (! newValue.sku) {
+                            newValue.sku = this.$parent.generateVariantSku(newValue, newValue);
+                        }
+
                         setTimeout(() => this.setFiles());
                     },
                     deep: true

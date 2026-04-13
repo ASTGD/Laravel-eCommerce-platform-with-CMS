@@ -1,8 +1,28 @@
 {!! view_render_event('bagisto.admin.catalog.product.edit.form.links.before', ['product' => $product]) !!}
-    
+
 <v-product-links></v-product-links>
 
 {!! view_render_event('bagisto.admin.catalog.product.edit.form.links.after', ['product' => $product]) !!}
+
+@php
+    $serializeLinkedProducts = function ($products) {
+        return $products->map(function ($linkedProduct) {
+            return [
+                'id' => $linkedProduct->id,
+                'type' => $linkedProduct->type,
+                'sku' => $linkedProduct->sku,
+                'name' => $linkedProduct->name,
+                'formatted_price' => $linkedProduct->formatted_price,
+                'images' => $linkedProduct->images,
+                'inventories' => $linkedProduct->inventories,
+            ];
+        })->values();
+    };
+
+    $upSells = $serializeLinkedProducts($product->up_sells()->with(['images', 'inventories'])->get());
+    $crossSells = $serializeLinkedProducts($product->cross_sells()->with(['images', 'inventories'])->get());
+    $relatedProducts = $serializeLinkedProducts($product->related_products()->with(['images', 'inventories'])->get());
+@endphp
 
 @pushOnce('scripts')
     <script
@@ -164,11 +184,11 @@
                     ],
 
                     addedProducts: {
-                        'up_sells': @json($product->up_sells()->with('images')->get()),
+                        'up_sells': @json($upSells),
 
-                        'cross_sells': @json($product->cross_sells()->with('images')->get()),
+                        'cross_sells': @json($crossSells),
 
-                        'related_products': @json($product->related_products()->with('images')->get())
+                        'related_products': @json($relatedProducts)
                     },
                 }
             },

@@ -1,5 +1,5 @@
 @php
-    $brandName = $brandName ?? 'ASTGD Ecommerce';
+    $brandName = $brandName ?? 'ASTGD ECommerce';
     $logo = core()->getConfigData('general.design.admin_logo.logo_image');
     $link = $link ?? null;
     $showName = $showName ?? true;
@@ -24,13 +24,17 @@
             alt="{{ $brandName }}"
         />
     @else
-        @include('admin.partials.brand-mark', ['class' => $markClass])
+        <img
+            class="{{ $imageClass }} max-w-[180px]"
+            src="{{ asset('images/astgd-ecommerce-logo.webp') }}"
+            alt="{{ $brandName }}"
+        />
     @endif
 
     @if ($showName)
         <span class="flex flex-col leading-none">
             <span class="{{ $eyebrowClass }}">ASTGD</span>
-            <span class="{{ $nameClass }}">Ecommerce</span>
+            <span class="{{ $nameClass }}">ECommerce</span>
         </span>
     @endif
 </{{ $tag }}>

@@ -95,7 +95,7 @@
 
                     <div class="grid gap-0.5 leading-none">
                         <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 sm:text-sm">
-                            ASTGD Ecommerce
+                            ASTGD ECommerce
                         </p>
 
                         <p class="text-[11px] text-gray-400 sm:text-xs">

@@ -54,7 +54,7 @@ Verification was executed through a temporary Docker PHP 8.3 image with the requ
   - `/`
   - `/admin/login`
   - `/customer/login`
-  - `/home-preview`
+  - `/home-preview` when `EXPERIENCE_CMS_STOREFRONT_MODE=cms`
 - smoke tests:
   - `packages/Webkul/Admin/tests/Feature/ExampleTest.php`
   - `packages/Webkul/Installer/tests/Feature/InstallerSecurityTest.php`
@@ -66,7 +66,7 @@ Verification was executed through a temporary Docker PHP 8.3 image with the requ
 - Bagisto installation completed successfully
 - the database migrated successfully on MySQL
 - the neutral platform seeders completed successfully after install
-- storefront, admin login, customer login, and homepage preview returned `200 OK`
+- storefront, admin login, and customer login returned `200 OK`; homepage preview returned `200 OK` when CMS storefront mode was enabled
 - root storefront assets now compile to both CSS and JS build artifacts
 - smoke tests passed: `10` tests, `19` assertions
 

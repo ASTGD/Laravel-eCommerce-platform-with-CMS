@@ -60,10 +60,16 @@ use Webkul\Shop\Http\Controllers\ProductsCategoriesProxyController;
 
 class ExperienceCmsServiceProvider extends ServiceProvider
 {
+    private function usesCmsStorefront(): bool
+    {
+        return config('experience-cms.storefront_mode') === 'cms';
+    }
+
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../../config/menu.php', 'menu.admin');
         $this->mergeConfigFrom(__DIR__.'/../../config/acl.php', 'acl');
+        $this->mergeConfigFrom(__DIR__.'/../../config/experience-cms.php', 'experience-cms');
 
         $this->app->singleton(SectionTypeRegistry::class, function () {
             return new SectionTypeRegistry([
@@ -108,8 +114,11 @@ class ExperienceCmsServiceProvider extends ServiceProvider
         $this->app->bind(MenuResolverContract::class, MenuResolver::class);
         $this->app->bind(HeaderResolverContract::class, HeaderResolver::class);
         $this->app->bind(FooterResolverContract::class, FooterResolver::class);
-        $this->app->bind(HomeController::class, CmsAwareHomeController::class);
-        $this->app->bind(ProductsCategoriesProxyController::class, CmsAwareProductsCategoriesProxyController::class);
+
+        if ($this->usesCmsStorefront()) {
+            $this->app->bind(HomeController::class, CmsAwareHomeController::class);
+            $this->app->bind(ProductsCategoriesProxyController::class, CmsAwareProductsCategoriesProxyController::class);
+        }
     }
 
     public function boot(): void
@@ -117,8 +126,10 @@ class ExperienceCmsServiceProvider extends ServiceProvider
         Route::middleware(['web', PreventRequestsDuringMaintenance::class])
             ->group(__DIR__.'/../../routes/admin.php');
 
-        Route::middleware(['web', PreventRequestsDuringMaintenance::class])
-            ->group(__DIR__.'/../../routes/storefront.php');
+        if ($this->usesCmsStorefront()) {
+            Route::middleware(['web', PreventRequestsDuringMaintenance::class])
+                ->group(__DIR__.'/../../routes/storefront.php');
+        }
 
         Route::getRoutes()->refreshNameLookups();
         Route::getRoutes()->refreshActionLookups();

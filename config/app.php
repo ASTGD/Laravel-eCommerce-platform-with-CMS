@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Reusable Commerce Platform'),
+    'name' => env('APP_NAME', 'ASTGD ECommerce'),
 
     /*
     |--------------------------------------------------------------------------

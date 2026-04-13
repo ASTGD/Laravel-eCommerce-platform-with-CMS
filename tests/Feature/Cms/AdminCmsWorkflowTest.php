@@ -393,6 +393,10 @@ it('creates a category page assignment from the admin screen', function () {
 });
 
 it('redirects admin preview to a signed storefront preview URL and records publish transitions', function () {
+    if (config('experience-cms.storefront_mode') !== 'cms') {
+        $this->markTestSkipped('CMS storefront mode is disabled by default.');
+    }
+
     $this->loginAsAdmin();
 
     $page = Page::query()->create([

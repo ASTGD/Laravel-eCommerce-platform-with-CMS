@@ -5,3 +5,5 @@
 !vendor/
 !vendor/admin/
 !vendor/admin/**
+!vendor/shop/
+!vendor/shop/**

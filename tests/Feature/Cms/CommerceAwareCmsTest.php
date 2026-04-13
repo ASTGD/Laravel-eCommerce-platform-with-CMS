@@ -107,6 +107,10 @@ it('falls back to the active global product assignment when no exact override ap
 });
 
 it('renders the published category page through the CMS assignment and supports signed preview', function () {
+    if (config('experience-cms.storefront_mode') !== 'cms') {
+        $this->markTestSkipped('CMS storefront mode is disabled by default.');
+    }
+
     $category = cmsTestCategory();
 
     $product = (new ProductFaker)->getSimpleProductFactory()->create([
@@ -133,6 +137,10 @@ it('renders the published category page through the CMS assignment and supports 
 });
 
 it('renders the published product page through the CMS assignment and supports signed preview', function () {
+    if (config('experience-cms.storefront_mode') !== 'cms') {
+        $this->markTestSkipped('CMS storefront mode is disabled by default.');
+    }
+
     $product = (new ProductFaker)->getSimpleProductFactory()->create([
         'sku' => 'cms-product-smoke-product',
     ]);

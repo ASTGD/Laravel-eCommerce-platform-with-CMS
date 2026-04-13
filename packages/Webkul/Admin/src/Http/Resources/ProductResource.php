@@ -21,7 +21,7 @@ class ProductResource extends JsonResource
             'sku' => $this->sku,
             'name' => $this->name,
             'price' => $this->price,
-            'formatted_price' => core()->formatPrice($this->price),
+            'formatted_price' => $this->formatted_price,
             'images' => $this->images,
             'inventories' => $this->inventories,
             'is_options_required' => ! $this->getTypeInstance()->canBeAddedToCartWithoutOptions(),
