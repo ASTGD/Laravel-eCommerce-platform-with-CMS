@@ -70,6 +70,16 @@ Implemented Theme screen:
 
 Theme presets are still minimal in Milestone 2, but the admin CRUD is live and the selected preset is resolved by the storefront render path.
 
+## Catalog Area
+
+The product list remains Bagisto-native in structure, but now uses a parent-first hierarchy for configurable catalogs:
+
+- top-level product rows show parent products only
+- configurable variants are expanded under the parent row on demand
+- variant search by SKU or name resolves back to the parent row in the list
+
+This keeps the catalog list manageable without turning variants into a second top-level catalog.
+
 ## Page Editing Workflow
 
 The page editor is intentionally form-driven rather than builder-driven.
