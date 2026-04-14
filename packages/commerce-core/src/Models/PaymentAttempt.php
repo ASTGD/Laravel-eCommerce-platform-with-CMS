@@ -30,6 +30,10 @@ class PaymentAttempt extends Model
         'last_ipn_at',
         'callback_count',
         'ipn_count',
+        'last_reconciled_at',
+        'last_reconciled_status',
+        'last_reconciled_via',
+        'last_reconcile_error',
         'meta',
         'last_payload',
     ];
@@ -43,6 +47,7 @@ class PaymentAttempt extends Model
         'finalized_at' => 'datetime',
         'last_callback_at' => 'datetime',
         'last_ipn_at' => 'datetime',
+        'last_reconciled_at' => 'datetime',
     ];
 
     public function cart(): BelongsTo

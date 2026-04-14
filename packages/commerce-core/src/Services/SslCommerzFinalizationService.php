@@ -41,108 +41,7 @@ class SslCommerzFinalizationService
         }
 
         try {
-            $order = DB::transaction(function () use ($attempt, $validated, $source) {
-                /** @var PaymentAttempt $lockedAttempt */
-                $lockedAttempt = PaymentAttempt::query()
-                    ->whereKey($attempt->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                if ($lockedAttempt->finalized_at && $lockedAttempt->order_id) {
-                    return $lockedAttempt->order()->firstOrFail();
-                }
-
-                $this->assertAttemptMatchesValidation($lockedAttempt, $validated);
-
-                $status = $this->statusMapper->statusFromValidated($validated);
-
-                if ($status !== 'paid') {
-                    throw new SslCommerzVerificationException(
-                        $this->statusMapper->userMessageForValidated($validated),
-                        $validated,
-                        $status,
-                    );
-                }
-
-                $order = $this->findExistingOrder($lockedAttempt, $validated);
-
-                if (! $order) {
-                    $cart = $lockedAttempt->cart_id
-                        ? $this->cartRepository->find($lockedAttempt->cart_id)
-                        : null;
-
-                    if (! $cart) {
-                        throw new \RuntimeException('The checkout cart could not be restored after payment.');
-                    }
-
-                    if (! $cart->is_active) {
-                        $order = $this->findExistingOrder($lockedAttempt, $validated);
-
-                        if (! $order) {
-                            throw new \RuntimeException('This cart has already been processed.');
-                        }
-                    } else {
-                        Cart::setCart($cart);
-                        Cart::collectTotals();
-
-                        $gatewayTransactionId = $this->attemptService->extractGatewayTransactionId($validated)
-                            ?? $this->attemptService->extractGatewayTransactionId($lockedAttempt->last_payload ?? []);
-
-                        $data = (new OrderResource($cart))->jsonSerialize();
-                        $data['payment']['additional'] = array_merge(
-                            $this->attemptService->buildPaymentSnapshot($lockedAttempt, $validated),
-                            [
-                                'gateway_transaction_id' => $gatewayTransactionId,
-                                'status' => 'paid',
-                                'validation_status' => $this->statusMapper->validationStatus($validated),
-                                'finalized_via' => $source,
-                            ]
-                        );
-
-                        $order = $this->orderRepository->create($data);
-                    }
-                }
-
-                $invoice = $order->invoices()->first();
-
-                if (! $invoice && $order->canInvoice()) {
-                    $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
-                }
-
-                if ($order->status !== 'processing') {
-                    $this->orderRepository->update(['status' => 'processing'], $order->id);
-                    $order->refresh();
-                }
-
-                $this->upsertOrderTransaction($order, $invoice?->id, $lockedAttempt, $validated);
-
-                if ($lockedAttempt->cart_id && $cart = $this->cartRepository->find($lockedAttempt->cart_id)) {
-                    Cart::setCart($cart);
-
-                    if ($cart->is_active) {
-                        Cart::deActivateCart();
-                    }
-                }
-
-                $meta = $lockedAttempt->meta ?? [];
-                $meta['validated'] = $validated;
-
-                $gatewayTransactionId = $this->attemptService->extractGatewayTransactionId($validated)
-                    ?? $this->attemptService->extractGatewayTransactionId($lockedAttempt->last_payload ?? []);
-
-                $lockedAttempt->forceFill([
-                    'order_id' => $order->id,
-                    'gateway_tran_id' => $gatewayTransactionId,
-                    'status' => 'paid',
-                    'validation_status' => $this->statusMapper->validationStatus($validated),
-                    'finalized_via' => $source,
-                    'finalized_at' => now(),
-                    'meta' => $meta,
-                    'last_payload' => $validated,
-                ])->save();
-
-                return $order->fresh();
-            }, 3);
+            $order = $this->finalizeValidatedAttempt($attempt, $validated, $source);
 
             $this->attemptService->markEventProcessed($event, 'processed');
 
@@ -157,6 +56,112 @@ class SslCommerzFinalizationService
 
             throw $e;
         }
+    }
+
+    public function finalizeValidatedAttempt(PaymentAttempt $attempt, array $validated, string $source)
+    {
+        return DB::transaction(function () use ($attempt, $validated, $source) {
+            /** @var PaymentAttempt $lockedAttempt */
+            $lockedAttempt = PaymentAttempt::query()
+                ->whereKey($attempt->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedAttempt->finalized_at && $lockedAttempt->order_id) {
+                return $lockedAttempt->order()->firstOrFail();
+            }
+
+            $this->assertAttemptMatchesValidation($lockedAttempt, $validated);
+
+            $status = $this->statusMapper->statusFromValidated($validated);
+
+            if ($status !== 'paid') {
+                throw new SslCommerzVerificationException(
+                    $this->statusMapper->userMessageForValidated($validated),
+                    $validated,
+                    $status,
+                );
+            }
+
+            $order = $this->findExistingOrder($lockedAttempt, $validated);
+
+            if (! $order) {
+                $cart = $lockedAttempt->cart_id
+                    ? $this->cartRepository->find($lockedAttempt->cart_id)
+                    : null;
+
+                if (! $cart) {
+                    throw new \RuntimeException('The checkout cart could not be restored after payment.');
+                }
+
+                if (! $cart->is_active) {
+                    $order = $this->findExistingOrder($lockedAttempt, $validated);
+
+                    if (! $order) {
+                        throw new \RuntimeException('This cart has already been processed.');
+                    }
+                } else {
+                    Cart::setCart($cart);
+                    Cart::collectTotals();
+
+                    $gatewayTransactionId = $this->attemptService->extractGatewayTransactionId($validated)
+                        ?? $this->attemptService->extractGatewayTransactionId($lockedAttempt->last_payload ?? []);
+
+                    $data = (new OrderResource($cart))->jsonSerialize();
+                    $data['payment']['additional'] = array_merge(
+                        $this->attemptService->buildPaymentSnapshot($lockedAttempt, $validated),
+                        [
+                            'gateway_transaction_id' => $gatewayTransactionId,
+                            'status' => 'paid',
+                            'validation_status' => $this->statusMapper->validationStatus($validated),
+                            'finalized_via' => $source,
+                        ]
+                    );
+
+                    $order = $this->orderRepository->create($data);
+                }
+            }
+
+            $invoice = $order->invoices()->first();
+
+            if (! $invoice && $order->canInvoice()) {
+                $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
+            }
+
+            if ($order->status !== 'processing') {
+                $this->orderRepository->update(['status' => 'processing'], $order->id);
+                $order->refresh();
+            }
+
+            $this->upsertOrderTransaction($order, $invoice?->id, $lockedAttempt, $validated);
+
+            if ($lockedAttempt->cart_id && $cart = $this->cartRepository->find($lockedAttempt->cart_id)) {
+                Cart::setCart($cart);
+
+                if ($cart->is_active) {
+                    Cart::deActivateCart();
+                }
+            }
+
+            $meta = $lockedAttempt->meta ?? [];
+            $meta['validated'] = $validated;
+
+            $gatewayTransactionId = $this->attemptService->extractGatewayTransactionId($validated)
+                ?? $this->attemptService->extractGatewayTransactionId($lockedAttempt->last_payload ?? []);
+
+            $lockedAttempt->forceFill([
+                'order_id' => $order->id,
+                'gateway_tran_id' => $gatewayTransactionId,
+                'status' => 'paid',
+                'validation_status' => $this->statusMapper->validationStatus($validated),
+                'finalized_via' => $source,
+                'finalized_at' => now(),
+                'meta' => $meta,
+                'last_payload' => $validated,
+            ])->save();
+
+            return $order->fresh();
+        }, 3);
     }
 
     protected function assertAttemptMatchesValidation(PaymentAttempt $attempt, array $validated): void

@@ -5,6 +5,7 @@ namespace Platform\CommerceCore\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Http\Controllers\API\OnepageController as CommerceOnepageApiController;
 use Platform\CommerceCore\Http\Controllers\OnepageController as CommerceOnepageController;
@@ -34,6 +35,12 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ReconcilePendingPaymentsCommand::class,
+            ]);
+        }
+
         Route::middleware(['web', 'shop', PreventRequestsDuringMaintenance::class])
             ->group(__DIR__.'/../../routes/web.php');
 
