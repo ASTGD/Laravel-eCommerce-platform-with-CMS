@@ -218,3 +218,28 @@ Recommended role split before frontend work begins:
 - menu authoring is flat-form only
 - version comparison and diff UX are not yet implemented
 - customer portal page authoring is still deferred to a later workstream
+
+## Checkout Configuration
+
+The sales configuration area now includes the Bangladesh-specific checkout controls needed for this product install:
+
+- `Configuration > Sales > Shipping Methods > Courier`
+- `Configuration > Sales > Payment Methods > Payment Channel`
+- `Configuration > Sales > Payment Methods > SSLCOMMERZ Gateway`
+- `Configuration > Sales > Payment Methods > bKash`
+- `Configuration > Sales > Payment Methods > Nagad`
+- `Configuration > Sales > Payment Methods > Bank Card`
+
+Current shipping behavior:
+
+- `Courier` is a single carrier with two selectable storefront rates
+- `Home Delivery`
+- `Courier Pick-up`
+
+Current payment behavior:
+
+- `Payment Channel = Default` keeps the native Bagisto storefront methods
+- `Payment Channel = Custom` switches the storefront to the curated Bangladesh set
+- `Cash On Delivery` remains available in both modes when it is enabled
+- the first online card gateway target is `SSLCOMMERZ`
+- `bKash`, `Nagad`, and `Bank Card` are exposed as separate storefront choices backed by the shared SSLCOMMERZ credential block

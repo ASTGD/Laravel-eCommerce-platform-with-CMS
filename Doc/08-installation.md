@@ -127,6 +127,39 @@ Important:
 - once `.env` uses `DB_HOST=mysql` and `REDIS_HOST=redis`, prefer `./vendor/bin/sail artisan ...` over host `php artisan ...`
 - host artisan commands can fail because the service hostnames only resolve inside the Docker network
 
+## Bangladesh Checkout Configuration
+
+After install, configure the Bangladesh checkout slice in admin if you want to use the curated local storefront methods:
+
+1. Go to `Configuration > Sales > Shipping Methods > Courier`
+2. Enable `Courier`
+3. Set `Home Delivery` and `Courier Pick-up` titles and rates
+4. Go to `Configuration > Sales > Payment Methods > Payment Channel`
+5. Set `Storefront Payment Channel` to `Custom`
+6. Go to `Configuration > Sales > Payment Methods > SSLCOMMERZ Gateway`
+7. Enter the SSLCOMMERZ `Store ID` and `Store Password`
+8. Review:
+   - `Request Timeout (seconds)`
+   - `Strict Amount Validation`
+   - `Store Raw Gateway Payloads`
+9. Configure the SSLCOMMERZ hosted return and IPN URLs against the active storefront host
+10. Enable any of:
+   - `bKash`
+   - `Nagad`
+   - `Bank Card`
+11. Keep `Cash On Delivery` enabled if you want it to appear in both native and curated storefront modes
+
+Operational notes:
+
+- successful redirects and IPNs are validated against the SSLCOMMERZ validation API before the order is finalized
+- repeated callback/IPN calls are deduplicated through persistent payment attempts
+- gateway callback URLs must use the current storefront host, not a stale localhost or old LAN IP
+
+Checkout behavior in this slice:
+
+- failed or cancelled online payments return the customer to the checkout payment step
+- successful checkout for signed-in customers shows both `Continue Shopping` and `See Order`
+
 ## Verification
 
 - `./vendor/bin/sail artisan about` succeeds
