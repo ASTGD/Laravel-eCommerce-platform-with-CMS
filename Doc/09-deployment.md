@@ -38,3 +38,7 @@
   - success callback creates one order
   - invoice is created once
   - repeated redirect/IPN calls do not duplicate fulfillment
+- when payment state looks stale, admin can reconcile a single order from `Sales > Orders` or review the full payment attempt timeline in `Sales > Payments`
+- the platform now exposes a reconciliation command for pending SSLCOMMERZ attempts:
+  - `php artisan platform:payments:reconcile-pending`
+  - run it manually first before scheduling it automatically

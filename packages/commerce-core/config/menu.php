@@ -7,5 +7,11 @@ return [
         'route' => 'admin.sales.pickup-points.index',
         'sort'  => 8,
         'icon'  => '',
+    ], [
+        'key'   => 'sales.payments',
+        'name'  => 'Payments',
+        'route' => 'admin.sales.payments.index',
+        'sort'  => 9,
+        'icon'  => '',
     ],
 ];

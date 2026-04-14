@@ -243,3 +243,14 @@ Current payment behavior:
 - `Cash On Delivery` remains available in both modes when it is enabled
 - the first online card gateway target is `SSLCOMMERZ`
 - `bKash`, `Nagad`, and `Bank Card` are exposed as separate storefront choices backed by the shared SSLCOMMERZ credential block
+
+## Payment Operations
+
+The sales area now also exposes payment operations for external Bangladesh gateway traffic:
+
+- `Sales > Payments`
+- payment attempt detail
+- manual payment reconciliation from the payment attempt detail screen
+- manual payment reconciliation from the admin order view when the order is backed by an SSLCOMMERZ payment attempt
+
+The payment operations view is intended for support and fulfillment use, not storefront authoring. It exists so repeated callbacks, delayed gateway confirmations, and pending validations can be reviewed without inspecting logs directly.
