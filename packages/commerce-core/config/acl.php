@@ -41,5 +41,10 @@ return [
         'name'  => 'Reconcile Payment',
         'route' => 'admin.sales.orders.payments.reconcile',
         'sort'  => 10,
+    ], [
+        'key'   => 'sales.orders.refresh_refund_status',
+        'name'  => 'Refresh Refund Status',
+        'route' => 'admin.sales.orders.payment_refunds.refresh',
+        'sort'  => 11,
     ],
 ];

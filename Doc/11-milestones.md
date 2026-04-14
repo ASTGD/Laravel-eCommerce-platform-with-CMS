@@ -122,3 +122,16 @@ Proceed to Milestone 3 while preserving the current backend-complete CMS model a
 - product page resolution
 - theme assignment resolution
 - shared site settings and content entry usage
+
+## Bangladesh Payment Sequence Note
+
+The Bangladesh payment work should proceed in this order:
+
+1. finish the SSLCOMMERZ operational slice completely
+   - reconciliation
+   - refund workflow
+   - production hardening
+2. start direct `bKash` as a separate payment provider
+3. defer direct `Nagad` until after the direct `bKash` stage is stable
+
+This means the current `bKash` and `Nagad` storefront labels exposed through the custom payment channel should still be treated as SSLCOMMERZ-backed methods until the direct provider work is implemented.

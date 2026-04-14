@@ -65,6 +65,11 @@ class PaymentAttempt extends Model
         return $this->hasMany(PaymentGatewayEvent::class);
     }
 
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(PaymentRefund::class);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(OrderProxy::modelClass(), 'order_id');

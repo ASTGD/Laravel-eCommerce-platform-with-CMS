@@ -38,6 +38,11 @@
   - success callback creates one order
   - invoice is created once
   - repeated redirect/IPN calls do not duplicate fulfillment
+- after refund enablement, verify one controlled refund in the merchant environment:
+  - refund request is accepted by SSLCOMMERZ
+  - admin order view shows refund history and status
+  - customer order detail shows the refund reference and status
+  - pending refunds can be refreshed without creating duplicate local refund records
 - when payment state looks stale, admin can reconcile a single order from `Sales > Orders` or review the full payment attempt timeline in `Sales > Payments`
 - the platform now exposes a reconciliation command for pending SSLCOMMERZ attempts:
   - `php artisan platform:payments:reconcile-pending`

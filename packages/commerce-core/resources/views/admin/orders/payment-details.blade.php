@@ -4,6 +4,10 @@
         ->where('order_id', $order->id)
         ->latest('id')
         ->first();
+    $paymentRefunds = \Platform\CommerceCore\Models\PaymentRefund::query()
+        ->where('order_id', $order->id)
+        ->latest('id')
+        ->get();
 @endphp
 
 @if (data_get($paymentAdditional, 'provider') === 'sslcommerz' || $paymentAttempt)
@@ -54,6 +58,56 @@
                     </button>
                 </form>
             @endif
+        </div>
+    @endif
+
+    @if ($paymentRefunds->isNotEmpty())
+        <div class="mt-4 rounded border border-slate-200 p-3 dark:border-gray-800">
+            <p class="font-semibold text-gray-800 dark:text-white">
+                Refund History
+            </p>
+
+            <div class="mt-3 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                @foreach ($paymentRefunds as $paymentRefund)
+                    <div class="rounded border border-slate-200 p-3 dark:border-gray-800">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1">
+                                <p>Refund Amount: {{ core()->formatBasePrice((float) $paymentRefund->requested_amount) }}</p>
+                                <p>Status: {{ strtoupper($paymentRefund->status) }}</p>
+
+                                @if ($paymentRefund->gateway_refund_ref)
+                                    <p>Refund Reference: {{ $paymentRefund->gateway_refund_ref }}</p>
+                                @endif
+
+                                @if ($paymentRefund->gateway_status)
+                                    <p>Gateway Status: {{ $paymentRefund->gateway_status }}</p>
+                                @endif
+
+                                @if ($paymentRefund->reason)
+                                    <p>Reason: {{ $paymentRefund->reason }}</p>
+                                @endif
+
+                                @if ($paymentRefund->last_error)
+                                    <p>Last Error: {{ $paymentRefund->last_error }}</p>
+                                @endif
+                            </div>
+
+                            @if (
+                                in_array($paymentRefund->status, ['pending', 'invalid'], true)
+                                && bouncer()->hasPermission('sales.orders.refresh_refund_status')
+                            )
+                                <form method="POST" action="{{ route('admin.sales.orders.payment_refunds.refresh', $paymentRefund) }}">
+                                    @csrf
+
+                                    <button type="submit" class="secondary-button">
+                                        Refresh Refund Status
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
     @endif
 @endif
