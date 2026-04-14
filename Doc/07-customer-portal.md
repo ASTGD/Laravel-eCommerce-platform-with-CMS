@@ -14,6 +14,7 @@ The customer portal is part of the storefront theme system, not a second admin.
 - address book
 - order history
 - order detail
+- payment and refund status visibility on order detail for gateway-backed orders
 
 ## Registration Flow
 

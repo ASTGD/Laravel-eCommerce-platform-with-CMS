@@ -5,6 +5,7 @@ namespace Platform\CommerceCore\Payment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use SimpleXMLElement;
 use Platform\CommerceCore\Support\PaymentChannel;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
@@ -204,6 +205,27 @@ abstract class AbstractSslCommerzPayment extends Payment
         return in_array(strtoupper((string) ($validated['status'] ?? '')), ['VALID', 'VALIDATED'], true);
     }
 
+    public function refundTransaction(string $bankTransactionId, float $amount, string $remarks, string $referenceId): array
+    {
+        return $this->callRefundOperation('initiateRefund', [
+            'bank_tran_id' => $bankTransactionId,
+            'refund_amount' => round($amount, 2),
+            'refund_remarks' => $remarks,
+            'refe_id' => $referenceId,
+            'store_Id' => $this->getStoreId(),
+            'store_Passwd' => $this->getStorePassword(),
+        ]);
+    }
+
+    public function queryRefundStatus(string $refundReferenceId): array
+    {
+        return $this->callRefundOperation('inquiryRefund', [
+            'refund_ref_id' => $refundReferenceId,
+            'store_Id' => $this->getStoreId(),
+            'store_Passwd' => $this->getStorePassword(),
+        ]);
+    }
+
     protected function isHashValid(array $payload): bool
     {
         if (empty($payload['verify_key']) || empty($payload['verify_sign'])) {
@@ -231,5 +253,59 @@ abstract class AbstractSslCommerzPayment extends Payment
         return $this->isSandbox()
             ? 'https://sandbox.sslcommerz.com'
             : 'https://securepay.sslcommerz.com';
+    }
+
+    protected function callRefundOperation(string $operation, array $arguments): array
+    {
+        $payload = $this->buildSoapEnvelope($operation, $arguments);
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'text/xml; charset=utf-8',
+            'SOAPAction' => 'urn:validationquote#'.$operation,
+        ])
+            ->timeout($this->getRequestTimeout())
+            ->withBody($payload, 'text/xml; charset=utf-8')
+            ->post($this->getGatewayBaseUrl().'/validator/api/merchantTransIDvalidationAPI.php')
+            ->throw()
+            ->body();
+
+        return $this->decodeSoapJsonResponse($response);
+    }
+
+    protected function buildSoapEnvelope(string $operation, array $arguments): string
+    {
+        $argumentXml = collect($arguments)
+            ->map(fn ($value, $key) => sprintf('<urn:%s>%s</urn:%s>', $key, e((string) $value), $key))
+            ->implode('');
+
+        return <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:validationquote">
+    <soapenv:Header/>
+    <soapenv:Body>
+        <urn:{$operation}>
+            {$argumentXml}
+        </urn:{$operation}>
+    </soapenv:Body>
+</soapenv:Envelope>
+XML;
+    }
+
+    protected function decodeSoapJsonResponse(string $response): array
+    {
+        $xml = new SimpleXMLElement($response);
+        $returnNode = $xml->xpath('//*[local-name()="return"]')[0] ?? null;
+
+        if (! $returnNode) {
+            throw new \RuntimeException('SSLCOMMERZ refund response did not include a return payload.');
+        }
+
+        $decoded = json_decode((string) $returnNode, true);
+
+        if (! is_array($decoded)) {
+            throw new \RuntimeException('SSLCOMMERZ refund response could not be decoded.');
+        }
+
+        return $decoded;
     }
 }

@@ -55,6 +55,7 @@
 - `pickup_points`
 - `payment_attempts`
 - `payment_gateway_events`
+- `payment_refunds`
 
 ## Relationship Summary
 
@@ -69,3 +70,5 @@
 - A `payment_attempt` tracks one external gateway payment session for one cart and optionally one finalized order.
 - A `payment_gateway_event` stores each inbound redirect/IPN payload for audit and idempotent gateway reconciliation.
 - A `payment_attempt` also stores the last reconciliation timestamp, outcome, source, and reconcile error so payment operations can inspect pending or disputed gateway state without replaying raw callbacks.
+- A `payment_refund` tracks one external gateway refund request against one paid order and one payment attempt.
+- A `payment_refund` records refund references, refresh results, failure reasons, and the linked Bagisto refund so gateway refund state can be audited without guessing from order totals alone.

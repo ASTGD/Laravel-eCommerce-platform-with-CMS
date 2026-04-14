@@ -252,5 +252,14 @@ The sales area now also exposes payment operations for external Bangladesh gatew
 - payment attempt detail
 - manual payment reconciliation from the payment attempt detail screen
 - manual payment reconciliation from the admin order view when the order is backed by an SSLCOMMERZ payment attempt
+- refund history on the admin order view for SSLCOMMERZ-backed orders
+- refund status refresh on the admin order view for pending or invalid SSLCOMMERZ refunds
 
 The payment operations view is intended for support and fulfillment use, not storefront authoring. It exists so repeated callbacks, delayed gateway confirmations, and pending validations can be reviewed without inspecting logs directly.
+
+Refund handling stays inside the native Bagisto order workflow:
+
+- admin still starts refunds from the standard order refund action
+- SSLCOMMERZ-backed refunds are sent to the gateway during that workflow, not after a separate manual export
+- rejected gateway refunds stop the local refund from completing
+- accepted or pending gateway refunds are written to `payment_refunds` and shown back on the order for later follow-up
