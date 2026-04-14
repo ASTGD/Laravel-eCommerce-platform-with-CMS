@@ -30,6 +30,15 @@ it('should returns the profile page', function () {
         ->assertSeeText($customer->email);
 });
 
+it('should returns the account dashboard page', function () {
+    $customer = $this->loginAsCustomer();
+
+    get(route('shop.customers.account.index'))
+        ->assertOk()
+        ->assertSeeText(trans('shop::app.layouts.my-account'))
+        ->assertSeeText($customer->first_name);
+});
+
 it('should returns the edit page of the customer', function () {
     // Act and Assert.
     $customer = $this->loginAsCustomer();

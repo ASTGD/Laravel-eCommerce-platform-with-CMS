@@ -114,6 +114,14 @@ composer run dev:sail-schedule
 composer run dev:sail-down
 ```
 
+Host switching for localhost or LAN:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+./vendor/bin/sail artisan platform:storefront-host local
+./vendor/bin/sail artisan platform:storefront-host 192.168.1.25:8001
+```
+
 Important:
 
 - once `.env` uses `DB_HOST=mysql` and `REDIS_HOST=redis`, prefer `./vendor/bin/sail artisan ...` over host `php artisan ...`

@@ -349,6 +349,22 @@ composer run dev:sail-down
 
 If you want to open the dev app from another device on your local network:
 
+Use the host-switch command first so `.env`, the Bagisto channel hostname, and seeded local footer links stay in sync.
+
+Localhost mode:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+./vendor/bin/sail artisan platform:storefront-host local
+```
+
+LAN mode example:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+./vendor/bin/sail artisan platform:storefront-host 192.168.1.25:8001
+```
+
 ### 1. Find your local IP
 
 macOS:
@@ -369,15 +385,26 @@ Linux:
 hostname -I
 ```
 
-### 2. Update `.env`
+### 2. Switch the host
 
-Example:
+The command above updates:
 
-```dotenv
-APP_URL=http://192.168.1.25:8000
-APP_ADMIN_URL=admin
-VITE_HOST=0.0.0.0
-VITE_PORT=5173
+- `APP_URL` in `.env`
+- the Bagisto channel hostname
+- seeded footer links that would otherwise keep pointing at an old local IP
+
+Equivalent target for localhost:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+./vendor/bin/sail artisan platform:storefront-host local
+```
+
+Example target for LAN:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+./vendor/bin/sail artisan platform:storefront-host 192.168.1.25:8001
 ```
 
 ### 3. Bind Laravel to all interfaces
@@ -568,4 +595,4 @@ Check:
 - Laravel server was started with `--host=0.0.0.0`
 - your machine firewall allows inbound access
 - both devices are on the same network
-- `APP_URL` uses the LAN IP, not `127.0.0.1`
+- `./vendor/bin/sail artisan platform:storefront-host <your-lan-ip>:8001` was run for the current session

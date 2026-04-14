@@ -3,6 +3,8 @@
 namespace Webkul\Shop\Http\Controllers\Customer;
 
 use Cookie;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
@@ -18,6 +20,8 @@ use Webkul\Shop\Mail\Customer\RegistrationNotification;
 
 class RegistrationController extends Controller
 {
+    public const REGISTRATION_NOTICE_SESSION_KEY = 'customer_registration_notice';
+
     /**
      * Create a new controller instance.
      *
@@ -46,6 +50,8 @@ class RegistrationController extends Controller
      */
     public function store(RegistrationRequest $registrationRequest)
     {
+        $emailVerificationEnabled = (bool) core()->getConfigData('customer.settings.email.verification');
+
         $customerGroup = core()->getConfigData('customer.settings.create_new_account_options.default_group');
 
         $subscription = $this->subscriptionRepository->findOneWhere(['email' => request()->input('email')]);
@@ -59,7 +65,7 @@ class RegistrationController extends Controller
         ]), [
             'password' => bcrypt(request()->input('password')),
             'api_token' => Str::random(80),
-            'is_verified' => ! core()->getConfigData('customer.settings.email.verification'),
+            'is_verified' => ! $emailVerificationEnabled,
             'customer_group_id' => $this->customerGroupRepository->findOneWhere(['code' => $customerGroup])->id,
             'channel_id' => core()->getCurrentChannel()->id,
             'token' => md5(uniqid(rand(), true)),
@@ -97,13 +103,26 @@ class RegistrationController extends Controller
 
         Event::dispatch('customer.registration.after', $customer);
 
-        if (core()->getConfigData('customer.settings.email.verification')) {
-            session()->flash('success', trans('shop::app.customers.signup-form.success-verify'));
-        } else {
-            session()->flash('success', trans('shop::app.customers.signup-form.success'));
+        session()->put(self::REGISTRATION_NOTICE_SESSION_KEY, [
+            'email'                 => $customer->email,
+            'requires_verification' => $emailVerificationEnabled,
+        ]);
+
+        return redirect()->route('shop.customers.register.result');
+    }
+
+    /**
+     * Show the post-registration result page.
+     */
+    public function registrationResult(): View|RedirectResponse
+    {
+        if (! session()->has(self::REGISTRATION_NOTICE_SESSION_KEY)) {
+            return redirect()->route('shop.customers.register.index');
         }
 
-        return redirect()->route('shop.customer.session.index');
+        return view('shop::customers.registration-result', [
+            'notice' => session(self::REGISTRATION_NOTICE_SESSION_KEY),
+        ]);
     }
 
     /**
@@ -122,6 +141,8 @@ class RegistrationController extends Controller
                 'token' => null,
             ], $customer->id);
 
+            session()->forget(self::REGISTRATION_NOTICE_SESSION_KEY);
+
             if ((bool) core()->getConfigData('emails.general.notifications.emails.general.notifications.registration')) {
                 Mail::queue(new RegistrationNotification($customer));
             }
@@ -139,11 +160,18 @@ class RegistrationController extends Controller
     /**
      * Resend verification email.
      *
-     * @param  string  $email
      * @return Response
      */
-    public function resendVerificationEmail($email)
+    public function resendVerificationEmail(Request $request, ?string $email = null)
     {
+        $email ??= (string) $request->string('email')->trim();
+
+        if (! $email) {
+            session()->flash('error', trans('shop::app.customers.signup-form.verification-not-sent'));
+
+            return redirect()->back();
+        }
+
         $verificationData = [
             'email' => $email,
             'token' => md5(uniqid(rand(), true)),
@@ -151,10 +179,16 @@ class RegistrationController extends Controller
 
         $customer = $this->customerRepository->findOneByField('email', $email);
 
+        if (! $customer) {
+            session()->flash('error', trans('shop::app.customers.signup-form.verification-not-sent'));
+
+            return redirect()->back();
+        }
+
         $this->customerRepository->update(['token' => $verificationData['token']], $customer->id);
 
         try {
-            Mail::queue(new EmailVerificationNotification($verificationData));
+            Mail::queue(new EmailVerificationNotification($customer));
 
             if (Cookie::has('enable-resend')) {
                 Cookie::queue(Cookie::forget('enable-resend'));
@@ -170,6 +204,11 @@ class RegistrationController extends Controller
 
             return redirect()->back();
         }
+
+        session()->put(self::REGISTRATION_NOTICE_SESSION_KEY, [
+            'email'                 => $email,
+            'requires_verification' => true,
+        ]);
 
         session()->flash('success', trans('shop::app.customers.signup-form.verification-sent'));
 

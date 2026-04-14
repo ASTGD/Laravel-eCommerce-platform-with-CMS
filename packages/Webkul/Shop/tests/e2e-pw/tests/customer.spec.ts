@@ -250,7 +250,11 @@ test("should display correct message when email verfication is off", async ({
     await page.getByRole("button", { name: "Register" }).click();
 
     await expect(
-        page.getByText("Account created successfully.").first(),
+        page.getByRole("heading", { name: "Registration Successful" }),
+    ).toBeVisible();
+
+    await expect(
+        page.getByText(credentials.email).first(),
     ).toBeVisible();
 });
 
@@ -317,11 +321,19 @@ test("should display correct message when email verfication is on", async ({
     await page.getByRole("button", { name: "Register" }).click();
 
     await expect(
+        page.getByRole("heading", { name: "Check Your Email" }),
+    ).toBeVisible();
+
+    await expect(
         page
             .getByText(
                 "Account created successfully, an e-mail has been sent for verification.",
             )
             .first(),
+    ).toBeVisible();
+
+    await expect(
+        page.getByText(credentials.email).first(),
     ).toBeVisible();
 
     /**

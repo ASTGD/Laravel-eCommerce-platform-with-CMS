@@ -53,10 +53,22 @@ it('successfully logins a customer', function () {
         'email' => $customer->email,
         'password' => $password,
     ])
-        ->assertRedirectToRoute('shop.home.index')
+        ->assertRedirectToRoute('shop.customers.account.index')
         ->assertSessionMissing('error')
         ->assertSessionMissing('warning')
         ->assertSessionMissing('info');
+});
+
+it('redirects a customer to the account dashboard when explicitly requested', function () {
+    $customer = (new CustomerFaker)->factory()->create([
+        'password' => Hash::make($password = 'admin123'),
+    ]);
+
+    post(route('shop.customer.session.create'), [
+        'email'       => $customer->email,
+        'password'    => $password,
+        'redirect_to' => 'account',
+    ])->assertRedirectToRoute('shop.customers.account.index');
 });
 
 it('fails to log in a customer if the email is invalid', function () {

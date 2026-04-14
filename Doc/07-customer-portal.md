@@ -15,6 +15,15 @@ The customer portal is part of the storefront theme system, not a second admin.
 - order history
 - order detail
 
+## Registration Flow
+
+- the customer registration flow remains Bagisto-based
+- the existing admin setting at `Configuration > Customer > Settings > Email > Email Verification` is the single source of truth for storefront account verification
+- when email verification is enabled, successful registration should land on an explicit verification-pending page with resend access rather than a silent redirect
+- when email verification is disabled, successful registration should land on an explicit success page with a direct sign-in action
+- the registration-success sign-in action should direct the customer into the account dashboard, not back to storefront home
+- customer login should continue to block unverified accounts and clearly offer verification resend guidance
+
 ## Route Principle
 
 Account routes should remain storefront-facing and authenticated with customer guards, while sharing the same layout and preset system as the storefront.
