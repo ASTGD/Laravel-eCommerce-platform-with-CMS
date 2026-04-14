@@ -67,8 +67,16 @@ it('successfully registers a customer', function () {
 
     // Act and Assert.
     post(route('shop.customers.register.store'), $requestedCustomer)
-        ->assertRedirectToRoute('shop.customer.session.index')
-        ->assertSessionHas('success', trans('shop::app.customers.signup-form.success'));
+        ->assertRedirectToRoute('shop.customers.register.result')
+        ->assertSessionHas('customer_registration_notice', fn ($notice) => $notice['email'] === $requestedCustomer['email']
+            && $notice['requires_verification'] === false);
+
+    get(route('shop.customers.register.result'))
+        ->assertOk()
+        ->assertSeeText(trans('shop::app.customers.signup-form.registration-success-title'))
+        ->assertSeeText(trans('shop::app.customers.signup-form.success'))
+        ->assertSeeText($requestedCustomer['email'])
+        ->assertSee(route('shop.customer.session.index', ['redirect_to' => 'account']));
 });
 
 it('successfully registers a customer and send mail to the customer verify the account', function () {
@@ -90,8 +98,16 @@ it('successfully registers a customer and send mail to the customer verify the a
 
     // Act and Assert.
     post(route('shop.customers.register.store'), $requestedCustomer)
-        ->assertRedirectToRoute('shop.customer.session.index')
-        ->assertSessionHas('success', trans('shop::app.customers.signup-form.success-verify'));
+        ->assertRedirectToRoute('shop.customers.register.result')
+        ->assertSessionHas('customer_registration_notice', fn ($notice) => $notice['email'] === $requestedCustomer['email']
+            && $notice['requires_verification'] === true);
+
+    get(route('shop.customers.register.result'))
+        ->assertOk()
+        ->assertSeeText(trans('shop::app.customers.signup-form.verification-required-title'))
+        ->assertSeeText(trans('shop::app.customers.signup-form.success-verify'))
+        ->assertSeeText($requestedCustomer['email'])
+        ->assertSee(route('shop.customer.session.index', ['redirect_to' => 'account']));
 
     Mail::assertQueued(EmailVerificationNotification::class);
 
@@ -124,12 +140,18 @@ it('registers a customer successfully and sends a registration email to customer
 
     // Act and Assert.
     post(route('shop.customers.register.store'), $requestedCustomer)
-        ->assertRedirectToRoute('shop.customer.session.index')
-        ->assertSessionHas('success', trans('shop::app.customers.signup-form.success'));
+        ->assertRedirectToRoute('shop.customers.register.result')
+        ->assertSessionHas('customer_registration_notice', fn ($notice) => $notice['email'] === $requestedCustomer['email']
+            && $notice['requires_verification'] === false);
 
     Mail::assertQueued(AdminRegistrationNotification::class);
 
     Mail::assertQueued(ShopRegistrationNotification::class);
 
     Mail::assertQueuedCount(2);
+});
+
+it('redirects the registration result page back to sign up when no notice exists', function () {
+    get(route('shop.customers.register.result'))
+        ->assertRedirectToRoute('shop.customers.register.index');
 });

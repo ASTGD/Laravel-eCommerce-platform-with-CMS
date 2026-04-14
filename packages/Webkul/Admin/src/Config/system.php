@@ -1329,7 +1329,7 @@ return [
                 'name' => 'redirected_to_page',
                 'title' => 'admin::app.configuration.index.customer.settings.login-options.redirect-to-page',
                 'type' => 'select',
-                'default' => 'home',
+                'default' => 'account',
                 'options' => [
                     [
                         'title' => 'admin::app.configuration.index.customer.settings.login-options.home',

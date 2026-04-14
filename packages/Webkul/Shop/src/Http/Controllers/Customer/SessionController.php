@@ -20,7 +20,7 @@ class SessionController extends Controller
     public function index()
     {
         if (auth()->guard('customer')->check()) {
-            return redirect()->route('shop.home.index');
+            return redirect()->route($this->resolvedRedirectRoute(request('redirect_to')));
         }
 
         return view('shop::customers.sign-in');
@@ -68,11 +68,9 @@ class SessionController extends Controller
          */
         Event::dispatch('customer.after.login', auth()->guard()->user());
 
-        if (core()->getConfigData('customer.settings.login_options.redirected_to_page') == 'account') {
-            return redirect()->route('shop.customers.account.profile.index');
-        }
+        session()->forget(RegistrationController::REGISTRATION_NOTICE_SESSION_KEY);
 
-        return redirect()->route('shop.home.index');
+        return redirect()->route($this->resolvedRedirectRoute($loginRequest->input('redirect_to')));
     }
 
     /**
@@ -89,5 +87,21 @@ class SessionController extends Controller
         Event::dispatch('customer.after.logout', $id);
 
         return redirect()->route('shop.home.index');
+    }
+
+    /**
+     * Resolve the post-login redirect route.
+     */
+    protected function resolvedRedirectRoute(?string $requestedRedirect = null): string
+    {
+        if ($requestedRedirect === 'account') {
+            return 'shop.customers.account.index';
+        }
+
+        if (core()->getConfigData('customer.settings.login_options.redirected_to_page') === 'account') {
+            return 'shop.customers.account.index';
+        }
+
+        return 'shop.home.index';
     }
 }
