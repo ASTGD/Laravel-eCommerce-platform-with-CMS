@@ -127,7 +127,7 @@ Proceed to Milestone 3 while preserving the current backend-complete CMS model a
 
 The Bangladesh payment work should proceed in this order:
 
-1. finish the SSLCOMMERZ operational slice completely
+1. finish the SSLCommerz operational slice completely
    - reconciliation
    - refund workflow
    - production hardening
@@ -136,6 +136,6 @@ The Bangladesh payment work should proceed in this order:
 
 Current status:
 
-- the SSLCOMMERZ operational slice is complete enough for checkout, reconciliation, and refunds
+- the SSLCommerz operational slice is complete enough for checkout, reconciliation, and refunds
 - the direct `bKash` payment slice is now active with direct checkout initiation, callback finalization, payment reconciliation, and refunds
 - direct `Nagad` is still deferred

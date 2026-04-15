@@ -136,22 +136,21 @@ After install, configure the Bangladesh checkout slice in admin if you want to u
 3. Set `Home Delivery` and `Courier Pick-up` titles and rates
 4. Go to `Configuration > Sales > Payment Methods > Payment Channel`
 5. Set `Storefront Payment Channel` to `Custom`
-6. Go to `Configuration > Sales > Payment Methods > SSLCOMMERZ Gateway`
-7. Enter the SSLCOMMERZ `Store ID` and `Store Password`
+6. Go to `Configuration > Sales > Payment Methods > SSLCommerz Gateway`
+7. Enter the SSLCommerz `Store ID` and `Store Password`
 8. Review:
    - `Request Timeout (seconds)`
    - `Strict Amount Validation`
    - `Store Raw Gateway Payloads`
-9. Configure the SSLCOMMERZ hosted return and IPN URLs against the active storefront host
+9. Configure the SSLCommerz hosted return and IPN URLs against the active storefront host
 10. Enable any of:
+   - `SSLCommerz`
    - `bKash`
-   - `Nagad`
-   - `Bank Card`
 11. Keep `Cash On Delivery` enabled if you want it to appear in both native and curated storefront modes
 
 Operational notes:
 
-- successful redirects and IPNs are validated against the SSLCOMMERZ validation API before the order is finalized
+- successful redirects and IPNs are validated against the SSLCommerz validation API before the order is finalized
 - repeated callback/IPN calls are deduplicated through persistent payment attempts
 - gateway callback URLs must use the current storefront host, not a stale localhost or old LAN IP
 

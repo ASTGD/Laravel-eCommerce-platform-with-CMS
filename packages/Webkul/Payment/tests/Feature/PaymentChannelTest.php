@@ -35,9 +35,7 @@ beforeEach(function () {
     setPaymentConfig('sales.payment_methods.sslcommerz_gateway.sandbox', 1);
     setPaymentConfig('sales.payment_methods.sslcommerz_gateway.store_id', 'test_store');
     setPaymentConfig('sales.payment_methods.sslcommerz_gateway.store_password', 'test_password');
-    setPaymentConfig('sales.payment_methods.sslcommerz_card.active', 1);
-    setPaymentConfig('sales.payment_methods.sslcommerz_bkash.active', 1);
-    setPaymentConfig('sales.payment_methods.sslcommerz_nagad.active', 1);
+    setPaymentConfig('sales.payment_methods.sslcommerz.active', 1);
 });
 
 it('keeps native payment methods in default mode', function () {
@@ -46,7 +44,7 @@ it('keeps native payment methods in default mode', function () {
     expect($methods->all())
         ->toContain('cashondelivery')
         ->toContain('moneytransfer')
-        ->not->toContain('sslcommerz_card')
+        ->not->toContain('sslcommerz')
         ->not->toContain('bkash')
         ->not->toContain('sslcommerz_bkash')
         ->not->toContain('sslcommerz_nagad');
@@ -59,7 +57,7 @@ it('switches storefront payment methods to the custom Bangladesh set when custom
 
     expect($methods->all())
         ->toContain('cashondelivery')
-        ->toContain('sslcommerz_card')
+        ->toContain('sslcommerz')
         ->toContain('bkash')
         ->not->toContain('sslcommerz_bkash')
         ->not->toContain('sslcommerz_nagad')
