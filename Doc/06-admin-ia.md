@@ -224,7 +224,6 @@ Recommended role split before frontend work begins:
 The sales configuration area now includes the Bangladesh-specific checkout controls needed for this product install:
 
 - `Configuration > Sales > Shipping Methods > Courier`
-- `Configuration > Sales > Payment Methods > Payment Channel`
 - `Configuration > Sales > Payment Methods > bKash Gateway`
 - `Configuration > Sales > Payment Methods > SSLCommerz Gateway`
 - `Configuration > Sales > Payment Methods > SSLCommerz`
@@ -238,15 +237,18 @@ Current shipping behavior:
 
 Current payment behavior:
 
-- `Payment Channel = Default` keeps the native Bagisto storefront methods
-- `Payment Channel = Custom` switches the storefront to the curated Bangladesh set
-- `Cash On Delivery` remains available in both modes when it is enabled
+- the payment-method configuration screen is tabbed:
+  - `Default` tab shows the native Bagisto methods
+  - `Custom` tab shows the Bangladesh-specific methods and gateway credentials
+- the tabs are organizational only; they do not enable or disable a payment set
+- storefront checkout shows every enabled payment method across both tabs
+- `Cash On Delivery` remains available whenever it is enabled
 - `SSLCommerz Gateway` owns the hosted card / aggregator rail
 - `bKash Gateway` owns the direct official bKash credentials and callback flow
-- custom storefront mode currently exposes:
-  - `SSLCommerz` as the unified online-payment option
-  - `bKash` through the direct provider
-  - `Cash On Delivery`
+- checkout can expose any enabled mix of:
+  - native methods such as Stripe, PayPal, Razorpay, Cash On Delivery, and Money Transfer
+  - `SSLCommerz`
+  - `bKash`
 - direct `Nagad` remains deferred until the direct provider slice is implemented
 
 ## Payment Operations

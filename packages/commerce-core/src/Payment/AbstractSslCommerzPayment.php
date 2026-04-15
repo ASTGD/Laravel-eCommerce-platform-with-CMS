@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SimpleXMLElement;
-use Platform\CommerceCore\Support\PaymentChannel;
 use Platform\CommerceCore\Support\PaymentMethodRegistry;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
@@ -60,7 +59,6 @@ abstract class AbstractSslCommerzPayment extends Payment
     public function isAvailable()
     {
         return parent::isAvailable()
-            && PaymentChannel::mode() === PaymentChannel::CUSTOM
             && $this->hasValidCredentials();
     }
 

@@ -134,9 +134,9 @@ After install, configure the Bangladesh checkout slice in admin if you want to u
 1. Go to `Configuration > Sales > Shipping Methods > Courier`
 2. Enable `Courier`
 3. Set `Home Delivery` and `Courier Pick-up` titles and rates
-4. Go to `Configuration > Sales > Payment Methods > Payment Channel`
-5. Set `Storefront Payment Channel` to `Custom`
-6. Go to `Configuration > Sales > Payment Methods > SSLCommerz Gateway`
+4. Go to `Configuration > Sales > Payment Methods`
+5. Open the `Custom` tab
+6. Go to `SSLCommerz Gateway`
 7. Enter the SSLCommerz `Store ID` and `Store Password`
 8. Review:
    - `Request Timeout (seconds)`
@@ -146,7 +146,7 @@ After install, configure the Bangladesh checkout slice in admin if you want to u
 10. Enable any of:
    - `SSLCommerz`
    - `bKash`
-11. Keep `Cash On Delivery` enabled if you want it to appear in both native and curated storefront modes
+11. Open the `Default` tab and enable any native methods you also want to show alongside the custom ones
 
 Operational notes:
 

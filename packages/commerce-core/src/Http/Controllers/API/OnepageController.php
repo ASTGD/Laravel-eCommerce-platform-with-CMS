@@ -58,9 +58,7 @@ class OnepageController extends BaseOnepageController
         Cart::refreshCart();
         Cart::collectTotals();
 
-        return response()->json([
-            'payment_methods' => Payment::getSupportedPaymentMethods(),
-        ]);
+        return response()->json(Payment::getSupportedPaymentMethods());
     }
 
     public function storeOrder()

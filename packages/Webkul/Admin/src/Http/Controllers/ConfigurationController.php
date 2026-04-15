@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Admin\Http\Requests\ConfigurationForm;
@@ -55,33 +56,13 @@ class ConfigurationController extends Controller
         $data = $request->all();
 
         if (isset($data['sales']['carriers'])) {
-            $atLeastOneCarrierEnabled = false;
-
-            foreach ($data['sales']['carriers'] as $carrier) {
-                if ($carrier['active']) {
-                    $atLeastOneCarrierEnabled = true;
-
-                    break;
-                }
-            }
-
-            if (! $atLeastOneCarrierEnabled) {
+            if (! $this->hasEnabledConfigurationGroup($data['sales']['carriers'])) {
                 session()->flash('error', trans('admin::app.configuration.index.enable-at-least-one-shipping'));
 
                 return redirect()->back();
             }
         } elseif (isset($data['sales']['payment_methods'])) {
-            $atLeastOnePaymentMethodEnabled = false;
-
-            foreach ($data['sales']['payment_methods'] as $paymentMethod) {
-                if ($paymentMethod['active']) {
-                    $atLeastOnePaymentMethodEnabled = true;
-
-                    break;
-                }
-            }
-
-            if (! $atLeastOnePaymentMethodEnabled) {
+            if (! $this->hasEnabledPaymentMethod($data)) {
                 session()->flash('error', trans('admin::app.configuration.index.enable-at-least-one-payment'));
 
                 return redirect()->back();
@@ -93,6 +74,77 @@ class ConfigurationController extends Controller
         session()->flash('success', trans('admin::app.configuration.index.save-message'));
 
         return redirect()->back();
+    }
+
+    /**
+     * Determine whether the submitted configuration contains at least one
+     * toggleable group with the active flag enabled.
+     */
+    protected function hasEnabledConfigurationGroup(array $groups): bool
+    {
+        foreach ($groups as $group) {
+            if (! is_array($group)) {
+                continue;
+            }
+
+            if (
+                array_key_exists('active', $group)
+                && (bool) $group['active']
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Limit payment validation to the tab-selected method groups when the
+     * payment-method configuration UI provides that metadata.
+     */
+    protected function hasEnabledPaymentMethod(array $data): bool
+    {
+        $groups = $data['sales']['payment_methods'] ?? [];
+
+        $activeConfiguration = system_config()->getActiveConfigurationItem();
+
+        if (
+            ! $activeConfiguration
+            || $activeConfiguration->getChildren()->isEmpty()
+        ) {
+            return $this->hasEnabledConfigurationGroup($groups);
+        }
+
+        foreach ($activeConfiguration->getChildren() as $child) {
+            $groupKey = Str::afterLast($child->getKey(), '.');
+
+            $hasActiveToggle = $child->getFields()->contains(
+                fn ($field) => $field->getName() === 'active'
+            );
+
+            if (! $hasActiveToggle) {
+                continue;
+            }
+
+            $submittedGroup = $groups[$groupKey] ?? null;
+
+            if (
+                is_array($submittedGroup)
+                && array_key_exists('active', $submittedGroup)
+            ) {
+                if ((bool) $submittedGroup['active']) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if ((bool) system_config()->getConfigData($child->getKey().'.active', $data['channel'] ?? null, $data['locale'] ?? null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

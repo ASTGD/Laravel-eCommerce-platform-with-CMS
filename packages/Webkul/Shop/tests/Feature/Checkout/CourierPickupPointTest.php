@@ -149,7 +149,15 @@ it('stores the selected pickup point on the order and shows it in the customer o
     postJson(route('shop.checkout.onepage.shipping_methods.store'), [
         'shipping_method' => 'courier_pickup',
         'pickup_point_id' => $pickupPoint->id,
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonStructure([
+            'payment_methods' => [[
+                'method',
+                'method_title',
+                'description',
+                'sort',
+            ]],
+        ]);
 
     postJson(route('shop.checkout.onepage.payment_methods.store'), [
         'payment' => [

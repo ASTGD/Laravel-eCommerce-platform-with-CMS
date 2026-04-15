@@ -19,7 +19,6 @@ uses(ProvidePaymentHelpers::class);
 function configurePaymentOperationsSslCommerz(): void
 {
     foreach ([
-        'sales.payment_methods.mode.channel' => 'custom',
         'sales.payment_methods.cashondelivery.active' => 1,
         'sales.payment_methods.sslcommerz_gateway.sandbox' => 1,
         'sales.payment_methods.sslcommerz_gateway.store_id' => 'test_store',
@@ -44,7 +43,6 @@ function configurePaymentOperationsSslCommerz(): void
 function configurePaymentOperationsBkash(): void
 {
     foreach ([
-        'sales.payment_methods.mode.channel' => 'custom',
         'sales.payment_methods.cashondelivery.active' => 1,
         'sales.payment_methods.bkash.active' => 1,
         'sales.payment_methods.bkash_gateway.sandbox' => 1,

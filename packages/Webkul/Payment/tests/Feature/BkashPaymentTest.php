@@ -27,7 +27,6 @@ function setBkashConfig(string $code, mixed $value): void
 }
 
 beforeEach(function () {
-    setBkashConfig('sales.payment_methods.mode.channel', 'custom');
     setBkashConfig('sales.payment_methods.cashondelivery.active', 1);
     setBkashConfig('sales.payment_methods.bkash.active', 1);
     setBkashConfig('sales.payment_methods.bkash_gateway.sandbox', 1);

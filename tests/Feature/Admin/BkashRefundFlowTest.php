@@ -20,7 +20,6 @@ uses(ProvidePaymentHelpers::class);
 function configureBkashRefundGateway(): void
 {
     foreach ([
-        'sales.payment_methods.mode.channel' => 'custom',
         'sales.payment_methods.cashondelivery.active' => 1,
         'sales.payment_methods.bkash.active' => 1,
         'sales.payment_methods.bkash_gateway.sandbox' => 1,
