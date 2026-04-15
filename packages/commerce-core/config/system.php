@@ -27,10 +27,82 @@ return [
             ],
         ],
     ], [
+        'key'  => 'sales.payment_methods.bkash_gateway',
+        'name' => 'bKash Gateway',
+        'info' => 'Direct bKash checkout credentials and endpoint configuration.',
+        'sort' => 8,
+        'fields' => [
+            [
+                'name' => 'sandbox',
+                'title' => 'Sandbox',
+                'type' => 'boolean',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => true,
+            ], [
+                'name' => 'sandbox_base_url',
+                'title' => 'Sandbox Base URL',
+                'type' => 'text',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'base_url',
+                'title' => 'Live Base URL',
+                'type' => 'text',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'username',
+                'title' => 'Username',
+                'type' => 'text',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'password',
+                'title' => 'Password',
+                'type' => 'password',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'app_key',
+                'title' => 'App Key',
+                'type' => 'text',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'app_secret',
+                'title' => 'App Secret',
+                'type' => 'password',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'request_timeout',
+                'title' => 'Request Timeout (seconds)',
+                'type' => 'text',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => 30,
+            ], [
+                'name' => 'strict_amount_validation',
+                'title' => 'Strict Amount Validation',
+                'type' => 'boolean',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => true,
+            ], [
+                'name' => 'log_payloads',
+                'title' => 'Store Raw Gateway Payloads',
+                'type' => 'boolean',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => true,
+            ],
+        ],
+    ], [
         'key'  => 'sales.payment_methods.sslcommerz_gateway',
         'name' => 'SSLCOMMERZ Gateway',
         'info' => 'Shared credentials for SSLCOMMERZ-based Bangladesh payment methods.',
-        'sort' => 8,
+        'sort' => 9,
         'fields' => [
             [
                 'name' => 'sandbox',
@@ -78,7 +150,7 @@ return [
         'key'  => 'sales.payment_methods.sslcommerz_card',
         'name' => 'Bank Card',
         'info' => 'Hosted SSLCOMMERZ card and online banking option.',
-        'sort' => 9,
+        'sort' => 10,
         'fields' => [
             [
                 'name' => 'active',
@@ -131,7 +203,7 @@ return [
         'key'  => 'sales.payment_methods.sslcommerz_bkash',
         'name' => 'bKash',
         'info' => 'Direct customers to the bKash gateway inside SSLCOMMERZ.',
-        'sort' => 10,
+        'sort' => 11,
         'fields' => [
             [
                 'name' => 'active',
@@ -191,7 +263,7 @@ return [
         'key'  => 'sales.payment_methods.sslcommerz_nagad',
         'name' => 'Nagad',
         'info' => 'Direct customers to the Nagad gateway when the SSLCOMMERZ account exposes it.',
-        'sort' => 11,
+        'sort' => 12,
         'fields' => [
             [
                 'name' => 'active',
@@ -245,6 +317,59 @@ return [
                 'channel_based' => true,
                 'locale_based' => false,
                 'default' => 3,
+            ],
+        ],
+    ], [
+        'key'  => 'sales.payment_methods.bkash',
+        'name' => 'bKash',
+        'info' => 'Direct official bKash checkout option.',
+        'sort' => 13,
+        'fields' => [
+            [
+                'name' => 'active',
+                'title' => 'Status',
+                'type' => 'boolean',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'title',
+                'title' => 'Title',
+                'type' => 'text',
+                'validation' => 'required_if:active,1',
+                'channel_based' => true,
+                'locale_based' => true,
+                'default' => 'bKash',
+            ], [
+                'name' => 'description',
+                'title' => 'Description',
+                'type' => 'textarea',
+                'channel_based' => true,
+                'locale_based' => true,
+                'default' => 'Pay directly with bKash',
+            ], [
+                'name' => 'image',
+                'title' => 'Logo',
+                'type' => 'image',
+                'validation' => 'mimes:bmp,jpeg,jpg,png,webp',
+                'channel_based' => true,
+                'locale_based' => false,
+            ], [
+                'name' => 'sort',
+                'title' => 'Sort Order',
+                'type' => 'select',
+                'options' => [
+                    ['title' => '1', 'value' => 1],
+                    ['title' => '2', 'value' => 2],
+                    ['title' => '3', 'value' => 3],
+                    ['title' => '4', 'value' => 4],
+                    ['title' => '5', 'value' => 5],
+                    ['title' => '6', 'value' => 6],
+                    ['title' => '7', 'value' => 7],
+                    ['title' => '8', 'value' => 8],
+                ],
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => 2,
             ],
         ],
     ], [

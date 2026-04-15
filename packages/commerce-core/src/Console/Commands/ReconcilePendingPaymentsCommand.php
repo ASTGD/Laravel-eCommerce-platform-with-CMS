@@ -3,18 +3,19 @@
 namespace Platform\CommerceCore\Console\Commands;
 
 use Illuminate\Console\Command;
-use Platform\CommerceCore\Services\SslCommerzReconciliationService;
+use Platform\CommerceCore\Services\PaymentReconciliationService;
 
 class ReconcilePendingPaymentsCommand extends Command
 {
     protected $signature = 'platform:payments:reconcile-pending
+        {--provider= : Restrict reconciliation to a single provider (sslcommerz or bkash)}
         {--limit=50 : Maximum number of attempts to reconcile}
         {--older-than= : Only reconcile attempts updated at or before N minutes ago}';
 
-    protected $description = 'Reconcile pending SSLCOMMERZ payment attempts and finalize verified paid orders exactly once.';
+    protected $description = 'Reconcile pending external payment attempts and finalize verified paid orders exactly once.';
 
     public function __construct(
-        protected SslCommerzReconciliationService $reconciliationService,
+        protected PaymentReconciliationService $reconciliationService,
     ) {
         parent::__construct();
     }
@@ -22,6 +23,7 @@ class ReconcilePendingPaymentsCommand extends Command
     public function handle(): int
     {
         $result = $this->reconciliationService->reconcilePending(
+            provider: $this->option('provider') ?: null,
             limit: (int) $this->option('limit'),
             olderThanMinutes: $this->option('older-than') !== null ? (int) $this->option('older-than') : null,
         );

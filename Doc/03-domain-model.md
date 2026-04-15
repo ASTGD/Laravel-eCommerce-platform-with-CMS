@@ -68,6 +68,7 @@
 - Header/footer configs and theme presets are resolved globally or per page later.
 - A `pickup_point` is selected against checkout shipping context and copied into the final order shipping snapshot.
 - A `payment_attempt` tracks one external gateway payment session for one cart and optionally one finalized order.
+- A `payment_attempt.provider` currently resolves either `sslcommerz` or direct `bkash`, so payment operations remain provider-aware without forking the order model.
 - A `payment_gateway_event` stores each inbound redirect/IPN payload for audit and idempotent gateway reconciliation.
 - A `payment_attempt` also stores the last reconciliation timestamp, outcome, source, and reconcile error so payment operations can inspect pending or disputed gateway state without replaying raw callbacks.
 - A `payment_refund` tracks one external gateway refund request against one paid order and one payment attempt.

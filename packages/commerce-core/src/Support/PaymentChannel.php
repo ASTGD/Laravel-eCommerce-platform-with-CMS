@@ -10,8 +10,7 @@ final class PaymentChannel
 
     public const CUSTOM_METHOD_CODES = [
         'sslcommerz_card',
-        'sslcommerz_bkash',
-        'sslcommerz_nagad',
+        'bkash',
     ];
 
     public static function mode(): string

@@ -43,6 +43,34 @@ function configurePaymentOperationsSslCommerz(): void
     }
 }
 
+function configurePaymentOperationsBkash(): void
+{
+    foreach ([
+        'sales.payment_methods.mode.channel' => 'custom',
+        'sales.payment_methods.cashondelivery.active' => 1,
+        'sales.payment_methods.bkash.active' => 1,
+        'sales.payment_methods.bkash_gateway.sandbox' => 1,
+        'sales.payment_methods.bkash_gateway.sandbox_base_url' => 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+        'sales.payment_methods.bkash_gateway.username' => 'sandbox-user',
+        'sales.payment_methods.bkash_gateway.password' => 'sandbox-password',
+        'sales.payment_methods.bkash_gateway.app_key' => 'sandbox-app-key',
+        'sales.payment_methods.bkash_gateway.app_secret' => 'sandbox-app-secret',
+        'sales.payment_methods.bkash_gateway.request_timeout' => 30,
+        'sales.payment_methods.bkash_gateway.strict_amount_validation' => 1,
+        'sales.payment_methods.bkash_gateway.log_payloads' => 1,
+    ] as $code => $value) {
+        CoreConfig::query()->updateOrCreate(
+            [
+                'code' => $code,
+                'channel_code' => 'default',
+            ],
+            [
+                'value' => (string) $value,
+            ],
+        );
+    }
+}
+
 beforeEach(function () {
     configurePaymentOperationsSslCommerz();
 });
@@ -200,4 +228,145 @@ it('reconciles pending sslcommerz attempts through the batch command', function 
         ->and(Order::query()->where('cart_id', $cart->id)->count())->toBe(1)
         ->and(Invoice::query()->where('order_id', $attempt->order_id)->count())->toBe(1)
         ->and(OrderTransaction::query()->where('transaction_id', 'bank-command-reconcile')->count())->toBe(1);
+});
+
+it('reconciles a direct bkash payment attempt from admin and stays idempotent on repeat runs', function () {
+    configurePaymentOperationsBkash();
+
+    $cart = $this->createCartWithItems('bkash', [
+        'base_currency_code' => 'BDT',
+        'channel_currency_code' => 'BDT',
+        'cart_currency_code' => 'BDT',
+    ]);
+
+    $attempt = PaymentAttempt::query()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $cart->customer_id,
+        'provider' => 'bkash',
+        'method_code' => 'bkash',
+        'merchant_tran_id' => "bkash_invoice_{$cart->id}_ADMIN_RECONCILE",
+        'session_key' => "payment-{$cart->id}-admin",
+        'currency' => 'BDT',
+        'amount' => (float) $cart->base_grand_total,
+        'status' => 'redirected',
+    ]);
+
+    Http::fake([
+        'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+            'statusCode' => '0000',
+            'statusMessage' => 'Successful',
+            'id_token' => 'reconcile-id-token',
+            'refresh_token' => 'reconcile-refresh-token',
+            'expires_in' => 3600,
+        ], 200),
+        'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/payment/status' => Http::response([
+            'statusCode' => '0000',
+            'statusMessage' => 'Successful',
+            'paymentID' => $attempt->session_key,
+            'trxID' => 'bkash-admin-reconcile',
+            'transactionStatus' => 'Completed',
+            'amount' => (string) $cart->base_grand_total,
+            'currency' => 'BDT',
+            'merchantInvoiceNumber' => $attempt->merchant_tran_id,
+            'payerReference' => $cart->billing_address->phone,
+            'customerMsisdn' => $cart->billing_address->phone,
+        ], 200),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.payments.reconcile', $attempt))
+        ->assertRedirect(route('admin.sales.payments.view', $attempt))
+        ->assertSessionHas('success', 'Payment reconciliation completed.');
+
+    $order = Order::query()->where('cart_id', $cart->id)->first();
+
+    expect($order)->not->toBeNull()
+        ->and(Invoice::query()->where('order_id', $order->id)->count())->toBe(1)
+        ->and(OrderTransaction::query()->where('transaction_id', 'bkash-admin-reconcile')->count())->toBe(1);
+
+    $attempt->refresh();
+
+    expect($attempt->status)->toBe('paid')
+        ->and($attempt->last_reconciled_via)->toBe('manual_reconcile')
+        ->and($attempt->last_reconciled_status)->toBe('COMPLETED');
+
+    get(route('admin.sales.orders.view', $order->id))
+        ->assertOk()
+        ->assertSeeText('View Payment Attempt')
+        ->assertSeeText('Reconcile Payment')
+        ->assertSeeText('bKash Details');
+
+    post(route('admin.sales.orders.payments.reconcile', $order->id))
+        ->assertRedirect(route('admin.sales.orders.view', $order->id))
+        ->assertSessionHas('success', 'Payment reconciliation completed.');
+
+    expect(Order::query()->where('cart_id', $cart->id)->count())->toBe(1)
+        ->and(Invoice::query()->where('order_id', $order->id)->count())->toBe(1)
+        ->and(OrderTransaction::query()->where('transaction_id', 'bkash-admin-reconcile')->count())->toBe(1)
+        ->and(PaymentGatewayEvent::query()->where('payment_attempt_id', $attempt->id)->where('event_type', 'manual_reconcile')->count())->toBe(2);
+});
+
+it('reconciles pending bkash attempts through the batch command', function () {
+    configurePaymentOperationsBkash();
+
+    $cart = $this->createCartWithItems('bkash', [
+        'base_currency_code' => 'BDT',
+        'channel_currency_code' => 'BDT',
+        'cart_currency_code' => 'BDT',
+    ]);
+
+    $attempt = PaymentAttempt::query()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $cart->customer_id,
+        'provider' => 'bkash',
+        'method_code' => 'bkash',
+        'merchant_tran_id' => "bkash_invoice_{$cart->id}_COMMAND_RECONCILE",
+        'session_key' => "payment-{$cart->id}-command",
+        'currency' => 'BDT',
+        'amount' => (float) $cart->base_grand_total,
+        'status' => 'redirected',
+    ]);
+
+    PaymentAttempt::query()
+        ->whereKey($attempt->id)
+        ->update([
+            'created_at' => now()->subMinutes(10),
+            'updated_at' => now()->subMinutes(10),
+        ]);
+
+    Http::fake([
+        'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/token/grant' => Http::response([
+            'statusCode' => '0000',
+            'statusMessage' => 'Successful',
+            'id_token' => 'command-id-token',
+            'refresh_token' => 'command-refresh-token',
+            'expires_in' => 3600,
+        ], 200),
+        'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized/checkout/payment/status' => Http::response([
+            'statusCode' => '0000',
+            'statusMessage' => 'Successful',
+            'paymentID' => $attempt->session_key,
+            'trxID' => 'bkash-command-reconcile',
+            'transactionStatus' => 'Completed',
+            'amount' => (string) $cart->base_grand_total,
+            'currency' => 'BDT',
+            'merchantInvoiceNumber' => $attempt->merchant_tran_id,
+        ], 200),
+    ]);
+
+    $this->artisan('platform:payments:reconcile-pending', [
+        '--provider' => 'bkash',
+        '--limit' => 10,
+        '--older-than' => 5,
+    ])
+        ->assertExitCode(0);
+
+    $attempt->refresh();
+
+    expect($attempt->status)->toBe('paid')
+        ->and($attempt->last_reconciled_via)->toBe('scheduled_reconcile')
+        ->and(Order::query()->where('cart_id', $cart->id)->count())->toBe(1)
+        ->and(Invoice::query()->where('order_id', $attempt->order_id)->count())->toBe(1)
+        ->and(OrderTransaction::query()->where('transaction_id', 'bkash-command-reconcile')->count())->toBe(1);
 });

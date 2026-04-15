@@ -16,6 +16,11 @@ The customer portal is part of the storefront theme system, not a second admin.
 - order detail
 - payment and refund status visibility on order detail for gateway-backed orders
 
+Current gateway-backed order detail coverage:
+
+- `SSLCOMMERZ` payment details and refund history
+- direct `bKash` payment details and refund history
+
 ## Registration Flow
 
 - the customer registration flow remains Bagisto-based
