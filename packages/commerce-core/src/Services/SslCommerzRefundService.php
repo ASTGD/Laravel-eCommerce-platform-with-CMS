@@ -7,6 +7,7 @@ use Platform\CommerceCore\Models\PaymentAttempt;
 use Platform\CommerceCore\Models\PaymentRefund;
 use Platform\CommerceCore\Payment\AbstractSslCommerzPayment;
 use Platform\CommerceCore\Repositories\PaymentRefundRepository;
+use Platform\CommerceCore\Support\PaymentMethodRegistry;
 use Webkul\Sales\Contracts\Refund as RefundContract;
 
 class SslCommerzRefundService
@@ -26,11 +27,11 @@ class SslCommerzRefundService
             ->firstOrFail();
 
         if ($attempt->status !== 'paid') {
-            throw new \RuntimeException('This SSLCOMMERZ payment is not in a refundable paid state.');
+            throw new \RuntimeException('This SSLCommerz payment is not in a refundable paid state.');
         }
 
         if (! $attempt->gateway_tran_id) {
-            throw new \RuntimeException('The SSLCOMMERZ gateway transaction reference is missing for this order.');
+            throw new \RuntimeException('The SSLCommerz gateway transaction reference is missing for this order.');
         }
 
         $payment = $this->resolvePayment($attempt->method_code);
@@ -166,12 +167,12 @@ class SslCommerzRefundService
             }
         }
 
-        return 'The SSLCOMMERZ refund request was rejected.';
+        return 'The SSLCommerz refund request was rejected.';
     }
 
     protected function resolvePayment(string $code): AbstractSslCommerzPayment
     {
-        $paymentConfig = config('payment_methods.'.$code);
+        $paymentConfig = config('payment_methods.'.PaymentMethodRegistry::canonicalCode($code));
 
         if (! $paymentConfig || ! isset($paymentConfig['class'])) {
             throw new \RuntimeException("Payment method [{$code}] is not configured.");
@@ -180,7 +181,7 @@ class SslCommerzRefundService
         $payment = app($paymentConfig['class']);
 
         if (! $payment instanceof AbstractSslCommerzPayment) {
-            throw new \RuntimeException("Payment method [{$code}] is not an SSLCOMMERZ payment.");
+            throw new \RuntimeException("Payment method [{$code}] is not an SSLCommerz payment.");
         }
 
         return $payment;
@@ -193,7 +194,7 @@ class SslCommerzRefundService
             ->sum('requested_amount');
 
         if (($reserved + $amount) - (float) $attempt->amount > 0.01) {
-            throw new \RuntimeException('The requested refund exceeds the captured SSLCOMMERZ payment amount.');
+            throw new \RuntimeException('The requested refund exceeds the captured SSLCommerz payment amount.');
         }
     }
 

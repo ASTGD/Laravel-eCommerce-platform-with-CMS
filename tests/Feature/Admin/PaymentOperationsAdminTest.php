@@ -27,9 +27,7 @@ function configurePaymentOperationsSslCommerz(): void
         'sales.payment_methods.sslcommerz_gateway.request_timeout' => 30,
         'sales.payment_methods.sslcommerz_gateway.strict_amount_validation' => 1,
         'sales.payment_methods.sslcommerz_gateway.log_payloads' => 1,
-        'sales.payment_methods.sslcommerz_card.active' => 1,
-        'sales.payment_methods.sslcommerz_bkash.active' => 1,
-        'sales.payment_methods.sslcommerz_nagad.active' => 1,
+        'sales.payment_methods.sslcommerz.active' => 1,
     ] as $code => $value) {
         CoreConfig::query()->updateOrCreate(
             [
@@ -86,7 +84,7 @@ it('shows the admin payments index', function () {
 it('shows the payment attempt detail page with gateway events', function () {
     $attempt = PaymentAttempt::query()->create([
         'provider' => 'sslcommerz',
-        'method_code' => 'sslcommerz_card',
+        'method_code' => 'sslcommerz',
         'merchant_tran_id' => 'attempt-view-001',
         'currency' => 'BDT',
         'amount' => 1500,
@@ -116,7 +114,7 @@ it('shows the payment attempt detail page with gateway events', function () {
 });
 
 it('reconciles a payment attempt from admin and stays idempotent on repeat runs', function () {
-    $cart = $this->createCartWithItems('sslcommerz_card', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -126,7 +124,7 @@ it('reconciles a payment attempt from admin and stays idempotent on repeat runs'
         'cart_id' => $cart->id,
         'customer_id' => $cart->customer_id,
         'provider' => 'sslcommerz',
-        'method_code' => 'sslcommerz_card',
+        'method_code' => 'sslcommerz',
         'merchant_tran_id' => "cart_{$cart->id}_ADMIN_RECONCILE",
         'currency' => 'BDT',
         'amount' => (float) $cart->base_grand_total,
@@ -139,7 +137,7 @@ it('reconciles a payment attempt from admin and stays idempotent on repeat runs'
             'tran_id' => $attempt->merchant_tran_id,
             'bank_tran_id' => 'bank-admin-reconcile',
             'value_a' => (string) $cart->id,
-            'value_b' => 'sslcommerz_card',
+            'value_b' => 'sslcommerz',
             'currency_type' => 'BDT',
             'amount' => (string) $cart->base_grand_total,
         ], 200),

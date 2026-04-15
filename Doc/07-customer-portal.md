@@ -18,7 +18,7 @@ The customer portal is part of the storefront theme system, not a second admin.
 
 Current gateway-backed order detail coverage:
 
-- `SSLCOMMERZ` payment details and refund history
+- `SSLCommerz` payment details and refund history
 - direct `bKash` payment details and refund history
 
 ## Registration Flow

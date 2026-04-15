@@ -27,9 +27,7 @@ function configureSslRefundGateway(): void
         'sales.payment_methods.sslcommerz_gateway.request_timeout' => 30,
         'sales.payment_methods.sslcommerz_gateway.strict_amount_validation' => 1,
         'sales.payment_methods.sslcommerz_gateway.log_payloads' => 1,
-        'sales.payment_methods.sslcommerz_card.active' => 1,
-        'sales.payment_methods.sslcommerz_bkash.active' => 1,
-        'sales.payment_methods.sslcommerz_nagad.active' => 1,
+        'sales.payment_methods.sslcommerz.active' => 1,
     ] as $code => $value) {
         CoreConfig::query()->updateOrCreate(
             ['code' => $code, 'channel_code' => 'default'],
@@ -47,7 +45,7 @@ function sslSoapJsonResponse(array $payload, string $operation): string
     );
 }
 
-function createPaidSslOrderForRefundTest($test, string $method = 'sslcommerz_card'): Order
+function createPaidSslOrderForRefundTest($test, string $method = 'sslcommerz'): Order
 {
     $cart = $test->createCartWithItems($method, [
         'base_currency_code' => 'BDT',

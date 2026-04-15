@@ -29,11 +29,11 @@
 
 ## Bangladesh Payment Deployment Notes
 
-- SSLCOMMERZ `success`, `fail`, `cancel`, and `ipn` URLs must point to the production storefront host
+- SSLCommerz `success`, `fail`, `cancel`, and `ipn` URLs must point to the production storefront host
 - callback/IPN traffic must reach the application directly over HTTPS
-- `sales.payment_methods.sslcommerz_gateway.strict_amount_validation` should remain enabled unless SSLCOMMERZ support requires a different amount contract
+- `sales.payment_methods.sslcommerz_gateway.strict_amount_validation` should remain enabled unless SSLCommerz support requires a different amount contract
 - `sales.payment_methods.sslcommerz_gateway.log_payloads` can be disabled in stricter environments if raw callback retention is not desired
-- direct bKash credentials must be configured separately from SSLCOMMERZ:
+- direct bKash credentials must be configured separately from SSLCommerz:
   - `sales.payment_methods.bkash_gateway.username`
   - `sales.payment_methods.bkash_gateway.password`
   - `sales.payment_methods.bkash_gateway.app_key`
@@ -47,7 +47,7 @@
   - success callback creates one order
   - invoice is created once
   - repeated redirect/IPN calls do not duplicate fulfillment
-- after enabling direct bKash, verify one end-to-end bKash payment separately from SSLCOMMERZ:
+- after enabling direct bKash, verify one end-to-end bKash payment separately from SSLCommerz:
   - token grant succeeds
   - create payment returns a `bkashURL`
   - success callback executes or queries the payment once

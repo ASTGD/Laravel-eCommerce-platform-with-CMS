@@ -7,12 +7,50 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SimpleXMLElement;
 use Platform\CommerceCore\Support\PaymentChannel;
+use Platform\CommerceCore\Support\PaymentMethodRegistry;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
 
 abstract class AbstractSslCommerzPayment extends Payment
 {
     protected array $gatewayTypes = [];
+
+    public function getConfigData($field)
+    {
+        $value = parent::getConfigData($field);
+
+        if ($value !== null && $value !== '') {
+            return $value;
+        }
+
+        if ($this->getCode() !== PaymentMethodRegistry::SSLCOMMERZ) {
+            return $value;
+        }
+
+        if ($field === 'active') {
+            foreach (array_keys(PaymentMethodRegistry::LEGACY_SSLCOMMERZ_CODES) as $legacyCode) {
+                if ((bool) core()->getConfigData('sales.payment_methods.'.$legacyCode.'.active')) {
+                    return true;
+                }
+            }
+
+            return $value;
+        }
+
+        if (! in_array($field, ['image', 'sort'], true)) {
+            return $value;
+        }
+
+        foreach (array_keys(PaymentMethodRegistry::LEGACY_SSLCOMMERZ_CODES) as $legacyCode) {
+            $legacyValue = core()->getConfigData('sales.payment_methods.'.$legacyCode.'.'.$field);
+
+            if ($legacyValue !== null && $legacyValue !== '') {
+                return $legacyValue;
+            }
+        }
+
+        return $value;
+    }
 
     public function getRedirectUrl()
     {
@@ -135,7 +173,7 @@ abstract class AbstractSslCommerzPayment extends Payment
             ->json();
 
         if (($response['status'] ?? null) !== 'SUCCESS') {
-            throw new \RuntimeException($response['failedreason'] ?? 'Unable to initiate SSLCOMMERZ payment session.');
+            throw new \RuntimeException($response['failedreason'] ?? 'Unable to initiate SSLCommerz payment session.');
         }
 
         return $response;
@@ -172,7 +210,7 @@ abstract class AbstractSslCommerzPayment extends Payment
     public function validateTransaction(array $payload): array
     {
         if (! empty($payload['verify_sign']) && ! $this->isHashValid($payload)) {
-            throw new \RuntimeException('SSLCOMMERZ hash verification failed.');
+            throw new \RuntimeException('SSLCommerz hash verification failed.');
         }
 
         $query = [
@@ -191,7 +229,7 @@ abstract class AbstractSslCommerzPayment extends Payment
 
             $url = $this->getGatewayBaseUrl().'/validator/api/merchantTransIDvalidationAPI.php';
         } else {
-            throw new \RuntimeException('SSLCOMMERZ did not return a validation id or transaction id.');
+            throw new \RuntimeException('SSLCommerz did not return a validation id or transaction id.');
         }
 
         return Http::timeout($this->getRequestTimeout())
@@ -297,13 +335,13 @@ XML;
         $returnNode = $xml->xpath('//*[local-name()="return"]')[0] ?? null;
 
         if (! $returnNode) {
-            throw new \RuntimeException('SSLCOMMERZ refund response did not include a return payload.');
+            throw new \RuntimeException('SSLCommerz refund response did not include a return payload.');
         }
 
         $decoded = json_decode((string) $returnNode, true);
 
         if (! is_array($decoded)) {
-            throw new \RuntimeException('SSLCOMMERZ refund response could not be decoded.');
+            throw new \RuntimeException('SSLCommerz refund response could not be decoded.');
         }
 
         return $decoded;

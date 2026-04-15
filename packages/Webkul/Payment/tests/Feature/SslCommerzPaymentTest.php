@@ -36,13 +36,11 @@ beforeEach(function () {
     setSslCommerzConfig('sales.payment_methods.sslcommerz_gateway.request_timeout', 30);
     setSslCommerzConfig('sales.payment_methods.sslcommerz_gateway.strict_amount_validation', 1);
     setSslCommerzConfig('sales.payment_methods.sslcommerz_gateway.log_payloads', 1);
-    setSslCommerzConfig('sales.payment_methods.sslcommerz_bkash.active', 1);
-    setSslCommerzConfig('sales.payment_methods.sslcommerz_card.active', 1);
-    setSslCommerzConfig('sales.payment_methods.sslcommerz_nagad.active', 1);
+    setSslCommerzConfig('sales.payment_methods.sslcommerz.active', 1);
 });
 
 it('starts an sslcommerz checkout session for the selected Bangladesh payment method', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -56,7 +54,7 @@ it('starts an sslcommerz checkout session for the selected Bangladesh payment me
         ], 200),
     ]);
 
-    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz_bkash']))
+    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz']))
         ->assertRedirect('https://sandbox.sslcommerz.com/EasyCheckOut/test-session');
 
     Http::assertSent(function ($request) use ($cart) {
@@ -69,25 +67,25 @@ it('starts an sslcommerz checkout session for the selected Bangladesh payment me
 
     expect($attempt)->not->toBeNull()
         ->and($attempt->provider)->toBe('sslcommerz')
-        ->and($attempt->method_code)->toBe('sslcommerz_bkash')
+        ->and($attempt->method_code)->toBe('sslcommerz')
         ->and($attempt->status)->toBe('redirected')
         ->and($attempt->session_key)->toBe('SESSION-123');
 });
 
 it('returns customers to the checkout payment step when sslcommerz payment fails', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
     ]);
 
-    get(route('commerce-core.sslcommerz.fail', ['code' => 'sslcommerz_bkash', 'value_a' => $cart->id]))
+    get(route('commerce-core.sslcommerz.fail', ['code' => 'sslcommerz', 'value_a' => $cart->id]))
         ->assertRedirect(route('shop.checkout.onepage.index', ['step' => 'payment']))
         ->assertSessionHas('error');
 });
 
 it('creates an order and invoice after a verified sslcommerz payment callback', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -103,14 +101,14 @@ it('creates an order and invoice after a verified sslcommerz payment callback', 
             'bank_tran_id' => $transactionId,
             'val_id' => $validationId,
             'value_a' => (string) $cart->id,
-            'value_b' => 'sslcommerz_bkash',
+            'value_b' => 'sslcommerz',
             'currency_type' => 'BDT',
             'amount' => (string) $cart->base_grand_total,
         ], 200),
     ]);
 
     get(route('commerce-core.sslcommerz.success', [
-        'code' => 'sslcommerz_bkash',
+        'code' => 'sslcommerz',
         'val_id' => $validationId,
         'tran_id' => "cart_{$cart->id}_20260414010101",
         'value_a' => $cart->id,
@@ -143,7 +141,7 @@ it('creates an order and invoice after a verified sslcommerz payment callback', 
 });
 
 it('does not duplicate orders or invoices when the success callback is received twice', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -161,24 +159,24 @@ it('does not duplicate orders or invoices when the success callback is received 
             'bank_tran_id' => 'bank-tran-duplicate',
             'val_id' => 'val-duplicate',
             'value_a' => (string) $cart->id,
-            'value_b' => 'sslcommerz_bkash',
+            'value_b' => 'sslcommerz',
             'currency_type' => 'BDT',
             'amount' => (string) $cart->base_grand_total,
         ], 200),
     ]);
 
-    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz_bkash']));
+    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz']));
 
     PaymentAttempt::query()->where('cart_id', $cart->id)->update([
         'merchant_tran_id' => "cart_{$cart->id}_DUPLICATE",
     ]);
 
     $payload = [
-        'code' => 'sslcommerz_bkash',
+        'code' => 'sslcommerz',
         'val_id' => 'val-duplicate',
         'tran_id' => "cart_{$cart->id}_DUPLICATE",
         'value_a' => $cart->id,
-        'value_b' => 'sslcommerz_bkash',
+        'value_b' => 'sslcommerz',
     ];
 
     get(route('commerce-core.sslcommerz.success', $payload))
@@ -200,7 +198,7 @@ it('does not duplicate orders or invoices when the success callback is received 
 });
 
 it('finalizes only once when ipn arrives before the browser success redirect', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -218,31 +216,31 @@ it('finalizes only once when ipn arrives before the browser success redirect', f
             'bank_tran_id' => 'bank-tran-ipn',
             'val_id' => 'val-ipn',
             'value_a' => (string) $cart->id,
-            'value_b' => 'sslcommerz_bkash',
+            'value_b' => 'sslcommerz',
             'currency_type' => 'BDT',
             'amount' => (string) $cart->base_grand_total,
         ], 200),
     ]);
 
-    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz_bkash']));
+    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz']));
 
     PaymentAttempt::query()->where('cart_id', $cart->id)->update([
         'merchant_tran_id' => "cart_{$cart->id}_IPN",
     ]);
 
-    post(route('commerce-core.sslcommerz.ipn', ['code' => 'sslcommerz_bkash']), [
+    post(route('commerce-core.sslcommerz.ipn', ['code' => 'sslcommerz']), [
         'val_id' => 'val-ipn',
         'tran_id' => "cart_{$cart->id}_IPN",
         'value_a' => (string) $cart->id,
-        'value_b' => 'sslcommerz_bkash',
+        'value_b' => 'sslcommerz',
     ])->assertOk();
 
     get(route('commerce-core.sslcommerz.success', [
-        'code' => 'sslcommerz_bkash',
+        'code' => 'sslcommerz',
         'val_id' => 'val-ipn',
         'tran_id' => "cart_{$cart->id}_IPN",
         'value_a' => $cart->id,
-        'value_b' => 'sslcommerz_bkash',
+        'value_b' => 'sslcommerz',
     ]))->assertRedirect(route('shop.checkout.onepage.success'));
 
     $order = Order::query()->where('cart_id', $cart->id)->first();
@@ -260,7 +258,7 @@ it('finalizes only once when ipn arrives before the browser success redirect', f
 });
 
 it('returns customers to the payment step when validation amount does not match the cart total', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -278,24 +276,24 @@ it('returns customers to the payment step when validation amount does not match 
             'bank_tran_id' => 'bank-tran-mismatch',
             'val_id' => 'val-mismatch',
             'value_a' => (string) $cart->id,
-            'value_b' => 'sslcommerz_bkash',
+            'value_b' => 'sslcommerz',
             'currency_type' => 'BDT',
             'amount' => (string) ($cart->base_grand_total + 50),
         ], 200),
     ]);
 
-    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz_bkash']));
+    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz']));
 
     PaymentAttempt::query()->where('cart_id', $cart->id)->update([
         'merchant_tran_id' => "cart_{$cart->id}_MISMATCH",
     ]);
 
     get(route('commerce-core.sslcommerz.success', [
-        'code' => 'sslcommerz_bkash',
+        'code' => 'sslcommerz',
         'val_id' => 'val-mismatch',
         'tran_id' => "cart_{$cart->id}_MISMATCH",
         'value_a' => $cart->id,
-        'value_b' => 'sslcommerz_bkash',
+        'value_b' => 'sslcommerz',
     ]))
         ->assertRedirect(route('shop.checkout.onepage.index', ['step' => 'payment']))
         ->assertSessionHas('error');
@@ -310,7 +308,7 @@ it('returns customers to the payment step when validation amount does not match 
 });
 
 it('returns customers to the checkout payment step when sslcommerz payment is cancelled', function () {
-    $cart = $this->createCartWithItems('sslcommerz_bkash', [
+    $cart = $this->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -324,12 +322,12 @@ it('returns customers to the checkout payment step when sslcommerz payment is ca
         ], 200),
     ]);
 
-    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz_bkash']));
+    get(route('commerce-core.sslcommerz.redirect', ['code' => 'sslcommerz']));
 
     $attempt = PaymentAttempt::query()->where('cart_id', $cart->id)->first();
 
     get(route('commerce-core.sslcommerz.cancel', [
-        'code' => 'sslcommerz_bkash',
+        'code' => 'sslcommerz',
         'tran_id' => $attempt->merchant_tran_id,
         'value_a' => $cart->id,
     ]))

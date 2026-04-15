@@ -4,6 +4,7 @@ namespace Platform\CommerceCore\Services;
 
 use Platform\CommerceCore\Models\PaymentRefund;
 use Platform\CommerceCore\Payment\AbstractSslCommerzPayment;
+use Platform\CommerceCore\Support\PaymentMethodRegistry;
 
 class SslCommerzRefundStatusService
 {
@@ -56,7 +57,7 @@ class SslCommerzRefundStatusService
 
     protected function resolvePayment(string $code): AbstractSslCommerzPayment
     {
-        $paymentConfig = config('payment_methods.'.$code);
+        $paymentConfig = config('payment_methods.'.PaymentMethodRegistry::canonicalCode($code));
 
         if (! $paymentConfig || ! isset($paymentConfig['class'])) {
             throw new \RuntimeException("Payment method [{$code}] is not configured.");
@@ -65,7 +66,7 @@ class SslCommerzRefundStatusService
         $payment = app($paymentConfig['class']);
 
         if (! $payment instanceof AbstractSslCommerzPayment) {
-            throw new \RuntimeException("Payment method [{$code}] is not an SSLCOMMERZ payment.");
+            throw new \RuntimeException("Payment method [{$code}] is not an SSLCommerz payment.");
         }
 
         return $payment;

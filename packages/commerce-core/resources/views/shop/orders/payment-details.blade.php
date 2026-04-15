@@ -5,9 +5,12 @@
         ->latest('id')
         ->get();
     $paymentProvider = data_get($paymentAdditional, 'provider');
+    $paymentMethodLabel = \Platform\CommerceCore\Support\PaymentMethodRegistry::labelForCode(
+        data_get($paymentAdditional, 'method_code', $order->payment?->method)
+    );
     $paymentHeading = match ($paymentProvider) {
         'bkash' => 'bKash Details',
-        'sslcommerz' => 'SSLCOMMERZ Details',
+        'sslcommerz' => 'SSLCommerz Details',
         default => null,
     };
 @endphp
@@ -18,6 +21,7 @@
             {{ $paymentHeading }}
         </p>
 
+        <p>Method: {{ $paymentMethodLabel }}</p>
         <p>Status: {{ strtoupper((string) data_get($paymentAdditional, 'validation_status', data_get($paymentAdditional, 'status', 'pending'))) }}</p>
 
         @if ($paymentProvider === 'bkash' && data_get($paymentAdditional, 'merchant_invoice_number'))

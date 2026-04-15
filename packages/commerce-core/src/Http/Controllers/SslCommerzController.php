@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Platform\CommerceCore\Payment\AbstractSslCommerzPayment;
 use Platform\CommerceCore\Services\SslCommerzAttemptService;
 use Platform\CommerceCore\Services\SslCommerzFinalizationService;
+use Platform\CommerceCore\Support\PaymentMethodRegistry;
 use Platform\CommerceCore\Support\SslCommerzStatusMapper;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Checkout\Repositories\CartRepository;
@@ -27,7 +28,7 @@ class SslCommerzController extends Controller
         $payment = $this->resolvePayment($code);
 
         if (! $payment->hasValidCredentials()) {
-            session()->flash('error', 'Configure SSLCOMMERZ credentials before enabling this payment method.');
+            session()->flash('error', 'Configure SSLCommerz credentials before enabling this payment method.');
 
             return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
         }
@@ -59,7 +60,7 @@ class SslCommerzController extends Controller
             $redirectUrl = $payment->resolveRedirectUrl($session);
 
             if (! $redirectUrl) {
-                throw new \RuntimeException('SSLCOMMERZ did not return a checkout URL.');
+                throw new \RuntimeException('SSLCommerz did not return a checkout URL.');
             }
 
             return redirect()->away($redirectUrl);
@@ -158,7 +159,7 @@ class SslCommerzController extends Controller
 
     protected function resolvePayment(string $code): AbstractSslCommerzPayment
     {
-        $paymentConfig = config('payment_methods.'.$code);
+        $paymentConfig = config('payment_methods.'.PaymentMethodRegistry::canonicalCode($code));
 
         abort_unless($paymentConfig && isset($paymentConfig['class']), 404);
 

@@ -20,7 +20,7 @@ function configureShopRefundGateway(): void
         'sales.payment_methods.sslcommerz_gateway.request_timeout' => 30,
         'sales.payment_methods.sslcommerz_gateway.strict_amount_validation' => 1,
         'sales.payment_methods.sslcommerz_gateway.log_payloads' => 1,
-        'sales.payment_methods.sslcommerz_card.active' => 1,
+        'sales.payment_methods.sslcommerz.active' => 1,
     ] as $code => $value) {
         CoreConfig::query()->updateOrCreate(
             ['code' => $code, 'channel_code' => 'default'],
@@ -104,7 +104,7 @@ function createPaidBkashOrderForShopRefundTest($test): Order
 
 function createPaidSslOrderForShopRefundTest($test): Order
 {
-    $cart = $test->createCartWithItems('sslcommerz_card', [
+    $cart = $test->createCartWithItems('sslcommerz', [
         'base_currency_code' => 'BDT',
         'channel_currency_code' => 'BDT',
         'cart_currency_code' => 'BDT',
@@ -117,18 +117,18 @@ function createPaidSslOrderForShopRefundTest($test): Order
             'bank_tran_id' => "bank-tran-{$cart->id}",
             'val_id' => "val-{$cart->id}",
             'value_a' => (string) $cart->id,
-            'value_b' => 'sslcommerz_card',
+            'value_b' => 'sslcommerz',
             'currency_type' => 'BDT',
             'amount' => (string) $cart->base_grand_total,
         ], 200),
     ]);
 
     get(route('commerce-core.sslcommerz.success', [
-        'code' => 'sslcommerz_card',
+        'code' => 'sslcommerz',
         'val_id' => "val-{$cart->id}",
         'tran_id' => "cart_{$cart->id}_SHOP_REFUND",
         'value_a' => $cart->id,
-        'value_b' => 'sslcommerz_card',
+        'value_b' => 'sslcommerz',
     ]))->assertRedirect(route('shop.checkout.onepage.success'));
 
     return Order::query()->where('cart_id', $cart->id)->firstOrFail();
@@ -145,7 +145,7 @@ it('shows sslcommerz refund history on the customer order detail page', function
         'payment_attempt_id' => \Platform\CommerceCore\Models\PaymentAttempt::query()->where('order_id', $order->id)->latest('id')->value('id'),
         'order_id' => $order->id,
         'provider' => 'sslcommerz',
-        'method_code' => 'sslcommerz_card',
+        'method_code' => 'sslcommerz',
         'merchant_tran_id' => 'merchant-refund-shop',
         'gateway_tran_id' => 'gateway-refund-shop',
         'gateway_refund_ref' => 'refund-ref-shop',

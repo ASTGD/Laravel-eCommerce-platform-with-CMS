@@ -204,7 +204,7 @@ class SslCommerzFinalizationService
 
         if ($validatedAmount === null) {
             throw new SslCommerzVerificationException(
-                'SSLCOMMERZ did not return a verifiable payment amount.',
+                'SSLCommerz did not return a verifiable payment amount.',
                 $validated,
                 'invalid',
             );
