@@ -1,5 +1,6 @@
 <?php
 
+use Platform\CommerceCore\Payment\Bkash;
 use Platform\CommerceCore\Payment\SslCommerzBkash;
 use Platform\CommerceCore\Payment\SslCommerzCard;
 use Platform\CommerceCore\Payment\SslCommerzNagad;
@@ -30,5 +31,14 @@ return [
         'description' => 'Pay with Nagad via SSLCOMMERZ',
         'active' => false,
         'sort' => 3,
+    ],
+
+    'bkash' => [
+        'class' => Bkash::class,
+        'code' => 'bkash',
+        'title' => 'bKash',
+        'description' => 'Pay directly with bKash',
+        'active' => false,
+        'sort' => 2,
     ],
 ];

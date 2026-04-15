@@ -7,13 +7,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Platform\CommerceCore\DataGrids\Sales\PaymentAttemptDataGrid;
 use Platform\CommerceCore\Models\PaymentAttempt;
-use Platform\CommerceCore\Services\SslCommerzReconciliationService;
+use Platform\CommerceCore\Services\PaymentReconciliationService;
 use Webkul\Sales\Models\Order;
 
 class PaymentAttemptController extends Controller
 {
     public function __construct(
-        protected SslCommerzReconciliationService $reconciliationService,
+        protected PaymentReconciliationService $reconciliationService,
     ) {}
 
     public function index()

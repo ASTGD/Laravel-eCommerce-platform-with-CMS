@@ -4,25 +4,47 @@
         ->where('order_id', $order->id)
         ->latest('id')
         ->get();
+    $paymentProvider = data_get($paymentAdditional, 'provider');
+    $paymentHeading = match ($paymentProvider) {
+        'bkash' => 'bKash Details',
+        'sslcommerz' => 'SSLCOMMERZ Details',
+        default => null,
+    };
 @endphp
 
-@if (data_get($paymentAdditional, 'provider') === 'sslcommerz')
+@if ($paymentHeading)
     <div class="rounded-lg bg-gray-50 p-3 text-xs text-zinc-600">
         <p class="font-medium text-navyBlue">
-            SSLCOMMERZ Details
+            {{ $paymentHeading }}
         </p>
 
         <p>Status: {{ strtoupper((string) data_get($paymentAdditional, 'validation_status', data_get($paymentAdditional, 'status', 'pending'))) }}</p>
 
-        @if (data_get($paymentAdditional, 'merchant_transaction_id'))
+        @if ($paymentProvider === 'bkash' && data_get($paymentAdditional, 'merchant_invoice_number'))
+            <p>Transaction: {{ data_get($paymentAdditional, 'merchant_invoice_number') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'sslcommerz' && data_get($paymentAdditional, 'merchant_transaction_id'))
             <p>Transaction: {{ data_get($paymentAdditional, 'merchant_transaction_id') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'bkash' && data_get($paymentAdditional, 'payment_id'))
+            <p>Payment ID: {{ data_get($paymentAdditional, 'payment_id') }}</p>
         @endif
 
         @if (data_get($paymentAdditional, 'gateway_transaction_id'))
             <p>Gateway Reference: {{ data_get($paymentAdditional, 'gateway_transaction_id') }}</p>
         @endif
 
-        @if ($paymentRefunds->isNotEmpty())
+        @if ($paymentProvider === 'bkash' && data_get($paymentAdditional, 'payer_reference'))
+            <p>Payer Reference: {{ data_get($paymentAdditional, 'payer_reference') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'bkash' && data_get($paymentAdditional, 'customer_msisdn'))
+            <p>Customer MSISDN: {{ data_get($paymentAdditional, 'customer_msisdn') }}</p>
+        @endif
+
+        @if (in_array($paymentProvider, ['sslcommerz', 'bkash'], true) && $paymentRefunds->isNotEmpty())
             <div class="mt-3 border-t border-zinc-200 pt-3">
                 <p class="font-medium text-navyBlue">
                     Refund History

@@ -8,18 +8,28 @@
         ->where('order_id', $order->id)
         ->latest('id')
         ->get();
+    $paymentProvider = $paymentAttempt?->provider ?: data_get($paymentAdditional, 'provider');
+    $paymentHeading = match ($paymentProvider) {
+        'bkash' => 'bKash Details',
+        'sslcommerz' => 'SSLCOMMERZ Details',
+        default => null,
+    };
 @endphp
 
-@if (data_get($paymentAdditional, 'provider') === 'sslcommerz' || $paymentAttempt)
+@if ($paymentHeading)
     <p class="pt-4 font-semibold text-gray-800 dark:text-white">
-        SSLCOMMERZ Details
+        {{ $paymentHeading }}
     </p>
 
     <div class="space-y-1 pt-1 text-gray-600 dark:text-gray-300">
         <p>Method: {{ $paymentAttempt?->method_code ?: data_get($paymentAdditional, 'method_code', $order->payment?->method) }}</p>
         <p>Status: {{ strtoupper((string) ($paymentAttempt?->validation_status ?: data_get($paymentAdditional, 'validation_status', data_get($paymentAdditional, 'status', 'pending')))) }}</p>
 
-        @if ($paymentAttempt?->merchant_tran_id || data_get($paymentAdditional, 'merchant_transaction_id'))
+        @if ($paymentProvider === 'bkash' && ($paymentAttempt?->merchant_tran_id || data_get($paymentAdditional, 'merchant_invoice_number')))
+            <p>Merchant Invoice: {{ $paymentAttempt?->merchant_tran_id ?: data_get($paymentAdditional, 'merchant_invoice_number') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'sslcommerz' && ($paymentAttempt?->merchant_tran_id || data_get($paymentAdditional, 'merchant_transaction_id')))
             <p>Merchant Transaction: {{ $paymentAttempt?->merchant_tran_id ?: data_get($paymentAdditional, 'merchant_transaction_id') }}</p>
         @endif
 
@@ -27,8 +37,20 @@
             <p>Gateway Transaction: {{ $paymentAttempt?->gateway_tran_id ?: data_get($paymentAdditional, 'gateway_transaction_id') }}</p>
         @endif
 
-        @if ($paymentAttempt?->session_key || data_get($paymentAdditional, 'session_key'))
+        @if ($paymentProvider === 'bkash' && ($paymentAttempt?->session_key || data_get($paymentAdditional, 'payment_id')))
+            <p>Payment ID: {{ $paymentAttempt?->session_key ?: data_get($paymentAdditional, 'payment_id') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'sslcommerz' && ($paymentAttempt?->session_key || data_get($paymentAdditional, 'session_key')))
             <p>Session Key: {{ $paymentAttempt?->session_key ?: data_get($paymentAdditional, 'session_key') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'bkash' && (data_get($paymentAdditional, 'payer_reference') || data_get($paymentAttempt?->meta, 'payer_reference')))
+            <p>Payer Reference: {{ data_get($paymentAdditional, 'payer_reference') ?: data_get($paymentAttempt?->meta, 'payer_reference') }}</p>
+        @endif
+
+        @if ($paymentProvider === 'bkash' && (data_get($paymentAdditional, 'customer_msisdn') || data_get($paymentAttempt?->meta, 'customer_msisdn')))
+            <p>Customer MSISDN: {{ data_get($paymentAdditional, 'customer_msisdn') ?: data_get($paymentAttempt?->meta, 'customer_msisdn') }}</p>
         @endif
 
         @if ($paymentAttempt?->finalized_via || data_get($paymentAdditional, 'finalized_via'))
@@ -49,7 +71,7 @@
                 View Payment Attempt
             </a>
 
-            @if (bouncer()->hasPermission('sales.orders.reconcile_payment'))
+            @if (in_array($paymentProvider, ['sslcommerz', 'bkash'], true) && bouncer()->hasPermission('sales.orders.reconcile_payment'))
                 <form method="POST" action="{{ route('admin.sales.orders.payments.reconcile', $order->id) }}">
                     @csrf
 

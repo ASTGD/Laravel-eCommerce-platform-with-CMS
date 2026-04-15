@@ -225,6 +225,7 @@ The sales configuration area now includes the Bangladesh-specific checkout contr
 
 - `Configuration > Sales > Shipping Methods > Courier`
 - `Configuration > Sales > Payment Methods > Payment Channel`
+- `Configuration > Sales > Payment Methods > bKash Gateway`
 - `Configuration > Sales > Payment Methods > SSLCOMMERZ Gateway`
 - `Configuration > Sales > Payment Methods > bKash`
 - `Configuration > Sales > Payment Methods > Nagad`
@@ -241,8 +242,13 @@ Current payment behavior:
 - `Payment Channel = Default` keeps the native Bagisto storefront methods
 - `Payment Channel = Custom` switches the storefront to the curated Bangladesh set
 - `Cash On Delivery` remains available in both modes when it is enabled
-- the first online card gateway target is `SSLCOMMERZ`
-- `bKash`, `Nagad`, and `Bank Card` are exposed as separate storefront choices backed by the shared SSLCOMMERZ credential block
+- `SSLCOMMERZ Gateway` owns the hosted card / aggregator rail
+- `bKash Gateway` owns the direct official bKash credentials and callback flow
+- custom storefront mode currently exposes:
+  - `Bank Card` through SSLCOMMERZ
+  - `bKash` through the direct provider
+  - `Cash On Delivery`
+- `Nagad` remains deferred until the direct provider slice is implemented
 
 ## Payment Operations
 
@@ -251,15 +257,20 @@ The sales area now also exposes payment operations for external Bangladesh gatew
 - `Sales > Payments`
 - payment attempt detail
 - manual payment reconciliation from the payment attempt detail screen
-- manual payment reconciliation from the admin order view when the order is backed by an SSLCOMMERZ payment attempt
-- refund history on the admin order view for SSLCOMMERZ-backed orders
-- refund status refresh on the admin order view for pending or invalid SSLCOMMERZ refunds
+- manual payment reconciliation from the admin order view when the order is backed by a supported external payment attempt
+- refund history on the admin order view for supported external payment providers
+- refund status refresh on the admin order view for pending or invalid supported gateway refunds
 
 The payment operations view is intended for support and fulfillment use, not storefront authoring. It exists so repeated callbacks, delayed gateway confirmations, and pending validations can be reviewed without inspecting logs directly.
+
+Current reconciliation coverage:
+
+- `sslcommerz` supports manual reconcile, scheduled reconcile, and refund status follow-up
+- direct `bkash` supports manual reconcile, scheduled reconcile, and refund status follow-up
 
 Refund handling stays inside the native Bagisto order workflow:
 
 - admin still starts refunds from the standard order refund action
-- SSLCOMMERZ-backed refunds are sent to the gateway during that workflow, not after a separate manual export
+- supported external-payment refunds are sent to the gateway during that workflow, not after a separate manual export
 - rejected gateway refunds stop the local refund from completing
 - accepted or pending gateway refunds are written to `payment_refunds` and shown back on the order for later follow-up

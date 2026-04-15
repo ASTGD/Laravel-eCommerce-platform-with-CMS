@@ -2,13 +2,13 @@
 
 namespace Platform\CommerceCore\Listeners;
 
-use Platform\CommerceCore\Services\SslCommerzRefundService;
+use Platform\CommerceCore\Services\PaymentRefundService;
 use Webkul\Admin\Mail\Order\RefundedNotification;
 
 class Refund extends \Webkul\Admin\Listeners\Refund
 {
     public function __construct(
-        protected SslCommerzRefundService $refundService,
+        protected PaymentRefundService $refundService,
     ) {}
 
     public function afterCreated($refund)
@@ -28,10 +28,7 @@ class Refund extends \Webkul\Admin\Listeners\Refund
 
     public function refundOrder($refund)
     {
-        $paymentAdditional = $refund->order?->payment?->additional ?? [];
-
-        if (data_get($paymentAdditional, 'provider') === 'sslcommerz') {
-            $this->refundService->requestRefund($refund);
+        if ($this->refundService->requestRefund($refund)) {
 
             return;
         }

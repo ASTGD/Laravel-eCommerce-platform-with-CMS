@@ -134,4 +134,8 @@ The Bangladesh payment work should proceed in this order:
 2. start direct `bKash` as a separate payment provider
 3. defer direct `Nagad` until after the direct `bKash` stage is stable
 
-This means the current `bKash` and `Nagad` storefront labels exposed through the custom payment channel should still be treated as SSLCOMMERZ-backed methods until the direct provider work is implemented.
+Current status:
+
+- the SSLCOMMERZ operational slice is complete enough for checkout, reconciliation, and refunds
+- the direct `bKash` payment slice is now active with direct checkout initiation, callback finalization, payment reconciliation, and refunds
+- direct `Nagad` is still deferred

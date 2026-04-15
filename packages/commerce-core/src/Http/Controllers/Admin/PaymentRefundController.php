@@ -5,12 +5,12 @@ namespace Platform\CommerceCore\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Platform\CommerceCore\Models\PaymentRefund;
-use Platform\CommerceCore\Services\SslCommerzRefundStatusService;
+use Platform\CommerceCore\Services\PaymentRefundStatusService;
 
 class PaymentRefundController extends Controller
 {
     public function __construct(
-        protected SslCommerzRefundStatusService $refundStatusService,
+        protected PaymentRefundStatusService $refundStatusService,
     ) {}
 
     public function refresh(PaymentRefund $paymentRefund): RedirectResponse
