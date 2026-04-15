@@ -3,7 +3,6 @@
 namespace Platform\CommerceCore\Payment;
 
 use Illuminate\Support\Facades\Config;
-use Platform\CommerceCore\Support\PaymentChannel;
 use Platform\CommerceCore\Support\PaymentMethodRegistry;
 use Webkul\Payment\Payment as BasePaymentManager;
 
@@ -46,20 +45,10 @@ class PaymentManager extends BasePaymentManager
 
     protected function shouldExposeMethod(string $code): bool
     {
-        if ($code === 'cashondelivery') {
-            return true;
-        }
-
         if (PaymentMethodRegistry::isHiddenLegacyCode($code)) {
             return false;
         }
 
-        $mode = PaymentChannel::mode();
-
-        if ($mode === PaymentChannel::CUSTOM) {
-            return in_array($code, PaymentMethodRegistry::customStorefrontCodes(), true);
-        }
-
-        return ! in_array($code, PaymentMethodRegistry::customStorefrontCodes(), true);
+        return true;
     }
 }

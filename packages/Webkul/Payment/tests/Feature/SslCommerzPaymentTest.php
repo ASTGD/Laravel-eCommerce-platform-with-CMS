@@ -28,7 +28,6 @@ function setSslCommerzConfig(string $code, mixed $value): void
 }
 
 beforeEach(function () {
-    setSslCommerzConfig('sales.payment_methods.mode.channel', 'custom');
     setSslCommerzConfig('sales.payment_methods.cashondelivery.active', 1);
     setSslCommerzConfig('sales.payment_methods.sslcommerz_gateway.sandbox', 1);
     setSslCommerzConfig('sales.payment_methods.sslcommerz_gateway.store_id', 'test_store');

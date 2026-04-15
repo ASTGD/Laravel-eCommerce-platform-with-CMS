@@ -48,7 +48,7 @@
                                 <input 
                                     type="radio" 
                                     name="payment[method]" 
-                                    :value="payment.payment"
+                                    :value="payment.method"
                                     :id="payment.method"
                                     class="peer hidden"
                                     @change="store(payment)"
@@ -67,6 +67,7 @@
                                     {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.image.before') !!}
 
                                     <img
+                                        v-if="payment.image"
                                         class="max-h-11 max-w-14"
                                         :src="payment.image"
                                         width="55"
@@ -117,7 +118,7 @@
 
             props: {
                 methods: {
-                    type: Object,
+                    type: Array,
                     required: true,
                     default: () => null,
                 },

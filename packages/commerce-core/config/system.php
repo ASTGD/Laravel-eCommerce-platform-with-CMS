@@ -2,31 +2,6 @@
 
 return [
     [
-        'key'  => 'sales.payment_methods.mode',
-        'name' => 'Payment Channel',
-        'info' => 'Choose whether storefront checkout uses Bagisto native methods or the curated Bangladesh payment set.',
-        'sort' => 0,
-        'fields' => [
-            [
-                'name' => 'channel',
-                'title' => 'Storefront Payment Channel',
-                'type' => 'select',
-                'options' => [
-                    [
-                        'title' => 'Default (native)',
-                        'value' => 'default',
-                    ],
-                    [
-                        'title' => 'Custom',
-                        'value' => 'custom',
-                    ],
-                ],
-                'channel_based' => true,
-                'locale_based' => false,
-                'default' => 'default',
-            ],
-        ],
-    ], [
         'key'  => 'sales.payment_methods.bkash_gateway',
         'name' => 'bKash Gateway',
         'info' => 'Direct bKash checkout credentials and endpoint configuration.',

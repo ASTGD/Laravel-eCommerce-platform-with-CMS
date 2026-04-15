@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Platform\CommerceCore\Services\BkashTokenService;
-use Platform\CommerceCore\Support\PaymentChannel;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Payment\Payment\Payment;
 
@@ -24,7 +23,6 @@ abstract class AbstractBkashPayment extends Payment
     public function isAvailable()
     {
         return parent::isAvailable()
-            && PaymentChannel::mode() === PaymentChannel::CUSTOM
             && $this->hasValidCredentials();
     }
 

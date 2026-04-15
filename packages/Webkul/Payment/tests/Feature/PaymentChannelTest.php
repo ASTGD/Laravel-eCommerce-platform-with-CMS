@@ -24,7 +24,6 @@ beforeEach(function () {
 
     setPaymentConfig('sales.payment_methods.cashondelivery.active', 1);
     setPaymentConfig('sales.payment_methods.moneytransfer.active', 1);
-    setPaymentConfig('sales.payment_methods.mode.channel', 'default');
     setPaymentConfig('sales.payment_methods.bkash_gateway.sandbox', 1);
     setPaymentConfig('sales.payment_methods.bkash_gateway.sandbox_base_url', 'https://tokenized.sandbox.bka.sh/v1.2.0-beta');
     setPaymentConfig('sales.payment_methods.bkash_gateway.username', 'sandbox-user');
@@ -38,28 +37,28 @@ beforeEach(function () {
     setPaymentConfig('sales.payment_methods.sslcommerz.active', 1);
 });
 
-it('keeps native payment methods in default mode', function () {
+it('shows enabled default and custom payment methods together', function () {
     $methods = collect(PaymentFacade::getPaymentMethods())->pluck('method');
 
     expect($methods->all())
         ->toContain('cashondelivery')
         ->toContain('moneytransfer')
-        ->not->toContain('sslcommerz')
-        ->not->toContain('bkash')
+        ->toContain('sslcommerz')
+        ->toContain('bkash')
         ->not->toContain('sslcommerz_bkash')
         ->not->toContain('sslcommerz_nagad');
 });
 
-it('switches storefront payment methods to the custom Bangladesh set when custom mode is enabled', function () {
-    setPaymentConfig('sales.payment_methods.mode.channel', 'custom');
+it('hides only the disabled method while keeping enabled methods from both groups', function () {
+    setPaymentConfig('sales.payment_methods.bkash.active', 0);
 
     $methods = collect(PaymentFacade::getPaymentMethods())->pluck('method');
 
     expect($methods->all())
         ->toContain('cashondelivery')
         ->toContain('sslcommerz')
-        ->toContain('bkash')
+        ->toContain('moneytransfer')
+        ->not->toContain('bkash')
         ->not->toContain('sslcommerz_bkash')
-        ->not->toContain('sslcommerz_nagad')
-        ->not->toContain('moneytransfer');
+        ->not->toContain('sslcommerz_nagad');
 });

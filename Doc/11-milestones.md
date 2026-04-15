@@ -138,4 +138,5 @@ Current status:
 
 - the SSLCommerz operational slice is complete enough for checkout, reconciliation, and refunds
 - the direct `bKash` payment slice is now active with direct checkout initiation, callback finalization, payment reconciliation, and refunds
+- one final review pass remains for the `bKash` and `SSLCommerz` payment methods before this workstream is considered closed
 - direct `Nagad` is still deferred
