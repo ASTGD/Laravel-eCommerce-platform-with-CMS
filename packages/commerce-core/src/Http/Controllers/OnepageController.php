@@ -21,13 +21,6 @@ class OnepageController extends BaseOnepageController
 
         Event::dispatch('checkout.load.index');
 
-        if (
-            ! auth()->guard('customer')->check()
-            && ! core()->getConfigData('sales.checkout.shopping_cart.allow_guest_checkout')
-        ) {
-            return redirect()->route('shop.customer.session.index');
-        }
-
         if (auth()->guard('customer')->user()?->is_suspended) {
             session()->flash('warning', trans('shop::app.checkout.cart.suspended-account-message'));
 
@@ -42,10 +35,7 @@ class OnepageController extends BaseOnepageController
 
         if (
             ! auth()->guard('customer')->check()
-            && (
-                $cart->hasDownloadableItems()
-                || ! $cart->hasGuestCheckoutItems()
-            )
+            && $cart->hasDownloadableItems()
         ) {
             return redirect()->route('shop.customer.session.index');
         }

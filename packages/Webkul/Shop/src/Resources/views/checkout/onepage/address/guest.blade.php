@@ -3,6 +3,7 @@
 <!-- Guest Address Vue Component -->
 <v-checkout-address-guest
     :cart="cart"
+    :checkout-state="checkoutState"
     @processing="stepForward"
     @processed="stepProcessed"
 ></v-checkout-address-guest>
@@ -32,62 +33,33 @@
                             @lang('shop::app.checkout.onepage.address.billing-address')
                         </h2>
                     </div>
-                
+
                     <!-- Billing Address Form -->
                     <v-checkout-address-form
                         control-name="billing"
-                        :address="cart.billing_address || undefined"
+                        :address="checkoutAddress"
                     ></v-checkout-address-form>
-
-                    <!-- Use for Shipping Checkbox -->
-                    <x-shop::form.control-group
-                        class="!mb-0 flex items-center gap-2.5"
-                        v-if="cart.have_stockable_items"
-                    >
-                        <x-shop::form.control-group.control
-                            type="checkbox"
-                            name="billing.use_for_shipping"
-                            id="use_for_shipping"
-                            for="use_for_shipping"
-                            value="1"
-                            @change="useBillingAddressForShipping = ! useBillingAddressForShipping"
-                            ::checked="!! useBillingAddressForShipping"
-                        />
-
-                        <label
-                            class="cursor-pointer select-none text-base text-zinc-500 max-md:text-sm max-sm:text-xs ltr:pl-0 rtl:pr-0"
-                            for="use_for_shipping"
-                        >
-                            @lang('shop::app.checkout.onepage.address.same-as-billing')
-                        </label>
-                    </x-shop::form.control-group>
 
                     {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.after') !!}
                 </div>
 
-                <!-- Guest Shipping Address -->
-                <template v-if="cart.have_stockable_items">
-                    <div
-                        class="mt-8"
-                        v-if="! useBillingAddressForShipping"
-                    >
-                        {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.shipping.before') !!}
+                <template v-if="showCreateAccount">
+                    <x-shop::form.control-group class="!mb-0 flex items-center gap-2.5">
+                        <x-shop::form.control-group.control
+                            type="checkbox"
+                            id="create_account"
+                            for="create_account"
+                            value="1"
+                            v-model="createAccount"
+                        />
 
-                        <!-- Shipping Address Header -->
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-xl font-medium max-md:text-lg max-sm:text-base">
-                                @lang('shop::app.checkout.onepage.address.shipping-address')
-                            </h2>
-                        </div>
-                    
-                        <!-- Shipping Address Form -->
-                        <v-checkout-address-form
-                            control-name="shipping"
-                            :address="cart.shipping_address || undefined"
-                        ></v-checkout-address-form>
-
-                        {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.shipping.after') !!}
-                    </div>
+                        <label
+                            class="cursor-pointer select-none text-base text-zinc-500 max-md:text-sm max-sm:text-xs ltr:pl-0 rtl:pr-0"
+                            for="create_account"
+                        >
+                            @{{ createAccountLabel }}
+                        </label>
+                    </x-shop::form.control-group>
                 </template>
 
                 <!-- Proceed Button -->
@@ -107,29 +79,64 @@
         app.component('v-checkout-address-guest', {
             template: '#v-checkout-address-guest-template',
 
-            props: ['cart'],
+            props: {
+                cart: {
+                    type: Object,
+                    required: true,
+                },
+
+                checkoutState: {
+                    type: Object,
+                    default: null,
+                },
+            },
 
             emits: ['processing', 'processed'],
 
             data() {
                 return {
-                    useBillingAddressForShipping: true,
-
                     isStoring: false,
+                    createAccount: false,
                 }
             },
 
-            created() {
-                if (this.cart.billing_address) {
-                    this.useBillingAddressForShipping = this.cart.billing_address.use_for_shipping;
+            computed: {
+                checkoutAddress() {
+                    return this.checkoutState?.customer?.draft || this.cart.billing_address || undefined;
+                },
+
+                createAccountLabel() {
+                    return this.checkoutState?.form?.guest?.create_account_field?.label || 'Create an account?';
+                },
+
+                showCreateAccount() {
+                    return this.checkoutState?.form?.guest?.show_create_account ?? true;
                 }
             },
 
             methods: {
+                normalizeAddress(params) {
+                    const billing = params.billing ?? {};
+
+                    const nameParts = (billing.name ?? '')
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean);
+
+                    billing.first_name = nameParts.shift() || '';
+                    billing.last_name = nameParts.join(' ') || billing.first_name;
+                    billing.city = billing.city || billing.state || '';
+                    billing.postcode = billing.postcode || billing.state || '';
+                    billing.use_for_shipping = true;
+                    billing.create_account = this.createAccount;
+
+                    return billing;
+                },
+
                 addAddress(params, { setErrors }) {
                     this.isStoring = true;
 
-                    params['billing']['use_for_shipping'] = this.useBillingAddressForShipping;
+                    params.billing = this.normalizeAddress(params);
 
                     this.moveToNextStep();
 
@@ -140,28 +147,36 @@
                             if (response.data.data.redirect_url) {
                                 window.location.href = response.data.data.redirect_url;
                             } else {
-                                if (this.cart.have_stockable_items) {
-                                    this.$emit('processed', response.data.data.shippingMethods);
-                                } else {
-                                    this.$emit('processed', response.data.data.payment_methods);
-                                }
+                                this.$emit('processed', response.data.data.payment_methods);
                             }
                         })
                         .catch(error => {
                             this.isStoring = false;
 
                             if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
+                                setErrors(this.mapValidationErrors(error.response.data.errors));
                             }
                         });
                 },
 
                 moveToNextStep() {
-                    if (this.cart.have_stockable_items) {
-                        this.$emit('processing', 'shipping');
-                    } else {
-                        this.$emit('processing', 'payment');
-                    }
+                    this.$emit('processing', 'payment');
+                },
+
+                mapValidationErrors(errors) {
+                    const mappedErrors = {};
+
+                    Object.entries(errors || {}).forEach(([key, messages]) => {
+                        if (['billing.first_name', 'billing.last_name'].includes(key)) {
+                            mappedErrors['billing.name'] = messages;
+                        } else if (['billing.city', 'billing.postcode'].includes(key)) {
+                            mappedErrors['billing.state'] = messages;
+                        } else {
+                            mappedErrors[key] = messages;
+                        }
+                    });
+
+                    return mappedErrors;
                 }
             }
         });
