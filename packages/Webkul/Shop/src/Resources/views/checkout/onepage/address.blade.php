@@ -1,19 +1,18 @@
 {!! view_render_event('bagisto.shop.checkout.onepage.address.before') !!}
 
-<!-- Accordion Blade Component -->
-<x-shop::accordion class="mb-7 mt-8 overflow-hidden rounded-xl !border-b-0 max-md:mb-0 max-md:mt-0 max-md:rounded-lg max-md:!border-none max-md:!bg-gray-100">
-    <!-- Accordion Header Component Slot -->
-    <x-slot:header class="!p-0 max-md:!mb-0 max-md:rounded-t-md max-md:!p-3 max-md:text-sm max-md:font-medium max-sm:!p-2">
-        <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-medium max-md:text-base">
-                @lang('shop::app.checkout.onepage.address.title')
-            </h2>
-        </div>
-    </x-slot>
+<section class="flex h-full flex-col rounded-[2rem] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200 lg:p-8">
+    <div class="border-b border-slate-200 pb-5">
+        <p class="text-xs uppercase tracking-[0.32em] text-slate-400">
+            Checkout Details
+        </p>
 
-    <!-- Accordion Content Component Slot -->
-    <x-slot:content class="mt-8 !p-0 max-md:mt-0 max-md:rounded-t-none max-md:border max-md:border-t-0 max-md:!p-4">
-    <!-- If the customer is guest -->
+        <h2 class="mt-2 text-2xl font-semibold uppercase tracking-[0.2em] text-slate-900 max-md:text-xl">
+            Billing &amp; Shipping
+        </h2>
+    </div>
+
+    <div class="flex-1 pt-6">
+        <!-- If the customer is guest -->
         <template v-if="cart.is_guest">
             @include('shop::checkout.onepage.address.guest')
         </template>
@@ -22,7 +21,7 @@
         <template v-else>
             @include('shop::checkout.onepage.address.customer')
         </template>
-    </x-slot:content>
-</x-shop::accordion>
+    </div>
+</section>
 
 {!! view_render_event('bagisto.shop.checkout.onepage.address.after') !!}

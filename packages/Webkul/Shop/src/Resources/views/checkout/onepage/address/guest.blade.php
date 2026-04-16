@@ -22,29 +22,18 @@
             v-slot="{ meta, errors, handleSubmit }"
             as="div"
         >
-            <form @submit="handleSubmit($event, addAddress)">
-                <!-- Guest Billing Address -->
-                <div class="mb-4">
-                    {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.before') !!}
+            <form class="space-y-6" @submit="handleSubmit($event, addAddress)">
+                {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.before') !!}
 
-                    <!-- Billing Address Header -->
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-medium max-md:text-lg max-sm:text-base">
-                            @lang('shop::app.checkout.onepage.address.billing-address')
-                        </h2>
-                    </div>
-
-                    <!-- Billing Address Form -->
+                <div class="space-y-5">
                     <v-checkout-address-form
                         control-name="billing"
                         :address="checkoutAddress"
                     ></v-checkout-address-form>
-
-                    {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.after') !!}
                 </div>
 
                 <template v-if="showCreateAccount">
-                    <x-shop::form.control-group class="!mb-0 flex items-center gap-2.5">
+                    <div class="flex items-center gap-2.5">
                         <x-shop::form.control-group.control
                             type="checkbox"
                             id="create_account"
@@ -54,16 +43,15 @@
                         />
 
                         <label
-                            class="cursor-pointer select-none text-base text-zinc-500 max-md:text-sm max-sm:text-xs ltr:pl-0 rtl:pr-0"
+                            class="cursor-pointer select-none text-sm font-medium text-slate-700 ltr:pl-0 rtl:pr-0"
                             for="create_account"
                         >
                             @{{ createAccountLabel }}
                         </label>
-                    </x-shop::form.control-group>
+                    </div>
                 </template>
 
-                <!-- Proceed Button -->
-                <div class="mt-4 flex justify-end">
+                <div class="flex justify-end pt-2">
                     <x-shop::button
                         class="primary-button rounded-2xl px-11 py-3 max-md:w-full max-md:max-w-full max-md:rounded-lg"
                         :title="trans('shop::app.checkout.onepage.address.proceed')"
@@ -71,6 +59,8 @@
                         ::disabled="isStoring"
                     />
                 </div>
+
+                {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.after') !!}
             </form>
         </x-shop::form>
     </script>

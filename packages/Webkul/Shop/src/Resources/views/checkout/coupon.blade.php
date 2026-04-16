@@ -3,53 +3,44 @@
     :cart="cart"
     @coupon-applied="getCart"
     @coupon-removed="getCart"
->
-</v-coupon>
+></v-coupon>
 
 @pushOnce('scripts')
     <script
         type="text/x-template"
         id="v-coupon-template"
     >
-        <div class="flex justify-between text-right">
-            <p class="text-base max-md:font-normal max-sm:text-sm">
-                @{{ cart.coupon_code ? "@lang('shop::app.checkout.coupon.applied')" : "@lang('shop::app.checkout.coupon.discount')" }}
-            </p>
+        <div class="space-y-3">
+            <div class="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <span>
+                    Have a coupon?
+                </span>
 
-            {!! view_render_event('bagisto.shop.checkout.cart.coupon.before') !!}
-
-            <p class="text-base font-medium max-sm:text-sm">
-                <!-- Apply Coupon Form -->
                 <x-shop::form
                     v-slot="{ meta, errors, handleSubmit }"
                     as="div"
                 >
-                    <!-- Apply coupon form -->
                     <form @submit="handleSubmit($event, applyCoupon)">
-                        {!! view_render_event('bagisto.shop.checkout.cart.coupon.coupon_form_controls.before') !!}
+                        {!! view_render_event('bagisto.shop.checkout.cart.coupon.before') !!}
 
-                        <!-- Apply coupon modal -->
                         <x-shop::modal ref="couponModel">
-                            <!-- Modal Toggler -->
                             <x-slot:toggle>
-                                <span 
-                                    class="cursor-pointer text-base text-blue-700 max-sm:text-sm"
+                                <span
+                                    class="cursor-pointer text-blue-700 underline decoration-blue-300 underline-offset-4 transition hover:text-blue-800"
                                     role="button"
                                     tabindex="0"
                                     v-if="! cart.coupon_code"
                                 >
-                                    @lang('shop::app.checkout.coupon.apply')
+                                    Click here to enter your code
                                 </span>
                             </x-slot>
 
-                            <!-- Modal Header -->
                             <x-slot:header class="max-md:p-5">
                                 <h2 class="text-2xl font-medium max-md:text-base">
                                     @lang('shop::app.checkout.coupon.apply')
                                 </h2>
                             </x-slot>
 
-                            <!-- Modal Content -->
                             <x-slot:content class="!px-4">
                                 <x-shop::form.control-group class="!mb-0">
                                     <x-shop::form.control-group.control
@@ -67,9 +58,7 @@
                                 </x-shop::form.control-group>
                             </x-slot>
 
-                            <!-- Modal Footer -->
                             <x-slot:footer>
-                                <!-- Coupon Form Action Container -->
                                 <div class="flex flex-wrap items-center gap-4 max-md:justify-between">
                                     <div class="flex items-center gap-4 max-md:block">
                                         <p class="text-sm font-medium text-zinc-500 max-md:text-left max-md:text-xs">
@@ -94,29 +83,26 @@
                         {!! view_render_event('bagisto.shop.checkout.cart.coupon.coupon_form_controls.after') !!}
                     </form>
                 </x-shop::form>
+            </div>
 
-                <!-- Applied Coupon Information Container -->
-                <div 
-                    class="font-small flex items-center justify-between text-xs"
-                    v-if="cart.coupon_code"
+            <div 
+                class="font-small flex items-center justify-between text-xs"
+                v-if="cart.coupon_code"
+            >
+                <p 
+                    class="text-sm font-medium text-[#2f5ec5] max-sm:text-sm"
+                    title="@lang('shop::app.checkout.coupon.applied')"
                 >
-                    <p 
-                        class="text-base font-medium text-navyBlue max-sm:text-sm"
-                        title="@lang('shop::app.checkout.coupon.applied')"
-                    >
-                        "@{{ cart.coupon_code }}"
-                    </p>
+                    "@{{ cart.coupon_code }}"
+                </p>
 
-                    <span 
-                        class="icon-cancel cursor-pointer text-2xl max-sm:text-base"
-                        title="@lang('shop::app.checkout.coupon.remove')"
-                        @click="destroyCoupon"
-                    >
-                    </span>
-                </div>
-            </p>
-
-            {!! view_render_event('bagisto.shop.checkout.cart.coupon.after') !!}
+                <span 
+                    class="icon-cancel cursor-pointer text-2xl max-sm:text-base"
+                    title="@lang('shop::app.checkout.coupon.remove')"
+                    @click="destroyCoupon"
+                >
+                </span>
+            </div>
         </div>
     </script>
 

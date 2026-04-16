@@ -2,6 +2,7 @@
 
 <v-payment-methods
     :methods="paymentMethods"
+    :cart="cart"
     @processing="stepForward"
     @processed="stepProcessed"
 >
@@ -15,101 +16,108 @@
         type="text/x-template"
         id="v-payment-methods-template"
     >
-        <div class="mb-7 max-md:last:!mb-0">
+        <section class="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200">
             <template v-if="! methods">
-                <!-- Payment Method shimmer Effect -->
-                <x-shop::shimmer.checkout.onepage.payment-method />
+                <div class="p-6">
+                    <x-shop::shimmer.checkout.onepage.payment-method />
+                </div>
             </template>
-    
+
             <template v-else>
                 {!! view_render_event('bagisto.shop.checkout.onepage.payment_method.accordion.before') !!}
 
-                <!-- Accordion Blade Component -->
-                <x-shop::accordion class="overflow-hidden !border-b-0 max-md:rounded-lg max-md:!border-none max-md:!bg-gray-100">
-                    <!-- Accordion Blade Component Header -->
-                    <x-slot:header class="px-0 py-4 max-md:p-3 max-md:text-sm max-md:font-medium max-sm:p-2">
-                        
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-2xl font-medium max-md:text-base">
+                <div class="px-6 py-6">
+                    <div class="mb-4 flex items-center justify-between border-b border-slate-200 pb-4">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.32em] text-slate-400">
+                                Payment
+                            </p>
+
+                            <h2 class="mt-2 text-xl font-semibold uppercase tracking-[0.18em] text-slate-900">
                                 @lang('shop::app.checkout.onepage.payment.payment-method')
                             </h2>
                         </div>
-                    </x-slot>
-    
-                    <!-- Accordion Blade Component Content -->
-                    <x-slot:content class="mt-8 !p-0 max-md:mt-0 max-md:rounded-t-none max-md:border max-md:border-t-0 max-md:!p-4">
-                        <div class="flex flex-wrap gap-7 max-md:gap-4 max-sm:gap-2.5">
-                            <div 
-                                class="relative cursor-pointer max-md:max-w-full max-md:flex-auto"
-                                v-for="(payment, index) in methods"
+                    </div>
+
+                    <div class="space-y-3">
+                        {!! view_render_event('bagisto.shop.checkout.onepage.payment_method.before') !!}
+
+                        <div
+                            class="group"
+                            v-for="(payment, index) in methods"
+                            :key="payment.method"
+                        >
+                            <input
+                                type="radio"
+                                name="payment[method]"
+                                :value="payment.method"
+                                :id="payment.method"
+                                class="peer sr-only"
+                                :checked="cart && cart.payment_method == payment.method"
+                                @change="store(payment)"
                             >
-                                {!! view_render_event('bagisto.shop.checkout.payment-method.before') !!}
 
-                                <input 
-                                    type="radio" 
-                                    name="payment[method]" 
-                                    :value="payment.method"
-                                    :id="payment.method"
-                                    class="peer hidden"
-                                    @change="store(payment)"
-                                >
-    
-                                <label 
-                                    :for="payment.method" 
-                                    class="icon-radio-unselect peer-checked:icon-radio-select absolute top-5 cursor-pointer text-2xl text-navyBlue ltr:right-5 rtl:left-5"
-                                >
-                                </label>
+                            <label
+                                :for="payment.method"
+                            class="flex min-h-[6.75rem] w-full cursor-pointer items-center gap-4 rounded-[1.25rem] border border-slate-200 bg-slate-50 px-5 py-4 transition hover:border-slate-300 peer-checked:border-[#2f5ec5] peer-checked:bg-blue-50/40"
+                            >
+                                <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white peer-checked:border-[#2f5ec5]">
+                                    <span
+                                        class="h-2 w-2 rounded-full bg-[#2f5ec5] transition"
+                                        :class="cart && cart.payment_method == payment.method ? 'opacity-100' : 'opacity-0'"
+                                    ></span>
+                                </span>
 
-                                <label 
-                                    :for="payment.method" 
-                                    class="block w-[190px] cursor-pointer rounded-xl border border-zinc-200 p-5 max-md:flex max-md:w-full max-md:gap-5 max-md:rounded-lg max-sm:gap-4 max-sm:px-4 max-sm:py-2.5"
-                                >
-                                    {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.image.before') !!}
+                                <div class="min-w-0 flex-1">
+                                    {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.title.before') !!}
 
-                                    <img
-                                        v-if="payment.image"
-                                        class="max-h-11 max-w-14"
-                                        :src="payment.image"
-                                        width="55"
-                                        height="55"
-                                        :alt="payment.method_title"
-                                        :title="payment.method_title"
-                                    />
+                                    <div class="flex items-center justify-between gap-4">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-slate-900">
+                                                @{{ payment.method_title }}
+                                            </p>
 
-                                    {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.image.after') !!}
+                                            {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.title.after') !!}
 
-                                    <div>
-                                        {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.title.before') !!}
+                                            {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.description.before') !!}
 
-                                        <p class="mt-1.5 text-sm font-semibold max-md:mt-1 max-sm:mt-0">
-                                            @{{ payment.method_title }}
-                                        </p>
-                                        
-                                        {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.title.after') !!}
+                                            <p class="mt-1 text-xs leading-5 text-slate-500">
+                                                @{{ paymentDescription(payment) }}
+                                            </p>
 
-                                        {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.description.before') !!}
+                                            {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.description.after') !!}
+                                        </div>
 
-                                        <p class="mt-2.5 text-xs font-medium text-zinc-500 max-md:mt-1 max-sm:mt-0">
-                                            @{{ payment.description }}
-                                        </p> 
-
-                                        {!! view_render_event('bagisto.shop.checkout.onepage.payment-method.description.after') !!}
-    
+                                        <div
+                                            v-if="payment.image"
+                                            class="ml-auto shrink-0"
+                                            :class="paymentLogoFrameClass(payment.method)"
+                                        >
+                                            <img
+                                                class="block h-full w-full"
+                                                :class="paymentLogoClass(payment.method)"
+                                                :style="paymentLogoStyle(payment.method)"
+                                                :src="paymentLogoSrc(payment)"
+                                                :alt="payment.method_title"
+                                                :title="payment.method_title"
+                                            />
+                                        </div>
                                     </div>
-                                </label>
+                                </div>
 
                                 {!! view_render_event('bagisto.shop.checkout.payment-method.after') !!}
 
-                                <!-- Todo implement the additionalDetails -->
                                 {{-- \Webkul\Payment\Payment::getAdditionalDetails($payment['method'] --}}
-                            </div>
+                            </label>
                         </div>
-                    </x-slot>
-                </x-shop::accordion>
+
+                        {!! view_render_event('bagisto.shop.checkout.onepage.payment_method.after') !!}
+                    </div>
+                </div>
 
                 {!! view_render_event('bagisto.shop.checkout.onepage.payment_method.accordion.after') !!}
             </template>
-        </div>
+        </section>
     </script>
 
     <script type="module">
@@ -122,11 +130,100 @@
                     required: true,
                     default: () => null,
                 },
+
+                cart: {
+                    type: Object,
+                    default: null,
+                },
             },
 
             emits: ['processing', 'processed'],
 
             methods: {
+                paymentLogoFrameClass(method) {
+                    if (method === 'bkash') {
+                        return 'h-12 w-[8.75rem] overflow-hidden rounded-xl';
+                    }
+
+                    if (method === 'sslcommerz') {
+                        return 'h-[42px] w-[130px] overflow-hidden rounded-xl';
+                    }
+
+                    if (method === 'cashondelivery') {
+                        return 'h-8 w-[5.75rem] overflow-hidden rounded-lg bg-transparent';
+                    }
+
+                    return 'h-9 w-[6.5rem] overflow-hidden rounded-lg bg-transparent';
+                },
+
+                paymentLogoClass(method) {
+                    if (method === 'bkash') {
+                        return 'scale-[1.12]';
+                    }
+
+                    if (method === 'sslcommerz') {
+                        return 'scale-100';
+                    }
+
+                    if (method === 'cashondelivery') {
+                        return 'scale-[1.02]';
+                    }
+
+                    return '';
+                },
+
+                paymentLogoStyle(method) {
+                    if (method === 'bkash') {
+                        return {
+                            objectFit: 'cover',
+                            objectPosition: '86% 78%',
+                        };
+                    }
+
+                    if (method === 'sslcommerz') {
+                        return {
+                            objectFit: 'contain',
+                            objectPosition: 'center',
+                        };
+                    }
+
+                    if (method === 'cashondelivery') {
+                        return {
+                            objectFit: 'contain',
+                            objectPosition: 'center',
+                        };
+                    }
+
+                    return {
+                        objectFit: 'contain',
+                        objectPosition: 'right center',
+                    };
+                },
+
+                paymentDescription(payment) {
+                    if (payment.method === 'sslcommerz') {
+                        return 'Cards, mobile banking, and internet banking.';
+                    }
+
+                    if (payment.method === 'bkash') {
+                        return payment.description || 'Pay directly with bKash.';
+                    }
+
+                    if (payment.method === 'cashondelivery') {
+                        return payment.description || 'Cash On Delivery';
+                    }
+
+                    return payment.description;
+                },
+
+                paymentLogoSrc(payment) {
+                    if (payment.method === 'sslcommerz') {
+                        return 'https://extremegadgets.com.bd/wp-content/plugins/wc-sslcommerz-easycheckout/images/sslcz-verified.png';
+                    }
+
+                    return payment.image;
+                },
+
                 store(selectedMethod) {
                     this.$emit('processing', 'review');
 
@@ -136,7 +233,6 @@
                         .then(response => {
                             this.$emit('processed', response.data.cart);
 
-                            // Used in mobile view. 
                             if (window.innerWidth <= 768) {
                                 window.scrollTo({
                                     top: document.body.scrollHeight,

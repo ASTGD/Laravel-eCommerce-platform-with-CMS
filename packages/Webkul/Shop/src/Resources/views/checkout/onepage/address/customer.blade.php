@@ -27,19 +27,13 @@
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
             >
-                <form @submit="handleSubmit($event, addAddressToCart)">
-                    <div class="mb-4 flex items-center justify-between">
-                        <h2 class="text-xl font-medium max-md:text-base max-sm:font-normal">
-                            @lang('shop::app.checkout.onepage.address.billing-address')
-                        </h2>
-                    </div>
-
+                <form class="space-y-6" @submit="handleSubmit($event, addAddressToCart)">
                     <v-checkout-address-form
                         control-name="billing"
                         :address="checkoutAddress"
                     ></v-checkout-address-form>
 
-                    <div class="mt-4 flex justify-end">
+                    <div class="flex justify-end pt-2">
                         <x-shop::button
                             class="primary-button rounded-2xl px-11 py-3 max-md:rounded-lg max-sm:w-full max-sm:max-w-full max-sm:py-1.5"
                             :title="trans('shop::app.checkout.onepage.address.proceed')"
