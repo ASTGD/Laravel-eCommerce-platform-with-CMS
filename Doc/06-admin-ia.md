@@ -231,9 +231,10 @@ The sales configuration area now includes the Bangladesh-specific checkout contr
 
 Current shipping behavior:
 
-- `Courier` is a single carrier with two selectable storefront rates
-- `Home Delivery`
-- `Courier Pick-up`
+- `Courier` is a single district-based carrier
+- shipping is calculated automatically from the selected district
+- `Dhaka`
+- `Outside Dhaka`
 
 Current payment behavior:
 
@@ -250,6 +251,12 @@ Current payment behavior:
   - `SSLCommerz`
   - `bKash`
 - direct `Nagad` remains deferred until the direct provider slice is implemented
+
+Checkout flow behavior:
+
+- checkout is a single address capture flow
+- the storefront does not ask the customer to choose a shipping method
+- district selection drives the shipping fee automatically
 
 ## Payment Operations
 

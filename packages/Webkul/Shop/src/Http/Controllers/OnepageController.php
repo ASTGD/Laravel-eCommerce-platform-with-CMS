@@ -25,16 +25,6 @@ class OnepageController extends Controller
         Event::dispatch('checkout.load.index');
 
         /**
-         * If guest checkout is not allowed then redirect back to the cart page.
-         */
-        if (
-            ! auth()->guard('customer')->check()
-            && ! core()->getConfigData('sales.checkout.shopping_cart.allow_guest_checkout')
-        ) {
-            return redirect()->route('shop.customer.session.index');
-        }
-
-        /**
          * If user is suspended then redirect back to the cart page.
          */
         if (auth()->guard('customer')->user()?->is_suspended) {
@@ -53,15 +43,11 @@ class OnepageController extends Controller
         $cart = Cart::getCart();
 
         /**
-         * If cart is has downloadable items and customer is not logged in
-         * then redirect back to the cart page.
+         * Downloadable products still require an authenticated customer.
          */
         if (
             ! auth()->guard('customer')->check()
-            && (
-                $cart->hasDownloadableItems()
-                || ! $cart->hasGuestCheckoutItems()
-            )
+            && $cart->hasDownloadableItems()
         ) {
             return redirect()->route('shop.customer.session.index');
         }

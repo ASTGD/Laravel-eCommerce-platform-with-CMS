@@ -59,8 +59,9 @@ Use Bagisto for commerce primitives and admin baseline. Build structured CMS, th
 1. Admin manages structured CMS records.
 2. CMS stores schema-backed configuration in package-owned tables.
 3. Storefront page services resolve template, sections, and data sources.
-4. Theme core resolves active preset and section rendering.
-5. Theme default renders the page using server-side Blade views.
+4. Checkout resolves a single state contract for cart summary, customer draft data, the single-address form contract, district shipping, and payment methods.
+5. Theme core resolves active preset and section rendering.
+6. Theme default renders the page using server-side Blade views.
 
 ## Extension Strategy
 

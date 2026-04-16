@@ -140,3 +140,16 @@ Current status:
 - the direct `bKash` payment slice is now active with direct checkout initiation, callback finalization, payment reconciliation, and refunds
 - one final review pass remains for the `bKash` and `SSLCommerz` payment methods before this workstream is considered closed
 - direct `Nagad` is still deferred
+
+## Checkout Contract Note
+
+The checkout workstream now has a dedicated single-state contract for the future theme layer.
+
+Current status:
+
+- single-screen checkout flow is in place at the core level
+- district-based shipping is automatic from the selected address district
+- the checkout state payload now carries cart summary, customer draft data, the single-address form contract, district shipping rules, and payment methods as one contract
+- the visible checkout form is now reduced to Name, Mobile Number, Country/Region, District/Region, Full Address, and Email, with guest create-account support declared in the contract
+- city and postcode remain hidden compatibility fields until the theme layer replaces the current checkout presentation entirely
+- the checkout page shell is now moving into the default theme layer so the screenshot-style layout can be rendered without changing the core flow contract

@@ -80,6 +80,8 @@ Route::group(['prefix' => 'api'], function () {
     });
 
     Route::controller(OnepageController::class)->prefix('checkout/onepage')->group(function () {
+        Route::get('state', 'state')->name('shop.checkout.onepage.state');
+
         Route::get('summary', 'summary')->name('shop.checkout.onepage.summary');
 
         Route::post('addresses', 'storeAddress')->name('shop.checkout.onepage.addresses.store');

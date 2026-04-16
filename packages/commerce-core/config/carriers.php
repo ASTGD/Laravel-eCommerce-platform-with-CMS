@@ -6,8 +6,8 @@ return [
     'courier' => [
         'code' => 'courier',
         'title' => 'Courier',
-        'description' => 'Courier delivery options',
-        'active' => false,
+        'description' => 'District-based delivery charges',
+        'active' => true,
         'class' => Courier::class,
     ],
 ];

@@ -176,6 +176,7 @@ The custom storefront layout now targets the root application Vite build directo
 ## Remaining Gaps Before Frontend Polish
 
 - the default theme is still intentionally minimal
+- checkout page presentation is now owned by the default theme shell and consumes the single checkout contract
 - preset tokens are resolved but not yet exhaustively applied across all storefront surfaces
 - category and PDP payloads are stable, but the final visual implementation is still pending
 - customer account pages are not yet moved onto the same structured theme implementation

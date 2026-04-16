@@ -133,7 +133,9 @@ After install, configure the Bangladesh checkout slice in admin if you want to u
 
 1. Go to `Configuration > Sales > Shipping Methods > Courier`
 2. Enable `Courier`
-3. Set `Home Delivery` and `Courier Pick-up` titles and rates
+3. Set the district name and automatic rates:
+   - `Dhaka`
+   - `Outside Dhaka`
 4. Go to `Configuration > Sales > Payment Methods`
 5. Open the `Custom` tab
 6. Go to `SSLCommerz Gateway`
@@ -146,13 +148,16 @@ After install, configure the Bangladesh checkout slice in admin if you want to u
 10. Enable any of:
    - `SSLCommerz`
    - `bKash`
-11. Open the `Default` tab and enable any native methods you also want to show alongside the custom ones
+11. Open the `Default` tab and enable any additional methods you want to show alongside the custom ones
 
 Operational notes:
 
 - successful redirects and IPNs are validated against the SSLCommerz validation API before the order is finalized
 - repeated callback/IPN calls are deduplicated through persistent payment attempts
 - gateway callback URLs must use the current storefront host, not a stale localhost or old LAN IP
+- checkout now uses a single address capture flow
+- shipping is determined automatically from the selected district
+- the storefront no longer asks the customer to choose a shipping method during checkout
 
 Checkout behavior in this slice:
 

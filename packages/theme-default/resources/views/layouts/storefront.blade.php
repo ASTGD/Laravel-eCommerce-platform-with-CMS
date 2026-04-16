@@ -11,6 +11,8 @@
     @if ($seo?->canonical_url)
         <link rel="canonical" href="{{ $seo->canonical_url }}">
     @endif
+    @stack('meta')
+    @stack('styles')
     {!! app(\Illuminate\Foundation\Vite::class)
         ->useHotFile('hot')
         ->useBuildDirectory('build')
@@ -18,6 +20,16 @@
         ->toHtml() !!}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
-    @yield('content')
+    <div id="app">
+        @yield('content')
+    </div>
+    @stack('scripts')
+    <script>
+        window.addEventListener('load', function () {
+            if (window.app) {
+                app.mount('#app');
+            }
+        });
+    </script>
 </body>
 </html>

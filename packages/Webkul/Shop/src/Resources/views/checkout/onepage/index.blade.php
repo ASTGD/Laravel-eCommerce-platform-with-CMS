@@ -5,6 +5,14 @@
     <meta name="keywords" content="@lang('shop::app.checkout.onepage.index.checkout')"/>
 @endPush
 
+@php
+    $initialCheckoutStep = match (request('step')) {
+        'payment', 'review' => request('step'),
+        'shipping' => 'payment',
+        default => 'address',
+    };
+@endphp
+
 <x-shop::layouts
     :has-header="false"
     :has-feature="false"
@@ -84,13 +92,8 @@
                         id="steps-container"
                     >
                         <!-- Included Addresses Blade File -->
-                        <template v-if="['address', 'shipping', 'payment', 'review'].includes(currentStep)">
+                        <template v-if="['address', 'payment', 'review'].includes(currentStep)">
                             @include('shop::checkout.onepage.address')
-                        </template>
-
-                        <!-- Included Shipping Methods Blade File -->
-                        <template v-if="cart.have_stockable_items && ['shipping', 'payment', 'review'].includes(currentStep)">
-                            @include('shop::checkout.onepage.shipping')
                         </template>
 
                         <!-- Included Payment Methods Blade File -->
@@ -142,6 +145,8 @@
                     return {
                         cart: null,
 
+                        checkoutState: null,
+
                         displayTax: {
                             prices: "{{ core()->getConfigData('sales.taxes.shopping_cart.display_prices') }}",
 
@@ -152,9 +157,7 @@
 
                         isPlacingOrder: false,
 
-                        currentStep: 'address',
-
-                        shippingMethods: null,
+                        currentStep: @json($initialCheckoutStep),
 
                         paymentMethods: null,
 
@@ -163,14 +166,16 @@
                 },
 
                 mounted() {
-                    this.getCart();
+                    this.getCheckoutState();
                 },
 
                 methods: {
-                    getCart() {
-                        this.$axios.get("{{ route('shop.checkout.onepage.summary') }}")
+                    getCheckoutState() {
+                        this.$axios.get("{{ route('shop.checkout.onepage.state') }}")
                             .then(response => {
-                                this.cart = response.data.data;
+                                this.checkoutState = response.data.data;
+                                this.cart = response.data.data.cart;
+                                this.paymentMethods = response.data.data.payment_methods;
 
                                 this.scrollToCurrentStep();
                             })
@@ -188,21 +193,17 @@
 
                         this.canPlaceOrder = false;
 
-                        if (this.currentStep == 'shipping') {
-                            this.shippingMethods = null;
-                        } else if (this.currentStep == 'payment') {
+                        if (this.currentStep == 'payment') {
                             this.paymentMethods = null;
                         }
                     },
 
                     stepProcessed(data) {
-                        if (this.currentStep == 'shipping') {
-                            this.shippingMethods = data;
-                        } else if (this.currentStep == 'payment') {
+                        if (this.currentStep == 'payment') {
                             this.paymentMethods = data;
                         }
 
-                        this.getCart();
+                        this.getCheckoutState();
                     },
 
                     scrollToCurrentStep() {

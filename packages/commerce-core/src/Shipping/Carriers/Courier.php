@@ -2,6 +2,8 @@
 
 namespace Platform\CommerceCore\Shipping\Carriers;
 
+use Illuminate\Support\Str;
+use Webkul\Checkout\Facades\Cart;
 use Webkul\Checkout\Models\CartShippingRate;
 use Webkul\Shipping\Carriers\AbstractShipping;
 
@@ -15,27 +17,28 @@ class Courier extends AbstractShipping
             return false;
         }
 
-        $rates = [];
+        $shippingAddress = Cart::getCart()?->shipping_address;
 
-        if ($this->getConfigData('home_delivery_active')) {
-            $rates[] = $this->makeRate(
-                'home_delivery',
-                $this->getConfigData('home_delivery_title') ?: 'Home Delivery',
-                $this->getConfigData('description') ?: 'Courier home delivery',
-                (float) $this->getConfigData('home_delivery_rate')
-            );
+        if (! $shippingAddress || blank($shippingAddress->state)) {
+            return false;
         }
 
-        if ($this->getConfigData('pickup_active')) {
-            $rates[] = $this->makeRate(
-                'pickup',
-                $this->getConfigData('pickup_title') ?: 'Courier Pick-up',
-                $this->getConfigData('description') ?: 'Courier pick-up',
-                (float) $this->getConfigData('pickup_rate')
-            );
-        }
+        $isDhakaDistrict = $this->isDhakaDistrict($shippingAddress->state);
 
-        return $rates ?: false;
+        $rateTitle = $this->getConfigData($isDhakaDistrict ? 'dhaka_title' : 'outside_dhaka_title')
+            ?: ($isDhakaDistrict ? 'Dhaka Delivery' : 'Outside Dhaka Delivery');
+
+        $rateDescription = $this->getConfigData('description')
+            ?: ($isDhakaDistrict ? 'Delivery charge for Dhaka district' : 'Delivery charge for outside Dhaka districts');
+
+        $rate = $this->makeRate(
+            $isDhakaDistrict ? 'dhaka' : 'outside_dhaka',
+            $rateTitle,
+            $rateDescription,
+            (float) $this->getConfigData($isDhakaDistrict ? 'dhaka_rate' : 'outside_dhaka_rate')
+        );
+
+        return [$rate];
     }
 
     protected function makeRate(string $suffix, string $title, string $description, float $basePrice): CartShippingRate
@@ -51,5 +54,13 @@ class Courier extends AbstractShipping
         $rate->base_price = $basePrice;
 
         return $rate;
+    }
+
+    protected function isDhakaDistrict(string $district): bool
+    {
+        $normalizedDistrict = Str::lower(trim($district));
+        $configuredDistrict = Str::lower(trim((string) ($this->getConfigData('dhaka_district') ?: 'Dhaka')));
+
+        return $normalizedDistrict !== '' && $normalizedDistrict === $configuredDistrict;
     }
 }
