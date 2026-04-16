@@ -1,11 +1,5 @@
 <!-- Checkout Login Vue JS Component -->
-<v-checkout-login>
-    <div class="flex items-center">
-        <span class="cursor-pointer text-base font-medium text-blue-700">
-            @lang('shop::app.checkout.login.title')
-        </span>
-    </div>
-</v-checkout-login>
+<v-checkout-login></v-checkout-login>
 
 @pushOnce('scripts')
     {!! \Webkul\Customer\Facades\Captcha::renderJS() !!}
@@ -15,15 +9,17 @@
         id="v-checkout-login-template"
     >
         <div>
-            <div class="flex items-center">
+            <p class="text-sm font-medium text-slate-700">
+                Returning customer?
+
                 <span
-                    class="cursor-pointer text-base font-medium text-blue-700"
+                    class="cursor-pointer text-blue-700 underline decoration-blue-300 underline-offset-4 transition hover:text-blue-800"
                     role="button"
                     @click="$refs.loginModel.open()"
                 >
-                    @lang('shop::app.checkout.login.title')
+                    Click here to login
                 </span>
-            </div>
+            </p>
 
             <!-- Login Form -->
             <x-shop::form

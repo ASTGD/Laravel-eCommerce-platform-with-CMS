@@ -3,7 +3,7 @@
         type="text/x-template"
         id="v-checkout-address-form-template"
     >
-        <div class="mt-2 max-md:mt-3">
+        <div class="mt-2 space-y-5 max-md:mt-4">
             <x-shop::form.control-group class="hidden">
                 <x-shop::form.control-group.control
                     type="text"
@@ -13,7 +13,7 @@
             </x-shop::form.control-group>
 
             <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
+                <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
                     Name
                 </x-shop::form.control-group.label>
 
@@ -24,13 +24,14 @@
                     rules="required"
                     :label="'Name'"
                     placeholder="Name"
+                    class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
                 />
 
                 <x-shop::form.control-group.error ::name="controlName + '.name'" />
             </x-shop::form.control-group>
 
             <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
+                <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
                     Mobile Number
                 </x-shop::form.control-group.label>
 
@@ -41,13 +42,14 @@
                     rules="required|phone"
                     :label="'Mobile Number'"
                     placeholder="Mobile Number"
+                    class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
                 />
 
                 <x-shop::form.control-group.error ::name="controlName + '.phone'" />
             </x-shop::form.control-group>
 
-            <x-shop::form.control-group class="!mb-4">
-                <x-shop::form.control-group.label class="required !mt-0">
+            <x-shop::form.control-group>
+                <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
                     Country / Region
                 </x-shop::form.control-group.label>
 
@@ -59,6 +61,7 @@
                     rules="required"
                     :label="'Country / Region'"
                     placeholder="Country / Region"
+                    class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-0"
                 >
                     <option value="">
                         Select Country
@@ -76,7 +79,7 @@
             </x-shop::form.control-group>
 
             <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
+                <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
                     District / Region
                 </x-shop::form.control-group.label>
 
@@ -87,13 +90,14 @@
                     rules="required"
                     :label="'District / Region'"
                     placeholder="District / Region"
+                    class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
                 />
 
                 <x-shop::form.control-group.error ::name="controlName + '.state'" />
             </x-shop::form.control-group>
 
             <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
+                <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
                     Full Address
                 </x-shop::form.control-group.label>
 
@@ -104,6 +108,7 @@
                     rules="required|address"
                     :label="'Full Address'"
                     placeholder="Full Address"
+                    class="min-h-28 rounded-[1.5rem] border border-slate-200 bg-white px-6 py-4 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
                 />
 
                 <x-shop::form.control-group.error
@@ -113,7 +118,7 @@
             </x-shop::form.control-group>
 
             <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
+                <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
                     Email
                 </x-shop::form.control-group.label>
 
@@ -124,6 +129,7 @@
                     rules="required|email"
                     :label="'Email'"
                     placeholder="email@example.com"
+                    class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
                 />
 
                 <x-shop::form.control-group.error ::name="controlName + '.email'" />

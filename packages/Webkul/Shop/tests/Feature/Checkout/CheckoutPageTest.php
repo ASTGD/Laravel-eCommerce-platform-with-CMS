@@ -177,8 +177,9 @@ it('renders the checkout page for guest customers from buy now', function () {
 
     get(route('shop.checkout.onepage.index'))
         ->assertOk()
-        ->assertSeeText('Sign In')
-        ->assertSeeText('Address')
+        ->assertSeeText('Returning customer?')
+        ->assertSeeText('Have a coupon?')
+        ->assertSeeText('Billing & Shipping')
         ->assertSeeText('Your Order')
         ->assertSeeText('Name')
         ->assertSeeText('Mobile Number')

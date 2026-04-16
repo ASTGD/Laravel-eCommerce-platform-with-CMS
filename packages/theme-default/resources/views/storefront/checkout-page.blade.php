@@ -19,30 +19,16 @@
     };
 @endphp
 
-<main class="min-h-screen bg-white">
-    <div class="border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex max-w-7xl items-center px-6 py-4 max-lg:px-8 max-sm:px-4">
-            <a
-                href="{{ route('shop.home.index') }}"
-                class="flex min-h-[30px] items-center"
-                aria-label="@lang('shop::checkout.onepage.index.bagisto')"
-            >
-                <img
-                    src="{{ core()->getCurrentChannel()->logo_url ?? bagisto_asset('images/logo.svg') }}"
-                    alt="{{ config('app.name') }}"
-                    width="131"
-                    height="29"
-                >
-            </a>
+<main class="flex min-h-screen flex-col bg-[#f6f3f2] text-slate-900">
+    @include('theme-default::storefront.checkout-header')
 
-        </div>
-    </div>
-
-    <div class="mx-auto max-w-7xl px-6 py-10 max-lg:px-8 max-sm:px-4 lg:py-12">
+    <div class="mx-auto w-full max-w-[1440px] flex-1 px-6 py-10 lg:px-10 xl:px-12 lg:py-12">
         <v-checkout>
             <x-shop::shimmer.checkout.onepage />
         </v-checkout>
     </div>
+
+    @include('theme-default::storefront.checkout-footer')
 </main>
 
 @pushOnce('scripts')
@@ -57,30 +43,29 @@
         <template v-else>
             <div
                 id="steps-container"
-                class="grid gap-8 xl:grid-cols-[minmax(0,1.05fr)_minmax(24rem,0.95fr)]"
+                class="grid gap-10 xl:grid-cols-[minmax(0,1.03fr)_minmax(22rem,0.97fr)]"
             >
-                <div class="space-y-6">
-                    <div class="space-y-3">
-                        @guest('customer')
-                            @include('shop::checkout.login')
-                        @endguest
+                <div class="space-y-3">
+                    @guest('customer')
+                        @include('shop::checkout.login')
+                    @endguest
 
-                        @include('shop::checkout.coupon')
-                    </div>
+                    @include('shop::checkout.coupon')
+                </div>
 
+                <div class="hidden xl:block"></div>
+
+                <div class="flex h-full flex-col">
                     @include('shop::checkout.onepage.address')
                 </div>
 
-                <aside class="space-y-6 rounded-[2rem] bg-slate-100 p-5 ring-1 ring-slate-200 lg:sticky lg:top-8 lg:p-6">
+                <aside class="space-y-6 xl:sticky xl:top-8">
                     @include('theme-default::storefront.checkout-summary')
 
                     @include('shop::checkout.onepage.payment')
 
-                    <div
-                        class="flex justify-end"
-                        v-if="canPlaceOrder"
-                    >
-                        <template v-if="cart.payment_method == 'paypal_smart_button'">
+                    <div v-if="canPlaceOrder">
+                        <template v-if="cart && cart.payment_method == 'paypal_smart_button'">
                             {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.before') !!}
 
                             <v-paypal-smart-button></v-paypal-smart-button>
@@ -91,7 +76,7 @@
                         <template v-else>
                             <x-shop::button
                                 type="button"
-                                class="primary-button w-full rounded-2xl bg-navyBlue px-11 py-3 max-md:mb-4 max-md:max-w-full max-md:rounded-lg max-sm:py-1.5"
+                                class="primary-button w-full rounded-2xl bg-[#2f5ec5] px-11 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-white shadow-sm transition hover:bg-[#244cad] max-md:rounded-xl max-md:px-8 max-md:py-3 max-md:text-xs max-md:tracking-[0.16em]"
                                 :title="trans('shop::app.checkout.onepage.summary.place-order')"
                                 ::disabled="isPlacingOrder"
                                 ::loading="isPlacingOrder"
