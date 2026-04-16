@@ -169,7 +169,8 @@ it('renders the simplified checkout form contract for authenticated customers', 
         ->assertSeeText('Full Address')
         ->assertSeeText('Email')
         ->assertDontSeeText('Company Name')
-        ->assertDontSeeText('Vat ID');
+        ->assertDontSeeText('Vat ID')
+        ->assertDontSeeText('Proceed');
 });
 
 it('renders the checkout page for guest customers from buy now', function () {
@@ -186,6 +187,7 @@ it('renders the checkout page for guest customers from buy now', function () {
         ->assertSeeText('District / Region')
         ->assertSeeText('Full Address')
         ->assertSeeText('Email')
+        ->assertDontSeeText('Proceed')
         ->assertSeeText('Payment Method');
 });
 

@@ -90,7 +90,7 @@ class CheckoutStateResource extends JsonResource
                 'outside_dhaka_rate' => (float) core()->getConfigData('sales.carriers.courier.outside_dhaka_rate') ?: 120,
             ],
 
-            'payment_methods' => Payment::getSupportedPaymentMethods()['payment_methods'] ?? [],
+            'payment_methods' => self::preferredPaymentMethods(Payment::getSupportedPaymentMethods()['payment_methods'] ?? []),
         ];
     }
 
@@ -120,5 +120,18 @@ class CheckoutStateResource extends JsonResource
             'postcode' => '',
             'phone' => $customer?->phone ?? '',
         ];
+    }
+
+    public static function preferredPaymentMethods(array $paymentMethods): array
+    {
+        return collect($paymentMethods)
+            ->sortBy(fn (array $paymentMethod) => $paymentMethod['method'] === 'cashondelivery' ? 0 : 1)
+            ->values()
+            ->all();
+    }
+
+    public static function defaultPaymentMethod(array $paymentMethods): ?string
+    {
+        return self::preferredPaymentMethods($paymentMethods)[0]['method'] ?? null;
     }
 }

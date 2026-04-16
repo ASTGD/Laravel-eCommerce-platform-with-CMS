@@ -29,6 +29,8 @@ class OnepageController extends BaseOnepageController
 
     public function state(): JsonResource
     {
+        $this->ensureDefaultPaymentMethod();
+
         return new CheckoutStateResource(Cart::getCart());
     }
 
@@ -69,9 +71,13 @@ class OnepageController extends BaseOnepageController
                 'redirect' => false,
                 'data' => array_merge(
                     [
-                    'shippingMethods' => $shippingMethods,
+                        'shippingMethods' => $shippingMethods,
                     ],
-                    Payment::getSupportedPaymentMethods(),
+                    [
+                        'payment_methods' => CheckoutStateResource::preferredPaymentMethods(
+                            Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+                        ),
+                    ],
                 ),
             ]);
         }
@@ -80,7 +86,11 @@ class OnepageController extends BaseOnepageController
 
         return new JsonResource([
             'redirect' => false,
-            'data' => Payment::getSupportedPaymentMethods(),
+            'data' => [
+                'payment_methods' => CheckoutStateResource::preferredPaymentMethods(
+                    Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+                ),
+            ],
         ]);
     }
 
@@ -120,7 +130,11 @@ class OnepageController extends BaseOnepageController
         Cart::refreshCart();
         Cart::collectTotals();
 
-        return response()->json(Payment::getSupportedPaymentMethods());
+        return response()->json([
+            'payment_methods' => CheckoutStateResource::preferredPaymentMethods(
+                Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+            ),
+        ]);
     }
 
     public function storeOrder()
@@ -163,6 +177,38 @@ class OnepageController extends BaseOnepageController
             'redirect' => true,
             'redirect_url' => route('shop.checkout.onepage.success'),
         ]);
+    }
+
+    protected function ensureDefaultPaymentMethod(): void
+    {
+        $cart = Cart::getCart();
+
+        if (! $cart) {
+            return;
+        }
+
+        $paymentMethods = CheckoutStateResource::preferredPaymentMethods(
+            Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+        );
+
+        if ($paymentMethods === []) {
+            return;
+        }
+
+        $availableMethods = collect($paymentMethods)->pluck('method')->all();
+        $currentMethod = $cart->payment?->method;
+
+        if ($currentMethod && in_array($currentMethod, $availableMethods, true)) {
+            return;
+        }
+
+        $defaultMethod = CheckoutStateResource::defaultPaymentMethod($paymentMethods);
+
+        if (! $defaultMethod) {
+            return;
+        }
+
+        Cart::savePaymentMethod(['method' => $defaultMethod]);
     }
 
     public function validateOrder()
