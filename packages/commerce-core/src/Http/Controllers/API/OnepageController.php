@@ -4,7 +4,10 @@ namespace Platform\CommerceCore\Http\Controllers\API;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Platform\CommerceCore\Services\CheckoutGuestAccountService;
 use Platform\CommerceCore\Services\DistrictShippingService;
 use Platform\CommerceCore\Services\PickupPointService;
 use Platform\CommerceCore\Transformers\CheckoutStateResource;
@@ -22,6 +25,7 @@ class OnepageController extends BaseOnepageController
         OrderRepository $orderRepository,
         CustomerRepository $customerRepository,
         protected DistrictShippingService $districtShippingService,
+        protected CheckoutGuestAccountService $checkoutGuestAccountService,
         protected PickupPointService $pickupPointService,
     ) {
         parent::__construct($orderRepository, $customerRepository);
@@ -29,12 +33,15 @@ class OnepageController extends BaseOnepageController
 
     public function state(): JsonResource
     {
+        $this->ensureDefaultPaymentMethod();
+
         return new CheckoutStateResource(Cart::getCart());
     }
 
     public function storeAddress(\Webkul\Shop\Http\Requests\CartAddressRequest $cartAddressRequest): JsonResource
     {
         $params = $cartAddressRequest->all();
+        $createAccount = $this->shouldCreateGuestAccount($params);
 
         if (
             ! auth()->guard('customer')->check()
@@ -53,7 +60,11 @@ class OnepageController extends BaseOnepageController
             ]);
         }
 
+        $this->validateGuestAccountIntent($params, $createAccount);
+
         Cart::saveAddresses($params);
+
+        $this->checkoutGuestAccountService->storeIntent(data_get($params, 'billing', []), $createAccount);
 
         $cart = Cart::getCart();
 
@@ -69,9 +80,13 @@ class OnepageController extends BaseOnepageController
                 'redirect' => false,
                 'data' => array_merge(
                     [
-                    'shippingMethods' => $shippingMethods,
+                        'shippingMethods' => $shippingMethods,
                     ],
-                    Payment::getSupportedPaymentMethods(),
+                    [
+                        'payment_methods' => CheckoutStateResource::preferredPaymentMethods(
+                            Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+                        ),
+                    ],
                 ),
             ]);
         }
@@ -80,7 +95,11 @@ class OnepageController extends BaseOnepageController
 
         return new JsonResource([
             'redirect' => false,
-            'data' => Payment::getSupportedPaymentMethods(),
+            'data' => [
+                'payment_methods' => CheckoutStateResource::preferredPaymentMethods(
+                    Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+                ),
+            ],
         ]);
     }
 
@@ -120,7 +139,11 @@ class OnepageController extends BaseOnepageController
         Cart::refreshCart();
         Cart::collectTotals();
 
-        return response()->json(Payment::getSupportedPaymentMethods());
+        return response()->json([
+            'payment_methods' => CheckoutStateResource::preferredPaymentMethods(
+                Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+            ),
+        ]);
     }
 
     public function storeOrder()
@@ -132,10 +155,17 @@ class OnepageController extends BaseOnepageController
             ]);
         }
 
-        Cart::collectTotals();
-
         try {
+            $this->checkoutGuestAccountService->attachMatchingExistingCustomerToCart(Cart::getCart());
+            $this->checkoutGuestAccountService->createCustomerFromIntent(Cart::getCart());
+            $this->ensureDefaultPaymentMethod();
+            Cart::collectTotals();
             $this->validateOrder();
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'message' => collect($exception->errors())->flatten()->first() ?: 'Please review the checkout form.',
+                'errors'  => $exception->errors(),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
@@ -157,12 +187,46 @@ class OnepageController extends BaseOnepageController
 
         Cart::deActivateCart();
 
+        session()->put('order_id', $order->id);
         session()->flash('order_id', $order->id);
 
         return new JsonResource([
             'redirect' => true,
-            'redirect_url' => route('shop.checkout.onepage.success'),
+            'redirect_url' => route('shop.checkout.success', ['order' => $order->id]),
         ]);
+    }
+
+    protected function ensureDefaultPaymentMethod(): void
+    {
+        $cart = Cart::getCart();
+
+        if (! $cart) {
+            return;
+        }
+
+        $paymentMethods = CheckoutStateResource::preferredPaymentMethods(
+            Payment::getSupportedPaymentMethods()['payment_methods'] ?? []
+        );
+
+        if ($paymentMethods === []) {
+            return;
+        }
+
+        $availableMethods = collect($paymentMethods)->pluck('method')->all();
+        $currentMethod = $cart->payment?->method;
+
+        if ($currentMethod && in_array($currentMethod, $availableMethods, true)) {
+            return;
+        }
+
+        $defaultMethod = CheckoutStateResource::defaultPaymentMethod($paymentMethods);
+
+        if (! $defaultMethod) {
+            return;
+        }
+
+        Cart::savePaymentMethod(['method' => $defaultMethod]);
+        Cart::refreshCart();
     }
 
     public function validateOrder()
@@ -177,5 +241,30 @@ class OnepageController extends BaseOnepageController
         ) {
             $this->pickupPointService->assertValidSelection($cart->shipping_address);
         }
+    }
+
+    protected function shouldCreateGuestAccount(array $params): bool
+    {
+        if (auth()->guard('customer')->check()) {
+            return false;
+        }
+
+        return filter_var(data_get($params, 'billing.create_account'), FILTER_VALIDATE_BOOL);
+    }
+
+    protected function validateGuestAccountIntent(array $params, bool $createAccount): void
+    {
+        if (! $createAccount) {
+            return;
+        }
+
+        Validator::make($params, [
+            'billing.email' => 'required|email|unique:customers,email,NULL,id,channel_id,'.core()->getCurrentChannel()->id,
+            'billing.phone' => 'required|unique:customers,phone',
+            'billing.password' => 'required|confirmed|min:6',
+        ], [
+            'billing.password.confirmed' => 'The password confirmation does not match.',
+            'billing.phone.unique' => 'This phone number is already registered. Please sign in instead.',
+        ])->validate();
     }
 }

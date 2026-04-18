@@ -255,8 +255,24 @@ return [
                 'locale_based' => true,
                 'default' => 'District-based delivery charges',
             ], [
+                'name' => 'default_rate',
+                'title' => 'Default Rate',
+                'type' => 'text',
+                'validation' => 'required_if:active,1|numeric',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => 120,
+            ], [
+                'name' => 'district_rates',
+                'title' => 'District Rates',
+                'info' => 'Use one district per line in the format District=Rate. Example: Dhaka=60',
+                'type' => 'textarea',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => "Dhaka=60\nChattogram=120",
+            ], [
                 'name' => 'dhaka_district',
-                'title' => 'Dhaka District Name',
+                'title' => 'Legacy Dhaka District Name',
                 'type' => 'text',
                 'validation' => 'required_if:active,1',
                 'channel_based' => true,
@@ -264,7 +280,7 @@ return [
                 'default' => 'Dhaka',
             ], [
                 'name' => 'dhaka_title',
-                'title' => 'Dhaka Title',
+                'title' => 'Legacy Dhaka Title',
                 'type' => 'text',
                 'validation' => 'required_if:active,1',
                 'channel_based' => true,
@@ -272,7 +288,7 @@ return [
                 'default' => 'Dhaka Delivery',
             ], [
                 'name' => 'dhaka_rate',
-                'title' => 'Dhaka Rate',
+                'title' => 'Legacy Dhaka Rate',
                 'type' => 'text',
                 'validation' => 'required_if:active,1|numeric',
                 'channel_based' => true,
@@ -280,7 +296,7 @@ return [
                 'default' => 60,
             ], [
                 'name' => 'outside_dhaka_title',
-                'title' => 'Outside Dhaka Title',
+                'title' => 'Legacy Outside Dhaka Title',
                 'type' => 'text',
                 'validation' => 'required_if:active,1',
                 'channel_based' => true,
@@ -288,7 +304,7 @@ return [
                 'default' => 'Outside Dhaka Delivery',
             ], [
                 'name' => 'outside_dhaka_rate',
-                'title' => 'Outside Dhaka Rate',
+                'title' => 'Legacy Outside Dhaka Rate',
                 'type' => 'text',
                 'validation' => 'required_if:active,1|numeric',
                 'channel_based' => true,

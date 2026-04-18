@@ -2,6 +2,7 @@
 
 <!-- Customer Address Vue Component -->
 <v-checkout-address-customer
+    ref="checkoutAddress"
     :cart="cart"
     :checkout-state="checkoutState"
     @processing="stepForward"
@@ -12,6 +13,12 @@
 </v-checkout-address-customer>
 
 {!! view_render_event('bagisto.shop.checkout.onepage.address.customer.after') !!}
+
+@php
+    $checkoutRoutePrefix = request()->routeIs('shop.checkout.custom.*')
+        ? 'shop.checkout.custom'
+        : 'shop.checkout.onepage';
+@endphp
 
 @pushOnce('scripts')
     <script
@@ -27,20 +34,23 @@
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
             >
-                <form class="space-y-6" @submit="handleSubmit($event, addAddressToCart)">
+                <form
+                    id="checkout-address-form"
+                    ref="checkoutAddressForm"
+                    class="space-y-6"
+                    @submit="handleSubmit($event, addAddressToCart)"
+                >
                     <v-checkout-address-form
                         control-name="billing"
                         :address="checkoutAddress"
                     ></v-checkout-address-form>
 
-                    <div class="flex justify-end pt-2">
-                        <x-shop::button
-                            class="primary-button rounded-2xl px-11 py-3 max-md:rounded-lg max-sm:w-full max-sm:max-w-full max-sm:py-1.5"
-                            :title="trans('shop::app.checkout.onepage.address.proceed')"
-                            ::loading="isStoring"
-                            ::disabled="isStoring"
-                        />
-                    </div>
+                    <button
+                        type="submit"
+                        class="hidden"
+                        aria-hidden="true"
+                        tabindex="-1"
+                    ></button>
                 </form>
             </x-shop::form>
         </template>
@@ -83,6 +93,10 @@
             },
 
             methods: {
+                submitAddress() {
+                    this.$refs.checkoutAddressForm?.requestSubmit();
+                },
+
                 normalizeAddress(params) {
                     const billing = params.billing ?? {};
 
@@ -107,15 +121,14 @@
 
                     this.isStoring = true;
 
-                    this.moveToNextStep();
-
-                    this.$axios.post('{{ route('shop.checkout.onepage.addresses.store') }}', payload)
+                    this.$axios.post('{{ route($checkoutRoutePrefix.'.addresses.store') }}', payload)
                         .then((response) => {
                             this.isStoring = false;
 
                             if (response.data.data.redirect_url) {
                                 window.location.href = response.data.data.redirect_url;
                             } else {
+                                this.moveToNextStep();
                                 this.$emit('processed', response.data.data.payment_methods);
                             }
                         })
@@ -126,6 +139,11 @@
 
                             if (error.response.status == 422) {
                                 setErrors(this.mapValidationErrors(error.response.data.errors));
+
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: error.response?.data?.message || 'Please review the highlighted checkout fields.',
+                                });
                             }
                         });
                 },

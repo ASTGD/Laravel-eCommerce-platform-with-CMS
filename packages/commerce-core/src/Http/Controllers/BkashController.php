@@ -28,7 +28,7 @@ class BkashController extends Controller
         if (! $payment->hasValidCredentials()) {
             session()->flash('error', 'Configure the direct bKash credentials before enabling this payment method.');
 
-            return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
+            return redirect()->route('shop.checkout.index', ['step' => 'payment']);
         }
 
         $cart = Cart::getCart();
@@ -42,7 +42,7 @@ class BkashController extends Controller
         if ($cart->payment?->method !== $payment->getCode()) {
             session()->flash('error', 'Select the payment method again before continuing.');
 
-            return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
+            return redirect()->route('shop.checkout.index', ['step' => 'payment']);
         }
 
         $attempt = null;
@@ -94,10 +94,11 @@ class BkashController extends Controller
                 'callback_success',
             );
 
+            session()->put('order_id', $order->id);
             session()->flash('order_id', $order->id);
             session()->flash('success', 'Payment completed successfully.');
 
-            return redirect()->route('shop.checkout.onepage.success');
+            return redirect()->route('shop.checkout.success', ['order' => $order->id]);
         } catch (\Throwable $e) {
             report($e);
 
@@ -140,7 +141,7 @@ class BkashController extends Controller
 
         session()->flash('error', $message);
 
-        return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
+        return redirect()->route('shop.checkout.index', ['step' => 'payment']);
     }
 
     protected function resolvePayment(string $code): AbstractBkashPayment

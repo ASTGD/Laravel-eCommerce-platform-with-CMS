@@ -4,6 +4,7 @@ namespace Platform\CommerceCore\Transformers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Platform\CommerceCore\Services\BangladeshDistrictService;
 use Webkul\Payment\Facades\Payment;
 use Webkul\Shop\Http\Resources\CartResource;
 
@@ -18,6 +19,7 @@ class CheckoutStateResource extends JsonResource
     public function toArray($request)
     {
         $isCustomerAuthenticated = auth()->guard('customer')->check();
+        $districtService = app(BangladeshDistrictService::class);
 
         return [
             'single_flow' => true,
@@ -44,7 +46,7 @@ class CheckoutStateResource extends JsonResource
                         ['name' => 'name', 'label' => 'Name', 'type' => 'text', 'required' => true],
                         ['name' => 'phone', 'label' => 'Mobile Number', 'type' => 'text', 'required' => true],
                         ['name' => 'country', 'label' => 'Country / Region', 'type' => 'select', 'required' => true],
-                        ['name' => 'state', 'label' => 'District / Region', 'type' => 'text', 'required' => true],
+                        ['name' => 'state', 'label' => 'District / Region', 'type' => 'select', 'required' => true],
                         ['name' => 'address', 'label' => 'Full Address', 'type' => 'textarea', 'required' => true],
                         ['name' => 'email', 'label' => 'Email', 'type' => 'email', 'required' => true],
                     ],
@@ -63,6 +65,18 @@ class CheckoutStateResource extends JsonResource
                         'label' => 'Create an account?',
                         'type' => 'checkbox',
                     ],
+
+                    'password_field' => [
+                        'name' => 'password',
+                        'label' => 'Password',
+                        'type' => 'password',
+                    ],
+
+                    'password_confirmation_field' => [
+                        'name' => 'password_confirmation',
+                        'label' => 'Confirm Password',
+                        'type' => 'password',
+                    ],
                 ],
 
                 'customer' => [
@@ -79,6 +93,14 @@ class CheckoutStateResource extends JsonResource
 
                 'district_field' => 'state',
 
+                'default_country' => $districtService->defaultCountryCode(),
+
+                'districts' => $districtService->districtOptions(),
+
+                'default_rate' => $districtService->defaultRate(),
+
+                'configured_rates' => $districtService->configuredRates(),
+
                 'dhaka_district' => core()->getConfigData('sales.carriers.courier.dhaka_district') ?: 'Dhaka',
 
                 'dhaka_title' => core()->getConfigData('sales.carriers.courier.dhaka_title') ?: 'Dhaka Delivery',
@@ -90,7 +112,7 @@ class CheckoutStateResource extends JsonResource
                 'outside_dhaka_rate' => (float) core()->getConfigData('sales.carriers.courier.outside_dhaka_rate') ?: 120,
             ],
 
-            'payment_methods' => Payment::getSupportedPaymentMethods()['payment_methods'] ?? [],
+            'payment_methods' => self::preferredPaymentMethods(Payment::getSupportedPaymentMethods()['payment_methods'] ?? []),
         ];
     }
 
@@ -100,6 +122,7 @@ class CheckoutStateResource extends JsonResource
     protected function customerDraft(): array
     {
         $customer = auth()->guard('customer')->user();
+        $districtService = app(BangladeshDistrictService::class);
         $name = trim(implode(' ', array_filter([
             $customer->first_name ?? null,
             $customer->last_name ?? null,
@@ -114,11 +137,24 @@ class CheckoutStateResource extends JsonResource
             'last_name' => $customer?->last_name ?? '',
             'email' => $customer?->email ?? '',
             'address' => [''],
-            'country' => strtoupper(config('app.default_country') ?? ''),
+            'country' => $districtService->defaultCountryCode(),
             'state' => '',
             'city' => '',
             'postcode' => '',
             'phone' => $customer?->phone ?? '',
         ];
+    }
+
+    public static function preferredPaymentMethods(array $paymentMethods): array
+    {
+        return collect($paymentMethods)
+            ->sortBy(fn (array $paymentMethod) => $paymentMethod['method'] === 'cashondelivery' ? 0 : 1)
+            ->values()
+            ->all();
+    }
+
+    public static function defaultPaymentMethod(array $paymentMethods): ?string
+    {
+        return self::preferredPaymentMethods($paymentMethods)[0]['method'] ?? null;
     }
 }

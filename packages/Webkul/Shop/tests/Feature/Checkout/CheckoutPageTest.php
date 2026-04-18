@@ -3,11 +3,27 @@
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartItem;
 use Webkul\Customer\Models\Customer;
+use Webkul\Core\Models\CoreConfig;
 use Webkul\Faker\Helpers\Product as ProductFaker;
 use Webkul\Sales\Models\Order;
 
 use function Pest\Laravel\get;
 use function Pest\Laravel\getJson;
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\putJson;
+
+function setCheckoutPageConfig(string $code, mixed $value): void
+{
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => $code,
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => (string) $value,
+        ],
+    );
+}
 
 function createCheckoutCustomerAndCart(array $customerOverrides = []): array
 {
@@ -136,7 +152,7 @@ it('prefills checkout address details for logged in customers without saved addr
 
     $this->loginAsCustomer($customer);
 
-    getJson(route('shop.checkout.onepage.state'))
+    getJson(route('shop.checkout.custom.state'))
         ->assertSuccessful()
         ->assertJsonPath('data.customer.is_authenticated', true)
         ->assertJsonPath('data.customer.draft.name', trim($customer->first_name.' '.$customer->last_name))
@@ -149,7 +165,7 @@ it('opens checkout on the requested payment step after a failed online payment r
 
     $this->loginAsCustomer($customer);
 
-    get(route('shop.checkout.onepage.index', ['step' => 'payment']))
+    get(route('shop.checkout.custom.index', ['step' => 'payment']))
         ->assertOk()
         ->assertSee('currentStep: "payment"', false);
 });
@@ -159,7 +175,7 @@ it('renders the simplified checkout form contract for authenticated customers', 
 
     $this->loginAsCustomer($customer);
 
-    get(route('shop.checkout.onepage.index'))
+    get(route('shop.checkout.custom.index'))
         ->assertOk()
         ->assertSeeText('Your Order')
         ->assertDontSeeText('Cart Summary')
@@ -169,13 +185,18 @@ it('renders the simplified checkout form contract for authenticated customers', 
         ->assertSeeText('Full Address')
         ->assertSeeText('Email')
         ->assertDontSeeText('Company Name')
-        ->assertDontSeeText('Vat ID');
+        ->assertDontSeeText('Vat ID')
+        ->assertDontSeeText('Proceed');
 });
 
 it('renders the checkout page for guest customers from buy now', function () {
     createGuestCheckoutCart();
 
-    get(route('shop.checkout.onepage.index'))
+    getJson(route('shop.checkout.custom.state'))
+        ->assertOk()
+        ->assertJsonPath('data.cart.payment_method', 'cashondelivery');
+
+    get(route('shop.checkout.custom.index'))
         ->assertOk()
         ->assertSeeText('Returning customer?')
         ->assertSeeText('Have a coupon?')
@@ -186,6 +207,7 @@ it('renders the checkout page for guest customers from buy now', function () {
         ->assertSeeText('District / Region')
         ->assertSeeText('Full Address')
         ->assertSeeText('Email')
+        ->assertDontSeeText('Proceed')
         ->assertSeeText('Payment Method');
 });
 
@@ -206,8 +228,221 @@ it('shows a see order button on checkout success for logged in customers', funct
 
     session(['order_id' => $order->id]);
 
-    get(route('shop.checkout.onepage.success'))
+    get(route('shop.checkout.custom.success'))
         ->assertOk()
         ->assertSeeText('See Order')
         ->assertSee(route('shop.customers.account.orders.view', $order->id), false);
+});
+
+it('lets a guest submit the single checkout flow and reach the success redirect', function () {
+    setCheckoutPageConfig('sales.checkout.shopping_cart.allow_guest_checkout', 1);
+    setCheckoutPageConfig('sales.carriers.courier.active', 1);
+    setCheckoutPageConfig('sales.carriers.courier.title', 'Courier');
+    setCheckoutPageConfig('sales.carriers.courier.description', 'District-based delivery charges');
+    setCheckoutPageConfig('sales.carriers.courier.default_rate', 120);
+    setCheckoutPageConfig('sales.carriers.courier.district_rates', "Dhaka=60\nRajshahi=140");
+    setCheckoutPageConfig('sales.carriers.courier.dhaka_district', 'Dhaka');
+    setCheckoutPageConfig('sales.carriers.courier.dhaka_title', 'Dhaka Delivery');
+    setCheckoutPageConfig('sales.carriers.courier.dhaka_rate', 60);
+    setCheckoutPageConfig('sales.carriers.courier.outside_dhaka_title', 'Outside Dhaka Delivery');
+    setCheckoutPageConfig('sales.carriers.courier.outside_dhaka_rate', 120);
+    setCheckoutPageConfig('sales.payment_methods.cashondelivery.active', 1);
+
+    createGuestCheckoutCart();
+
+    getJson(route('shop.checkout.custom.state'))
+        ->assertOk()
+        ->assertJsonPath('data.cart.payment_method', 'cashondelivery');
+
+    postJson(route('shop.checkout.custom.addresses.store'), [
+        'billing' => [
+            'use_for_shipping' => true,
+            'first_name' => 'Guest',
+            'last_name' => 'Checkout',
+            'email' => 'guest.checkout@example.com',
+            'address' => ['House 12'],
+            'country' => 'BD',
+            'state' => 'Dhaka',
+            'city' => 'Dhaka',
+            'postcode' => '1212',
+            'phone' => '+8801711111111',
+        ],
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.payment_methods.0.method', 'cashondelivery');
+
+    getJson(route('shop.checkout.custom.state'))
+        ->assertOk()
+        ->assertJsonPath('data.cart.shipping_method', 'courier_dhaka')
+        ->assertJsonPath('data.cart.payment_method', 'cashondelivery')
+        ->assertJsonPath('data.cart.billing_address.state', 'Dhaka')
+        ->assertJsonPath('data.cart.shipping_address.state', 'Dhaka');
+
+    postJson(route('shop.checkout.custom.orders.store'))
+        ->assertOk()
+        ->assertJsonPath('data.redirect', true)
+        ->assertJsonPath('data.redirect_url', fn (string $url) => str_contains($url, route('shop.checkout.success', absolute: false)));
+});
+
+it('lets a guest complete the custom one page checkout even when courier is inactive', function () {
+    setCheckoutPageConfig('sales.checkout.shopping_cart.allow_guest_checkout', 1);
+    setCheckoutPageConfig('sales.carriers.courier.active', 0);
+    setCheckoutPageConfig('sales.carriers.courier.title', 'Courier');
+    setCheckoutPageConfig('sales.carriers.courier.description', 'District-based delivery charges');
+    setCheckoutPageConfig('sales.carriers.courier.default_rate', 120);
+    setCheckoutPageConfig('sales.carriers.courier.district_rates', "Dhaka=60\nRajshahi=140");
+    setCheckoutPageConfig('sales.carriers.courier.dhaka_district', 'Dhaka');
+    setCheckoutPageConfig('sales.carriers.courier.dhaka_title', 'Dhaka Delivery');
+    setCheckoutPageConfig('sales.carriers.courier.dhaka_rate', 60);
+    setCheckoutPageConfig('sales.carriers.courier.outside_dhaka_title', 'Outside Dhaka Delivery');
+    setCheckoutPageConfig('sales.carriers.courier.outside_dhaka_rate', 120);
+    setCheckoutPageConfig('sales.payment_methods.cashondelivery.active', 1);
+
+    createGuestCheckoutCart();
+
+    getJson(route('shop.checkout.custom.state'))
+        ->assertOk()
+        ->assertJsonPath('data.cart.payment_method', 'cashondelivery');
+
+    postJson(route('shop.checkout.custom.addresses.store'), [
+        'billing' => [
+            'use_for_shipping' => true,
+            'first_name' => 'Guest',
+            'last_name' => 'Checkout',
+            'email' => 'guest.checkout@example.com',
+            'address' => ['House 12'],
+            'country' => 'BD',
+            'state' => 'Dhaka',
+            'city' => 'Dhaka',
+            'postcode' => '1212',
+            'phone' => '+8801711111111',
+        ],
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.shippingMethods.courier.rates.0.method', 'courier_dhaka');
+
+    postJson(route('shop.checkout.custom.orders.store'))
+        ->assertOk()
+        ->assertJsonPath('data.redirect', true)
+        ->assertJsonPath('data.redirect_url', fn (string $url) => str_contains($url, route('shop.checkout.success', absolute: false)));
+});
+
+it('creates a real customer account from one page checkout when create account is selected', function () {
+    $phone = '+88017'.str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+
+    setCheckoutPageConfig('sales.checkout.shopping_cart.allow_guest_checkout', 1);
+    setCheckoutPageConfig('sales.carriers.courier.active', 1);
+    setCheckoutPageConfig('sales.carriers.courier.default_rate', 120);
+    setCheckoutPageConfig('sales.carriers.courier.district_rates', "Dhaka=60\nRajshahi=140");
+    setCheckoutPageConfig('sales.payment_methods.cashondelivery.active', 1);
+
+    createGuestCheckoutCart();
+
+    getJson(route('shop.checkout.custom.state'))
+        ->assertOk()
+        ->assertJsonPath('data.cart.payment_method', 'cashondelivery');
+
+    postJson(route('shop.checkout.custom.addresses.store'), [
+        'billing' => [
+            'use_for_shipping' => true,
+            'first_name' => 'Shafin',
+            'last_name' => 'Mia',
+            'email' => 'sharwatshafin1000@gmail.com',
+            'address' => ['House 12'],
+            'country' => 'BD',
+            'state' => 'Dhaka',
+            'city' => 'Dhaka',
+            'postcode' => '1212',
+            'phone' => $phone,
+            'create_account' => true,
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ],
+    ])->assertOk();
+
+    postJson(route('shop.checkout.custom.orders.store'))
+        ->assertOk()
+        ->assertJsonPath('data.redirect', true);
+
+    $customer = Customer::query()
+        ->where('email', 'sharwatshafin1000@gmail.com')
+        ->first();
+
+    expect($customer)->not->toBeNull()
+        ->and(auth()->guard('customer')->check())->toBeTrue()
+        ->and(auth()->guard('customer')->user()->id)->toBe($customer->id);
+
+    $order = Order::query()->latest('id')->first();
+
+    expect($order)->not->toBeNull()
+        ->and($order->customer_id)->toBe($customer->id)
+        ->and((int) $order->is_guest)->toBe(0);
+});
+
+it('attaches a guest one page checkout order to an existing customer when the email matches', function () {
+    $email = 'existing.'.uniqid().'@example.com';
+    $phone = '+88017'.str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+    $checkoutPhone = '+88018'.str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+
+    setCheckoutPageConfig('sales.checkout.shopping_cart.allow_guest_checkout', 1);
+    setCheckoutPageConfig('sales.carriers.courier.active', 1);
+    setCheckoutPageConfig('sales.carriers.courier.default_rate', 120);
+    setCheckoutPageConfig('sales.carriers.courier.district_rates', "Dhaka=60\nRajshahi=140");
+    setCheckoutPageConfig('sales.payment_methods.cashondelivery.active', 1);
+
+    $customer = Customer::factory()->create([
+        'first_name' => 'Shafin',
+        'last_name' => 'Mia',
+        'email' => $email,
+        'phone' => $phone,
+    ]);
+
+    createGuestCheckoutCart();
+
+    postJson(route('shop.checkout.custom.addresses.store'), [
+        'billing' => [
+            'use_for_shipping' => true,
+            'first_name' => 'Shafin',
+            'last_name' => 'Mia',
+            'email' => $email,
+            'address' => ['House 58 Khansamarchock'],
+            'country' => 'BD',
+            'state' => 'Rajshahi',
+            'city' => 'Rajshahi',
+            'postcode' => '6200',
+            'phone' => $checkoutPhone,
+            'create_account' => false,
+        ],
+    ])->assertOk();
+
+    postJson(route('shop.checkout.custom.orders.store'))
+        ->assertOk()
+        ->assertJsonPath('data.redirect', true);
+
+    $order = Order::query()->latest('id')->first();
+
+    expect($order)->not->toBeNull()
+        ->and($order->customer_id)->toBe($customer->id)
+        ->and((int) $order->is_guest)->toBe(0)
+        ->and(auth()->guard('customer')->check())->toBeFalse()
+        ->and($customer->fresh()->orders()->whereKey($order->id)->exists())->toBeTrue();
+});
+
+it('updates one page checkout item quantities through the existing cart update flow', function () {
+    createGuestCheckoutCart();
+
+    $cart = Cart::query()->latest('id')->with('items')->firstOrFail();
+    $item = $cart->items->first();
+
+    putJson(route('shop.api.checkout.cart.update'), [
+        'qty' => [
+            $item->id => 3,
+        ],
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.items.0.quantity', 3);
+
+    $item->refresh();
+
+    expect($item->quantity)->toBe(3);
 });

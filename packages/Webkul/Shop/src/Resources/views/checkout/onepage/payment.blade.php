@@ -11,6 +11,12 @@
 
 {!! view_render_event('bagisto.shop.checkout.onepage.payment_methods.after') !!}
 
+@php
+    $checkoutRoutePrefix = request()->routeIs('shop.checkout.custom.*')
+        ? 'shop.checkout.custom'
+        : 'shop.checkout.onepage';
+@endphp
+
 @pushOnce('scripts')
     <script
         type="text/x-template"
@@ -52,20 +58,35 @@
                                 name="payment[method]"
                                 :value="payment.method"
                                 :id="payment.method"
-                                class="peer sr-only"
-                                :checked="cart && cart.payment_method == payment.method"
+                                v-model="selectedPaymentMethod"
+                                class="sr-only"
                                 @change="store(payment)"
                             >
 
                             <label
                                 :for="payment.method"
-                            class="flex min-h-[6.75rem] w-full cursor-pointer items-center gap-4 rounded-[1.25rem] border border-slate-200 bg-slate-50 px-5 py-4 transition hover:border-slate-300 peer-checked:border-[#2f5ec5] peer-checked:bg-blue-50/40"
+                                class="flex min-h-[6.75rem] w-full cursor-pointer items-center gap-4 rounded-[1.25rem] border px-5 py-4 transition"
+                                :style="paymentRowStyle(payment.method)"
                             >
-                                <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white peer-checked:border-[#2f5ec5]">
-                                    <span
-                                        class="h-2 w-2 rounded-full bg-[#2f5ec5] transition"
-                                        :class="cart && cart.payment_method == payment.method ? 'opacity-100' : 'opacity-0'"
-                                    ></span>
+                                <span
+                                    class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white"
+                                    :style="paymentRadioStyle(payment.method)"
+                                >
+                                    <svg
+                                        v-if="isSelected(payment.method)"
+                                        class="h-2.5 w-2.5 text-[#2f5ec5]"
+                                        viewBox="0 0 20 20"
+                                        fill="none"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M4.75 10.25L8.25 13.75L15.25 6.75"
+                                            stroke="currentColor"
+                                            stroke-width="2.25"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
                                 </span>
 
                                 <div class="min-w-0 flex-1">
@@ -139,7 +160,69 @@
 
             emits: ['processing', 'processed'],
 
+            data() {
+                return {
+                    selectedPaymentMethod: this.cart?.payment_method || this.methods?.[0]?.method || null,
+                };
+            },
+
+            watch: {
+                cart: {
+                    immediate: true,
+
+                    handler(cart) {
+                        if (cart?.payment_method) {
+                            this.selectedPaymentMethod = cart.payment_method;
+                        }
+                    },
+                },
+
+                methods: {
+                    immediate: true,
+
+                    handler(methods) {
+                        if (! this.selectedPaymentMethod && methods?.length) {
+                            this.selectedPaymentMethod = methods[0].method;
+                        }
+                    },
+                },
+            },
+
             methods: {
+                isSelected(method) {
+                    return String(this.selectedPaymentMethod ?? '') === String(method ?? '');
+                },
+
+                paymentRowStyle(method) {
+                    if (! this.isSelected(method)) {
+                        return {
+                            borderColor: '#e2e8f0',
+                            backgroundColor: '#f8fafc',
+                        };
+                    }
+
+                    return {
+                        borderColor: '#2f5ec5',
+                        backgroundColor: 'rgba(239, 246, 255, 0.4)',
+                    };
+                },
+
+                paymentRadioStyle(method) {
+                    if (! this.isSelected(method)) {
+                        return {
+                            borderColor: '#cbd5e1',
+                        };
+                    }
+
+                    return {
+                        borderColor: '#2f5ec5',
+                    };
+                },
+
+                syncSelectedPaymentMethod(method) {
+                    this.selectedPaymentMethod = method;
+                },
+
                 paymentLogoFrameClass(method) {
                     if (method === 'bkash') {
                         return 'h-12 w-[8.75rem] overflow-hidden rounded-xl';
@@ -225,9 +308,11 @@
                 },
 
                 store(selectedMethod) {
+                    this.syncSelectedPaymentMethod(selectedMethod.method);
+
                     this.$emit('processing', 'review');
 
-                    this.$axios.post("{{ route('shop.checkout.onepage.payment_methods.store') }}", {
+                    this.$axios.post("{{ route($checkoutRoutePrefix.'.payment_methods.store') }}", {
                             payment: selectedMethod
                         })
                         .then(response => {
@@ -242,6 +327,8 @@
                         })
                         .catch(error => {
                             this.$emit('processing', 'payment');
+
+                            this.syncSelectedPaymentMethod(this.cart?.payment_method || selectedMethod.method);
 
                             if (error.response.data.redirect_url) {
                                 window.location.href = error.response.data.redirect_url;

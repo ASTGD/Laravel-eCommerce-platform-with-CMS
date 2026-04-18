@@ -30,7 +30,7 @@ class SslCommerzController extends Controller
         if (! $payment->hasValidCredentials()) {
             session()->flash('error', 'Configure SSLCommerz credentials before enabling this payment method.');
 
-            return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
+            return redirect()->route('shop.checkout.index', ['step' => 'payment']);
         }
 
         $cart = Cart::getCart();
@@ -44,7 +44,7 @@ class SslCommerzController extends Controller
         if ($cart->payment?->method !== $payment->getCode()) {
             session()->flash('error', 'Select the payment method again before continuing.');
 
-            return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
+            return redirect()->route('shop.checkout.index', ['step' => 'payment']);
         }
 
         $attempt = null;
@@ -87,10 +87,11 @@ class SslCommerzController extends Controller
                 'success_redirect',
             );
 
+            session()->put('order_id', $order->id);
             session()->flash('order_id', $order->id);
             session()->flash('success', 'Payment completed successfully.');
 
-            return redirect()->route('shop.checkout.onepage.success');
+            return redirect()->route('shop.checkout.success', ['order' => $order->id]);
         } catch (\Throwable $e) {
             report($e);
 
@@ -154,7 +155,7 @@ class SslCommerzController extends Controller
 
         session()->flash('error', $message);
 
-        return redirect()->route('shop.checkout.onepage.index', ['step' => 'payment']);
+        return redirect()->route('shop.checkout.index', ['step' => 'payment']);
     }
 
     protected function resolvePayment(string $code): AbstractSslCommerzPayment

@@ -87,7 +87,7 @@ function createPaidBkashOrderForRefundTest($test): Order
         'code' => 'bkash',
         'status' => 'success',
         'paymentID' => "refund-pay-{$cart->id}",
-    ]))->assertRedirect(route('shop.checkout.onepage.success'));
+    ]))->assertRedirect(route('shop.checkout.success', ['order' => Order::query()->where('cart_id', $cart->id)->firstOrFail()->id]));
 
     return Order::query()->where('cart_id', $cart->id)->firstOrFail();
 }

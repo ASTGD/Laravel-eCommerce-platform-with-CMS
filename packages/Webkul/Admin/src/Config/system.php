@@ -3141,6 +3141,23 @@ return [
         'sort' => 1,
         'fields' => [
             [
+                'name' => 'checkout_mode',
+                'title' => 'Checkout Mode',
+                'info' => 'Choose between the native full checkout flow and the custom one page checkout flow.',
+                'type' => 'select',
+                'options' => [
+                    [
+                        'title' => 'Full Checkout',
+                        'value' => 'full',
+                    ],
+                    [
+                        'title' => 'One Page Checkout',
+                        'value' => 'onepage',
+                    ],
+                ],
+                'default' => 'onepage',
+            ],
+            [
                 'name' => 'allow_guest_checkout',
                 'title' => 'admin::app.configuration.index.sales.checkout.shopping-cart.guest-checkout',
                 'info' => 'admin::app.configuration.index.sales.checkout.shopping-cart.guest-checkout-info',

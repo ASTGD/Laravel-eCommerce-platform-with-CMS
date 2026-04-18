@@ -71,7 +71,7 @@ function createPaidSslOrderForRefundTest($test, string $method = 'sslcommerz'): 
         'tran_id' => "cart_{$cart->id}_REFUND",
         'value_a' => $cart->id,
         'value_b' => $method,
-    ]))->assertRedirect(route('shop.checkout.onepage.success'));
+    ]))->assertRedirect(route('shop.checkout.success', ['order' => Order::query()->where('cart_id', $cart->id)->firstOrFail()->id]));
 
     return Order::query()->where('cart_id', $cart->id)->firstOrFail();
 }

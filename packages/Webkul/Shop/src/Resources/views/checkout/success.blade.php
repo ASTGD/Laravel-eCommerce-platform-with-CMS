@@ -46,6 +46,12 @@
 				@endif
 			</p>
 
+            @if ($checkoutAccount = session('checkout_account_created'))
+                <p class="text-sm text-slate-600 max-md:text-center">
+                    {{ __('Account created for :email. Use the password you entered during checkout to sign in.', ['email' => $checkoutAccount['email']]) }}
+                </p>
+            @endif
+
 			{{ view_render_event('bagisto.shop.checkout.success.continue-shopping.before', ['order' => $order]) }}
 
 			<a href="{{ route('shop.home.index') }}">

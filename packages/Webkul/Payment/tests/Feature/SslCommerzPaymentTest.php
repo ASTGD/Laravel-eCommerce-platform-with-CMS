@@ -79,7 +79,7 @@ it('returns customers to the checkout payment step when sslcommerz payment fails
     ]);
 
     get(route('commerce-core.sslcommerz.fail', ['code' => 'sslcommerz', 'value_a' => $cart->id]))
-        ->assertRedirect(route('shop.checkout.onepage.index', ['step' => 'payment']))
+        ->assertRedirect(route('shop.checkout.index', ['step' => 'payment']))
         ->assertSessionHas('error');
 });
 
@@ -106,16 +106,18 @@ it('creates an order and invoice after a verified sslcommerz payment callback', 
         ], 200),
     ]);
 
-    get(route('commerce-core.sslcommerz.success', [
+    $response = get(route('commerce-core.sslcommerz.success', [
         'code' => 'sslcommerz',
         'val_id' => $validationId,
         'tran_id' => "cart_{$cart->id}_20260414010101",
         'value_a' => $cart->id,
-    ]))
-        ->assertRedirect(route('shop.checkout.onepage.success'))
-        ->assertSessionHas('order_id');
+    ]));
 
     $order = Order::query()->where('cart_id', $cart->id)->first();
+
+    $response
+        ->assertRedirect(route('shop.checkout.success', ['order' => $order->id]))
+        ->assertSessionHas('order_id');
 
     expect($order)->not->toBeNull()
         ->and($order->status)->toBe('processing');
@@ -178,13 +180,14 @@ it('does not duplicate orders or invoices when the success callback is received 
         'value_b' => 'sslcommerz',
     ];
 
-    get(route('commerce-core.sslcommerz.success', $payload))
-        ->assertRedirect(route('shop.checkout.onepage.success'));
+    $firstResponse = get(route('commerce-core.sslcommerz.success', $payload));
+
+    $order = Order::query()->where('cart_id', $cart->id)->firstOrFail();
+
+    $firstResponse->assertRedirect(route('shop.checkout.success', ['order' => $order->id]));
 
     get(route('commerce-core.sslcommerz.success', $payload))
-        ->assertRedirect(route('shop.checkout.onepage.success'));
-
-    $order = Order::query()->where('cart_id', $cart->id)->first();
+        ->assertRedirect(route('shop.checkout.success', ['order' => $order->id]));
 
     expect(Order::query()->where('cart_id', $cart->id)->count())->toBe(1)
         ->and(Invoice::query()->where('order_id', $order->id)->count())->toBe(1)
@@ -234,15 +237,17 @@ it('finalizes only once when ipn arrives before the browser success redirect', f
         'value_b' => 'sslcommerz',
     ])->assertOk();
 
-    get(route('commerce-core.sslcommerz.success', [
+    $response = get(route('commerce-core.sslcommerz.success', [
         'code' => 'sslcommerz',
         'val_id' => 'val-ipn',
         'tran_id' => "cart_{$cart->id}_IPN",
         'value_a' => $cart->id,
         'value_b' => 'sslcommerz',
-    ]))->assertRedirect(route('shop.checkout.onepage.success'));
+    ]));
 
-    $order = Order::query()->where('cart_id', $cart->id)->first();
+    $order = Order::query()->where('cart_id', $cart->id)->firstOrFail();
+
+    $response->assertRedirect(route('shop.checkout.success', ['order' => $order->id]));
 
     expect(Order::query()->where('cart_id', $cart->id)->count())->toBe(1)
         ->and(Invoice::query()->where('order_id', $order->id)->count())->toBe(1)
@@ -294,7 +299,7 @@ it('returns customers to the payment step when validation amount does not match 
         'value_a' => $cart->id,
         'value_b' => 'sslcommerz',
     ]))
-        ->assertRedirect(route('shop.checkout.onepage.index', ['step' => 'payment']))
+        ->assertRedirect(route('shop.checkout.index', ['step' => 'payment']))
         ->assertSessionHas('error');
 
     expect(Order::query()->where('cart_id', $cart->id)->exists())->toBeFalse();
@@ -330,7 +335,7 @@ it('returns customers to the checkout payment step when sslcommerz payment is ca
         'tran_id' => $attempt->merchant_tran_id,
         'value_a' => $cart->id,
     ]))
-        ->assertRedirect(route('shop.checkout.onepage.index', ['step' => 'payment']))
+        ->assertRedirect(route('shop.checkout.index', ['step' => 'payment']))
         ->assertSessionHas('error');
 
     expect($attempt->fresh()->status)->toBe('cancelled');

@@ -40,10 +40,16 @@
 
                         {!! view_render_event('bagisto.shop.checkout.onepage.summary.item_name.after') !!}
 
-                        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                            <span>
-                                @lang('shop::app.checkout.onepage.summary.price_and_qty', ['price' => '@{{ item.formatted_price }}', 'qty' => '@{{ item.quantity }}'])
-                            </span>
+                        <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                            <span>@{{ item.formatted_price }}</span>
+
+                            <x-shop::quantity-changer
+                                v-if="item.can_change_qty"
+                                class="flex max-w-max items-center gap-x-2 rounded-full border border-slate-300 px-2.5 py-1"
+                                name="quantity"
+                                ::value="item.quantity"
+                                @change="updateItemQuantity(item.id, $event)"
+                            />
                         </div>
                     </div>
 

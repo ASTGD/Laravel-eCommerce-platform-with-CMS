@@ -223,11 +223,18 @@ Recommended role split before frontend work begins:
 
 The sales configuration area now includes the Bangladesh-specific checkout controls needed for this product install:
 
+- `Configuration > Sales > Checkout > Shopping Cart > Checkout Mode`
 - `Configuration > Sales > Shipping Methods > Courier`
 - `Configuration > Sales > Payment Methods > bKash Gateway`
 - `Configuration > Sales > Payment Methods > SSLCommerz Gateway`
 - `Configuration > Sales > Payment Methods > SSLCommerz`
 - `Configuration > Sales > Payment Methods > bKash`
+
+Checkout mode behavior:
+
+- `Full Checkout` uses the Bagisto-native checkout route and flow
+- `One Page Checkout` uses the custom single-page checkout flow
+- storefront checkout entry points such as `Buy Now` and cart checkout buttons resolve through the selected mode instead of linking directly to one fixed checkout implementation
 
 Current shipping behavior:
 
