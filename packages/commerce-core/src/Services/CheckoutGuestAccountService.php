@@ -12,6 +12,7 @@ use Webkul\Customer\Models\Customer;
 use Webkul\Customer\Models\CustomerGroup;
 use Webkul\Customer\Repositories\CustomerAddressRepository;
 use Webkul\Customer\Repositories\CustomerRepository;
+use Webkul\Sales\Models\Order;
 
 class CheckoutGuestAccountService
 {
@@ -130,22 +131,14 @@ class CheckoutGuestAccountService
         if (
             ! $billingAddress
             || blank($billingAddress->email)
-            || blank($billingAddress->phone)
         ) {
             return null;
         }
 
-        $customer = Customer::query()
-            ->where('channel_id', core()->getCurrentChannel()->id)
-            ->where('email', $billingAddress->email)
-            ->first();
-
-        if (! $customer) {
-            $customer = Customer::query()
-                ->where('channel_id', core()->getCurrentChannel()->id)
-                ->where('phone', $billingAddress->phone)
-                ->first();
-        }
+        $customer = $this->findExistingCustomerByEmail(
+            $billingAddress->email,
+            $cart->channel_id ?: core()->getCurrentChannel()->id,
+        );
 
         if (! $customer) {
             return null;
@@ -154,6 +147,54 @@ class CheckoutGuestAccountService
         $this->attachCustomerToCart($cart, $customer);
 
         return $customer;
+    }
+
+    public function attachExistingCustomerToOrder(Order $order): ?Customer
+    {
+        if (! $order->is_guest && $order->customer_id) {
+            return $order->customer;
+        }
+
+        $customer = $this->findExistingCustomerByEmail($order->customer_email, $order->channel_id);
+
+        if (! $customer) {
+            return null;
+        }
+
+        $this->syncGuestOrdersForCustomer($customer, $order->channel_id);
+
+        return $customer;
+    }
+
+    public function syncGuestOrdersForCustomer(Customer $customer, ?int $channelId = null): void
+    {
+        $channelId = $channelId ?: $customer->channel_id ?: core()->getCurrentChannel()->id;
+
+        $orders = Order::query()
+            ->where('channel_id', $channelId)
+            ->whereRaw('LOWER(customer_email) = ?', [mb_strtolower(trim($customer->email))])
+            ->get();
+
+        foreach ($orders as $order) {
+            $order->update([
+                'is_guest' => 0,
+                'customer_id' => $customer->id,
+                'customer_type' => Customer::class,
+            ]);
+
+            $order->addresses()->update([
+                'customer_id' => $customer->id,
+            ]);
+
+            $order->shipments()->update([
+                'customer_id' => $customer->id,
+                'customer_type' => Customer::class,
+            ]);
+
+            $order->downloadable_link_purchased()->update([
+                'customer_id' => $customer->id,
+            ]);
+        }
     }
 
     protected function resolveCustomerGroupId(): int
@@ -178,6 +219,22 @@ class CheckoutGuestAccountService
         }
 
         return (int) $customerGroup->id;
+    }
+
+    protected function findExistingCustomerByEmail(?string $email, ?int $channelId): ?Customer
+    {
+        $email = trim((string) $email);
+
+        if ($email === '') {
+            return null;
+        }
+
+        $channelId = $channelId ?: core()->getCurrentChannel()->id;
+
+        return Customer::query()
+            ->where('channel_id', $channelId)
+            ->whereRaw('LOWER(email) = ?', [mb_strtolower($email)])
+            ->first();
     }
 
     protected function attachCustomerToCart(Cart $cart, Customer $customer): void

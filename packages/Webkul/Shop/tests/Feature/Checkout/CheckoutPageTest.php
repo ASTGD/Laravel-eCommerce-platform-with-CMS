@@ -428,6 +428,53 @@ it('attaches a guest one page checkout order to an existing customer when the em
         ->and($customer->fresh()->orders()->whereKey($order->id)->exists())->toBeTrue();
 });
 
+it('keeps a guest one page checkout order as guest when only the phone matches an existing customer', function () {
+    $existingEmail = 'existing.'.uniqid().'@example.com';
+    $checkoutEmail = 'guest.'.uniqid().'@example.com';
+    $phone = '+88017'.str_pad((string) random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+
+    setCheckoutPageConfig('sales.checkout.shopping_cart.allow_guest_checkout', 1);
+    setCheckoutPageConfig('sales.carriers.courier.active', 1);
+    setCheckoutPageConfig('sales.carriers.courier.default_rate', 120);
+    setCheckoutPageConfig('sales.carriers.courier.district_rates', "Dhaka=60\nRajshahi=140");
+    setCheckoutPageConfig('sales.payment_methods.cashondelivery.active', 1);
+
+    Customer::factory()->create([
+        'first_name' => 'Existing',
+        'last_name' => 'Customer',
+        'email' => $existingEmail,
+        'phone' => $phone,
+    ]);
+
+    createGuestCheckoutCart();
+
+    postJson(route('shop.checkout.custom.addresses.store'), [
+        'billing' => [
+            'use_for_shipping' => true,
+            'first_name' => 'Guest',
+            'last_name' => 'Checkout',
+            'email' => $checkoutEmail,
+            'address' => ['House 58 Khansamarchock'],
+            'country' => 'BD',
+            'state' => 'Rajshahi',
+            'city' => 'Rajshahi',
+            'postcode' => '6200',
+            'phone' => $phone,
+            'create_account' => false,
+        ],
+    ])->assertOk();
+
+    postJson(route('shop.checkout.custom.orders.store'))
+        ->assertOk()
+        ->assertJsonPath('data.redirect', true);
+
+    $order = Order::query()->latest('id')->first();
+
+    expect($order)->not->toBeNull()
+        ->and($order->customer_id)->toBeNull()
+        ->and((int) $order->is_guest)->toBe(1);
+});
+
 it('updates one page checkout item quantities through the existing cart update flow', function () {
     createGuestCheckoutCart();
 
