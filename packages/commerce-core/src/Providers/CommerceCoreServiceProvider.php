@@ -10,6 +10,7 @@ use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
 use Platform\CommerceCore\Payment\PaymentManager;
+use Platform\CommerceCore\Services\CheckoutGuestAccountService;
 use Platform\CommerceCore\Services\DataSourceResolver;
 use Platform\CommerceCore\Support\CheckoutMode;
 use Webkul\Admin\Http\Controllers\Sales\RefundController as BaseRefundController;
@@ -66,6 +67,14 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
         Event::listen('bagisto.shop.customers.account.orders.view.payment_method_details.after', static function (ViewRenderEventManager $viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('commerce-core::shop.orders.payment-details');
+        });
+
+        Event::listen('checkout.order.save.after', function ($order): void {
+            app(CheckoutGuestAccountService::class)->attachExistingCustomerToOrder($order);
+        });
+
+        Event::listen('customer.after.login', function ($customer): void {
+            app(CheckoutGuestAccountService::class)->syncGuestOrdersForCustomer($customer);
         });
     }
 }

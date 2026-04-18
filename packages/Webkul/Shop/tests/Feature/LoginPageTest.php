@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Hash;
 use Webkul\Faker\Helpers\Customer as CustomerFaker;
+use Webkul\Sales\Models\Order;
 
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
@@ -57,6 +58,33 @@ it('successfully logins a customer', function () {
         ->assertSessionMissing('error')
         ->assertSessionMissing('warning')
         ->assertSessionMissing('info');
+});
+
+it('syncs matching guest orders to the customer after login', function () {
+    $customer = (new CustomerFaker)->factory()->create([
+        'email' => 'existing.'.uniqid().'@example.com',
+        'password' => Hash::make($password = 'admin123'),
+    ]);
+
+    $order = Order::factory()->create([
+        'customer_id' => null,
+        'customer_type' => null,
+        'customer_email' => $customer->email,
+        'customer_first_name' => $customer->first_name,
+        'customer_last_name' => $customer->last_name,
+        'channel_id' => $customer->channel_id,
+        'is_guest' => 1,
+    ]);
+
+    post(route('shop.customer.session.create'), [
+        'email' => $customer->email,
+        'password' => $password,
+    ])->assertRedirectToRoute('shop.customers.account.index');
+
+    $order->refresh();
+
+    expect($order->customer_id)->toBe($customer->id)
+        ->and((int) $order->is_guest)->toBe(0);
 });
 
 it('redirects a customer to the account dashboard when explicitly requested', function () {
