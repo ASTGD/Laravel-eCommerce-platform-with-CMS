@@ -40,7 +40,7 @@ class OnepageController extends BaseOnepageController
             return redirect()->route('shop.customer.session.index');
         }
 
-        return view('shop::checkout.onepage.index', [
+        return view('commerce-core::shop.checkout.custom-index', [
             'cart' => $cart,
             'pickupPoints' => $this->pickupPointService->checkoutOptions()->values()->all(),
         ]);

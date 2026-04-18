@@ -153,3 +153,4 @@ Current status:
 - the visible checkout form is now reduced to Name, Mobile Number, Country/Region, District/Region, Full Address, and Email, with guest create-account support declared in the contract
 - city and postcode remain hidden compatibility fields until the theme layer replaces the current checkout presentation entirely
 - the checkout page shell is now moving into the default theme layer so the screenshot-style layout can be rendered without changing the core flow contract
+- checkout mode routing is now being split so Bagisto native full checkout and the custom one-page checkout can coexist behind an admin-selected mode switch

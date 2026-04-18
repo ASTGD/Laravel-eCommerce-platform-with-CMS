@@ -39,7 +39,7 @@ it('returns a single checkout state contract for the storefront checkout screen'
 
     $this->loginAsCustomer($customer);
 
-    $response = getJson(route('shop.checkout.onepage.state'))
+    $response = getJson(route('shop.checkout.custom.state'))
         ->assertOk()
         ->assertJsonStructure([
             'data' => [
@@ -93,6 +93,16 @@ it('returns a single checkout state contract for the storefront checkout screen'
                             'label',
                             'type',
                         ],
+                        'password_field' => [
+                            'name',
+                            'label',
+                            'type',
+                        ],
+                        'password_confirmation_field' => [
+                            'name',
+                            'label',
+                            'type',
+                        ],
                     ],
                     'customer' => [
                         'draft' => [
@@ -111,6 +121,10 @@ it('returns a single checkout state contract for the storefront checkout screen'
                     'title',
                     'description',
                     'district_field',
+                    'default_country',
+                    'districts',
+                    'default_rate',
+                    'configured_rates',
                     'dhaka_district',
                     'dhaka_title',
                     'dhaka_rate',
@@ -135,9 +149,13 @@ it('returns a single checkout state contract for the storefront checkout screen'
         ->and($response->json('data.customer.is_authenticated'))->toBeTrue()
         ->and($response->json('data.form.mode'))->toBe('customer')
         ->and($response->json('data.form.single_address.visible_fields.0.name'))->toBe('name')
+        ->and($response->json('data.form.single_address.visible_fields.3.type'))->toBe('select')
         ->and($response->json('data.form.guest.show_create_account'))->toBeTrue()
         ->and($response->json('data.customer.draft.email'))->toBe($customer->email)
         ->and($response->json('data.customer.draft.name'))->toBe(trim($customer->first_name.' '.$customer->last_name))
+        ->and($response->json('data.customer.draft.country'))->toBe('BD')
+        ->and($response->json('data.district_shipping.default_country'))->toBe('BD')
+        ->and($response->json('data.district_shipping.districts.0.name'))->toBe('Bagerhat')
         ->and($response->json('data.district_shipping.dhaka_district'))->toBe('Dhaka')
         ->and($response->json('data.payment_methods.0.method'))->toBe('cashondelivery')
         ->and(collect($response->json('data.payment_methods'))->pluck('method')->all())
@@ -147,13 +165,15 @@ it('returns a single checkout state contract for the storefront checkout screen'
 it('returns a guest checkout form contract with create account support', function () {
     $cart = $this->createCartWithItems('cashondelivery');
 
-    $response = getJson(route('shop.checkout.onepage.state'))
+    $response = getJson(route('shop.checkout.custom.state'))
         ->assertOk();
 
     expect($response->json('data.customer.is_authenticated'))->toBeFalse()
         ->and($response->json('data.form.mode'))->toBe('guest')
         ->and($response->json('data.form.guest.show_create_account'))->toBeTrue()
         ->and($response->json('data.form.guest.create_account_field.name'))->toBe('create_account')
+        ->and($response->json('data.form.guest.password_field.name'))->toBe('password')
+        ->and($response->json('data.form.guest.password_confirmation_field.name'))->toBe('password_confirmation')
         ->and($response->json('data.form.single_address.visible_fields.0.name'))->toBe('name')
         ->and($response->json('data.cart.id'))->toBe($cart->id)
         ->and($response->json('data.cart.payment_method'))->toBe('cashondelivery')

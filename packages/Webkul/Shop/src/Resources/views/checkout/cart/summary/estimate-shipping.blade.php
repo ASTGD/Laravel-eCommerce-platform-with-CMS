@@ -68,7 +68,30 @@
                         @lang('shop::app.checkout.cart.summary.estimate-shipping.state')
                     </x-shop::form.control-group.label>
 
-                    <template v-if="states">
+                    <template v-if="usesBangladeshDistricts">
+                        <x-shop::form.control-group.control
+                            type="select"
+                            name="state"
+                            v-model="selectedDistrict"
+                            rules="{{ core()->isStateRequired() ? 'required' : '' }}"
+                            :label="trans('shop::app.checkout.cart.summary.estimate-shipping.state')"
+                            :placeholder="trans('shop::app.checkout.cart.summary.estimate-shipping.state')"
+                        >
+                            <option value="">
+                                Select District
+                            </option>
+
+                            <option
+                                v-for="district in districtOptions"
+                                :key="district.code"
+                                :value="district.name"
+                            >
+                                @{{ district.name }}
+                            </option>
+                        </x-shop::form.control-group.control>
+                    </template>
+
+                    <template v-else-if="states">
                         <template v-if="haveStates">
                             <x-shop::form.control-group.control
                                 type="select"
@@ -173,7 +196,9 @@
 
             data() {
                 return {
-                    selectedCountry: '',
+                    selectedCountry: this.cart?.shipping_address?.country || this.cart?.billing_address?.country || '',
+
+                    selectedDistrict: this.cart?.shipping_address?.state || this.cart?.billing_address?.state || '',
 
                     countries: [],
 
@@ -182,12 +207,20 @@
                     methods: [],
 
                     isStoring: false,
+
+                    districtOptions: @json(app(\Platform\CommerceCore\Services\BangladeshDistrictService::class)->districtOptions()),
+
+                    configuredDefaultCountry: @json(app(\Platform\CommerceCore\Services\BangladeshDistrictService::class)->defaultCountryCode()),
                 }
             },
 
             computed: {
                 haveStates() {
                     return !! this.states[this.selectedCountry]?.length;
+                },
+
+                usesBangladeshDistricts() {
+                    return String(this.selectedCountry || '').toUpperCase() === 'BD';
                 },
             },
 
@@ -202,6 +235,10 @@
                     this.$axios.get("{{ route('shop.api.core.countries') }}")
                         .then(response => {
                             this.countries = response.data.data;
+
+                            if (! this.selectedCountry) {
+                                this.selectedCountry = this.resolvePreferredCountry(response.data.data);
+                            }
                         })
                         .catch(() => {});
                 },
@@ -234,6 +271,29 @@
                                 setErrors(error.response.data.errors);
                             }
                         });
+                },
+
+                resolvePreferredCountry(countries) {
+                    const browserCountry = this.resolveBrowserCountry(countries);
+
+                    if (browserCountry) {
+                        return browserCountry;
+                    }
+
+                    return this.configuredDefaultCountry;
+                },
+
+                resolveBrowserCountry(countries) {
+                    const locale = navigator.language || Intl.DateTimeFormat().resolvedOptions().locale || '';
+                    const countryCode = locale.split('-')[1]?.toUpperCase();
+
+                    if (! countryCode) {
+                        return null;
+                    }
+
+                    return countries.some(country => country.code === countryCode)
+                        ? countryCode
+                        : null;
                 },
             },
         });

@@ -2,7 +2,7 @@
 
 namespace Platform\CommerceCore\Shipping\Carriers;
 
-use Illuminate\Support\Str;
+use Platform\CommerceCore\Services\BangladeshDistrictService;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Checkout\Models\CartShippingRate;
 use Webkul\Shipping\Carriers\AbstractShipping;
@@ -23,19 +23,14 @@ class Courier extends AbstractShipping
             return false;
         }
 
-        $isDhakaDistrict = $this->isDhakaDistrict($shippingAddress->state);
-
-        $rateTitle = $this->getConfigData($isDhakaDistrict ? 'dhaka_title' : 'outside_dhaka_title')
-            ?: ($isDhakaDistrict ? 'Dhaka Delivery' : 'Outside Dhaka Delivery');
-
-        $rateDescription = $this->getConfigData('description')
-            ?: ($isDhakaDistrict ? 'Delivery charge for Dhaka district' : 'Delivery charge for outside Dhaka districts');
+        $districtService = app(BangladeshDistrictService::class);
+        $districtName = $districtService->resolveDistrictName($shippingAddress->state);
 
         $rate = $this->makeRate(
-            $isDhakaDistrict ? 'dhaka' : 'outside_dhaka',
-            $rateTitle,
-            $rateDescription,
-            (float) $this->getConfigData($isDhakaDistrict ? 'dhaka_rate' : 'outside_dhaka_rate')
+            str($districtName !== '' ? $districtName : 'delivery')->slug('_'),
+            $districtService->resolveTitle($districtName),
+            $districtService->resolveDescription($districtName),
+            $districtService->resolveRate($districtName)
         );
 
         return [$rate];
@@ -54,13 +49,5 @@ class Courier extends AbstractShipping
         $rate->base_price = $basePrice;
 
         return $rate;
-    }
-
-    protected function isDhakaDistrict(string $district): bool
-    {
-        $normalizedDistrict = Str::lower(trim($district));
-        $configuredDistrict = Str::lower(trim((string) ($this->getConfigData('dhaka_district') ?: 'Dhaka')));
-
-        return $normalizedDistrict !== '' && $normalizedDistrict === $configuredDistrict;
     }
 }

@@ -79,6 +79,6 @@ it('redirects directly to checkout when buy now is used', function () {
         'quantity' => 1,
     ])
         ->assertOk()
-        ->assertJsonPath('redirect', route('shop.checkout.onepage.index'))
+        ->assertJsonPath('redirect', route('shop.checkout.index'))
         ->assertJsonPath('data.items_count', 1);
 });

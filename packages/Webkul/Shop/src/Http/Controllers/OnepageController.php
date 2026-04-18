@@ -3,6 +3,7 @@
 namespace Webkul\Shop\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Checkout\Facades\Cart;
@@ -60,9 +61,13 @@ class OnepageController extends Controller
      *
      * @return View|RedirectResponse
      */
-    public function success(OrderRepository $orderRepository)
+    public function success(Request $request, OrderRepository $orderRepository)
     {
-        if (! $order = $orderRepository->find(session('order_id'))) {
+        $orderId = $request->input('order')
+            ?: session('order_id')
+            ?: session('checkout_order_id');
+
+        if (! $order = $orderRepository->find($orderId)) {
             return redirect()->route('shop.checkout.cart.index');
         }
 

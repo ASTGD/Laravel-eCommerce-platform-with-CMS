@@ -1,8 +1,36 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\CommerceCore\Http\Controllers\API\OnepageController as CustomOnepageApiController;
 use Platform\CommerceCore\Http\Controllers\BkashController;
+use Platform\CommerceCore\Http\Controllers\CheckoutController;
+use Platform\CommerceCore\Http\Controllers\OnepageController as CustomOnepageController;
 use Platform\CommerceCore\Http\Controllers\SslCommerzController;
+
+Route::controller(CheckoutController::class)
+    ->prefix('checkout')
+    ->group(function () {
+        Route::get('', 'index')->name('shop.checkout.index');
+        Route::get('success', 'success')->name('shop.checkout.success');
+    });
+
+Route::controller(CustomOnepageController::class)
+    ->prefix('checkout/custom')
+    ->group(function () {
+        Route::get('', 'index')->name('shop.checkout.custom.index');
+        Route::get('success', 'success')->name('shop.checkout.custom.success');
+    });
+
+Route::controller(CustomOnepageApiController::class)
+    ->prefix('api/checkout/custom')
+    ->group(function () {
+        Route::get('state', 'state')->name('shop.checkout.custom.state');
+        Route::get('summary', 'summary')->name('shop.checkout.custom.summary');
+        Route::post('addresses', 'storeAddress')->name('shop.checkout.custom.addresses.store');
+        Route::post('shipping-methods', 'storeShippingMethod')->name('shop.checkout.custom.shipping_methods.store');
+        Route::post('payment-methods', 'storePaymentMethod')->name('shop.checkout.custom.payment_methods.store');
+        Route::post('orders', 'storeOrder')->name('shop.checkout.custom.orders.store');
+    });
 
 Route::controller(SslCommerzController::class)
     ->prefix('payment/sslcommerz/{code}')

@@ -122,15 +122,17 @@ it('creates an order and invoice after a verified direct bkash callback', functi
         'session_key' => 'pay-456',
     ]);
 
-    get(route('commerce-core.bkash.callback', [
+    $response = get(route('commerce-core.bkash.callback', [
         'code' => 'bkash',
         'status' => 'success',
         'paymentID' => 'pay-456',
-    ]))
-        ->assertRedirect(route('shop.checkout.onepage.success'))
-        ->assertSessionHas('order_id');
+    ]));
 
     $order = Order::query()->where('cart_id', $cart->id)->first();
+
+    $response
+        ->assertRedirect(route('shop.checkout.success', ['order' => $order->id]))
+        ->assertSessionHas('order_id');
 
     expect($order)->not->toBeNull()
         ->and($order->status)->toBe('processing')
@@ -210,8 +212,11 @@ it('falls back to query payment when execute payment is inconclusive', function 
         'paymentID' => 'pay-789',
     ];
 
-    get(route('commerce-core.bkash.callback', $payload))
-        ->assertRedirect(route('shop.checkout.onepage.success'));
+    $response = get(route('commerce-core.bkash.callback', $payload));
+
+    $order = Order::query()->where('cart_id', $cart->id)->first();
+
+    $response->assertRedirect(route('shop.checkout.success', ['order' => $order->id]));
 
     $attempt = PaymentAttempt::query()->where('cart_id', $cart->id)->first();
 
@@ -266,13 +271,14 @@ it('finalizes only once when the success callback is received twice', function (
         'paymentID' => 'pay-dup',
     ];
 
-    get(route('commerce-core.bkash.callback', $payload))
-        ->assertRedirect(route('shop.checkout.onepage.success'));
+    $firstResponse = get(route('commerce-core.bkash.callback', $payload));
+
+    $order = Order::query()->where('cart_id', $cart->id)->firstOrFail();
+
+    $firstResponse->assertRedirect(route('shop.checkout.success', ['order' => $order->id]));
 
     get(route('commerce-core.bkash.callback', $payload))
-        ->assertRedirect(route('shop.checkout.onepage.success'));
-
-    $order = Order::query()->where('cart_id', $cart->id)->first();
+        ->assertRedirect(route('shop.checkout.success', ['order' => $order->id]));
 
     expect(Order::query()->where('cart_id', $cart->id)->count())->toBe(1)
         ->and(Invoice::query()->where('order_id', $order->id)->count())->toBe(1)
@@ -319,7 +325,7 @@ it('returns customers to the payment step when direct bkash payment is cancelled
         'status' => 'cancel',
         'paymentID' => 'pay-cancel',
     ]))
-        ->assertRedirect(route('shop.checkout.onepage.index', ['step' => 'payment']))
+        ->assertRedirect(route('shop.checkout.index', ['step' => 'payment']))
         ->assertSessionHas('error');
 
     $attempt = PaymentAttempt::query()->where('cart_id', $cart->id)->latest('id')->first();

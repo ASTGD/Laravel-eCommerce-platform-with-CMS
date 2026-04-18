@@ -8,17 +8,14 @@ use Illuminate\Support\ServiceProvider;
 use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
-use Platform\CommerceCore\Http\Controllers\API\OnepageController as CommerceOnepageApiController;
-use Platform\CommerceCore\Http\Controllers\OnepageController as CommerceOnepageController;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
 use Platform\CommerceCore\Payment\PaymentManager;
 use Platform\CommerceCore\Services\DataSourceResolver;
+use Platform\CommerceCore\Support\CheckoutMode;
 use Webkul\Admin\Http\Controllers\Sales\RefundController as BaseRefundController;
 use Webkul\Admin\Listeners\Refund as BaseRefundListener;
 use Webkul\Core\Http\Middleware\PreventRequestsDuringMaintenance;
 use Webkul\Payment\Payment as BasePaymentManager;
-use Webkul\Shop\Http\Controllers\API\OnepageController as BaseOnepageApiController;
-use Webkul\Shop\Http\Controllers\OnepageController as BaseOnepageController;
 use Webkul\Theme\ViewRenderEventManager;
 
 class CommerceCoreServiceProvider extends ServiceProvider
@@ -26,9 +23,8 @@ class CommerceCoreServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(DataSourceResolverContract::class, DataSourceResolver::class);
+        $this->app->singleton(CheckoutMode::class);
         $this->app->bind(BasePaymentManager::class, PaymentManager::class);
-        $this->app->bind(BaseOnepageController::class, CommerceOnepageController::class);
-        $this->app->bind(BaseOnepageApiController::class, CommerceOnepageApiController::class);
         $this->app->bind(BaseRefundController::class, CommerceRefundController::class);
         $this->app->bind(BaseRefundListener::class, CommerceRefundListener::class);
 

@@ -95,7 +95,7 @@ function createPaidBkashOrderForShopRefundTest($test): Order
         'code' => 'bkash',
         'status' => 'success',
         'paymentID' => "shop-refund-pay-{$cart->id}",
-    ]))->assertRedirect(route('shop.checkout.onepage.success'));
+    ]))->assertRedirect(route('shop.checkout.success', ['order' => Order::query()->where('cart_id', $cart->id)->firstOrFail()->id]));
 
     return Order::query()->where('cart_id', $cart->id)->firstOrFail();
 }
@@ -127,7 +127,7 @@ function createPaidSslOrderForShopRefundTest($test): Order
         'tran_id' => "cart_{$cart->id}_SHOP_REFUND",
         'value_a' => $cart->id,
         'value_b' => 'sslcommerz',
-    ]))->assertRedirect(route('shop.checkout.onepage.success'));
+    ]))->assertRedirect(route('shop.checkout.success', ['order' => Order::query()->where('cart_id', $cart->id)->firstOrFail()->id]));
 
     return Order::query()->where('cart_id', $cart->id)->firstOrFail();
 }

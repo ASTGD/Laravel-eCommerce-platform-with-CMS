@@ -2,6 +2,7 @@
 
 <!-- Guest Address Vue Component -->
 <v-checkout-address-guest
+    ref="checkoutAddress"
     :cart="cart"
     :checkout-state="checkoutState"
     @processing="stepForward"
@@ -12,17 +13,28 @@
 
 @include('shop::checkout.onepage.address.form')
 
+@php
+    $checkoutRoutePrefix = request()->routeIs('shop.checkout.custom.*')
+        ? 'shop.checkout.custom'
+        : 'shop.checkout.onepage';
+@endphp
+
 @pushOnce('scripts')
     <script
         type="text/x-template"
         id="v-checkout-address-guest-template"
     >
         <!-- Address Form -->
-        <x-shop::form
-            v-slot="{ meta, errors, handleSubmit }"
-            as="div"
-        >
-            <form class="space-y-6" @submit="handleSubmit($event, addAddress)">
+            <x-shop::form
+                v-slot="{ meta, errors, handleSubmit }"
+                as="div"
+            >
+                <form
+                    id="checkout-address-form"
+                    ref="checkoutAddressForm"
+                    class="space-y-6"
+                    @submit="handleSubmit($event, addAddress)"
+                >
                 {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.before') !!}
 
                 <div class="space-y-5">
@@ -48,6 +60,44 @@
                         >
                             @{{ createAccountLabel }}
                         </label>
+                    </div>
+                </template>
+
+                <template v-if="createAccount">
+                    <div class="grid gap-5 md:grid-cols-2">
+                        <x-shop::form.control-group>
+                            <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
+                                @{{ passwordLabel }}
+                            </x-shop::form.control-group.label>
+
+                            <x-shop::form.control-group.control
+                                type="password"
+                                name="billing.password"
+                                rules="required|min:6"
+                                :label="'Password'"
+                                placeholder="Password"
+                                class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
+                            />
+
+                            <x-shop::form.control-group.error name="billing.password" />
+                        </x-shop::form.control-group>
+
+                        <x-shop::form.control-group>
+                            <x-shop::form.control-group.label class="required !mt-0 text-[13px] font-medium text-slate-700">
+                                @{{ passwordConfirmationLabel }}
+                            </x-shop::form.control-group.label>
+
+                            <x-shop::form.control-group.control
+                                type="password"
+                                name="billing.password_confirmation"
+                                rules="required|min:6"
+                                :label="'Confirm Password'"
+                                placeholder="Confirm Password"
+                                class="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-0"
+                            />
+
+                            <x-shop::form.control-group.error name="billing.password_confirmation" />
+                        </x-shop::form.control-group>
                     </div>
                 </template>
 
@@ -99,10 +149,22 @@
 
                 showCreateAccount() {
                     return this.checkoutState?.form?.guest?.show_create_account ?? true;
-                }
+                },
+
+                passwordLabel() {
+                    return this.checkoutState?.form?.guest?.password_field?.label || 'Password';
+                },
+
+                passwordConfirmationLabel() {
+                    return this.checkoutState?.form?.guest?.password_confirmation_field?.label || 'Confirm Password';
+                },
             },
 
             methods: {
+                submitAddress() {
+                    this.$refs.checkoutAddressForm?.requestSubmit();
+                },
+
                 normalizeAddress(params) {
                     const billing = params.billing ?? {};
 
@@ -126,23 +188,49 @@
 
                     params.billing = this.normalizeAddress(params);
 
-                    this.moveToNextStep();
+                    if (
+                        this.createAccount
+                        && params.billing.password !== params.billing.password_confirmation
+                    ) {
+                        this.isStoring = false;
 
-                    this.$axios.post('{{ route('shop.checkout.onepage.addresses.store') }}', params)
+                        setErrors({
+                            'billing.password_confirmation': ['The password confirmation does not match.'],
+                        });
+
+                        this.$emitter.emit('add-flash', {
+                            type: 'error',
+                            message: 'The password confirmation does not match.',
+                        });
+
+                        this.$emit('processing', 'address');
+
+                        return;
+                    }
+
+                    this.$axios.post('{{ route($checkoutRoutePrefix.'.addresses.store') }}', params)
                         .then((response) => {
                             this.isStoring = false;
 
                             if (response.data.data.redirect_url) {
                                 window.location.href = response.data.data.redirect_url;
                             } else {
+                                this.moveToNextStep();
                                 this.$emit('processed', response.data.data.payment_methods);
                             }
                         })
                         .catch(error => {
                             this.isStoring = false;
 
+                            this.$emit('processing', 'address');
+
                             if (error.response.status == 422) {
                                 setErrors(this.mapValidationErrors(error.response.data.errors));
+
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: error.response?.data?.message || 'Please review the highlighted checkout fields.',
+                                });
                             }
                         });
                 },

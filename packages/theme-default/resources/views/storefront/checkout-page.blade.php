@@ -64,26 +64,24 @@
 
                     @include('shop::checkout.onepage.payment')
 
-                    <div v-if="canPlaceOrder">
-                        <template v-if="cart && cart.payment_method == 'paypal_smart_button'">
-                            {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.before') !!}
+                    <template v-if="cart && cart.payment_method == 'paypal_smart_button'">
+                        {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.before') !!}
 
-                            <v-paypal-smart-button></v-paypal-smart-button>
+                        <v-paypal-smart-button></v-paypal-smart-button>
 
-                            {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.after') !!}
-                        </template>
+                        {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.after') !!}
+                    </template>
 
-                        <template v-else>
-                            <x-shop::button
-                                type="button"
-                                class="primary-button w-full rounded-2xl bg-[#2f5ec5] px-11 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-white shadow-sm transition hover:bg-[#244cad] max-md:rounded-xl max-md:px-8 max-md:py-3 max-md:text-xs max-md:tracking-[0.16em]"
-                                :title="trans('shop::app.checkout.onepage.summary.place-order')"
-                                ::disabled="isPlacingOrder"
-                                ::loading="isPlacingOrder"
-                                @click="placeOrder"
-                            />
-                        </template>
-                    </div>
+                    <template v-else>
+                        <button
+                            type="button"
+                            class="primary-button flex w-full items-center justify-center rounded-2xl bg-[#2f5ec5] px-11 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-white shadow-sm transition hover:bg-[#244cad] max-md:rounded-xl max-md:px-8 max-md:py-3 max-md:text-xs max-md:tracking-[0.16em]"
+                            :disabled="isPlacingOrder"
+                            @click.prevent="submitOrder"
+                        >
+                            @lang('shop::app.checkout.onepage.summary.place-order')
+                        </button>
+                    </template>
                 </aside>
             </div>
         </template>
@@ -109,11 +107,12 @@
 
                     isPlacingOrder: false,
 
+                    pendingPlaceOrder: false,
+
                     currentStep: @json($initialCheckoutStep),
 
                     paymentMethods: null,
 
-                    canPlaceOrder: false,
                 }
             },
 
@@ -123,7 +122,7 @@
 
             methods: {
                 getCheckoutState() {
-                    this.$axios.get("{{ route('shop.checkout.onepage.state') }}")
+                    return this.$axios.get("{{ route('shop.checkout.custom.state') }}")
                         .then(response => {
                             this.checkoutState = response.data.data;
                             this.cart = response.data.data.cart;
@@ -134,16 +133,26 @@
                         .catch(error => {});
                 },
 
-                stepForward(step) {
-                    this.currentStep = step;
+                submitOrder() {
+                    if (this.isPlacingOrder) {
+                        return;
+                    }
 
-                    if (step == 'review') {
-                        this.canPlaceOrder = true;
+                    const addressForm = document.getElementById('checkout-address-form');
+
+                    if (! addressForm) {
+                        this.placeOrder();
 
                         return;
                     }
 
-                    this.canPlaceOrder = false;
+                    this.pendingPlaceOrder = true;
+
+                    addressForm.requestSubmit();
+                },
+
+                stepForward(step) {
+                    this.currentStep = step;
 
                     if (this.currentStep == 'payment') {
                         this.paymentMethods = null;
@@ -153,6 +162,14 @@
                 stepProcessed(data) {
                     if (this.currentStep == 'payment') {
                         this.paymentMethods = data;
+                    }
+
+                    if (this.pendingPlaceOrder) {
+                        return this.getCheckoutState().then(() => {
+                            this.pendingPlaceOrder = false;
+
+                            return this.$nextTick(() => this.placeOrder());
+                        });
                     }
 
                     this.getCheckoutState();
@@ -174,12 +191,12 @@
                 placeOrder() {
                     this.isPlacingOrder = true;
 
-                    this.$axios.post('{{ route('shop.checkout.onepage.orders.store') }}')
+                    this.$axios.post('{{ route('shop.checkout.custom.orders.store') }}')
                         .then(response => {
                             if (response.data.data.redirect) {
                                 window.location.href = response.data.data.redirect_url;
                             } else {
-                                window.location.href = '{{ route('shop.checkout.onepage.success') }}';
+                                window.location.href = '{{ route('shop.checkout.success') }}';
                             }
 
                             this.isPlacingOrder = false;
@@ -188,6 +205,25 @@
                             this.isPlacingOrder = false
 
                             this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                        });
+                },
+
+                updateItemQuantity(itemId, quantity) {
+                    this.$axios.put('{{ route('shop.api.checkout.cart.update') }}', {
+                            qty: {
+                                [itemId]: quantity,
+                            },
+                        })
+                        .then((response) => {
+                            this.cart = response.data.data;
+
+                            return this.getCheckoutState();
+                        })
+                        .catch((error) => {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: error.response?.data?.message || 'Unable to update the cart quantity.',
+                            });
                         });
                 }
             },
