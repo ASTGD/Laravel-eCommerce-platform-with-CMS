@@ -639,6 +639,11 @@
                                 message: "@lang('admin::app.notifications.order-status-messages.processing')",
                             },
 
+                            shipped: {
+                                icon: 'icon-ship',
+                                message: "@lang('admin::app.notifications.order-status-messages.shipped')",
+                            },
+
                             canceled: {
                                 icon: 'icon-cancel-1',
                                 message: "@lang('admin::app.notifications.order-status-messages.canceled')"
@@ -668,6 +673,7 @@
                             {{ \Webkul\Sales\Models\Order::STATUS_CLOSED }}: "@lang('admin::app.notifications.order-status-messages.closed')",
                             {{ \Webkul\Sales\Models\Order::STATUS_COMPLETED }}: "@lang('admin::app.notifications.order-status-messages.completed')",
                             {{ \Webkul\Sales\Models\Order::STATUS_PROCESSING }}: "@lang('admin::app.notifications.order-status-messages.processing')",
+                            {{ \Webkul\Sales\Models\Order::STATUS_SHIPPED }}: "@lang('admin::app.notifications.order-status-messages.shipped')",
                             {{ \Webkul\Sales\Models\Order::STATUS_PENDING_PAYMENT }}: "@lang('admin::app.notifications.order-status-messages.pending-payment')",
                         }
                     }
@@ -681,6 +687,7 @@
                             completed: 'icon-done rounded-full bg-blue-100 text-2xl text-blue-600 dark:!text-blue-600',
                             canceled: 'icon-cancel-1 rounded-full bg-red-100 text-2xl text-red-600 dark:!text-red-600',
                             processing: 'icon-sort-right rounded-full bg-green-100 text-2xl text-green-600 dark:!text-green-600',
+                            shipped: 'icon-ship rounded-full bg-sky-100 text-2xl text-sky-600 dark:!text-sky-600',
                         };
                     },
                 },

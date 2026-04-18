@@ -20,6 +20,7 @@ use Webkul\Shop\Mail\Order\CanceledNotification as ShopOrderCanceledNotification
 use Webkul\Shop\Mail\Order\CommentedNotification;
 
 use function Pest\Laravel\get;
+use function Pest\Laravel\post;
 use function Pest\Laravel\postJson;
 
 it('should return the index page of Orders page', function () {
@@ -220,6 +221,19 @@ it('should return the view page of order', function () {
             $this->prepareOrderPayment($orderPayment),
         ],
     ]);
+});
+
+it('should confirm a pending order and move it to processing', function () {
+    $order = Order::factory()->create([
+        'status' => Order::STATUS_PENDING,
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.orders.confirm', $order->id))
+        ->assertRedirect(route('admin.sales.orders.view', $order->id));
+
+    expect($order->fresh()->status)->toBe(Order::STATUS_PROCESSING);
 });
 
 it('should cancel the order', function () {

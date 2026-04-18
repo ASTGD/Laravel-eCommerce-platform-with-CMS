@@ -126,11 +126,6 @@ class BkashFinalizationService
                 $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
             }
 
-            if ($order->status !== 'processing') {
-                $this->orderRepository->update(['status' => 'processing'], $order->id);
-                $order->refresh();
-            }
-
             $this->upsertOrderTransaction($order, $invoice?->id, $lockedAttempt, $validated);
 
             if ($lockedAttempt->cart_id && $cart = $this->cartRepository->find($lockedAttempt->cart_id)) {

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentAttemptController;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentRefundController;
 use Platform\CommerceCore\Http\Controllers\Admin\PickupPointController;
+use Platform\CommerceCore\Http\Controllers\Admin\OrderStatusController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::group([
@@ -32,6 +33,10 @@ Route::group([
     Route::post('sales/orders/{order}/payments/reconcile', [PaymentAttemptController::class, 'reconcileOrder'])
         ->middleware('platform.acl:sales.orders.reconcile_payment')
         ->name('admin.sales.orders.payments.reconcile');
+
+    Route::post('sales/orders/{order}/confirm', [OrderStatusController::class, 'confirm'])
+        ->middleware('platform.acl:sales.orders.confirm')
+        ->name('admin.sales.orders.confirm');
 
     Route::post('sales/orders/payment-refunds/{paymentRefund}/refresh', [PaymentRefundController::class, 'refresh'])
         ->middleware('platform.acl:sales.orders.refresh_refund_status')

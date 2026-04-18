@@ -113,8 +113,6 @@ class StripeController extends Controller
 
             $order = $this->orderRepository->create($data);
 
-            $this->orderRepository->update(['status' => 'processing'], $order->id);
-
             if ($order->canInvoice()) {
                 $invoiceData = [
                     'order_id' => $order->id,

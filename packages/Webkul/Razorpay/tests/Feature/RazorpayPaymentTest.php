@@ -129,7 +129,7 @@ it('successfully processes razorpay payment and creates order with invoice', fun
     $order = Order::where('cart_id', $cart->id)->first();
 
     expect($order)->not->toBeNull()
-        ->and($order->status)->toBe('processing')
+        ->and($order->status)->toBe('pending')
         ->and($order->customer_id)->toBe($cart->customer_id);
 
     // Verify invoice was created

@@ -105,13 +105,7 @@ class TransactionController extends Controller
         $transactionTotal = $this->orderTransactionRepository->where('invoice_id', $invoice->id)->sum('amount');
 
         if ($transactionTotal >= $invoice->base_grand_total) {
-            $shipments = $this->shipmentRepository->where('order_id', $invoice->order_id)->first();
-
-            $status = isset($shipments)
-                ? Order::STATUS_COMPLETED
-                : Order::STATUS_PROCESSING;
-
-            $this->orderRepository->updateOrderStatus($order, $status);
+            $this->orderRepository->updateOrderStatus($order);
 
             $this->invoiceRepository->updateState($invoice, Invoice::STATUS_PAID);
         }

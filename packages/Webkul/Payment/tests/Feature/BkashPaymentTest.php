@@ -135,7 +135,7 @@ it('creates an order and invoice after a verified direct bkash callback', functi
         ->assertSessionHas('order_id');
 
     expect($order)->not->toBeNull()
-        ->and($order->status)->toBe('processing')
+        ->and($order->status)->toBe('pending')
         ->and(data_get($order->payment?->additional, 'provider'))->toBe('bkash')
         ->and(data_get($order->payment?->additional, 'payment_id'))->toBe('pay-456');
 
