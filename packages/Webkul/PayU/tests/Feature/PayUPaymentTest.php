@@ -133,7 +133,7 @@ it('successfully processes payu payment and creates order with invoice', functio
     $order = Order::where('cart_id', $cart->id)->first();
 
     expect($order)->not->toBeNull()
-        ->and($order->status)->toBe('processing')
+        ->and($order->status)->toBe('pending')
         ->and($order->customer_id)->toBe($cart->customer_id);
 
     // Verify invoice was created

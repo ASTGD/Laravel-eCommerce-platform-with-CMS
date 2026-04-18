@@ -397,6 +397,7 @@ img.lazy {
 
     .label-pending,
     .label-processing,
+    .label-shipped,
     .label-closed,
     .label-canceled,
     .label-info,
@@ -411,6 +412,10 @@ img.lazy {
 
 	.label-processing{
 		@apply bg-cyan-600;
+    }
+
+	.label-shipped{
+		@apply bg-sky-700;
     }
 
 	.label-completed,

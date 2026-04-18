@@ -121,6 +121,7 @@ it('should fails the validation error when store the the shipment to the order',
         'customer_email' => $customer->email,
         'customer_first_name' => $customer->first_name,
         'customer_last_name' => $customer->last_name,
+        'status' => Order::STATUS_PROCESSING,
     ]);
 
     $orderItem = OrderItem::factory()->create([
@@ -314,6 +315,7 @@ it('should store the shipment to the order', function () {
         'customer_email' => $customer->email,
         'customer_first_name' => $customer->first_name,
         'customer_last_name' => $customer->last_name,
+        'status' => Order::STATUS_PROCESSING,
     ]);
 
     $orderItem = OrderItem::factory()->create([
@@ -542,6 +544,7 @@ it('should store the shipment to the order and send email to the customer and ad
         'customer_email' => $customer->email,
         'customer_first_name' => $customer->first_name,
         'customer_last_name' => $customer->last_name,
+        'status' => Order::STATUS_PROCESSING,
     ]);
 
     $orderItem = OrderItem::factory()->create([
@@ -764,6 +767,7 @@ it('should return the view page of shipments', function () {
         'customer_email' => $customer->email,
         'customer_first_name' => $customer->first_name,
         'customer_last_name' => $customer->last_name,
+        'status' => Order::STATUS_PROCESSING,
     ]);
 
     $orderItem = OrderItem::factory()->create([

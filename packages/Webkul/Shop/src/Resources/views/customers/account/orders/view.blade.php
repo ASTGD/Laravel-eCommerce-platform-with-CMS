@@ -461,6 +461,10 @@
                                             <p class="label-processing">{{ ucfirst($order->status) }}</p>
                                             @break
 
+                                        @case('shipped')
+                                            <p class="label-shipped">{{ ucfirst($order->status) }}</p>
+                                            @break
+
                                         @case('canceled')
                                             <p class="label-canceled">{{ ucfirst($order->status) }}</p>
                                             @break

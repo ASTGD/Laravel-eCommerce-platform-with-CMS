@@ -37,14 +37,19 @@ return [
         'route' => 'admin.sales.payments.reconcile',
         'sort'  => 2,
     ], [
+        'key'   => 'sales.orders.confirm',
+        'name'  => 'Confirm Order',
+        'route' => 'admin.sales.orders.confirm',
+        'sort'  => 10,
+    ], [
         'key'   => 'sales.orders.reconcile_payment',
         'name'  => 'Reconcile Payment',
         'route' => 'admin.sales.orders.payments.reconcile',
-        'sort'  => 10,
+        'sort'  => 11,
     ], [
         'key'   => 'sales.orders.refresh_refund_status',
         'name'  => 'Refresh Refund Status',
         'route' => 'admin.sales.orders.payment_refunds.refresh',
-        'sort'  => 11,
+        'sort'  => 12,
     ],
 ];

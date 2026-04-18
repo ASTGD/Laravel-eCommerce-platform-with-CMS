@@ -177,7 +177,7 @@ it('successfully processes stripe payment and creates order with invoice', funct
     $order = Order::where('customer_id', $cart->customer_id)->first();
 
     expect($order)->not->toBeNull()
-        ->and($order->status)->toBe('processing');
+        ->and($order->status)->toBe('pending');
 
     // Verify order transaction was created
     $orderTransaction = OrderTransaction::where('transaction_id', 'pi_test_123')->first();

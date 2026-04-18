@@ -21,6 +21,14 @@ Current gateway-backed order detail coverage:
 - `SSLCommerz` payment details and refund history
 - direct `bKash` payment details and refund history
 
+Current customer-facing order lifecycle:
+
+- new order: `Pending`
+- admin-confirmed order: `Processing`
+- shipped order: `Shipped`
+
+The customer order history and order detail views now render the same order state progression as the admin sales area for this slice.
+
 ## Registration Flow
 
 - the customer registration flow remains Bagisto-based

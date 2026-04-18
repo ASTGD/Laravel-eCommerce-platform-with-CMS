@@ -154,3 +154,20 @@ Current status:
 - city and postcode remain hidden compatibility fields until the theme layer replaces the current checkout presentation entirely
 - the checkout page shell is now moving into the default theme layer so the screenshot-style layout can be rendered without changing the core flow contract
 - checkout mode routing is now being split so Bagisto native full checkout and the custom one-page checkout can coexist behind an admin-selected mode switch
+
+## Order Status Workflow Note
+
+The first custom order-status slice is now active.
+
+Current status progression for physical-order operations:
+
+- new order: `Pending`
+- admin confirmation: `Processing`
+- full shipment creation: `Shipped`
+
+Current implementation notes:
+
+- Bagisto native shipment creation no longer acts as the first transition out of `Pending`
+- payment success paths no longer auto-promote supported orders to `Processing`
+- admin order confirmation is now the explicit gate before shipment
+- later shipment sub-stages and courier workflow detail are still deferred to a dedicated shipment slice

@@ -10,6 +10,7 @@ use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
 use Platform\CommerceCore\Payment\PaymentManager;
+use Platform\CommerceCore\Repositories\OrderRepository as CommerceOrderRepository;
 use Platform\CommerceCore\Services\CheckoutGuestAccountService;
 use Platform\CommerceCore\Services\DataSourceResolver;
 use Platform\CommerceCore\Support\CheckoutMode;
@@ -17,6 +18,7 @@ use Webkul\Admin\Http\Controllers\Sales\RefundController as BaseRefundController
 use Webkul\Admin\Listeners\Refund as BaseRefundListener;
 use Webkul\Core\Http\Middleware\PreventRequestsDuringMaintenance;
 use Webkul\Payment\Payment as BasePaymentManager;
+use Webkul\Sales\Repositories\OrderRepository as BaseOrderRepository;
 use Webkul\Theme\ViewRenderEventManager;
 
 class CommerceCoreServiceProvider extends ServiceProvider
@@ -28,6 +30,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
         $this->app->bind(BasePaymentManager::class, PaymentManager::class);
         $this->app->bind(BaseRefundController::class, CommerceRefundController::class);
         $this->app->bind(BaseRefundListener::class, CommerceRefundListener::class);
+        $this->app->bind(BaseOrderRepository::class, CommerceOrderRepository::class);
 
         $this->mergeConfigFrom(__DIR__.'/../../config/system.php', 'core');
         $this->mergeConfigFrom(__DIR__.'/../../config/carriers.php', 'carriers');
@@ -59,6 +62,10 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
         Event::listen('bagisto.admin.sales.order.payment-method.after', static function (ViewRenderEventManager $viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('commerce-core::admin.orders.payment-details');
+        });
+
+        Event::listen('bagisto.admin.sales.order.page_action.before', static function (ViewRenderEventManager $viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('commerce-core::admin.orders.confirm-button');
         });
 
         Event::listen('bagisto.shop.customers.account.orders.view.shipping_method_details.after', static function (ViewRenderEventManager $viewRenderEventManager) {

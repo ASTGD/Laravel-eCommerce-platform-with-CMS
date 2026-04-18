@@ -196,6 +196,7 @@ return [
                         'pending' => 'Pending',
                         'pending-payment' => 'Pending Payment',
                         'processing' => 'Processing',
+                        'shipped' => 'Shipped',
                     ],
 
                     'canceled' => 'Canceled',
@@ -205,6 +206,7 @@ return [
                     'pending' => 'Pending',
                     'pending-payment' => 'Pending Payment',
                     'processing' => 'Processing',
+                    'shipped' => 'Shipped',
                 ],
 
                 'view' => [

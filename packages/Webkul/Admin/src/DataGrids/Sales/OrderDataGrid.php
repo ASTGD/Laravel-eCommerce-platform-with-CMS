@@ -79,6 +79,10 @@ class OrderDataGrid extends DataGrid
                     'value' => Order::STATUS_PROCESSING,
                 ],
                 [
+                    'label' => trans('admin::app.sales.orders.index.datagrid.shipped'),
+                    'value' => Order::STATUS_SHIPPED,
+                ],
+                [
                     'label' => trans('admin::app.sales.orders.index.datagrid.completed'),
                     'value' => Order::STATUS_COMPLETED,
                 ],
@@ -108,6 +112,9 @@ class OrderDataGrid extends DataGrid
                 switch ($row->status) {
                     case Order::STATUS_PROCESSING:
                         return '<p class="label-processing">'.trans('admin::app.sales.orders.index.datagrid.processing').'</p>';
+
+                    case Order::STATUS_SHIPPED:
+                        return '<p class="label-shipped">'.trans('admin::app.sales.orders.index.datagrid.shipped').'</p>';
 
                     case Order::STATUS_COMPLETED:
                         return '<p class="label-active">'.trans('admin::app.sales.orders.index.datagrid.completed').'</p>';

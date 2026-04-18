@@ -109,8 +109,6 @@ class PayUController extends Controller
 
             $order = $this->orderRepository->create($data);
 
-            $this->orderRepository->update(['status' => 'processing'], $order->id);
-
             if ($order->canInvoice()) {
                 $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order));
 

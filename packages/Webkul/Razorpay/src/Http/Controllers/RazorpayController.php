@@ -159,8 +159,6 @@ class RazorpayController extends Controller
                 ]);
             }
 
-            $this->orderRepository->update(['status' => Order::STATUS_PROCESSING], $order->id);
-
             $invoice = $this->invoiceRepository->create($this->prepareInvoiceData($order->id));
 
             $this->orderTransactionRepository->create([

@@ -120,7 +120,7 @@ it('creates an order and invoice after a verified sslcommerz payment callback', 
         ->assertSessionHas('order_id');
 
     expect($order)->not->toBeNull()
-        ->and($order->status)->toBe('processing');
+        ->and($order->status)->toBe('pending');
 
     $transaction = OrderTransaction::query()->where('transaction_id', $transactionId)->first();
 

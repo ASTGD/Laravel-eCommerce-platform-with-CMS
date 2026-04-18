@@ -219,6 +219,23 @@ Recommended role split before frontend work begins:
 - version comparison and diff UX are not yet implemented
 - customer portal page authoring is still deferred to a later workstream
 
+## Sales Order Workflow
+
+The order lifecycle now adds an explicit admin confirmation step before shipment:
+
+- new order arrives as `Pending`
+- admin reviews the order and confirms it
+- confirmed order moves to `Processing`
+- shipment creation for a fully shippable order moves it to `Shipped`
+
+Current admin behavior for this slice:
+
+- `Confirm` action is available only for `Pending` orders
+- shipment creation is blocked until the order is `Processing`
+- order status filters and badges in the sales order screens now include `Shipped`
+
+This slice intentionally stops at `Shipped`. Courier handover, delivery tracking, and later shipment sub-stages remain a separate shipment workstream.
+
 ## Checkout Configuration
 
 The sales configuration area now includes the Bangladesh-specific checkout controls needed for this product install:
