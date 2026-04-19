@@ -81,11 +81,21 @@ Important:
 
 In `local` environment this also seeds a small ASTGD demo catalog and an AliExpress shirt sample through `database/seeders/SampleCatalogSeeder.php`, so you have usable sample products, image swatches, and a demo category for smoke testing. The seeded category is `/mens-shirts`.
 
-11. Install frontend dependencies:
+11. Install frontend dependencies for the same runtime that will execute the root Vite dev server.
+
+If you run root Vite on the host workstation, install on the host:
+
+```bash
+npm install
+```
+
+If you run root Vite inside Sail, install inside Sail:
 
 ```bash
 ./vendor/bin/sail npm install
 ```
+
+Do not mix host-installed `node_modules` with `./vendor/bin/sail npm run dev`, or Sail-installed `node_modules` with host `npm run dev`. Rollup optional native packages are platform-specific and can fail with missing-module errors when the runtime and install platform differ.
 
 12. If you plan to modify upstream Bagisto assets directly, install their workspace dependencies too:
 
@@ -113,6 +123,12 @@ composer run dev:sail-worker
 composer run dev:sail-schedule
 composer run dev:sail-down
 ```
+
+Important:
+
+- prefer host `npm run dev -- --host 127.0.0.1 --port 5174` for the root storefront shell on macOS workstations when `node_modules` were installed on the host
+- use `composer run dev:sail-vite` only when the root `node_modules` were installed inside Sail and you are keeping the Vite runtime Linux-aligned
+- `/checkout/custom` depends on the root storefront Vite entries from `resources/css/app.css` and `resources/js/app.js`, so that page will appear broken if the root Vite server is not reachable from the browser
 
 Host switching for localhost or LAN:
 

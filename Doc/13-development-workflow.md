@@ -201,11 +201,21 @@ If `.env` is already complete and you want a non-interactive run:
 
 In `local` environment this also seeds a small ASTGD sample catalog and an AliExpress shirt sample through `database/seeders/SampleCatalogSeeder.php`, which is the recommended starting point for product, image-swatch, and PDP smoke testing. The seeded demo category is `/mens-shirts`.
 
-8. Install the root storefront shell dependencies:
+8. Install the root storefront shell dependencies using the same runtime that will later execute root Vite.
+
+Host runtime:
+
+```bash
+npm install
+```
+
+Sail runtime:
 
 ```bash
 ./vendor/bin/sail npm install
 ```
+
+Do not mix a host-installed root `node_modules` tree with `./vendor/bin/sail npm run dev`, or a Sail-installed tree with host `npm run dev`. Rollup optional binaries are platform-specific.
 
 9. If you are changing upstream Bagisto assets, install those workspaces too:
 
@@ -272,6 +282,19 @@ Then run app setup through Sail:
 
 ```bash
 composer run dev:sail-install
+```
+
+For the root storefront shell, prefer host Vite on a macOS workstation:
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
+Use this only when the root `node_modules` were installed on the host.
+
+If you intentionally installed root `node_modules` inside Sail and want Vite inside the container too, use:
+
+```bash
 composer run dev:sail-vite
 ```
 
@@ -321,7 +344,7 @@ Terminal 2:
 
 ```bash
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
-composer run dev:sail-vite
+npm run dev -- --host 127.0.0.1 --port 5174
 ```
 
 Optional terminal for queued work:
@@ -344,6 +367,22 @@ Daily stop:
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
 composer run dev:sail-down
 ```
+
+If root `node_modules` were installed inside Sail instead of on the host, replace Terminal 2 with:
+
+```bash
+cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-vite
+```
+
+## Custom Checkout Note
+
+`/checkout/custom` is rendered by the `theme-default` storefront shell and depends on the root application Vite entries:
+
+- `resources/css/app.css`
+- `resources/js/app.js`
+
+It also loads Bagisto shop checkout assets, but the page layout and theme shell styling still require the root Vite server during local development. If the route returns HTML but the UI looks broken or unstyled, treat the root Vite server as the first dependency to verify.
 
 ## LAN Access
 
@@ -565,7 +604,9 @@ Fix:
 
 Cause:
 
-- the matching Vite workspace is not running, or is not bound correctly for LAN use
+- the matching Vite workspace is not running
+- or the Vite runtime does not match the platform that installed `node_modules`
+- or the browser is receiving a non-routable dev URL such as `0.0.0.0`
 
 Fix:
 
@@ -578,6 +619,53 @@ For LAN:
 ```bash
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
+
+For the root storefront shell on the verified localhost setup:
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
+If you intentionally want Vite inside Sail, reinstall the root dependencies inside Sail and then use:
+
+```bash
+composer run dev:sail-vite
+```
+
+### `./vendor/bin/sail npm run dev` fails with missing `@rollup/rollup-linux-*`
+
+Cause:
+
+- the root `node_modules` were installed on the host, but Vite is being started inside the Linux Sail container
+- Rollup optional native packages do not match across host and container platforms
+
+Fix:
+
+- use host Vite with host-installed dependencies:
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
+- or reinstall root dependencies inside Sail and keep both install and runtime inside Sail
+
+### `/checkout/custom` returns HTML but the UI looks broken
+
+Cause:
+
+- the custom checkout page depends on the root storefront shell assets from `resources/css/app.css` and `resources/js/app.js`
+- if the root Vite dev server is down, or the browser sees a hot URL like `http://0.0.0.0:5174`, the route can render while the UI still looks broken
+
+Fix:
+
+1. Start the root storefront Vite server with the runtime that matches the root `node_modules`.
+2. Clear compiled views if the storefront layout was recently changed:
+
+```bash
+./vendor/bin/sail artisan view:clear
+```
+
+3. Reload the page and confirm the rendered HTML references a browser-reachable host such as `127.0.0.1:5174` instead of `0.0.0.0:5174`.
 
 ### Admin page redirects unexpectedly
 
