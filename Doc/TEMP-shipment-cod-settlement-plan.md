@@ -31,7 +31,7 @@ This is a temporary execution document intended to guide the next step-by-step i
 ### Out Of Scope For This Workstream
 
 - storefront shipment tracking UX polish
-- courier API integrations
+- broad courier API coverage beyond the first live adapter
 - SMS or WhatsApp integrations
 - automated courier label printing
 - advanced delivery proof uploads
@@ -548,6 +548,9 @@ Current follow-up status:
   - carrier registry stores integration driver and API credential placeholders
   - shipment ops stores last sync state and supports manual sync triggers
   - queue job and CLI command foundations exist for future provider adapters
+- the first live courier adapter is now active:
+  - `Steadfast` can call a real tracking endpoint and map external delivery statuses into the internal shipment timeline
+  - other courier drivers still remain on the placeholder sync foundation until their dedicated adapter slices are implemented
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
@@ -556,4 +559,4 @@ Current follow-up status:
   - `Sales > Settlement Batches` now includes CSV import with strict row validation
   - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
   - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
-- additional courier adapters remain deferred
+- additional courier adapters beyond `Steadfast` remain deferred

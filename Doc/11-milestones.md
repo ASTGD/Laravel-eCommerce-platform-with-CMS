@@ -197,6 +197,9 @@ Current status:
   - carriers can store tracking integration driver and API credential placeholders
   - shipment ops can record last sync state/message and trigger a manual sync action
   - queue job and CLI command foundations now exist for later real courier adapters
+- the first live courier adapter slice is now active:
+  - `Steadfast` tracking sync can call a real courier endpoint and map external statuses into internal shipment ops states
+  - non-integrated carriers still remain on the placeholder provider until their dedicated adapter slices are implemented
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows
