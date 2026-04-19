@@ -271,6 +271,19 @@
                             />
 
                             <x-admin::form.control-group.error control-name="webhook_secret" />
+
+                            @if ($carrier->exists && $carrier->trackingDriver() === 'steadfast')
+                                <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                    Callback URL:
+                                    <span class="break-all font-mono">
+                                        {{ route('commerce-core.webhooks.shipment-carriers.steadfast', $carrier) }}
+                                    </span>
+                                </p>
+
+                                <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                    Configure Steadfast to send the webhook token as a bearer token matching this secret.
+                                </p>
+                            @endif
                         </x-admin::form.control-group>
                     </div>
                 </div>

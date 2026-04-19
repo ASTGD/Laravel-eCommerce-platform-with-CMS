@@ -551,6 +551,11 @@ Current follow-up status:
 - the first live courier adapter is now active:
   - `Steadfast` can call a real tracking endpoint and map external delivery statuses into the internal shipment timeline
   - other courier drivers still remain on the placeholder sync foundation until their dedicated adapter slices are implemented
+- the first courier webhook slice is now active:
+  - `Steadfast` carriers expose a dedicated callback URL plus shared-secret verification
+  - webhook payloads can update shipment records through the same internal status pipeline used by manual tracking sync
+  - invoice fallback is supported when tracking code is absent
+  - pure `consignment_id` matching remains deferred until local courier booking references are persisted
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
@@ -560,3 +565,4 @@ Current follow-up status:
   - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
   - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
 - additional courier adapters beyond `Steadfast` remain deferred
+- richer webhook matching via stored courier consignment ids remains deferred

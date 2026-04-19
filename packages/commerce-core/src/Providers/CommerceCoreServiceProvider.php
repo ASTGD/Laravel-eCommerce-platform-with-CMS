@@ -57,6 +57,9 @@ class CommerceCoreServiceProvider extends ServiceProvider
             ->group(__DIR__.'/../../routes/web.php');
 
         Route::middleware(['web', PreventRequestsDuringMaintenance::class])
+            ->group(__DIR__.'/../../routes/webhooks.php');
+
+        Route::middleware(['web', PreventRequestsDuringMaintenance::class])
             ->group(__DIR__.'/../../routes/admin.php');
 
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
