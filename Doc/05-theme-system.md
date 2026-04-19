@@ -173,6 +173,8 @@ This is enough for the current homepage slice and keeps the view layer aligned w
 
 The custom storefront layout now targets the root application Vite build directory explicitly instead of relying on the Bagisto theme Vite singleton state. This avoids runtime manifest collisions between Bagisto theme assets and the custom storefront shell.
 
+In local development, the same layout also normalizes Vite hot asset hosts such as `0.0.0.0` and `[::]` to the current request host before emitting the asset tags. This keeps browser-facing pages like `/checkout/custom` usable on `127.0.0.1` and LAN hosts even when the Vite server is bound to all interfaces.
+
 ## Remaining Gaps Before Frontend Polish
 
 - the default theme is still intentionally minimal

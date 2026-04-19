@@ -13,11 +13,16 @@
     @endif
     @stack('meta')
     @stack('styles')
-    {!! app(\Illuminate\Foundation\Vite::class)
+    @php($storefrontAssets = app(\Illuminate\Foundation\Vite::class)
         ->useHotFile('hot')
         ->useBuildDirectory('build')
         ->withEntryPoints(['resources/css/app.css', 'resources/js/app.js'])
-        ->toHtml() !!}
+        ->toHtml())
+    @php($requestHost = request()->getHost())
+
+    {!! $requestHost
+        ? preg_replace('/:\/\/(?:0\.0\.0\.0|\[::\])(?=:\d+)/', '://'.$requestHost, $storefrontAssets) ?? $storefrontAssets
+        : $storefrontAssets !!}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
     <div id="app">
