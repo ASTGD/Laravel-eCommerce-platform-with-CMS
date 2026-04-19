@@ -5,6 +5,7 @@ namespace Platform\CommerceCore\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Platform\CommerceCore\Console\Commands\ImportCodSettlementsCommand;
 use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
 use Platform\CommerceCore\Console\Commands\SyncShipmentTrackingCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
@@ -46,6 +47,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ImportCodSettlementsCommand::class,
                 ReconcilePendingPaymentsCommand::class,
                 SyncShipmentTrackingCommand::class,
             ]);

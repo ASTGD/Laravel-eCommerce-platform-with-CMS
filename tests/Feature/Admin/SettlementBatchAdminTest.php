@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Arr;
+use Illuminate\Http\UploadedFile;
 use Platform\CommerceCore\Models\CodSettlement;
 use Platform\CommerceCore\Models\SettlementBatch;
 use Platform\CommerceCore\Models\ShipmentCarrier;
@@ -97,6 +98,77 @@ it('updates a settlement batch and syncs linked cod settlements', function () {
         ->and($batch->received_at)->not->toBeNull()
         ->and($settledItem->codSettlement->fresh()->status)->toBe(CodSettlement::STATUS_SETTLED)
         ->and($shortItem->codSettlement->fresh()->status)->toBe(CodSettlement::STATUS_SHORT_SETTLED);
+});
+
+it('imports a settlement batch from csv and auto-syncs cod settlements', function () {
+    $this->loginAsAdmin();
+
+    $settlements = createSettlementBatchSettlements(2);
+    $first = $settlements[0]->fresh(['shipmentRecord']);
+    $second = $settlements[1]->fresh(['shipmentRecord']);
+    $secondNet = (float) $second->net_amount;
+    $shortBy = min(20.0, max(1.0, round($secondNet / 2, 2)));
+    $secondRemitted = max(0, $secondNet - $shortBy);
+
+    $csv = implode(PHP_EOL, [
+        'tracking_number,remitted_amount,adjustment_amount,item_note',
+        sprintf(
+            '%s,%s,0,Imported in full remittance run',
+            $first->shipmentRecord->tracking_number,
+            number_format((float) $first->net_amount, 2, '.', ''),
+        ),
+        sprintf(
+            '%s,%s,0,Imported short remittance run',
+            $second->shipmentRecord->tracking_number,
+            number_format($secondRemitted, 2, '.', ''),
+        ),
+    ]);
+
+    $importFile = UploadedFile::fake()->createWithContent('settlement-import.csv', $csv);
+
+    post(route('admin.sales.settlement-batches.import-store'), [
+        'reference' => 'BATCH-CSV-20260419-01',
+        'shipment_carrier_id' => $first->shipment_carrier_id,
+        'payout_method' => 'bank_transfer',
+        'status' => SettlementBatch::STATUS_RECONCILED,
+        'notes' => 'Courier CSV import completed.',
+        'import_file' => $importFile,
+    ])->assertRedirect()->assertSessionHasNoErrors();
+
+    $batch = SettlementBatch::query()->with('items.codSettlement')->latest('id')->firstOrFail();
+
+    expect($batch->reference)->toBe('BATCH-CSV-20260419-01')
+        ->and($batch->items)->toHaveCount(2)
+        ->and((float) $batch->total_short_amount)->toEqualWithDelta($shortBy, 0.01)
+        ->and($first->fresh()->status)->toBe(CodSettlement::STATUS_SETTLED)
+        ->and($second->fresh()->status)->toBe(CodSettlement::STATUS_SHORT_SETTLED);
+});
+
+it('rejects settlement csv import when any row cannot be matched', function () {
+    $this->loginAsAdmin();
+
+    $settlement = createSettlementBatchSettlements(1)[0]->fresh(['shipmentRecord']);
+
+    $csv = implode(PHP_EOL, [
+        'tracking_number,remitted_amount,adjustment_amount,item_note',
+        sprintf(
+            '%s,%s,0,Valid row',
+            $settlement->shipmentRecord->tracking_number,
+            number_format((float) $settlement->net_amount, 2, '.', ''),
+        ),
+        'NOT-FOUND-TRACKING,10.00,0,Invalid row',
+    ]);
+
+    $importFile = UploadedFile::fake()->createWithContent('settlement-import-invalid.csv', $csv);
+
+    post(route('admin.sales.settlement-batches.import-store'), [
+        'reference' => 'BATCH-CSV-20260419-02',
+        'shipment_carrier_id' => $settlement->shipment_carrier_id,
+        'status' => SettlementBatch::STATUS_RECONCILED,
+        'import_file' => $importFile,
+    ])->assertSessionHasErrors(['import_file']);
+
+    expect(SettlementBatch::query()->where('reference', 'BATCH-CSV-20260419-02')->exists())->toBeFalse();
 });
 
 it('requires a note when marking a settlement batch disputed', function () {
@@ -292,8 +364,8 @@ function createSettlementBatchShipmentFixture(): array
         'name' => 'Steadfast Courier',
         'supports_cod' => true,
         'default_cod_fee_type' => 'flat',
-        'default_cod_fee_amount' => 55,
-        'default_return_fee_amount' => 120,
+        'default_cod_fee_amount' => 0,
+        'default_return_fee_amount' => 0,
         'default_payout_method' => 'bkash',
         'is_active' => true,
     ]);
