@@ -201,6 +201,10 @@ Current status:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows
   - sales configuration now controls operational shipment email toggles
+- the courier settlement import and automated sync slice is now active:
+  - `Sales > Settlement Batches` now supports courier remittance CSV import
+  - CSV import creates one settlement batch and auto-syncs linked COD settlement states
+  - CLI import command `platform:cod-settlements:import` now supports automated operator/cron runs
 - the `COD Settlements` slice is now active as the first money-operations layer for COD shipments
 - COD shipment records now auto-create one admin settlement row per shipment record
 - the manual COD reconciliation hardening slice is now active:
@@ -211,6 +215,4 @@ Current status:
 - many COD settlements can now be grouped into one payout batch with item-level short-settlement visibility
 - the admin order view now shows shipment, COD settlement, and payout-batch summaries through custom order-side components
 - carrier management is intended to become the foundation for later:
-  - real courier adapters
-  - settlement imports
   - SMS / WhatsApp shipment notifications

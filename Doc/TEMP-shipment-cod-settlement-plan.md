@@ -283,6 +283,7 @@ Implemented slices so far:
 - `feature/public-shipment-tracking-page`
 - `feature/carrier-tracking-links-and-public-entry`
 - `feature/courier-api-integration-foundation`
+- `feature/courier-settlement-import-and-automated-sync`
 - `feature/manual-cod-reconciliation-hardening`
 - `feature/shipment-notifications-and-communications`
 
@@ -551,4 +552,8 @@ Current follow-up status:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
   - settlement batches now expose reconciliation health counts and attention state
-- live courier adapters, settlement imports, and messaging hooks remain deferred
+- courier settlement import and automated sync is now active:
+  - `Sales > Settlement Batches` now includes CSV import with strict row validation
+  - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
+  - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
+- additional courier adapters remain deferred

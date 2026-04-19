@@ -73,6 +73,8 @@ Route::group([
             Route::get('', 'index')->middleware('platform.acl:sales.settlement_batches')->name('admin.sales.settlement-batches.index');
             Route::get('create', 'create')->middleware('platform.acl:sales.settlement_batches.create')->name('admin.sales.settlement-batches.create');
             Route::post('', 'store')->middleware('platform.acl:sales.settlement_batches.create')->name('admin.sales.settlement-batches.store');
+            Route::get('import', 'import')->middleware('platform.acl:sales.settlement_batches.create')->name('admin.sales.settlement-batches.import');
+            Route::post('import', 'storeImport')->middleware('platform.acl:sales.settlement_batches.create')->name('admin.sales.settlement-batches.import-store');
             Route::get('{settlementBatch}', 'show')->middleware('platform.acl:sales.settlement_batches.view')->name('admin.sales.settlement-batches.view');
             Route::post('{settlementBatch}', 'update')->middleware('platform.acl:sales.settlement_batches.update')->name('admin.sales.settlement-batches.update');
         });
