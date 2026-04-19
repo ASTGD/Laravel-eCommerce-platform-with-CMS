@@ -8,50 +8,11 @@ use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Services\ShipmentRecordService;
 use Platform\CommerceCore\ShipmentTracking\CarrierTrackingSyncResult;
+use Platform\CommerceCore\ShipmentTracking\SteadfastTrackingStatusMapper;
 use Throwable;
 
 class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
 {
-    /**
-     * Statuses exposed by Steadfast are more coarse than the internal shipment
-     * model, so early-state mappings are intentionally conservative.
-     */
-    protected const STATUS_MAP = [
-        'created' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
-        'booked' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
-        'ready_for_pickup' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
-        'in_review' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
-        'picked_up' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
-        'picked' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
-        'handed_to_carrier' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
-        'received_by_carrier' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
-        'pending' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
-        'hold' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
-        'in_transit' => ShipmentRecord::STATUS_IN_TRANSIT,
-        'transit' => ShipmentRecord::STATUS_IN_TRANSIT,
-        'at_hub' => ShipmentRecord::STATUS_IN_TRANSIT,
-        'arrived_at_hub' => ShipmentRecord::STATUS_IN_TRANSIT,
-        'on_the_way' => ShipmentRecord::STATUS_IN_TRANSIT,
-        'out_for_delivery' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
-        'delivery_ongoing' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
-        'on_delivery' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
-        'partial_delivered_approval_pending' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
-        'partial_delivered' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
-        'delivered_approval_pending' => ShipmentRecord::STATUS_DELIVERED,
-        'delivered' => ShipmentRecord::STATUS_DELIVERED,
-        'delivery_failed' => ShipmentRecord::STATUS_DELIVERY_FAILED,
-        'failed' => ShipmentRecord::STATUS_DELIVERY_FAILED,
-        'undelivered' => ShipmentRecord::STATUS_DELIVERY_FAILED,
-        'attempted' => ShipmentRecord::STATUS_DELIVERY_FAILED,
-        'returned' => ShipmentRecord::STATUS_RETURNED,
-        'return_completed' => ShipmentRecord::STATUS_RETURNED,
-        'rto' => ShipmentRecord::STATUS_RETURNED,
-        'returned_to_origin' => ShipmentRecord::STATUS_RETURNED,
-        'cancelled_approval_pending' => ShipmentRecord::STATUS_CANCELED,
-        'cancelled' => ShipmentRecord::STATUS_CANCELED,
-        'canceled' => ShipmentRecord::STATUS_CANCELED,
-    ];
-
     protected const STATUS_PATHS = [
         'delivery_status',
         'current_status',
@@ -68,20 +29,9 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
         'consignment.status',
     ];
 
-    protected const STATUS_RANKS = [
-        ShipmentRecord::STATUS_DRAFT => 0,
-        ShipmentRecord::STATUS_READY_FOR_PICKUP => 1,
-        ShipmentRecord::STATUS_HANDED_TO_CARRIER => 2,
-        ShipmentRecord::STATUS_IN_TRANSIT => 3,
-        ShipmentRecord::STATUS_OUT_FOR_DELIVERY => 4,
-        ShipmentRecord::STATUS_DELIVERED => 5,
-        ShipmentRecord::STATUS_DELIVERY_FAILED => 5,
-        ShipmentRecord::STATUS_RETURNED => 5,
-        ShipmentRecord::STATUS_CANCELED => 5,
-    ];
-
     public function __construct(
         protected ShipmentRecordService $shipmentRecordService,
+        protected SteadfastTrackingStatusMapper $statusMapper,
         protected string $driver = 'steadfast',
         protected string $label = 'Steadfast',
     ) {}
@@ -146,7 +96,7 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
             ));
         }
 
-        $mappedStatus = $this->mapExternalStatus($externalStatus);
+        $mappedStatus = $this->statusMapper->map($externalStatus);
 
         if (! $mappedStatus) {
             return CarrierTrackingSyncResult::pending(sprintf(
@@ -165,7 +115,7 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
             ), $externalStatus);
         }
 
-        if ($this->wouldDowngrade($shipmentRecord->status, $mappedStatus)) {
+        if ($this->statusMapper->wouldDowngrade($shipmentRecord->status, $mappedStatus)) {
             return CarrierTrackingSyncResult::synced(sprintf(
                 '%s tracking synced. External status "%s" maps to "%s", but the current shipment status "%s" was kept to avoid a downgrade.',
                 $this->label,
@@ -259,21 +209,4 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
         return null;
     }
 
-    protected function mapExternalStatus(string $externalStatus): ?string
-    {
-        return self::STATUS_MAP[$this->normalizeStatus($externalStatus)] ?? null;
-    }
-
-    protected function wouldDowngrade(string $currentStatus, string $mappedStatus): bool
-    {
-        return (self::STATUS_RANKS[$mappedStatus] ?? -1) < (self::STATUS_RANKS[$currentStatus] ?? -1);
-    }
-
-    protected function normalizeStatus(string $status): string
-    {
-        $normalized = mb_strtolower(trim($status));
-        $normalized = preg_replace('/[^a-z0-9]+/u', '_', $normalized) ?: $normalized;
-
-        return trim($normalized, '_');
-    }
 }

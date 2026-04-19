@@ -200,6 +200,10 @@ Current status:
 - the first live courier adapter slice is now active:
   - `Steadfast` tracking sync can call a real courier endpoint and map external statuses into internal shipment ops states
   - non-integrated carriers still remain on the placeholder provider until their dedicated adapter slices are implemented
+- the first courier webhook slice is now active:
+  - `Steadfast` carriers now have a dedicated webhook callback route guarded by the carrier webhook secret
+  - webhook status updates now flow through the same shipment status pipeline and remain duplicate-safe for repeated callbacks
+  - invoice fallback is supported when a tracking number is not present in the webhook payload
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows
