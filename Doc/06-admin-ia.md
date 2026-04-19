@@ -21,6 +21,129 @@ Relevant admin areas now exposed:
 - Users & Roles
 - Audit Logs
 
+## Sales Extensions
+
+The `Sales` area now includes custom operational extensions beyond native Bagisto order and payment workflows.
+
+Current custom sales screens:
+
+- Pickup Points
+- Payments
+- Carriers
+- Shipment Ops
+- COD Settlements
+- Settlement Batches
+
+`Carriers` is the first shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
+
+- contact details
+- tracking URL template
+- integration driver selection
+- tracking sync enable/disable flag
+- API endpoint and credential placeholders
+- COD support flag
+- COD fee defaults
+- return fee defaults
+- payout-method default
+- active and inactive state
+
+This registry is intentionally admin-only in the current slice. It does not yet replace Bagisto's native shipment UI by itself.
+
+`Shipment Ops` is the custom operational shipment board. It is intentionally separate from native `Sales > Shipments` in the current slice so the new domain can coexist with Bagisto's shipment engine while it is being introduced.
+
+Current `Shipment Ops` capability now includes:
+
+- synced operational shipment records from native Bagisto shipment creation
+- dedicated shipment detail screens
+- auditable shipment event timeline
+- manual operational event logging for:
+  - destination hub arrival
+  - delivery attempts
+- explicit status updates kept as a separate admin action instead of overloading every timeline entry into a status flip
+- structured exception operations for Bangladesh courier flow:
+  - failure reason capture
+  - delivery-attempt count
+  - reattempt-required flag
+  - reattempt approval
+  - return initiation
+  - return completion
+- timeline metadata for:
+  - attempt number
+  - failure reason
+  - reattempt requirement
+- carrier tracking sync foundation:
+  - current driver visibility
+  - last sync timestamp
+  - last sync result/message
+  - manual sync trigger from shipment detail
+- operational communication logging:
+  - customer and admin email notifications for:
+    - out for delivery
+    - delivered
+    - delivery failed
+    - return initiated
+    - returned
+  - per-notification queued / skipped / failed audit rows on shipment detail
+  - shipment-notification toggles under sales configuration
+
+`COD Settlements` is the admin-only money-operations board for cash-on-delivery shipments. It currently tracks one settlement row per COD shipment record and supports:
+
+- expected COD amount
+- courier-collected amount
+- remitted amount
+- fee deductions
+- short-settlement visibility
+- dispute note and manual ops notes
+- reconciliation health visibility:
+  - outstanding amount
+  - linked batch visibility
+  - attention state for short/disputed/written-off cases
+- manual progression through:
+  - `Expected`
+  - `Collected by Carrier`
+  - `Remitted`
+  - `Settled`
+  - `Short Settled`
+  - `Disputed`
+  - `Written Off`
+
+`Settlement Batches` is the courier remittance grouping layer above individual COD settlements. It currently supports:
+
+- one payout batch for many COD settlements
+- per-item remitted amount snapshots
+- per-item adjustment and short-amount visibility
+- batch-level totals for:
+  - gross expected
+  - gross remitted
+  - total deductions
+  - total adjustments
+  - total short
+  - net amount
+- reconciliation-health visibility:
+  - settled item count
+  - short item count
+  - disputed item count
+  - written-off item count
+  - batch gap amount
+- manual batch progression through:
+  - `Draft`
+  - `Remitted`
+  - `Received`
+  - `Reconciled`
+  - `Disputed`
+
+Current hardening rules now also prevent:
+
+- marking a COD settlement `Settled` when remitted amount does not cover the net amount
+- marking a COD settlement `Disputed` without a dispute note
+- marking a settlement batch `Disputed` without operator notes
+
+The native admin order detail page now also includes order-level operational summaries through render hooks:
+
+- shipment summary with carrier/tracking and direct Shipment Ops link
+- COD settlement summary with status, money snapshot, and direct settlement link
+- settlement batch summary when the order is part of a courier payout batch
+
 ## CMS Area
 
 Implemented CMS screens:

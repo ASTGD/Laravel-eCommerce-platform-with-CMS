@@ -171,3 +171,46 @@ Current implementation notes:
 - payment success paths no longer auto-promote supported orders to `Processing`
 - admin order confirmation is now the explicit gate before shipment
 - later shipment sub-stages and courier workflow detail are still deferred to a dedicated shipment slice
+
+## Shipment And COD Workstream Note
+
+The shipment and COD domain workstream is now active.
+
+Current status:
+
+- the temporary execution plan is documented in [Doc/TEMP-shipment-cod-settlement-plan.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/TEMP-shipment-cod-settlement-plan.md)
+- the first implementation slice is `Sales > Carriers`
+- the carrier registry slice is now implemented in `packages/commerce-core`
+- the `Shipment Ops` slice is now active as the custom operational shipment layer
+- native Bagisto shipment creation now syncs into custom shipment records and timeline events
+- shipment timelines now support manual operational events without forcing every update through a pure status-change form
+- shipment exception handling now supports:
+  - structured failure reasons
+  - delivery-attempt counts
+  - reattempt approval
+  - return-to-origin initiation and completion
+- the first customer-facing shipment consumer is now active on customer order detail as a read-only shipment tracking timeline
+- a guarded public shipment-tracking page is now active for guest lookup by order/tracking reference plus phone number
+- customer and public tracking views now support carrier tracking links from the carrier registry tracking URL template
+- public shipment-tracking entry links are now exposed from checkout success and storefront footer surfaces
+- the courier API integration foundation slice is now active:
+  - carriers can store tracking integration driver and API credential placeholders
+  - shipment ops can record last sync state/message and trigger a manual sync action
+  - queue job and CLI command foundations now exist for later real courier adapters
+- the shipment notifications and communications slice is now active:
+  - Shipment Ops events can queue customer/admin operational shipment emails
+  - shipment detail now shows queued / skipped / failed communication audit rows
+  - sales configuration now controls operational shipment email toggles
+- the `COD Settlements` slice is now active as the first money-operations layer for COD shipments
+- COD shipment records now auto-create one admin settlement row per shipment record
+- the manual COD reconciliation hardening slice is now active:
+  - invalid finance-state transitions are blocked
+  - outstanding and attention visibility is exposed on settlement and batch screens
+  - disputed and short-settlement cases are surfaced more clearly for operators
+- the `Settlement Batches` slice is now active as the courier payout grouping layer above COD settlements
+- many COD settlements can now be grouped into one payout batch with item-level short-settlement visibility
+- the admin order view now shows shipment, COD settlement, and payout-batch summaries through custom order-side components
+- carrier management is intended to become the foundation for later:
+  - real courier adapters
+  - settlement imports
+  - SMS / WhatsApp shipment notifications

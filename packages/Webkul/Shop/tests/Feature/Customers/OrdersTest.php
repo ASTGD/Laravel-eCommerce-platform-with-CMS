@@ -1,5 +1,8 @@
 <?php
 
+use Platform\CommerceCore\Models\ShipmentEvent;
+use Platform\CommerceCore\Models\ShipmentCarrier;
+use Platform\CommerceCore\Models\ShipmentRecord;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
 use Webkul\Checkout\Models\CartItem;
@@ -202,6 +205,169 @@ it('should view the order', function () {
             $this->prepareOrderPayment($orderPayment),
         ],
     ]);
+});
+
+it('should show the shipment tracking timeline on the customer order view', function () {
+    $product = (new ProductFaker([
+        'attributes' => [
+            5 => 'new',
+        ],
+
+        'attribute_value' => [
+            'new' => [
+                'boolean_value' => true,
+            ],
+        ],
+    ]))
+        ->getSimpleProductFactory()
+        ->create();
+
+    $customer = Customer::factory()->create();
+
+    $cart = Cart::factory()->create([
+        'customer_id' => $customer->id,
+        'customer_first_name' => $customer->first_name,
+        'customer_last_name' => $customer->last_name,
+        'customer_email' => $customer->email,
+        'is_guest' => 0,
+    ]);
+
+    $additional = [
+        'product_id' => $product->id,
+        'rating' => '0',
+        'is_buy_now' => '0',
+        'quantity' => '1',
+    ];
+
+    CartItem::factory()->create([
+        'cart_id' => $cart->id,
+        'product_id' => $product->id,
+        'sku' => $product->sku,
+        'quantity' => $additional['quantity'],
+        'name' => $product->name,
+        'price' => $convertedPrice = core()->convertPrice($price = $product->price),
+        'base_price' => $price,
+        'total' => $convertedPrice * $additional['quantity'],
+        'base_total' => $price * $additional['quantity'],
+        'weight' => $product->weight ?? 0,
+        'total_weight' => ($product->weight ?? 0) * $additional['quantity'],
+        'base_total_weight' => ($product->weight ?? 0) * $additional['quantity'],
+        'type' => $product->type,
+        'additional' => $additional,
+    ]);
+
+    CustomerAddress::factory()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $customer->id,
+        'address_type' => CustomerAddress::ADDRESS_TYPE,
+    ]);
+
+    CartAddress::factory()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $customer->id,
+        'address_type' => CartAddress::ADDRESS_TYPE_BILLING,
+    ]);
+
+    CartAddress::factory()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $customer->id,
+        'address_type' => CartAddress::ADDRESS_TYPE_SHIPPING,
+    ]);
+
+    CartPayment::factory()->create([
+        'cart_id' => $cart->id,
+        'method' => $paymentMethod = 'cashondelivery',
+        'method_title' => core()->getConfigData('sales.payment_methods.'.$paymentMethod.'.title'),
+    ]);
+
+    $order = Order::factory()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $customer->id,
+        'customer_email' => $customer->email,
+        'customer_first_name' => $customer->first_name,
+        'customer_last_name' => $customer->last_name,
+    ]);
+
+    OrderItem::factory()->create([
+        'product_id' => $product->id,
+        'order_id' => $order->id,
+        'sku' => $product->sku,
+        'type' => $product->type,
+        'name' => $product->name,
+    ]);
+
+    OrderAddress::factory()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $customer->id,
+        'address_type' => OrderAddress::ADDRESS_TYPE_BILLING,
+    ]);
+
+    $orderShippingAddress = OrderAddress::factory()->create([
+        'cart_id' => $cart->id,
+        'customer_id' => $customer->id,
+        'address_type' => OrderAddress::ADDRESS_TYPE_SHIPPING,
+    ]);
+
+    OrderPayment::factory()->create([
+        'order_id' => $order->id,
+        'method' => 'cashondelivery',
+    ]);
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'tracking_url_template' => 'https://carrier.example/track/{tracking_number}',
+        'supports_cod' => true,
+        'default_cod_fee_type' => 'flat',
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $order->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
+        'carrier_name_snapshot' => 'Steadfast Courier',
+        'tracking_number' => 'TRACK-CUST-001',
+        'recipient_name' => $order->customer_full_name,
+        'recipient_phone' => $orderShippingAddress->phone,
+        'recipient_address' => $orderShippingAddress->address,
+        'handed_over_at' => now()->subDay(),
+    ]);
+
+    ShipmentEvent::query()->create([
+        'shipment_record_id' => $shipmentRecord->id,
+        'event_type' => ShipmentEvent::EVENT_SHIPMENT_CREATED,
+        'status_after_event' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
+        'event_at' => now()->subDay(),
+    ]);
+
+    ShipmentEvent::query()->create([
+        'shipment_record_id' => $shipmentRecord->id,
+        'event_type' => ShipmentEvent::EVENT_ARRIVED_DESTINATION_HUB,
+        'status_after_event' => ShipmentRecord::STATUS_IN_TRANSIT,
+        'event_at' => now()->subHours(5),
+    ]);
+
+    ShipmentEvent::query()->create([
+        'shipment_record_id' => $shipmentRecord->id,
+        'event_type' => ShipmentEvent::EVENT_STATUS_UPDATED,
+        'status_after_event' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
+        'event_at' => now()->subHours(1),
+    ]);
+
+    $this->loginAsCustomer($customer);
+
+    get(route('shop.customers.account.orders.view', $order->id))
+        ->assertOk()
+        ->assertSeeText('Shipment Tracking')
+        ->assertSeeText('Steadfast Courier')
+        ->assertSeeText('TRACK-CUST-001')
+        ->assertSeeText('Track on carrier site')
+        ->assertSeeText('Out for Delivery')
+        ->assertSeeText('Shipment created')
+        ->assertSeeText('Arrived at destination hub')
+        ->assertSee('https://carrier.example/track/TRACK-CUST-001', false)
+        ->assertDontSeeText('COD Settlements');
 });
 
 it('should cancel the customer order', function () {
