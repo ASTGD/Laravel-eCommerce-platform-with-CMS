@@ -102,6 +102,65 @@
                             </div>
                         @endif
 
+                        @if (bouncer()->hasPermission('sales.shipment_operations.manage_booking_references'))
+                            <form
+                                method="POST"
+                                action="{{ route('admin.sales.shipment-operations.update-booking-references', $shipmentRecord) }}"
+                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                            >
+                                @csrf
+
+                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                    Carrier Booking References
+                                </p>
+
+                                <input
+                                    type="text"
+                                    name="carrier_booking_reference"
+                                    value="{{ old('carrier_booking_reference', $shipmentRecord->carrier_booking_reference) }}"
+                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Carrier booking reference"
+                                >
+
+                                <input
+                                    type="text"
+                                    name="carrier_consignment_id"
+                                    value="{{ old('carrier_consignment_id', $shipmentRecord->carrier_consignment_id) }}"
+                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Carrier consignment ID"
+                                >
+
+                                <input
+                                    type="text"
+                                    name="carrier_invoice_reference"
+                                    value="{{ old('carrier_invoice_reference', $shipmentRecord->carrier_invoice_reference) }}"
+                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Carrier invoice reference"
+                                >
+
+                                <input
+                                    type="datetime-local"
+                                    name="carrier_booked_at"
+                                    value="{{ old('carrier_booked_at', $shipmentRecord->carrier_booked_at?->format('Y-m-d\\TH:i')) }}"
+                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                >
+
+                                <textarea
+                                    name="note"
+                                    rows="2"
+                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Optional note"
+                                >{{ old('note') }}</textarea>
+
+                                <button
+                                    type="submit"
+                                    class="secondary-button"
+                                >
+                                    Save Booking References
+                                </button>
+                            </form>
+                        @endif
+
                         @if (bouncer()->hasPermission('sales.shipment_operations.update_status'))
                             <form
                                 method="POST"
@@ -381,6 +440,46 @@
 
                         <p class="text-gray-600 dark:text-gray-300">
                             {{ $shipmentRecord->tracking_number ?: 'N/A' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-800 dark:text-white">
+                            Carrier Booking Reference
+                        </p>
+
+                        <p class="text-gray-600 dark:text-gray-300">
+                            {{ $shipmentRecord->carrier_booking_reference ?: 'N/A' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-800 dark:text-white">
+                            Carrier Consignment ID
+                        </p>
+
+                        <p class="text-gray-600 dark:text-gray-300">
+                            {{ $shipmentRecord->carrier_consignment_id ?: 'N/A' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-800 dark:text-white">
+                            Carrier Invoice Reference
+                        </p>
+
+                        <p class="text-gray-600 dark:text-gray-300">
+                            {{ $shipmentRecord->carrier_invoice_reference ?: 'N/A' }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="font-semibold text-gray-800 dark:text-white">
+                            Carrier Booked At
+                        </p>
+
+                        <p class="text-gray-600 dark:text-gray-300">
+                            {{ $shipmentRecord->carrier_booked_at?->format('d M, Y h:i a') ?? 'N/A' }}
                         </p>
                     </div>
 

@@ -667,6 +667,60 @@ it('syncs steadfast tracking and updates shipment status when mapped status chan
     Mail::assertQueued(AdminOperationalUpdateNotification::class);
 });
 
+it('stores carrier booking references on shipment ops without triggering shipment notifications', function () {
+    $fixture = createShipmentRecordFixture();
+
+    Mail::fake();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'integration_driver' => 'steadfast',
+        'tracking_sync_enabled' => true,
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_IN_TRANSIT,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'TRACK-BOOKING-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'handed_over_at' => now(),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.shipment-operations.update-booking-references', $shipmentRecord), [
+        'carrier_booking_reference' => 'BOOK-123',
+        'carrier_consignment_id' => 'CONSIGN-123',
+        'carrier_invoice_reference' => 'INV-123',
+        'carrier_booked_at' => '2026-04-19 18:30:00',
+        'note' => 'Mapped from the courier booking panel.',
+    ])->assertRedirect(route('admin.sales.shipment-operations.view', $shipmentRecord));
+
+    $shipmentRecord->refresh();
+
+    $latestEvent = ShipmentEvent::query()
+        ->where('shipment_record_id', $shipmentRecord->id)
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($shipmentRecord->carrier_booking_reference)->toBe('BOOK-123')
+        ->and($shipmentRecord->carrier_consignment_id)->toBe('CONSIGN-123')
+        ->and($shipmentRecord->carrier_invoice_reference)->toBe('INV-123')
+        ->and($shipmentRecord->carrier_booked_at?->format('Y-m-d H:i:s'))->toBe('2026-04-19 18:30:00')
+        ->and($latestEvent->event_type)->toBe(ShipmentEvent::EVENT_BOOKING_REFERENCES_UPDATED)
+        ->and($latestEvent->status_after_event)->toBeNull()
+        ->and(data_get($latestEvent->meta, 'carrier_consignment_id'))->toBe('CONSIGN-123')
+        ->and(ShipmentCommunication::query()->where('shipment_record_id', $shipmentRecord->id)->count())->toBe(0);
+
+    Mail::assertNothingQueued();
+});
+
 it('queues shipment tracking sync jobs from the command', function () {
     $fixture = createShipmentRecordFixture();
 

@@ -68,6 +68,40 @@ it('syncs a steadfast webhook payload by tracking number', function () {
     Mail::assertQueued(AdminOperationalUpdateNotification::class);
 });
 
+it('can resolve a steadfast webhook payload by persisted consignment id', function () {
+    Mail::fake();
+    setSteadfastWebhookNotificationConfig('sales.shipment_notifications.customer_out_for_delivery_email', 1);
+    setSteadfastWebhookNotificationConfig('sales.shipment_notifications.admin_out_for_delivery_email', 1);
+
+    $fixture = createSteadfastWebhookFixture([
+        'carrier_consignment_id' => 'CONSIGN-STEADFAST-1001',
+    ]);
+
+    postJson(
+        route('commerce-core.webhooks.shipment-carriers.steadfast', $fixture['carrier']),
+        [
+            'consignment_id' => 'CONSIGN-STEADFAST-1001',
+            'status' => 'out_for_delivery',
+        ],
+        [
+            'Authorization' => 'Bearer steadfast-hook-secret',
+        ],
+    )->assertOk()
+        ->assertJson([
+            'status' => 'ok',
+            'shipment_record_id' => $fixture['shipmentRecord']->id,
+            'external_status' => 'out_for_delivery',
+        ]);
+
+    $fixture['shipmentRecord']->refresh();
+
+    expect($fixture['shipmentRecord']->status)->toBe(ShipmentRecord::STATUS_OUT_FOR_DELIVERY)
+        ->and($fixture['shipmentRecord']->last_tracking_sync_status)->toBe('synced');
+
+    Mail::assertQueued(ShopOperationalUpdateNotification::class);
+    Mail::assertQueued(AdminOperationalUpdateNotification::class);
+});
+
 it('can resolve a steadfast webhook payload by order invoice when tracking number is absent', function () {
     Mail::fake();
     setSteadfastWebhookNotificationConfig('sales.shipment_notifications.customer_delivered_email', 1);

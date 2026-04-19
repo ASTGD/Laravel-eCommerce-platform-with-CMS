@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Platform\CommerceCore\DataGrids\Sales\ShipmentRecordDataGrid;
+use Platform\CommerceCore\Http\Requests\Admin\ShipmentBookingReferenceRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentDeliveryFailureRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentRecordEventRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentRecordStatusRequest;
@@ -142,5 +143,19 @@ class ShipmentRecordController extends Controller
         return redirect()
             ->route('admin.sales.shipment-operations.view', $shipmentRecord)
             ->with($result->status === 'failed' ? 'error' : 'success', $result->message);
+    }
+
+    public function updateBookingReferences(ShipmentBookingReferenceRequest $request, ShipmentRecord $shipmentRecord): RedirectResponse
+    {
+        $this->shipmentRecordService->updateBookingReferences(
+            $shipmentRecord,
+            $request->payload(),
+            $request->string('note')->value() ?: null,
+            auth('admin')->id(),
+        );
+
+        return redirect()
+            ->route('admin.sales.shipment-operations.view', $shipmentRecord)
+            ->with('success', 'Carrier booking references updated.');
     }
 }

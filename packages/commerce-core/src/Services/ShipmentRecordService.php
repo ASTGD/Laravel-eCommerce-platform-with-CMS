@@ -2,6 +2,7 @@
 
 namespace Platform\CommerceCore\Services;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -256,6 +257,61 @@ class ShipmentRecordService
                 'attempt_count' => $shipmentRecord->delivery_attempt_count,
             ],
         );
+    }
+
+    public function updateBookingReferences(
+        ShipmentRecord $shipmentRecord,
+        array $attributes,
+        ?string $note = null,
+        ?int $actorAdminId = null,
+    ): ShipmentRecord {
+        return DB::transaction(function () use ($shipmentRecord, $attributes, $note, $actorAdminId) {
+            $shipmentRecord->fill([
+                'carrier_booking_reference' => $attributes['carrier_booking_reference'] ?? null,
+                'carrier_consignment_id' => $attributes['carrier_consignment_id'] ?? null,
+                'carrier_invoice_reference' => $attributes['carrier_invoice_reference'] ?? null,
+                'carrier_booked_at' => isset($attributes['carrier_booked_at']) && $attributes['carrier_booked_at']
+                    ? Carbon::parse($attributes['carrier_booked_at'])
+                    : null,
+                'updated_by_admin_id' => $actorAdminId,
+            ]);
+
+            $referenceFields = [
+                'carrier_booking_reference',
+                'carrier_consignment_id',
+                'carrier_invoice_reference',
+                'carrier_booked_at',
+            ];
+
+            $referencesChanged = collect($referenceFields)
+                ->contains(fn (string $field) => $shipmentRecord->isDirty($field));
+
+            if (! $referencesChanged && blank($note)) {
+                return $shipmentRecord->fresh(['carrier', 'items', 'events', 'communications', 'nativeShipment', 'order', 'codSettlement']);
+            }
+
+            if ($shipmentRecord->isDirty()) {
+                $shipmentRecord->save();
+            }
+
+            ShipmentEvent::query()->create([
+                'shipment_record_id' => $shipmentRecord->id,
+                'actor_admin_id' => $actorAdminId,
+                'event_type' => ShipmentEvent::EVENT_BOOKING_REFERENCES_UPDATED,
+                'status_after_event' => null,
+                'event_at' => now(),
+                'note' => $note ?: 'Carrier booking references updated.',
+                'meta' => [
+                    'tracking_number' => $shipmentRecord->tracking_number,
+                    'carrier_booking_reference' => $shipmentRecord->carrier_booking_reference,
+                    'carrier_consignment_id' => $shipmentRecord->carrier_consignment_id,
+                    'carrier_invoice_reference' => $shipmentRecord->carrier_invoice_reference,
+                    'carrier_booked_at' => $shipmentRecord->carrier_booked_at?->toDateTimeString(),
+                ],
+            ]);
+
+            return $shipmentRecord->fresh(['carrier', 'items', 'events', 'communications', 'nativeShipment', 'order', 'codSettlement']);
+        });
     }
 
     public function appendEvent(

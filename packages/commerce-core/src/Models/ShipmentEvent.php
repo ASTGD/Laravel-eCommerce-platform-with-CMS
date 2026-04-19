@@ -18,6 +18,7 @@ class ShipmentEvent extends Model
     public const EVENT_REATTEMPT_APPROVED = 'reattempt_approved';
     public const EVENT_RETURN_INITIATED = 'return_initiated';
     public const EVENT_RETURN_COMPLETED = 'return_completed';
+    public const EVENT_BOOKING_REFERENCES_UPDATED = 'booking_references_updated';
 
     protected $fillable = [
         'shipment_record_id',
@@ -46,6 +47,7 @@ class ShipmentEvent extends Model
             self::EVENT_REATTEMPT_APPROVED => 'Reattempt Approved',
             self::EVENT_RETURN_INITIATED => 'Return Initiated',
             self::EVENT_RETURN_COMPLETED => 'Return Completed',
+            self::EVENT_BOOKING_REFERENCES_UPDATED => 'Booking References Updated',
         ];
     }
 

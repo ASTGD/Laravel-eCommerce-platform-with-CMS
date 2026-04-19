@@ -555,7 +555,11 @@ Current follow-up status:
   - `Steadfast` carriers expose a dedicated callback URL plus shared-secret verification
   - webhook payloads can update shipment records through the same internal status pipeline used by manual tracking sync
   - invoice fallback is supported when tracking code is absent
-  - pure `consignment_id` matching remains deferred until local courier booking references are persisted
+  - persisted booking references now allow `consignment_id` webhook matching on shipment records
+- the booking-reference persistence slice is now active:
+  - shipment records can store carrier booking reference, consignment id, invoice reference, and booked-at timestamp
+  - Shipment Ops now includes an admin form for maintaining those external references without changing shipment status
+  - booking-reference updates are logged as operational timeline events without triggering shipment notifications
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
@@ -565,4 +569,4 @@ Current follow-up status:
   - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
   - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
 - additional courier adapters beyond `Steadfast` remain deferred
-- richer webhook matching via stored courier consignment ids remains deferred
+- richer automated booking capture from live courier booking APIs remains deferred

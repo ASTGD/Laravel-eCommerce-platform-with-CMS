@@ -38,6 +38,13 @@ class SteadfastWebhookService
         'consignment.tracking_code',
     ];
 
+    protected const CONSIGNMENT_ID_PATHS = [
+        'consignment_id',
+        'data.consignment_id',
+        'consignment.consignment_id',
+        'parcel.consignment_id',
+    ];
+
     protected const INVOICE_PATHS = [
         'invoice',
         'order_reference',
@@ -62,13 +69,14 @@ class SteadfastWebhookService
         }
 
         $trackingNumber = $this->extractFirstValue($payload, self::TRACKING_PATHS);
+        $consignmentId = $this->extractFirstValue($payload, self::CONSIGNMENT_ID_PATHS);
         $invoice = $this->extractFirstValue($payload, self::INVOICE_PATHS);
 
-        if (! $trackingNumber && ! $invoice) {
-            return ShipmentTrackingWebhookResult::invalid('Webhook payload must include a tracking number or invoice reference.');
+        if (! $trackingNumber && ! $consignmentId && ! $invoice) {
+            return ShipmentTrackingWebhookResult::invalid('Webhook payload must include a tracking number, consignment id, or invoice reference.');
         }
 
-        $shipmentRecord = $this->resolveShipmentRecord($carrier, $trackingNumber, $invoice);
+        $shipmentRecord = $this->resolveShipmentRecord($carrier, $trackingNumber, $consignmentId, $invoice);
 
         if (! $shipmentRecord) {
             return ShipmentTrackingWebhookResult::accepted(
@@ -137,8 +145,24 @@ class SteadfastWebhookService
         return ShipmentTrackingWebhookResult::ok($message, $shipmentRecord->id, $externalStatus);
     }
 
-    protected function resolveShipmentRecord(ShipmentCarrier $carrier, ?string $trackingNumber, ?string $invoice): ?ShipmentRecord
+    protected function resolveShipmentRecord(
+        ShipmentCarrier $carrier,
+        ?string $trackingNumber,
+        ?string $consignmentId,
+        ?string $invoice,
+    ): ?ShipmentRecord
     {
+        if ($consignmentId) {
+            $shipmentRecord = ShipmentRecord::query()
+                ->where('shipment_carrier_id', $carrier->id)
+                ->where('carrier_consignment_id', $consignmentId)
+                ->first();
+
+            if ($shipmentRecord) {
+                return $shipmentRecord;
+            }
+        }
+
         if ($trackingNumber) {
             $shipmentRecord = ShipmentRecord::query()
                 ->where('shipment_carrier_id', $carrier->id)
@@ -156,12 +180,15 @@ class SteadfastWebhookService
 
         return ShipmentRecord::query()
             ->where('shipment_carrier_id', $carrier->id)
-            ->whereHas('order', function ($query) use ($invoice) {
-                $query->where('increment_id', $invoice);
+            ->where(function ($query) use ($invoice) {
+                $query->where('carrier_invoice_reference', $invoice)
+                    ->orWhereHas('order', function ($orderQuery) use ($invoice) {
+                        $orderQuery->where('increment_id', $invoice);
 
-                if (is_numeric($invoice)) {
-                    $query->orWhere('id', (int) $invoice);
-                }
+                        if (is_numeric($invoice)) {
+                            $orderQuery->orWhere('id', (int) $invoice);
+                        }
+                    });
             })
             ->latest('id')
             ->first();

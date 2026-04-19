@@ -204,6 +204,10 @@ Current status:
   - `Steadfast` carriers now have a dedicated webhook callback route guarded by the carrier webhook secret
   - webhook status updates now flow through the same shipment status pipeline and remain duplicate-safe for repeated callbacks
   - invoice fallback is supported when a tracking number is not present in the webhook payload
+- the booking-reference persistence slice is now active:
+  - shipment records can now persist carrier booking reference, consignment id, invoice reference, and booked-at timestamp
+  - Shipment Ops includes an admin-only booking-reference form so persisted courier ids can be managed before automated booking is implemented
+  - Steadfast webhook matching can now resolve shipment records by stored `consignment_id`
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows
