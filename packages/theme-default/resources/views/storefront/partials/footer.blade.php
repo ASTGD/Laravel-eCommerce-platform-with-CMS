@@ -7,6 +7,15 @@
                 <p class="mt-3 max-w-xl text-sm text-slate-300">
                     {{ $settings['description'] ?? 'Structured commerce experience powered by reusable CMS-driven storefront composition.' }}
                 </p>
+
+                <div class="mt-4">
+                    <a
+                        href="{{ route('shop.shipment-tracking.index') }}"
+                        class="inline-flex items-center rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-white hover:text-white"
+                    >
+                        Track Shipment
+                    </a>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4 text-sm text-slate-300">

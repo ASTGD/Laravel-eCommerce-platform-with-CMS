@@ -5,6 +5,7 @@ use Platform\CommerceCore\Http\Controllers\API\OnepageController as CustomOnepag
 use Platform\CommerceCore\Http\Controllers\BkashController;
 use Platform\CommerceCore\Http\Controllers\CheckoutController;
 use Platform\CommerceCore\Http\Controllers\OnepageController as CustomOnepageController;
+use Platform\CommerceCore\Http\Controllers\PublicShipmentTrackingController;
 use Platform\CommerceCore\Http\Controllers\SslCommerzController;
 
 Route::controller(CheckoutController::class)
@@ -47,4 +48,11 @@ Route::controller(BkashController::class)
     ->group(function () {
         Route::get('redirect', 'redirect')->name('commerce-core.bkash.redirect');
         Route::match(['get', 'post'], 'callback', 'callback')->name('commerce-core.bkash.callback');
+    });
+
+Route::controller(PublicShipmentTrackingController::class)
+    ->prefix('shipment-tracking')
+    ->group(function () {
+        Route::get('', 'index')->name('shop.shipment-tracking.index');
+        Route::post('', 'lookup')->name('shop.shipment-tracking.lookup');
     });

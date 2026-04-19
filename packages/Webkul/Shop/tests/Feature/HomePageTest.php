@@ -88,6 +88,13 @@ it('should returns the home page of the store', function () {
         ->assertSeeText('Get UPTO 40% OFF on your 1st order SHOP NOW');
 });
 
+it('shows a shipment tracking entry link in the storefront footer', function () {
+    get(route('shop.home.index'))
+        ->assertOk()
+        ->assertSeeText('Track shipment')
+        ->assertSee(route('shop.shipment-tracking.index'), false);
+});
+
 it('should returns the search page of the products', function () {
     // Arrange.
     $product = (new ProductFaker([

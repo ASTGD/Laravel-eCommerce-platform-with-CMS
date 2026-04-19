@@ -20,6 +20,7 @@ Current gateway-backed order detail coverage:
 
 - `SSLCommerz` payment details and refund history
 - direct `bKash` payment details and refund history
+- shipment tracking timeline from the custom shipment-operations domain
 
 Current customer-facing order lifecycle:
 
@@ -28,6 +29,59 @@ Current customer-facing order lifecycle:
 - shipped order: `Shipped`
 
 The customer order history and order detail views now render the same order state progression as the admin sales area for this slice.
+
+Current shipment-tracking coverage on order detail:
+
+- read-only shipment tracking card
+- carrier and tracking-number visibility
+- carrier tracking link when the selected carrier has a tracking URL template
+- customer-facing shipment timeline events such as:
+  - shipment created
+  - arrived at destination hub
+  - out for delivery
+  - delivered
+  - delivery failed
+  - return initiated
+  - returned to origin
+
+This view intentionally does not expose:
+
+- COD settlement state
+- remittance batches
+- admin-only shipment notes
+
+Current shipment communication coverage:
+
+- customer operational shipment emails are now sent for:
+  - out for delivery
+  - delivered
+  - delivery failed
+  - return initiated
+  - returned
+- customer emails link back to the public shipment-tracking page with the order reference prefilled
+
+Public storefront shipment tracking is also now available for guest and support use.
+
+Current public tracking rule:
+
+- lookup requires:
+  - order number or tracking number
+  - phone number used during checkout
+- successful lookup shows:
+  - shipment status
+  - carrier
+  - tracking number
+  - external carrier tracking link when configured
+  - simplified shipment timeline
+- public tracking still does not expose:
+  - COD settlements
+- payout batches
+- internal admin notes
+
+Current public-entry surfaces:
+
+- checkout success page
+- storefront footer / support surface
 
 ## Registration Flow
 

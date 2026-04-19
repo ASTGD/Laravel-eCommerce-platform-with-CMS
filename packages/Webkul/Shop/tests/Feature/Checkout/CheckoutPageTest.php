@@ -231,7 +231,9 @@ it('shows a see order button on checkout success for logged in customers', funct
     get(route('shop.checkout.custom.success'))
         ->assertOk()
         ->assertSeeText('See Order')
-        ->assertSee(route('shop.customers.account.orders.view', $order->id), false);
+        ->assertSee(route('shop.customers.account.orders.view', $order->id), false)
+        ->assertSeeText('Track your shipment')
+        ->assertSee(route('shop.shipment-tracking.index', ['reference' => $order->increment_id]), false);
 });
 
 it('lets a guest submit the single checkout flow and reach the success redirect', function () {

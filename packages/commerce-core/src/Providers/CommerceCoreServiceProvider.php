@@ -6,8 +6,10 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
+use Platform\CommerceCore\Console\Commands\SyncShipmentTrackingCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
+use Platform\CommerceCore\Listeners\SyncShipmentRecordFromNativeShipment;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
 use Platform\CommerceCore\Payment\PaymentManager;
 use Platform\CommerceCore\Repositories\OrderRepository as CommerceOrderRepository;
@@ -34,6 +36,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
         $this->mergeConfigFrom(__DIR__.'/../../config/system.php', 'core');
         $this->mergeConfigFrom(__DIR__.'/../../config/carriers.php', 'carriers');
+        $this->mergeConfigFrom(__DIR__.'/../../config/carrier-tracking.php', 'carrier_tracking');
         $this->mergeConfigFrom(__DIR__.'/../../config/payment-methods.php', 'payment_methods');
         $this->mergeConfigFrom(__DIR__.'/../../config/menu.php', 'menu.admin');
         $this->mergeConfigFrom(__DIR__.'/../../config/acl.php', 'acl');
@@ -44,6 +47,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ReconcilePendingPaymentsCommand::class,
+                SyncShipmentTrackingCommand::class,
             ]);
         }
 
@@ -68,6 +72,10 @@ class CommerceCoreServiceProvider extends ServiceProvider
             $viewRenderEventManager->addTemplate('commerce-core::admin.orders.confirm-button');
         });
 
+        Event::listen('bagisto.admin.sales.order.right_component.after', static function (ViewRenderEventManager $viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('commerce-core::admin.orders.shipment-record-summary');
+        });
+
         Event::listen('bagisto.shop.customers.account.orders.view.shipping_method_details.after', static function (ViewRenderEventManager $viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('commerce-core::shop.orders.pickup-point-details');
         });
@@ -76,9 +84,23 @@ class CommerceCoreServiceProvider extends ServiceProvider
             $viewRenderEventManager->addTemplate('commerce-core::shop.orders.payment-details');
         });
 
+        Event::listen('bagisto.shop.customers.account.orders.view.after', static function (ViewRenderEventManager $viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('commerce-core::shop.orders.shipment-tracking-timeline');
+        });
+
+        Event::listen('bagisto.shop.checkout.success.continue-shopping.after', static function (ViewRenderEventManager $viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('commerce-core::shop.partials.public-shipment-tracking-entry');
+        });
+
+        Event::listen('bagisto.shop.layout.footer.footer_text.after', static function (ViewRenderEventManager $viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('commerce-core::shop.partials.public-shipment-tracking-entry');
+        });
+
         Event::listen('checkout.order.save.after', function ($order): void {
             app(CheckoutGuestAccountService::class)->attachExistingCustomerToOrder($order);
         });
+
+        Event::listen('sales.shipment.save.after', [SyncShipmentRecordFromNativeShipment::class, 'handle']);
 
         Event::listen('customer.after.login', function ($customer): void {
             app(CheckoutGuestAccountService::class)->syncGuestOrdersForCustomer($customer);
