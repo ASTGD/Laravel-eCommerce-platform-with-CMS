@@ -2,6 +2,7 @@
 
 use Platform\CommerceCore\ShipmentTracking\Providers\ManualCarrierTrackingProvider;
 use Platform\CommerceCore\ShipmentTracking\Providers\PlaceholderApiCarrierTrackingProvider;
+use Platform\CommerceCore\ShipmentTracking\Providers\SteadfastCarrierTrackingProvider;
 
 return [
     'drivers' => [
@@ -11,7 +12,7 @@ return [
         ],
         'steadfast' => [
             'label' => 'Steadfast',
-            'provider' => PlaceholderApiCarrierTrackingProvider::class,
+            'provider' => SteadfastCarrierTrackingProvider::class,
         ],
         'pathao' => [
             'label' => 'Pathao',

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Platform\CommerceCore\Mail\Admin\Shipment\OperationalUpdateNotification as AdminOperationalUpdateNotification;
 use Platform\CommerceCore\Mail\Shop\Shipment\OperationalUpdateNotification as ShopOperationalUpdateNotification;
@@ -575,13 +576,13 @@ it('queues shipment communications when a return is initiated', function () {
         ->count())->toBe(2);
 });
 
-it('syncs carrier tracking for a shipment record from admin shipment ops', function () {
+it('keeps placeholder driver sync behavior for non-integrated carriers', function () {
     $fixture = createShipmentRecordFixture();
 
     $carrier = ShipmentCarrier::query()->create([
-        'code' => 'steadfast',
-        'name' => 'Steadfast Courier',
-        'integration_driver' => 'steadfast',
+        'code' => 'pathao',
+        'name' => 'Pathao',
+        'integration_driver' => 'pathao',
         'tracking_sync_enabled' => true,
         'is_active' => true,
     ]);
@@ -608,6 +609,62 @@ it('syncs carrier tracking for a shipment record from admin shipment ops', funct
     expect($shipmentRecord->last_tracking_synced_at)->not->toBeNull()
         ->and($shipmentRecord->last_tracking_sync_status)->toBe('pending')
         ->and($shipmentRecord->last_tracking_sync_message)->toContain('foundation is configured');
+});
+
+it('syncs steadfast tracking and updates shipment status when mapped status changes', function () {
+    $fixture = createShipmentRecordFixture();
+
+    Mail::fake();
+
+    Http::fake([
+        'https://api.steadfast.test/*' => Http::response([
+            'delivery_status' => 'out_for_delivery',
+        ], 200),
+    ]);
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'integration_driver' => 'steadfast',
+        'tracking_sync_enabled' => true,
+        'api_base_url' => 'https://api.steadfast.test/track/{tracking_number}',
+        'api_key' => 'test-key',
+        'api_secret' => 'test-secret',
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_IN_TRANSIT,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'TRACK-STEADFAST-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'handed_over_at' => now(),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.shipment-operations.sync-tracking', $shipmentRecord))
+        ->assertRedirect(route('admin.sales.shipment-operations.view', $shipmentRecord));
+
+    $shipmentRecord->refresh();
+
+    $latestEvent = ShipmentEvent::query()
+        ->where('shipment_record_id', $shipmentRecord->id)
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($shipmentRecord->status)->toBe(ShipmentRecord::STATUS_OUT_FOR_DELIVERY)
+        ->and($shipmentRecord->last_tracking_synced_at)->not->toBeNull()
+        ->and($shipmentRecord->last_tracking_sync_status)->toBe('synced')
+        ->and($shipmentRecord->last_tracking_sync_message)->toContain('mapped to')
+        ->and($latestEvent->note)->toContain('Steadfast tracking sync');
+
+    Mail::assertQueued(ShopOperationalUpdateNotification::class);
+    Mail::assertQueued(AdminOperationalUpdateNotification::class);
 });
 
 it('queues shipment tracking sync jobs from the command', function () {
