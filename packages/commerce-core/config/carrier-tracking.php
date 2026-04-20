@@ -1,6 +1,7 @@
 <?php
 
 use Platform\CommerceCore\ShipmentTracking\Providers\ManualCarrierTrackingProvider;
+use Platform\CommerceCore\ShipmentTracking\Providers\PathaoCarrierTrackingProvider;
 use Platform\CommerceCore\ShipmentTracking\Providers\PlaceholderApiCarrierTrackingProvider;
 use Platform\CommerceCore\ShipmentTracking\Providers\SteadfastCarrierTrackingProvider;
 
@@ -16,7 +17,7 @@ return [
         ],
         'pathao' => [
             'label' => 'Pathao',
-            'provider' => PlaceholderApiCarrierTrackingProvider::class,
+            'provider' => PathaoCarrierTrackingProvider::class,
         ],
         'redx' => [
             'label' => 'RedX',

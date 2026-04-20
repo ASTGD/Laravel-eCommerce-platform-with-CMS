@@ -18,6 +18,17 @@ class PathaoApiSupport
         return rtrim($baseUrl, '/').'/'.ltrim($path, '/');
     }
 
+    public function resolveTrackingEndpoint(ShipmentCarrier $carrier, ShipmentRecord $shipmentRecord): ?string
+    {
+        $trackingIdentifier = $this->trackingIdentifier($shipmentRecord);
+
+        if (! $trackingIdentifier) {
+            return null;
+        }
+
+        return $this->resolveEndpoint($carrier, sprintf('orders/%s', rawurlencode($trackingIdentifier)));
+    }
+
     public function authPayload(ShipmentCarrier $carrier): array
     {
         return array_filter([
@@ -71,5 +82,12 @@ class PathaoApiSupport
         $parts = array_values(array_filter($parts, static fn (string $part) => $part !== ''));
 
         return implode(', ', array_unique($parts));
+    }
+
+    public function trackingIdentifier(ShipmentRecord $shipmentRecord): ?string
+    {
+        $identifier = trim((string) ($shipmentRecord->carrier_consignment_id ?: $shipmentRecord->tracking_number));
+
+        return $identifier !== '' ? $identifier : null;
     }
 }

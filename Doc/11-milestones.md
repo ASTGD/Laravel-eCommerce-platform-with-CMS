@@ -217,6 +217,10 @@ Current status:
   - `Pathao` can create bookings through the merchant API contract using the carrier's stored API credentials and merchant store ID
   - booking resolves city, zone, and area through the merchant API lookup flow before creating the order
   - booking stores the returned consignment ID and logs a non-notifying operational event
+- the Pathao tracking adapter slice is now active:
+  - `Pathao` can query the merchant order lookup flow using the stored consignment ID or tracking number
+  - Pathao tracking responses are mapped into the same downgrade-safe shipment status pipeline used by Steadfast
+  - Pathao tracking sync remains duplicate-safe and non-destructive when the carrier returns an earlier status
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

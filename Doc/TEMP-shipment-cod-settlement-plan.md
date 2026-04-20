@@ -569,6 +569,10 @@ Current follow-up status:
   - Pathao bookings use the merchant API token flow plus city/zone/area lookup flow
   - the carrier stores a merchant store ID on the carrier record for booking
   - booking captures the returned consignment ID and stores it on shipment records without notifying customers
+- the Pathao tracking adapter slice is now active:
+  - Pathao tracking uses the merchant order lookup flow with the stored consignment ID or tracking number
+  - carrier response statuses are mapped into the internal shipment timeline through the shared status pipeline
+  - tracking sync remains duplicate-safe and non-destructive when the carrier returns an earlier status
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
@@ -577,5 +581,5 @@ Current follow-up status:
   - `Sales > Settlement Batches` now includes CSV import with strict row validation
   - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
   - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
-- additional courier adapters beyond `Steadfast` remain deferred
-- additional live courier booking adapters beyond `Steadfast` remain deferred
+- additional courier adapters beyond `Steadfast` and `Pathao` remain deferred
+- additional live courier booking adapters beyond `Steadfast` and `Pathao` remain deferred

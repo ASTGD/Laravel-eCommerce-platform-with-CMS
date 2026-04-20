@@ -117,9 +117,9 @@ Live credential checklist for Steadfast:
 - run one webhook callback smoke test
 - run one tracking sync smoke test
 
-## Pathao Reference Template
+## Pathao Reference
 
-Pathao is the next carrier candidate and should be documented here before implementation starts.
+Pathao is the next carrier candidate and this section records the implemented booking and tracking slices plus the remaining live-contract gaps.
 
 ## Public Pathao References
 
@@ -180,6 +180,20 @@ Current Pathao booking implementation notes:
 - carrier contact fields are used as the sender identity for booking
 - booking stores the returned consignment ID and related courier identifiers on the shipment record
 - booking creates a non-notifying operational event
+
+Live merchant verification is still required before production use.
+
+## Pathao Tracking Adapter
+
+The first Pathao tracking slice is now implemented against Pathao's merchant order lookup flow.
+
+Current Pathao tracking implementation notes:
+
+- tracking uses the merchant API `view_order` flow against `aladdin/api/v1/orders/{consignment_id}`
+- tracking requests reuse the same merchant credentials and bearer token flow as booking
+- tracking can fall back to the stored tracking number when a consignment id is missing
+- Pathao responses are read from `order_status` / `order_status_slug` and mapped into the internal shipment timeline
+- the status mapper keeps shipment state from downgrading when the carrier returns an earlier status
 
 Live merchant verification is still required before production use.
 
