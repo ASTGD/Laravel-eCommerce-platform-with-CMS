@@ -314,6 +314,83 @@ class ShipmentRecordService
         });
     }
 
+    public function captureCarrierBooking(
+        ShipmentRecord $shipmentRecord,
+        array $attributes,
+        ?string $note = null,
+        ?int $actorAdminId = null,
+        array $meta = [],
+    ): ShipmentRecord {
+        return DB::transaction(function () use ($shipmentRecord, $attributes, $note, $actorAdminId, $meta) {
+            $shipmentRecord->loadMissing('nativeShipment');
+
+            $trackingNumber = array_key_exists('tracking_number', $attributes)
+                ? trim((string) $attributes['tracking_number'])
+                : null;
+
+            $shipmentRecord->fill([
+                'carrier_booking_reference' => $attributes['carrier_booking_reference'] ?? $shipmentRecord->carrier_booking_reference,
+                'carrier_consignment_id' => $attributes['carrier_consignment_id'] ?? $shipmentRecord->carrier_consignment_id,
+                'carrier_invoice_reference' => $attributes['carrier_invoice_reference'] ?? $shipmentRecord->carrier_invoice_reference,
+                'carrier_booked_at' => isset($attributes['carrier_booked_at']) && $attributes['carrier_booked_at']
+                    ? Carbon::parse($attributes['carrier_booked_at'])
+                    : ($shipmentRecord->carrier_booked_at ?: now()),
+                'updated_by_admin_id' => $actorAdminId,
+            ]);
+
+            if ($trackingNumber !== null && $trackingNumber !== '') {
+                $shipmentRecord->tracking_number = $trackingNumber;
+            }
+
+            $trackedFields = [
+                'tracking_number',
+                'carrier_booking_reference',
+                'carrier_consignment_id',
+                'carrier_invoice_reference',
+                'carrier_booked_at',
+            ];
+
+            $changed = collect($trackedFields)
+                ->contains(fn (string $field) => $shipmentRecord->isDirty($field));
+
+            if (! $changed && blank($note)) {
+                return $shipmentRecord->fresh(['carrier', 'items', 'events', 'communications', 'nativeShipment', 'order', 'codSettlement']);
+            }
+
+            if ($shipmentRecord->isDirty()) {
+                $shipmentRecord->save();
+            }
+
+            if (
+                $shipmentRecord->nativeShipment
+                && $trackingNumber !== null
+                && $trackingNumber !== ''
+                && $shipmentRecord->nativeShipment->track_number !== $trackingNumber
+            ) {
+                $shipmentRecord->nativeShipment->track_number = $trackingNumber;
+                $shipmentRecord->nativeShipment->save();
+            }
+
+            ShipmentEvent::query()->create([
+                'shipment_record_id' => $shipmentRecord->id,
+                'actor_admin_id' => $actorAdminId,
+                'event_type' => ShipmentEvent::EVENT_CARRIER_BOOKED,
+                'status_after_event' => null,
+                'event_at' => now(),
+                'note' => $note ?: 'Carrier booking created from the courier API.',
+                'meta' => array_merge([
+                    'tracking_number' => $shipmentRecord->tracking_number,
+                    'carrier_booking_reference' => $shipmentRecord->carrier_booking_reference,
+                    'carrier_consignment_id' => $shipmentRecord->carrier_consignment_id,
+                    'carrier_invoice_reference' => $shipmentRecord->carrier_invoice_reference,
+                    'carrier_booked_at' => $shipmentRecord->carrier_booked_at?->toDateTimeString(),
+                ], $meta),
+            ]);
+
+            return $shipmentRecord->fresh(['carrier', 'items', 'events', 'communications', 'nativeShipment', 'order', 'codSettlement']);
+        });
+    }
+
     public function appendEvent(
         ShipmentRecord $shipmentRecord,
         string $eventType,

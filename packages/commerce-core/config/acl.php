@@ -82,25 +82,30 @@ return [
         'route' => 'admin.sales.shipment-operations.sync-tracking',
         'sort'  => 4,
     ], [
+        'key'   => 'sales.shipment_operations.book_with_carrier',
+        'name'  => 'Book With Carrier',
+        'route' => 'admin.sales.shipment-operations.book-with-carrier',
+        'sort'  => 5,
+    ], [
         'key'   => 'sales.shipment_operations.manage_booking_references',
         'name'  => 'Manage Booking References',
         'route' => 'admin.sales.shipment-operations.update-booking-references',
-        'sort'  => 5,
+        'sort'  => 6,
     ], [
         'key'   => 'sales.shipment_operations.record_failure',
         'name'  => 'Record Delivery Failure',
         'route' => 'admin.sales.shipment-operations.record-delivery-failure',
-        'sort'  => 6,
+        'sort'  => 7,
     ], [
         'key'   => 'sales.shipment_operations.approve_reattempt',
         'name'  => 'Approve Reattempt',
         'route' => 'admin.sales.shipment-operations.approve-reattempt',
-        'sort'  => 7,
+        'sort'  => 8,
     ], [
         'key'   => 'sales.shipment_operations.manage_returns',
         'name'  => 'Manage Returns',
         'route' => 'admin.sales.shipment-operations.initiate-return',
-        'sort'  => 8,
+        'sort'  => 9,
     ], [
         'key'   => 'sales.cod_settlements',
         'name'  => 'COD Settlements',

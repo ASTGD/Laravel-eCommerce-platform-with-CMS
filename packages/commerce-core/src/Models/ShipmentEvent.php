@@ -19,6 +19,7 @@ class ShipmentEvent extends Model
     public const EVENT_RETURN_INITIATED = 'return_initiated';
     public const EVENT_RETURN_COMPLETED = 'return_completed';
     public const EVENT_BOOKING_REFERENCES_UPDATED = 'booking_references_updated';
+    public const EVENT_CARRIER_BOOKED = 'carrier_booked';
 
     protected $fillable = [
         'shipment_record_id',
@@ -48,6 +49,7 @@ class ShipmentEvent extends Model
             self::EVENT_RETURN_INITIATED => 'Return Initiated',
             self::EVENT_RETURN_COMPLETED => 'Return Completed',
             self::EVENT_BOOKING_REFERENCES_UPDATED => 'Booking References Updated',
+            self::EVENT_CARRIER_BOOKED => 'Carrier Booked',
         ];
     }
 

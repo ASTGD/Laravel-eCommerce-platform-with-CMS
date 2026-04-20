@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Platform\CommerceCore\Contracts\CarrierTrackingProvider;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Platform\CommerceCore\ShipmentCarriers\SteadfastApiSupport;
 use Platform\CommerceCore\Services\ShipmentRecordService;
 use Platform\CommerceCore\ShipmentTracking\CarrierTrackingSyncResult;
 use Platform\CommerceCore\ShipmentTracking\SteadfastTrackingStatusMapper;
@@ -32,6 +33,7 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
     public function __construct(
         protected ShipmentRecordService $shipmentRecordService,
         protected SteadfastTrackingStatusMapper $statusMapper,
+        protected SteadfastApiSupport $apiSupport,
         protected string $driver = 'steadfast',
         protected string $label = 'Steadfast',
     ) {}
@@ -48,7 +50,7 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
 
     public function fetchTracking(ShipmentCarrier $carrier, ShipmentRecord $shipmentRecord): CarrierTrackingSyncResult
     {
-        $endpoint = $this->resolveEndpoint($carrier, $shipmentRecord);
+        $endpoint = $this->apiSupport->resolveTrackingEndpoint($carrier, $shipmentRecord);
 
         if (! $endpoint) {
             return CarrierTrackingSyncResult::failed(sprintf(
@@ -60,7 +62,7 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
         try {
             $response = Http::acceptJson()
                 ->timeout(20)
-                ->withHeaders($this->headers($carrier))
+                ->withHeaders($this->apiSupport->headers($carrier))
                 ->get($endpoint);
         } catch (Throwable $exception) {
             return CarrierTrackingSyncResult::failed(sprintf(
@@ -143,53 +145,6 @@ class SteadfastCarrierTrackingProvider implements CarrierTrackingProvider
             $externalStatus,
             ShipmentRecord::statusLabels()[$mappedStatus] ?? $mappedStatus,
         ), $externalStatus, 1);
-    }
-
-    protected function resolveEndpoint(ShipmentCarrier $carrier, ShipmentRecord $shipmentRecord): ?string
-    {
-        $template = trim((string) $carrier->api_base_url);
-        $trackingNumber = trim((string) $shipmentRecord->tracking_number);
-
-        if ($template === '' || $trackingNumber === '') {
-            return null;
-        }
-
-        if (! str_contains($template, '{tracking_number}') && ! str_contains($template, '{tracking}')) {
-            $template = rtrim($template, '/').'/status_by_trackingcode/{tracking_number}';
-        }
-
-        return str_replace(
-            ['{tracking_number}', '{tracking}'],
-            [rawurlencode($trackingNumber), rawurlencode($trackingNumber)],
-            $template,
-        );
-    }
-
-    protected function headers(ShipmentCarrier $carrier): array
-    {
-        $headers = [];
-
-        if ($apiKey = trim((string) $carrier->api_key)) {
-            $headers['Api-Key'] = $apiKey;
-            $headers['API-KEY'] = $apiKey;
-            $headers['X-API-KEY'] = $apiKey;
-        }
-
-        if ($apiSecret = trim((string) $carrier->api_secret)) {
-            $headers['Secret-Key'] = $apiSecret;
-            $headers['SECRET-KEY'] = $apiSecret;
-            $headers['X-API-SECRET'] = $apiSecret;
-        }
-
-        if ($username = trim((string) $carrier->api_username)) {
-            $headers['X-API-USERNAME'] = $username;
-        }
-
-        if ($password = trim((string) $carrier->api_password)) {
-            $headers['X-API-PASSWORD'] = $password;
-        }
-
-        return $headers;
     }
 
     protected function extractExternalStatus(array $payload): ?string
