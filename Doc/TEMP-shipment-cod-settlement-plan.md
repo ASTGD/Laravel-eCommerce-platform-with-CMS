@@ -577,6 +577,9 @@ Current follow-up status:
   - Pathao webhook callbacks are verified with the carrier secret and a Pathao-specific signature header
   - webhook payloads resolve shipment records by consignment id, tracking reference, or invoice reference
   - duplicate callback payloads remain duplicate-safe when the status does not advance
+- the Pathao admin polish slice is now active:
+  - Pathao setup guidance is visible in the admin carrier form for the required API fields and callback configuration
+  - the carrier integration doc now includes an operator checklist for live Pathao onboarding
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility

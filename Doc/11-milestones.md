@@ -225,6 +225,9 @@ Current status:
   - `Pathao` webhook callbacks can update shipment records through the same shipment status pipeline used by tracking sync
   - webhook callbacks are verified with the configured carrier secret and use a Pathao-specific response handshake header
   - duplicate webhook callbacks remain duplicate-safe when the mapped status already matches the shipment record
+- the Pathao admin polish slice is now active:
+  - Pathao carrier setup now exposes a clear admin checklist for store ID, API credentials, callback URL, and webhook signature
+  - Pathao-specific help text now appears in the carrier form when the Pathao driver is selected
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

@@ -1,5 +1,6 @@
 @php
     $isEdit = (bool) $carrier->exists;
+    $selectedIntegrationDriver = old('integration_driver', $carrier->trackingDriver());
 @endphp
 
 <x-admin::layouts>
@@ -195,6 +196,12 @@
                             />
 
                             <x-admin::form.control-group.error control-name="api_base_url" />
+
+                            @if ($selectedIntegrationDriver === 'pathao')
+                                <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                    Pathao booking and tracking both use the merchant API base URL. Use the official sandbox or live endpoint provided by Pathao.
+                                </p>
+                            @endif
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group>
@@ -212,6 +219,12 @@
                             />
 
                             <x-admin::form.control-group.error control-name="api_store_id" />
+
+                            @if ($selectedIntegrationDriver === 'pathao')
+                                <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                    Required for Pathao booking. Use the merchant store ID from the Pathao merchant panel.
+                                </p>
+                            @endif
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group>
@@ -289,20 +302,42 @@
 
                             <x-admin::form.control-group.error control-name="webhook_secret" />
 
-                            @if ($carrier->exists && in_array($carrier->trackingDriver(), ['steadfast', 'pathao'], true))
+                            @if ($selectedIntegrationDriver === 'pathao')
+                                <div class="mt-2 rounded border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+                                    <p class="font-semibold">
+                                        Pathao setup checklist
+                                    </p>
+
+                                    <ul class="mt-2 list-disc space-y-1 pl-4">
+                                        <li>Register or confirm the merchant account in the Pathao merchant panel.</li>
+                                        <li>Set the API Base URL, API Store ID, API Username, API Password, API Key, and API Secret.</li>
+                                        <li>Save the carrier once before copying the callback URL.</li>
+                                        <li>Send the webhook signature in <span class="font-mono">X-PATHAO-Signature</span> and echo the same secret in <span class="font-mono">X-Pathao-Merchant-Webhook-Integration-Secret</span>.</li>
+                                    </ul>
+
+                                    @if ($carrier->exists)
+                                        <p class="mt-2">
+                                            Callback URL:
+                                            <span class="break-all font-mono">
+                                                {{ route('commerce-core.webhooks.shipment-carriers.pathao', $carrier) }}
+                                            </span>
+                                        </p>
+                                    @else
+                                        <p class="mt-2">
+                                            Save the carrier to reveal the exact callback URL for this install.
+                                        </p>
+                                    @endif
+                                </div>
+                            @elseif ($carrier->exists && $carrier->trackingDriver() === 'steadfast')
                                 <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
                                     Callback URL:
                                     <span class="break-all font-mono">
-                                        {{ route('commerce-core.webhooks.shipment-carriers.'.$carrier->trackingDriver(), $carrier) }}
+                                        {{ route('commerce-core.webhooks.shipment-carriers.steadfast', $carrier) }}
                                     </span>
                                 </p>
 
                                 <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                                    @if ($carrier->trackingDriver() === 'pathao')
-                                        Configure Pathao to send the webhook signature as <span class="font-mono">X-PATHAO-Signature</span> and echo the same secret in <span class="font-mono">X-Pathao-Merchant-Webhook-Integration-Secret</span>.
-                                    @else
-                                        Configure Steadfast to send the webhook token as a bearer token matching this secret.
-                                    @endif
+                                    Configure Steadfast to send the webhook token as a bearer token matching this secret.
                                 </p>
                             @endif
                         </x-admin::form.control-group>

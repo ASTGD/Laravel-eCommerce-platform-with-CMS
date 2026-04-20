@@ -227,6 +227,21 @@ Pathao webhook payload fields currently handled:
 - `merchant_order_id`
 - `invoice`
 
+## Pathao Admin Setup Checklist
+
+Use this list when configuring a Pathao carrier record in the admin panel:
+
+1. confirm the merchant account is active in the Pathao merchant panel
+2. set the Pathao merchant API base URL
+3. set the Pathao merchant store ID
+4. set the merchant API username, password, key, and secret
+5. save the carrier once before copying the callback URL
+6. configure Pathao to send the webhook signature as `X-PATHAO-Signature`
+7. keep the webhook secret in the carrier record and mirror it in the Pathao callback configuration
+8. verify a local tracking sync before enabling production use
+
+The exact live API values still need to be confirmed with a real Pathao account.
+
 ## Implementation Notes
 
 When adding a new carrier adapter:
