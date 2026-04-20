@@ -117,9 +117,9 @@ Live credential checklist for Steadfast:
 - run one webhook callback smoke test
 - run one tracking sync smoke test
 
-## Pathao Reference Template
+## Pathao Reference
 
-Pathao is the next carrier candidate and should be documented here before implementation starts.
+Pathao is the next carrier candidate and this section records the implemented booking and tracking slices plus the remaining live-contract gaps.
 
 ## Public Pathao References
 
@@ -182,6 +182,92 @@ Current Pathao booking implementation notes:
 - booking creates a non-notifying operational event
 
 Live merchant verification is still required before production use.
+
+## Pathao Tracking Adapter
+
+The first Pathao tracking slice is now implemented against Pathao's merchant order lookup flow.
+
+Current Pathao tracking implementation notes:
+
+- tracking uses the merchant API `view_order` flow against `aladdin/api/v1/orders/{consignment_id}`
+- tracking requests reuse the same merchant credentials and bearer token flow as booking
+- tracking can fall back to the stored tracking number when a consignment id is missing
+- Pathao responses are read from `order_status` / `order_status_slug` and mapped into the internal shipment timeline
+- the status mapper keeps shipment state from downgrading when the carrier returns an earlier status
+
+Live merchant verification is still required before production use.
+
+## Pathao Webhook Adapter
+
+The first Pathao webhook slice is now implemented against Pathao's public webhook contract as documented in the merchant SDK README.
+
+Current Pathao webhook implementation notes:
+
+- Pathao webhook callbacks are accepted on the carrier-specific callback URL exposed in the admin carrier form
+- request verification checks the configured carrier secret against `X-PATHAO-Signature` and related request header aliases
+- valid callbacks receive the `X-Pathao-Merchant-Webhook-Integration-Secret` response header
+- webhook payloads resolve shipment records by:
+  - `consignment_id`
+  - `tracking_number` or `tracking_code`
+  - invoice fallback through `invoice_id`, `merchant_order_id`, or `invoice`
+- webhook status updates use the same downgrade-safe shipment status pipeline as tracking sync
+- duplicate callbacks do not create duplicate timeline events when the mapped status already matches the shipment record
+
+Pathao webhook payload fields currently handled:
+
+- `order_status`
+- `order_status_slug`
+- `status`
+- `status_slug`
+- `delivery_status`
+- `consignment_id`
+- `tracking_number`
+- `tracking_code`
+- `invoice_id`
+- `merchant_order_id`
+- `invoice`
+
+## Pathao Admin Setup Checklist
+
+Use this list when configuring a Pathao carrier record in the admin panel:
+
+1. confirm the merchant account is active in the Pathao merchant panel
+2. set the Pathao merchant API base URL
+3. set the Pathao merchant store ID
+4. set the merchant API username, password, key, and secret
+5. save the carrier once before copying the callback URL
+6. configure Pathao to send the webhook signature as `X-PATHAO-Signature`
+7. keep the webhook secret in the carrier record and mirror it in the Pathao callback configuration
+8. verify a local tracking sync before enabling production use
+
+The exact live API values still need to be confirmed with a real Pathao account.
+
+## Pathao Live Smoke Runbook
+
+Use this runbook when live Pathao credentials become available:
+
+1. confirm the carrier record has a live API base URL, merchant store ID, username, password, key, secret, and webhook secret
+2. save the carrier and copy the Pathao callback URL from the admin form
+3. create one COD shipment with a real Dhaka or district address that Pathao serves
+4. trigger booking from Shipment Ops and confirm the shipment record receives:
+   - `carrier_booking_reference`
+   - `carrier_consignment_id`
+   - `carrier_invoice_reference`
+   - `carrier_booked_at`
+   - `tracking_number` if the live response includes one
+5. run tracking sync and confirm the shipment status advances only forward
+6. POST a real webhook payload with `X-PATHAO-Signature` and confirm the response header echoes `X-Pathao-Merchant-Webhook-Integration-Secret`
+7. confirm the webhook updates the same shipment record without creating duplicate timeline rows
+8. verify customer and admin shipment communications still behave as expected after the live status update
+
+Recommended live verification matrix:
+
+- booking response fields returned by Pathao
+- tracking response fields returned by Pathao
+- webhook signature header names
+- webhook payload status names
+- consignment identifier field used by Pathao as the stable external key
+- whether Pathao returns invoice IDs, merchant order IDs, or another reference that should be preserved in the shipment record
 
 ## Implementation Notes
 

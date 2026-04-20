@@ -569,6 +569,20 @@ Current follow-up status:
   - Pathao bookings use the merchant API token flow plus city/zone/area lookup flow
   - the carrier stores a merchant store ID on the carrier record for booking
   - booking captures the returned consignment ID and stores it on shipment records without notifying customers
+- the Pathao tracking adapter slice is now active:
+  - Pathao tracking uses the merchant order lookup flow with the stored consignment ID or tracking number
+  - carrier response statuses are mapped into the internal shipment timeline through the shared status pipeline
+  - tracking sync remains duplicate-safe and non-destructive when the carrier returns an earlier status
+- the Pathao webhook adapter slice is now active:
+  - Pathao webhook callbacks are verified with the carrier secret and a Pathao-specific signature header
+  - webhook payloads resolve shipment records by consignment id, tracking reference, or invoice reference
+  - duplicate callback payloads remain duplicate-safe when the status does not advance
+- the Pathao admin polish slice is now active:
+  - Pathao setup guidance is visible in the admin carrier form for the required API fields and callback configuration
+  - the carrier integration doc now includes an operator checklist for live Pathao onboarding
+- the Pathao live smoke verification slice is documented but blocked:
+  - live Pathao booking, tracking, and webhook smoke checks require real merchant credentials
+  - the live verification runbook is now documented in the carrier integration notes for future use
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
@@ -577,5 +591,5 @@ Current follow-up status:
   - `Sales > Settlement Batches` now includes CSV import with strict row validation
   - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
   - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
-- additional courier adapters beyond `Steadfast` remain deferred
-- additional live courier booking adapters beyond `Steadfast` remain deferred
+- additional courier adapters beyond `Steadfast` and `Pathao` remain deferred
+- additional live courier booking adapters beyond `Steadfast` and `Pathao` remain deferred

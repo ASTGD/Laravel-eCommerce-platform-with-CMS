@@ -217,6 +217,20 @@ Current status:
   - `Pathao` can create bookings through the merchant API contract using the carrier's stored API credentials and merchant store ID
   - booking resolves city, zone, and area through the merchant API lookup flow before creating the order
   - booking stores the returned consignment ID and logs a non-notifying operational event
+- the Pathao tracking adapter slice is now active:
+  - `Pathao` can query the merchant order lookup flow using the stored consignment ID or tracking number
+  - Pathao tracking responses are mapped into the same downgrade-safe shipment status pipeline used by Steadfast
+  - Pathao tracking sync remains duplicate-safe and non-destructive when the carrier returns an earlier status
+- the Pathao webhook adapter slice is now active:
+  - `Pathao` webhook callbacks can update shipment records through the same shipment status pipeline used by tracking sync
+  - webhook callbacks are verified with the configured carrier secret and use a Pathao-specific response handshake header
+  - duplicate webhook callbacks remain duplicate-safe when the mapped status already matches the shipment record
+- the Pathao admin polish slice is now active:
+  - Pathao carrier setup now exposes a clear admin checklist for store ID, API credentials, callback URL, and webhook signature
+  - Pathao-specific help text now appears in the carrier form when the Pathao driver is selected
+- the Pathao live smoke verification slice is documented but blocked:
+  - live booking, tracking, and webhook smoke checks must wait for a real Pathao merchant account
+  - the exact onboarding steps and verification matrix now live in the carrier integration doc
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

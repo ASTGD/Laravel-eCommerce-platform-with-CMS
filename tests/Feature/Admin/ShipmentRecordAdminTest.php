@@ -580,9 +580,9 @@ it('keeps placeholder driver sync behavior for non-integrated carriers', functio
     $fixture = createShipmentRecordFixture();
 
     $carrier = ShipmentCarrier::query()->create([
-        'code' => 'pathao',
-        'name' => 'Pathao',
-        'integration_driver' => 'pathao',
+        'code' => 'custom_api',
+        'name' => 'Custom API',
+        'integration_driver' => 'custom_api',
         'tracking_sync_enabled' => true,
         'is_active' => true,
     ]);
@@ -609,6 +609,94 @@ it('keeps placeholder driver sync behavior for non-integrated carriers', functio
     expect($shipmentRecord->last_tracking_synced_at)->not->toBeNull()
         ->and($shipmentRecord->last_tracking_sync_status)->toBe('pending')
         ->and($shipmentRecord->last_tracking_sync_message)->toContain('foundation is configured');
+});
+
+it('syncs pathao tracking and updates shipment status when mapped status changes', function () {
+    $fixture = createShipmentRecordFixture();
+
+    Mail::fake();
+
+    Http::fake([
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/issue-token' => Http::response([
+            'access_token' => 'pathao-access-token',
+        ], 200),
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/orders/PA-TRACK-001' => Http::response([
+            'data' => [
+                'message' => 'Order details fetched successfully.',
+                'data' => [
+                    'consignment_id' => 'PA-TRACK-001',
+                    'order_status' => 'Out for Delivery',
+                    'order_status_slug' => 'out_for_delivery',
+                    'updated_at' => '2026-04-20 12:30:00',
+                    'invoice_id' => 'INV-123',
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'pathao',
+        'name' => 'Pathao Courier',
+        'integration_driver' => 'pathao',
+        'tracking_sync_enabled' => true,
+        'api_base_url' => 'https://courier-api-sandbox.pathao.com/aladdin/api/v1',
+        'api_store_id' => 169218,
+        'api_key' => 'client-id',
+        'api_secret' => 'client-secret',
+        'api_username' => 'merchant@example.com',
+        'api_password' => 'merchant-password',
+        'contact_name' => 'Merchant Contact',
+        'contact_phone' => '01711111111',
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_IN_TRANSIT,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'PA-TRACK-001',
+        'carrier_consignment_id' => 'PA-TRACK-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_city' => 'Dhaka',
+        'destination_region' => 'Dhaka',
+        'destination_country' => 'Bangladesh',
+        'handed_over_at' => now(),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.shipment-operations.sync-tracking', $shipmentRecord))
+        ->assertRedirect(route('admin.sales.shipment-operations.view', $shipmentRecord));
+
+    $shipmentRecord->refresh();
+
+    $latestEvent = ShipmentEvent::query()
+        ->where('shipment_record_id', $shipmentRecord->id)
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($shipmentRecord->status)->toBe(ShipmentRecord::STATUS_OUT_FOR_DELIVERY)
+        ->and($shipmentRecord->last_tracking_synced_at)->not->toBeNull()
+        ->and($shipmentRecord->last_tracking_sync_status)->toBe('synced')
+        ->and($shipmentRecord->last_tracking_sync_message)->toContain('Pathao tracking synced')
+        ->and($latestEvent->note)->toContain('Pathao tracking sync');
+
+    Http::assertSentCount(2);
+
+    Http::assertSent(fn ($request) => $request->url() === 'https://courier-api-sandbox.pathao.com/aladdin/api/v1/issue-token'
+        && $request['client_id'] === 'client-id'
+        && $request['client_secret'] === 'client-secret'
+        && $request['username'] === 'merchant@example.com'
+        && $request['password'] === 'merchant-password');
+
+    Http::assertSent(fn ($request) => $request->method() === 'GET'
+        && $request->url() === 'https://courier-api-sandbox.pathao.com/aladdin/api/v1/orders/PA-TRACK-001');
+
+    Mail::assertQueued(ShopOperationalUpdateNotification::class);
+    Mail::assertQueued(AdminOperationalUpdateNotification::class);
 });
 
 it('syncs steadfast tracking and updates shipment status when mapped status changes', function () {
