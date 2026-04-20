@@ -580,6 +580,9 @@ Current follow-up status:
 - the Pathao admin polish slice is now active:
   - Pathao setup guidance is visible in the admin carrier form for the required API fields and callback configuration
   - the carrier integration doc now includes an operator checklist for live Pathao onboarding
+- the Pathao live smoke verification slice is documented but blocked:
+  - live Pathao booking, tracking, and webhook smoke checks require real merchant credentials
+  - the live verification runbook is now documented in the carrier integration notes for future use
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility

@@ -228,6 +228,9 @@ Current status:
 - the Pathao admin polish slice is now active:
   - Pathao carrier setup now exposes a clear admin checklist for store ID, API credentials, callback URL, and webhook signature
   - Pathao-specific help text now appears in the carrier form when the Pathao driver is selected
+- the Pathao live smoke verification slice is documented but blocked:
+  - live booking, tracking, and webhook smoke checks must wait for a real Pathao merchant account
+  - the exact onboarding steps and verification matrix now live in the carrier integration doc
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

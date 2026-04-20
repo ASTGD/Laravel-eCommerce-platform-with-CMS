@@ -242,6 +242,33 @@ Use this list when configuring a Pathao carrier record in the admin panel:
 
 The exact live API values still need to be confirmed with a real Pathao account.
 
+## Pathao Live Smoke Runbook
+
+Use this runbook when live Pathao credentials become available:
+
+1. confirm the carrier record has a live API base URL, merchant store ID, username, password, key, secret, and webhook secret
+2. save the carrier and copy the Pathao callback URL from the admin form
+3. create one COD shipment with a real Dhaka or district address that Pathao serves
+4. trigger booking from Shipment Ops and confirm the shipment record receives:
+   - `carrier_booking_reference`
+   - `carrier_consignment_id`
+   - `carrier_invoice_reference`
+   - `carrier_booked_at`
+   - `tracking_number` if the live response includes one
+5. run tracking sync and confirm the shipment status advances only forward
+6. POST a real webhook payload with `X-PATHAO-Signature` and confirm the response header echoes `X-Pathao-Merchant-Webhook-Integration-Secret`
+7. confirm the webhook updates the same shipment record without creating duplicate timeline rows
+8. verify customer and admin shipment communications still behave as expected after the live status update
+
+Recommended live verification matrix:
+
+- booking response fields returned by Pathao
+- tracking response fields returned by Pathao
+- webhook signature header names
+- webhook payload status names
+- consignment identifier field used by Pathao as the stable external key
+- whether Pathao returns invoice IDs, merchant order IDs, or another reference that should be preserved in the shipment record
+
 ## Implementation Notes
 
 When adding a new carrier adapter:
