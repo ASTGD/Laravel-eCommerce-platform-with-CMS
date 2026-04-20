@@ -121,9 +121,32 @@ Live credential checklist for Steadfast:
 
 Pathao is the next carrier candidate and should be documented here before implementation starts.
 
-Use the same checklist when live credentials are available:
+## Public Pathao References
 
-- official API documentation link
+These are the public references we can rely on without merchant-panel access:
+
+- [Pathao Courier](https://pathao.com/courier/)
+- [How can I track orders from customers to customer service?](https://help.pathao.com/track-orders-customers-to-customer-service/)
+- [How can I get the address of the customer service booking point from the customer?](https://help.pathao.com/customer-service-booking-address/)
+- [Where is Pathao’s service available?](https://help.pathao.com/pathao-service-availability/)
+- [What kind of service do you provide?](https://help.pathao.com/types-of-services/)
+- [Courier Tracking Is Here!](https://pathao.com/blog/courier-tracking-is-here/)
+
+Publicly verified Pathao facts from those pages:
+
+- Pathao Courier is available in Bangladesh and advertises service across 64 districts.
+- Pathao supports merchant courier service and customer-to-customer booking-point service.
+- Pathao’s public tracking flow uses a consignment ID plus the customer phone number.
+- Pathao’s merchant onboarding flow points users to `merchant.pathao.com/register`.
+- Pathao provides public merchant tracking links and a user-app tracking flow.
+- Pathao advertises COD and parcel return support in its courier service.
+
+## Pathao Contract Placeholder
+
+We still need live merchant/API access to fill in the actual adapter contract.
+
+Capture the following once credentials are available:
+
 - booking endpoint
 - tracking endpoint
 - webhook callback support
@@ -133,8 +156,10 @@ Use the same checklist when live credentials are available:
 - external status values
 - retry and duplicate callback behavior
 - COD remittance and settlement notes if supported
+- booking status field names returned by the API
+- whether Pathao exposes a stable consignment identifier distinct from the tracking number
 
-Do not implement the Pathao adapter until the live API contract is confirmed from the vendor documentation or account representative.
+Do not implement the Pathao adapter until the live API contract is confirmed from vendor documentation or a Pathao account representative.
 
 ## Implementation Notes
 
@@ -152,4 +177,4 @@ When adding a new carrier adapter:
 - whether future carriers should share a common booking payload normalizer
 - whether webhook verification should remain carrier-specific or move to a shared signature verifier
 - whether a carrier settlement import format should live here or in the COD settlement document
-
+- whether Pathao should use the same booking invoice format as Steadfast or a carrier-specific invoice key
