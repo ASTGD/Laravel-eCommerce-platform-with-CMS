@@ -10,13 +10,11 @@ use Platform\CommerceCore\DataGrids\Sales\ShipmentCarrierDataGrid;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentCarrierRequest;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Repositories\ShipmentCarrierRepository;
-use Platform\CommerceCore\Support\CarrierTrackingProviderRegistry;
 
 class ShipmentCarrierController extends Controller
 {
     public function __construct(
         protected ShipmentCarrierRepository $shipmentCarrierRepository,
-        protected CarrierTrackingProviderRegistry $carrierTrackingProviderRegistry,
     ) {}
 
     public function index()
@@ -30,18 +28,13 @@ class ShipmentCarrierController extends Controller
 
     public function create(): View
     {
-        return view('commerce-core::admin.carriers.form', [
-            'carrier' => new ShipmentCarrier([
-                'supports_cod' => true,
-                'default_cod_fee_type' => 'flat',
-                'default_payout_method' => 'bank_transfer',
-                'integration_driver' => ShipmentCarrier::INTEGRATION_DRIVER_MANUAL,
-                'is_active' => true,
-            ]),
-            'codFeeTypes' => ShipmentCarrierRequest::COD_FEE_TYPES,
-            'integrationDrivers' => $this->carrierTrackingProviderRegistry->driverLabels(),
-            'payoutMethods' => ShipmentCarrierRequest::PAYOUT_METHODS,
-        ]);
+        return view('commerce-core::admin.carriers.form', $this->formViewData(new ShipmentCarrier([
+            'supports_cod' => true,
+            'default_cod_fee_type' => 'flat',
+            'default_payout_method' => 'bank_transfer',
+            'integration_driver' => ShipmentCarrier::INTEGRATION_DRIVER_MANUAL,
+            'is_active' => true,
+        ])));
     }
 
     public function store(ShipmentCarrierRequest $request): RedirectResponse
@@ -50,17 +43,12 @@ class ShipmentCarrierController extends Controller
 
         return redirect()
             ->route('admin.sales.carriers.edit', $carrier)
-            ->with('success', 'Carrier created.');
+            ->with('success', 'Courier service added.');
     }
 
     public function edit(ShipmentCarrier $carrier): View
     {
-        return view('commerce-core::admin.carriers.form', [
-            'carrier' => $carrier,
-            'codFeeTypes' => ShipmentCarrierRequest::COD_FEE_TYPES,
-            'integrationDrivers' => $this->carrierTrackingProviderRegistry->driverLabels(),
-            'payoutMethods' => ShipmentCarrierRequest::PAYOUT_METHODS,
-        ]);
+        return view('commerce-core::admin.carriers.form', $this->formViewData($carrier));
     }
 
     public function update(ShipmentCarrierRequest $request, ShipmentCarrier $carrier): RedirectResponse
@@ -69,7 +57,7 @@ class ShipmentCarrierController extends Controller
 
         return redirect()
             ->route('admin.sales.carriers.edit', $carrier)
-            ->with('success', 'Carrier updated.');
+            ->with('success', 'Courier service updated.');
     }
 
     public function destroy(ShipmentCarrier $carrier): JsonResponse|RedirectResponse
@@ -78,12 +66,37 @@ class ShipmentCarrierController extends Controller
 
         if (request()->ajax()) {
             return new JsonResponse([
-                'message' => 'Carrier deleted.',
+                'message' => 'Courier service deleted.',
             ]);
         }
 
         return redirect()
             ->route('admin.sales.carriers.index')
-            ->with('success', 'Carrier deleted.');
+            ->with('success', 'Courier service deleted.');
+    }
+
+    protected function formViewData(ShipmentCarrier $carrier): array
+    {
+        $selectedCourierService = old('courier_service', ShipmentCarrierRequest::courierServiceForDriver($carrier->trackingDriver()));
+        $legacyDriver = $carrier->exists && $selectedCourierService === ShipmentCarrierRequest::COURIER_SERVICE_MANUAL_OTHER
+            ? $carrier->trackingDriver()
+            : null;
+
+        if (in_array($legacyDriver, [
+            null,
+            '',
+            ShipmentCarrier::INTEGRATION_DRIVER_MANUAL,
+        ], true)) {
+            $legacyDriver = null;
+        }
+
+        return [
+            'carrier' => $carrier,
+            'courierOptions' => ShipmentCarrierRequest::courierOptions(),
+            'selectedCourierService' => $selectedCourierService,
+            'legacyDriverLabel' => $legacyDriver ? str($legacyDriver)->replace('_', ' ')->title()->value() : null,
+            'codFeeTypes' => ShipmentCarrierRequest::COD_FEE_TYPES,
+            'payoutMethods' => ShipmentCarrierRequest::PAYOUT_METHODS,
+        ];
     }
 }
