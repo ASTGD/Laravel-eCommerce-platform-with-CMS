@@ -143,7 +143,7 @@ Publicly verified Pathao facts from those pages:
 
 ## Pathao Contract Placeholder
 
-We still need live merchant/API access to finalize and verify the live adapter contract.
+We still need live merchant/API access to fill in and verify the actual adapter contract before production use.
 
 Capture the following once credentials are available:
 
