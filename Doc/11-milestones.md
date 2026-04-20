@@ -213,6 +213,10 @@ Current status:
   - successful courier booking now persists consignment id, invoice reference, booked-at, and tracking code back onto the shipment record
   - booking capture is logged as an operational event without triggering customer shipment notifications
 - dedicated carrier integration notes now live in [Doc/18-shipment-carrier-integrations.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/18-shipment-carrier-integrations.md)
+- the Pathao booking adapter slice is now active:
+  - `Pathao` can create bookings through the merchant API contract using the carrier's stored API credentials and merchant store ID
+  - booking resolves city, zone, and area through the merchant API lookup flow before creating the order
+  - booking stores the returned consignment ID and logs a non-notifying operational event
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

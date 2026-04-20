@@ -721,6 +721,121 @@ it('stores carrier booking references on shipment ops without triggering shipmen
     Mail::assertNothingQueued();
 });
 
+it('books a pathao consignment from shipment ops and persists returned courier references', function () {
+    $fixture = createShipmentRecordFixture();
+
+    Mail::fake();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'pathao',
+        'name' => 'Pathao Courier',
+        'integration_driver' => 'pathao',
+        'tracking_sync_enabled' => true,
+        'api_base_url' => 'https://courier-api-sandbox.pathao.com/aladdin/api/v1',
+        'api_store_id' => 169218,
+        'api_key' => 'client-id',
+        'api_secret' => 'client-secret',
+        'api_username' => 'merchant@example.com',
+        'api_password' => 'merchant-password',
+        'contact_name' => 'Merchant Contact',
+        'contact_phone' => '01711111111',
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
+        'carrier_name_snapshot' => $carrier->name,
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => 'House 58, Khansamarchock',
+        'destination_city' => 'Dhaka',
+        'destination_region' => 'Dhaka',
+        'destination_country' => 'Bangladesh',
+        'cod_amount_expected' => 499,
+        'handed_over_at' => now(),
+    ]);
+
+    $merchantOrderId = sprintf('%s-S%s', $fixture['order']->increment_id, $shipmentRecord->id);
+
+    Http::fake([
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/issue-token' => Http::response([
+            'access_token' => 'pathao-access-token',
+        ], 200),
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/city-list' => Http::response([
+            'data' => [
+                ['id' => 1, 'name' => 'Dhaka'],
+                ['id' => 2, 'name' => 'Chattogram'],
+            ],
+        ], 200),
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/cities/1/zone-list' => Http::response([
+            'data' => [
+                ['id' => 11, 'name' => 'Dhanmondi'],
+            ],
+        ], 200),
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/zones/11/area-list' => Http::response([
+            'data' => [
+                ['id' => 21, 'name' => 'Dhanmondi'],
+            ],
+        ], 200),
+        'https://courier-api-sandbox.pathao.com/aladdin/api/v1/orders' => Http::response([
+            'message' => 'Order Created Successfully',
+            'data' => [
+                'order_id' => 'PATHAO-ORDER-8899',
+                'consignment_id' => 'PA-10001',
+                'tracking_code' => 'PA-10001',
+                'created_at' => '2026-04-20T10:30:00.000000Z',
+            ],
+        ], 200),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.shipment-operations.book-with-carrier', $shipmentRecord), [
+        'note' => 'Call customer before delivery.',
+    ])->assertRedirect(route('admin.sales.shipment-operations.view', $shipmentRecord));
+
+    $shipmentRecord->refresh();
+
+    $latestEvent = ShipmentEvent::query()
+        ->where('shipment_record_id', $shipmentRecord->id)
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($shipmentRecord->tracking_number)->toBe('PA-10001')
+        ->and($shipmentRecord->carrier_booking_reference)->toBe('PATHAO-ORDER-8899')
+        ->and($shipmentRecord->carrier_consignment_id)->toBe('PA-10001')
+        ->and($shipmentRecord->carrier_invoice_reference)->toBe($merchantOrderId)
+        ->and($shipmentRecord->carrier_booked_at?->toIso8601String())->toContain('2026-04-20T10:30:00')
+        ->and($latestEvent->event_type)->toBe(ShipmentEvent::EVENT_CARRIER_BOOKED)
+        ->and($latestEvent->status_after_event)->toBeNull()
+        ->and(data_get($latestEvent->meta, 'merchant_order_id'))->toBe($merchantOrderId)
+        ->and(ShipmentCommunication::query()->where('shipment_record_id', $shipmentRecord->id)->count())->toBe(0);
+
+    Http::assertSentCount(5);
+
+    Http::assertSent(fn ($request) => $request->url() === 'https://courier-api-sandbox.pathao.com/aladdin/api/v1/issue-token'
+        && $request['client_id'] === 'client-id'
+        && $request['client_secret'] === 'client-secret'
+        && $request['username'] === 'merchant@example.com'
+        && $request['password'] === 'merchant-password');
+
+    Http::assertSent(fn ($request) => $request->url() === 'https://courier-api-sandbox.pathao.com/aladdin/api/v1/orders'
+        && $request['store_id'] === 169218
+        && $request['merchant_order_id'] === $merchantOrderId
+        && $request['sender_name'] === 'Merchant Contact'
+        && $request['sender_phone'] === '01711111111'
+        && $request['recipient_name'] === $fixture['order']->customer_full_name
+        && $request['recipient_phone'] === $fixture['order']->shipping_address->phone
+        && $request['recipient_city'] === 1
+        && $request['recipient_zone'] === 11
+        && $request['recipient_area'] === 21
+        && (float) $request['amount_to_collect'] === 499.0);
+
+    Mail::assertNothingQueued();
+});
+
 it('books a steadfast consignment from shipment ops and persists returned courier references', function () {
     $fixture = createShipmentRecordFixture();
 
