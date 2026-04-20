@@ -27,11 +27,12 @@
         </div>
     </div>
 
-    <div class="mt-3.5 flex gap-2.5 max-xl:flex-wrap">
-        <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
+    <x-admin::layouts.detail-three-column>
+        @slot('left')
+        <div class="flex min-w-0 flex-1 flex-col gap-2 max-xl:flex-auto">
             <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
-                <div class="flex items-start justify-between gap-4 max-md:flex-wrap">
-                    <div>
+                <div class="grid gap-4">
+                    <div class="min-w-0">
                         <p class="text-base font-semibold text-gray-800 dark:text-white">
                             Operational Summary
                         </p>
@@ -39,422 +40,6 @@
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
                             {{ $shipmentRecord->status_label }}
                         </p>
-                    </div>
-
-                    <div class="grid gap-3 md:min-w-[340px]">
-                        @if ($shipmentRecord->carrier)
-                            <div class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800">
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Tracking Sync
-                                </p>
-
-                                <div class="text-sm text-gray-600 dark:text-gray-300">
-                                    <p>
-                                        Driver:
-                                        <span class="font-medium text-gray-800 dark:text-white">
-                                            {{ str($shipmentRecord->carrier->trackingDriver())->replace('_', ' ')->title() }}
-                                        </span>
-                                    </p>
-
-                                    <p>
-                                        Sync Enabled:
-                                        <span class="font-medium text-gray-800 dark:text-white">
-                                            {{ $shipmentRecord->carrier->tracking_sync_enabled ? 'Yes' : 'No' }}
-                                        </span>
-                                    </p>
-
-                                    <p>
-                                        Last Sync:
-                                        <span class="font-medium text-gray-800 dark:text-white">
-                                            {{ $shipmentRecord->last_tracking_synced_at?->format('d M Y H:i') ?? 'Never' }}
-                                        </span>
-                                    </p>
-
-                                    <p>
-                                        Last Result:
-                                        <span class="font-medium text-gray-800 dark:text-white">
-                                            {{ $shipmentRecord->last_tracking_sync_status ? str($shipmentRecord->last_tracking_sync_status)->replace('_', ' ')->title() : 'Not synced yet' }}
-                                        </span>
-                                    </p>
-                                </div>
-
-                                @if ($shipmentRecord->last_tracking_sync_message)
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">
-                                        {{ $shipmentRecord->last_tracking_sync_message }}
-                                    </p>
-                                @endif
-
-                                @if (bouncer()->hasPermission('sales.shipment_operations.sync_tracking'))
-                                    <form
-                                        method="POST"
-                                        action="{{ route('admin.sales.shipment-operations.sync-tracking', $shipmentRecord) }}"
-                                    >
-                                        @csrf
-
-                                        <button
-                                            type="submit"
-                                            class="secondary-button"
-                                        >
-                                            Sync Carrier Tracking
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                        @endif
-
-                        @if (
-                            $canCreateCarrierBooking
-                            && bouncer()->hasPermission('sales.shipment_operations.book_with_carrier')
-                        )
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.book-with-carrier', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Courier Booking
-                                </p>
-
-                                <p class="text-sm text-gray-600 dark:text-gray-300">
-                                    Create the Steadfast booking directly from Shipment Ops and persist the returned consignment and tracking identifiers.
-                                </p>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional courier note"
-                                >{{ old('note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="secondary-button"
-                                    @disabled($shipmentRecord->carrier_consignment_id)
-                                >
-                                    {{ $shipmentRecord->carrier_consignment_id ? 'Carrier Booking Already Created' : 'Book With Steadfast' }}
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (bouncer()->hasPermission('sales.shipment_operations.manage_booking_references'))
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.update-booking-references', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Carrier Booking References
-                                </p>
-
-                                <input
-                                    type="text"
-                                    name="carrier_booking_reference"
-                                    value="{{ old('carrier_booking_reference', $shipmentRecord->carrier_booking_reference) }}"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Carrier booking reference"
-                                >
-
-                                <input
-                                    type="text"
-                                    name="carrier_consignment_id"
-                                    value="{{ old('carrier_consignment_id', $shipmentRecord->carrier_consignment_id) }}"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Carrier consignment ID"
-                                >
-
-                                <input
-                                    type="text"
-                                    name="carrier_invoice_reference"
-                                    value="{{ old('carrier_invoice_reference', $shipmentRecord->carrier_invoice_reference) }}"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Carrier invoice reference"
-                                >
-
-                                <input
-                                    type="datetime-local"
-                                    name="carrier_booked_at"
-                                    value="{{ old('carrier_booked_at', $shipmentRecord->carrier_booked_at?->format('Y-m-d\\TH:i')) }}"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                >
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional note"
-                                >{{ old('note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="secondary-button"
-                                >
-                                    Save Booking References
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (bouncer()->hasPermission('sales.shipment_operations.update_status'))
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.update-status', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Update Status
-                                </p>
-
-                                <select
-                                    name="status"
-                                    class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                >
-                                    @foreach ($statusOptions as $status => $label)
-                                        <option
-                                            value="{{ $status }}"
-                                            @selected(old('status', $shipmentRecord->status) === $status)
-                                        >
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional note"
-                                >{{ old('note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Update Shipment Status
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (bouncer()->hasPermission('sales.shipment_operations.record_failure'))
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.record-delivery-failure', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Record Delivery Failure
-                                </p>
-
-                                <select
-                                    name="failure_reason"
-                                    class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                >
-                                    <option value="">
-                                        Select failure reason
-                                    </option>
-
-                                    @foreach ($failureReasonOptions as $failureReason => $label)
-                                        <option
-                                            value="{{ $failureReason }}"
-                                            @selected(old('failure_reason', $shipmentRecord->delivery_failure_reason) === $failureReason)
-                                        >
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                    <input
-                                        type="checkbox"
-                                        name="requires_reattempt"
-                                        value="1"
-                                        @checked(old('requires_reattempt', $shipmentRecord->requires_reattempt))
-                                    >
-
-                                    Reattempt required
-                                </label>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Reason or courier note"
-                                >{{ old('note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="secondary-button"
-                                >
-                                    Save Delivery Failure
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (
-                            $shipmentRecord->requires_reattempt
-                            && bouncer()->hasPermission('sales.shipment_operations.approve_reattempt')
-                        )
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.approve-reattempt', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Approve Reattempt
-                                </p>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional reattempt note"
-                                >{{ old('reattempt_note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Approve Reattempt
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (
-                            $shipmentRecord->status === \Platform\CommerceCore\Models\ShipmentRecord::STATUS_DELIVERY_FAILED
-                            && ! $shipmentRecord->return_initiated_at
-                            && ! $shipmentRecord->returned_at
-                            && bouncer()->hasPermission('sales.shipment_operations.manage_returns')
-                        )
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.initiate-return', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Initiate Return to Origin
-                                </p>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional return note"
-                                >{{ old('return_note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="secondary-button"
-                                >
-                                    Initiate Return
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (
-                            $shipmentRecord->return_initiated_at
-                            && ! $shipmentRecord->returned_at
-                            && bouncer()->hasPermission('sales.shipment_operations.manage_returns')
-                        )
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.complete-return', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Complete Return
-                                </p>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional completion note"
-                                >{{ old('return_complete_note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="primary-button"
-                                >
-                                    Complete Return
-                                </button>
-                            </form>
-                        @endif
-
-                        @if (bouncer()->hasPermission('sales.shipment_operations.add_event'))
-                            <form
-                                method="POST"
-                                action="{{ route('admin.sales.shipment-operations.store-event', $shipmentRecord) }}"
-                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
-                            >
-                                @csrf
-
-                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
-                                    Log Operational Event
-                                </p>
-
-                                <select
-                                    name="event_type"
-                                    class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                >
-                                    <option value="">
-                                        Select event
-                                    </option>
-
-                                    @foreach ($eventTypeOptions as $eventType => $label)
-                                        <option
-                                            value="{{ $eventType }}"
-                                            @selected(old('event_type') === $eventType)
-                                        >
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <select
-                                    name="status_after_event"
-                                    class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                >
-                                    <option value="">
-                                        Keep current status
-                                    </option>
-
-                                    @foreach ($statusOptions as $status => $label)
-                                        <option
-                                            value="{{ $status }}"
-                                            @selected(old('status_after_event') === $status)
-                                        >
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <textarea
-                                    name="note"
-                                    rows="2"
-                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                    placeholder="Optional note"
-                                >{{ old('note') }}</textarea>
-
-                                <button
-                                    type="submit"
-                                    class="secondary-button"
-                                >
-                                    Record Shipment Event
-                                </button>
-                            </form>
-                        @endif
                     </div>
                 </div>
 
@@ -831,8 +416,435 @@
                 </div>
             </div>
         </div>
+        @endslot
 
+        @slot('middle')
         <div class="flex w-[360px] max-w-full flex-col gap-2 max-xl:w-full">
+            <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
+                <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
+                    Operational Actions
+                </p>
+
+                <div class="grid gap-3">
+                    @if ($shipmentRecord->carrier)
+                        <div class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800">
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Tracking Sync
+                            </p>
+
+                            <div class="text-sm text-gray-600 dark:text-gray-300">
+                                <p>
+                                    Driver:
+                                    <span class="font-medium text-gray-800 dark:text-white">
+                                        {{ str($shipmentRecord->carrier->trackingDriver())->replace('_', ' ')->title() }}
+                                    </span>
+                                </p>
+
+                                <p>
+                                    Sync Enabled:
+                                    <span class="font-medium text-gray-800 dark:text-white">
+                                        {{ $shipmentRecord->carrier->tracking_sync_enabled ? 'Yes' : 'No' }}
+                                    </span>
+                                </p>
+
+                                <p>
+                                    Last Sync:
+                                    <span class="font-medium text-gray-800 dark:text-white">
+                                        {{ $shipmentRecord->last_tracking_synced_at?->format('d M Y H:i') ?? 'Never' }}
+                                    </span>
+                                </p>
+
+                                <p>
+                                    Last Result:
+                                    <span class="font-medium text-gray-800 dark:text-white">
+                                        {{ $shipmentRecord->last_tracking_sync_status ? str($shipmentRecord->last_tracking_sync_status)->replace('_', ' ')->title() : 'Not synced yet' }}
+                                    </span>
+                                </p>
+                            </div>
+
+                            @if ($shipmentRecord->last_tracking_sync_message)
+                                <p class="text-sm text-gray-600 dark:text-gray-300">
+                                    {{ $shipmentRecord->last_tracking_sync_message }}
+                                </p>
+                            @endif
+
+                            @if (bouncer()->hasPermission('sales.shipment_operations.sync_tracking'))
+                                <form
+                                    method="POST"
+                                    action="{{ route('admin.sales.shipment-operations.sync-tracking', $shipmentRecord) }}"
+                                >
+                                    @csrf
+
+                                    <button
+                                        type="submit"
+                                        class="secondary-button"
+                                    >
+                                        Sync Carrier Tracking
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    @endif
+
+                    @if (
+                        $canCreateCarrierBooking
+                        && bouncer()->hasPermission('sales.shipment_operations.book_with_carrier')
+                    )
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.book-with-carrier', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Courier Booking
+                            </p>
+
+                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                Create the Steadfast booking directly from Shipment Ops and persist the returned consignment and tracking identifiers.
+                            </p>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional courier note"
+                            >{{ old('note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                                @disabled($shipmentRecord->carrier_consignment_id)
+                            >
+                                {{ $shipmentRecord->carrier_consignment_id ? 'Carrier Booking Already Created' : 'Book With Steadfast' }}
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (bouncer()->hasPermission('sales.shipment_operations.manage_booking_references'))
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.update-booking-references', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Carrier Booking References
+                            </p>
+
+                            <input
+                                type="text"
+                                name="carrier_booking_reference"
+                                value="{{ old('carrier_booking_reference', $shipmentRecord->carrier_booking_reference) }}"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Carrier booking reference"
+                            >
+
+                            <input
+                                type="text"
+                                name="carrier_consignment_id"
+                                value="{{ old('carrier_consignment_id', $shipmentRecord->carrier_consignment_id) }}"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Carrier consignment ID"
+                            >
+
+                            <input
+                                type="text"
+                                name="carrier_invoice_reference"
+                                value="{{ old('carrier_invoice_reference', $shipmentRecord->carrier_invoice_reference) }}"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Carrier invoice reference"
+                            >
+
+                            <input
+                                type="datetime-local"
+                                name="carrier_booked_at"
+                                value="{{ old('carrier_booked_at', $shipmentRecord->carrier_booked_at?->format('Y-m-d\\TH:i')) }}"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                            >
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional note"
+                            >{{ old('note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                            >
+                                Save Booking References
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (bouncer()->hasPermission('sales.shipment_operations.update_status'))
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.update-status', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Update Status
+                            </p>
+
+                            <select
+                                name="status"
+                                class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                            >
+                                @foreach ($statusOptions as $status => $label)
+                                    <option
+                                        value="{{ $status }}"
+                                        @selected(old('status', $shipmentRecord->status) === $status)
+                                    >
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional note"
+                            >{{ old('note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Update Shipment Status
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (bouncer()->hasPermission('sales.shipment_operations.record_failure'))
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.record-delivery-failure', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Record Delivery Failure
+                            </p>
+
+                            <select
+                                name="failure_reason"
+                                class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                            >
+                                <option value="">
+                                    Select failure reason
+                                </option>
+
+                                @foreach ($failureReasonOptions as $failureReason => $label)
+                                    <option
+                                        value="{{ $failureReason }}"
+                                        @selected(old('failure_reason', $shipmentRecord->delivery_failure_reason) === $failureReason)
+                                    >
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <input
+                                    type="checkbox"
+                                    name="requires_reattempt"
+                                    value="1"
+                                    @checked(old('requires_reattempt', $shipmentRecord->requires_reattempt))
+                                >
+
+                                Reattempt required
+                            </label>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Reason or courier note"
+                            >{{ old('note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                            >
+                                Save Delivery Failure
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (
+                        $shipmentRecord->requires_reattempt
+                        && bouncer()->hasPermission('sales.shipment_operations.approve_reattempt')
+                    )
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.approve-reattempt', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Approve Reattempt
+                            </p>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional reattempt note"
+                            >{{ old('reattempt_note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Approve Reattempt
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (
+                        $shipmentRecord->status === \Platform\CommerceCore\Models\ShipmentRecord::STATUS_DELIVERY_FAILED
+                        && ! $shipmentRecord->return_initiated_at
+                        && ! $shipmentRecord->returned_at
+                        && bouncer()->hasPermission('sales.shipment_operations.manage_returns')
+                    )
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.initiate-return', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Initiate Return to Origin
+                            </p>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional return note"
+                            >{{ old('return_note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                            >
+                                Initiate Return
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (
+                        $shipmentRecord->return_initiated_at
+                        && ! $shipmentRecord->returned_at
+                        && bouncer()->hasPermission('sales.shipment_operations.manage_returns')
+                    )
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.complete-return', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Complete Return
+                            </p>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional completion note"
+                            >{{ old('return_complete_note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Complete Return
+                            </button>
+                        </form>
+                    @endif
+
+                    @if (bouncer()->hasPermission('sales.shipment_operations.add_event'))
+                        <form
+                            method="POST"
+                            action="{{ route('admin.sales.shipment-operations.store-event', $shipmentRecord) }}"
+                            class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                        >
+                            @csrf
+
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                Log Operational Event
+                            </p>
+
+                            <select
+                                name="event_type"
+                                class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                            >
+                                <option value="">
+                                    Select event
+                                </option>
+
+                                @foreach ($eventTypeOptions as $eventType => $label)
+                                    <option
+                                        value="{{ $eventType }}"
+                                        @selected(old('event_type') === $eventType)
+                                    >
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <select
+                                name="status_after_event"
+                                class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                            >
+                                <option value="">
+                                    Keep current status
+                                </option>
+
+                                @foreach ($statusOptions as $status => $label)
+                                    <option
+                                        value="{{ $status }}"
+                                        @selected(old('status_after_event') === $status)
+                                    >
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <textarea
+                                name="note"
+                                rows="2"
+                                class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Optional note"
+                            >{{ old('note') }}</textarea>
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                            >
+                                Record Shipment Event
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endslot
+
+        @slot('right')
             <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
                 <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
                     Recipient Snapshot
@@ -912,6 +924,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        @endslot
+    </x-admin::layouts.detail-three-column>
 </x-admin::layouts>
