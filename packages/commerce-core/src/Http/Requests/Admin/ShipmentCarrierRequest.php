@@ -56,6 +56,7 @@ class ShipmentCarrierRequest extends FormRequest
             'integration_driver' => ['nullable', Rule::in(self::INTEGRATION_DRIVERS)],
             'tracking_sync_enabled' => ['nullable', 'boolean'],
             'api_base_url' => ['nullable', 'url', 'max:500'],
+            'api_store_id' => ['nullable', 'integer', 'min:1'],
             'api_username' => ['nullable', 'string', 'max:255'],
             'api_password' => ['nullable', 'string', 'max:5000'],
             'api_key' => ['nullable', 'string', 'max:5000'],
@@ -86,7 +87,7 @@ class ShipmentCarrierRequest extends FormRequest
         $payload['default_cod_fee_amount'] = round((float) ($payload['default_cod_fee_amount'] ?? 0), 2);
         $payload['default_return_fee_amount'] = round((float) ($payload['default_return_fee_amount'] ?? 0), 2);
 
-        foreach (['contact_name', 'contact_phone', 'contact_email', 'tracking_url_template', 'api_base_url', 'api_username', 'notes'] as $field) {
+        foreach (['contact_name', 'contact_phone', 'contact_email', 'tracking_url_template', 'api_base_url', 'api_username', 'api_store_id', 'notes'] as $field) {
             if (array_key_exists($field, $payload) && blank($payload[$field])) {
                 $payload[$field] = null;
             }

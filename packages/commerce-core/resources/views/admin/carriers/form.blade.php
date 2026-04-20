@@ -199,6 +199,23 @@
 
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
+                                API Store ID
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="number"
+                                name="api_store_id"
+                                min="1"
+                                :value="old('api_store_id', $carrier->api_store_id)"
+                                label="API Store ID"
+                                placeholder="Pathao merchant store ID"
+                            />
+
+                            <x-admin::form.control-group.error control-name="api_store_id" />
+                        </x-admin::form.control-group>
+
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
                                 API Username
                             </x-admin::form.control-group.label>
 

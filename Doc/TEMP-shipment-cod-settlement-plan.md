@@ -565,6 +565,10 @@ Current follow-up status:
   - successful booking responses persist consignment id, invoice reference, booked-at timestamp, and courier tracking code on the shipment record
   - automated booking creates a non-notifying operational timeline event, so courier IDs are captured without falsely advancing shipment status
 - carrier-specific API notes and future live credential details should be tracked in [Doc/18-shipment-carrier-integrations.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/18-shipment-carrier-integrations.md)
+- the Pathao booking adapter slice is now active:
+  - Pathao bookings use the merchant API token flow plus city/zone/area lookup flow
+  - the carrier stores a merchant store ID on the carrier record for booking
+  - booking captures the returned consignment ID and stores it on shipment records without notifying customers
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility

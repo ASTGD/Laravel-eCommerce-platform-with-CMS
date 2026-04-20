@@ -143,7 +143,7 @@ Publicly verified Pathao facts from those pages:
 
 ## Pathao Contract Placeholder
 
-We still need live merchant/API access to fill in the actual adapter contract.
+We still need live merchant/API access to finalize and verify the live adapter contract.
 
 Capture the following once credentials are available:
 
@@ -159,7 +159,29 @@ Capture the following once credentials are available:
 - booking status field names returned by the API
 - whether Pathao exposes a stable consignment identifier distinct from the tracking number
 
-Do not implement the Pathao adapter until the live API contract is confirmed from vendor documentation or a Pathao account representative.
+## Pathao Booking Adapter
+
+The first Pathao booking slice is now implemented against the merchant API flow inferred from Pathao's public merchant guidance and public integration examples.
+
+Current Pathao booking implementation notes:
+
+- token acquisition uses the merchant API `issue-token` flow
+- booking uses the merchant API `orders` flow
+- location lookups use:
+  - `city-list`
+  - `cities/{city_id}/zone-list`
+  - `zones/{zone_id}/area-list`
+- Pathao booking requires a merchant store ID, stored on the carrier as `api_store_id`
+- Pathao merchant credentials are mapped from the carrier fields already used by the admin carrier form:
+  - `api_key` -> client ID
+  - `api_secret` -> client secret
+  - `api_username` -> merchant username
+  - `api_password` -> merchant password
+- carrier contact fields are used as the sender identity for booking
+- booking stores the returned consignment ID and related courier identifiers on the shipment record
+- booking creates a non-notifying operational event
+
+Live merchant verification is still required before production use.
 
 ## Implementation Notes
 
@@ -178,3 +200,4 @@ When adding a new carrier adapter:
 - whether webhook verification should remain carrier-specific or move to a shared signature verifier
 - whether a carrier settlement import format should live here or in the COD settlement document
 - whether Pathao should use the same booking invoice format as Steadfast or a carrier-specific invoice key
+- whether Pathao booking should resolve zone and area from explicit admin-configured mappings instead of the first matching merchant API result
