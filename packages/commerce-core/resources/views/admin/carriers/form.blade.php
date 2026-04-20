@@ -289,16 +289,20 @@
 
                             <x-admin::form.control-group.error control-name="webhook_secret" />
 
-                            @if ($carrier->exists && $carrier->trackingDriver() === 'steadfast')
+                            @if ($carrier->exists && in_array($carrier->trackingDriver(), ['steadfast', 'pathao'], true))
                                 <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
                                     Callback URL:
                                     <span class="break-all font-mono">
-                                        {{ route('commerce-core.webhooks.shipment-carriers.steadfast', $carrier) }}
+                                        {{ route('commerce-core.webhooks.shipment-carriers.'.$carrier->trackingDriver(), $carrier) }}
                                     </span>
                                 </p>
 
                                 <p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                                    Configure Steadfast to send the webhook token as a bearer token matching this secret.
+                                    @if ($carrier->trackingDriver() === 'pathao')
+                                        Configure Pathao to send the webhook signature as <span class="font-mono">X-PATHAO-Signature</span> and echo the same secret in <span class="font-mono">X-Pathao-Merchant-Webhook-Integration-Secret</span>.
+                                    @else
+                                        Configure Steadfast to send the webhook token as a bearer token matching this secret.
+                                    @endif
                                 </p>
                             @endif
                         </x-admin::form.control-group>

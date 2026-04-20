@@ -221,6 +221,10 @@ Current status:
   - `Pathao` can query the merchant order lookup flow using the stored consignment ID or tracking number
   - Pathao tracking responses are mapped into the same downgrade-safe shipment status pipeline used by Steadfast
   - Pathao tracking sync remains duplicate-safe and non-destructive when the carrier returns an earlier status
+- the Pathao webhook adapter slice is now active:
+  - `Pathao` webhook callbacks can update shipment records through the same shipment status pipeline used by tracking sync
+  - webhook callbacks are verified with the configured carrier secret and use a Pathao-specific response handshake header
+  - duplicate webhook callbacks remain duplicate-safe when the mapped status already matches the shipment record
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

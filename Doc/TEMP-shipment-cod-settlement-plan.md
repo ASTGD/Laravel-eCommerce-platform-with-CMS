@@ -573,6 +573,10 @@ Current follow-up status:
   - Pathao tracking uses the merchant order lookup flow with the stored consignment ID or tracking number
   - carrier response statuses are mapped into the internal shipment timeline through the shared status pipeline
   - tracking sync remains duplicate-safe and non-destructive when the carrier returns an earlier status
+- the Pathao webhook adapter slice is now active:
+  - Pathao webhook callbacks are verified with the carrier secret and a Pathao-specific signature header
+  - webhook payloads resolve shipment records by consignment id, tracking reference, or invoice reference
+  - duplicate callback payloads remain duplicate-safe when the status does not advance
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility

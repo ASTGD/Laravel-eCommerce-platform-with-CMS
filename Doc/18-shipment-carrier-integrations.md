@@ -197,6 +197,36 @@ Current Pathao tracking implementation notes:
 
 Live merchant verification is still required before production use.
 
+## Pathao Webhook Adapter
+
+The first Pathao webhook slice is now implemented against Pathao's public webhook contract as documented in the merchant SDK README.
+
+Current Pathao webhook implementation notes:
+
+- Pathao webhook callbacks are accepted on the carrier-specific callback URL exposed in the admin carrier form
+- request verification checks the configured carrier secret against `X-PATHAO-Signature` and related request header aliases
+- valid callbacks receive the `X-Pathao-Merchant-Webhook-Integration-Secret` response header
+- webhook payloads resolve shipment records by:
+  - `consignment_id`
+  - `tracking_number` or `tracking_code`
+  - invoice fallback through `invoice_id`, `merchant_order_id`, or `invoice`
+- webhook status updates use the same downgrade-safe shipment status pipeline as tracking sync
+- duplicate callbacks do not create duplicate timeline events when the mapped status already matches the shipment record
+
+Pathao webhook payload fields currently handled:
+
+- `order_status`
+- `order_status_slug`
+- `status`
+- `status_slug`
+- `delivery_status`
+- `consignment_id`
+- `tracking_number`
+- `tracking_code`
+- `invoice_id`
+- `merchant_order_id`
+- `invoice`
+
 ## Implementation Notes
 
 When adding a new carrier adapter:
