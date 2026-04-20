@@ -1,11 +1,11 @@
 <x-admin::layouts>
     <x-slot:title>
-        Carriers
+        Courier Services
     </x-slot>
 
     <div class="flex items-center justify-between gap-4">
         <p class="text-xl font-bold text-gray-800 dark:text-white">
-            Carriers
+            Courier Services
         </p>
 
         @if (bouncer()->hasPermission('sales.carriers.create'))
@@ -13,7 +13,7 @@
                 href="{{ route('admin.sales.carriers.create') }}"
                 class="primary-button"
             >
-                Add Carrier
+                Add Courier Service
             </a>
         @endif
     </div>
