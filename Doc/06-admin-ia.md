@@ -51,6 +51,18 @@ This registry is intentionally admin-only in the current slice. It does not yet 
 
 `Shipment Ops` is the custom operational shipment board. It is intentionally separate from native `Sales > Shipments` in the current slice so the new domain can coexist with Bagisto's shipment engine while it is being introduced.
 
+`Shipment Ops` and similar operational detail pages now follow a shared 3-column admin shell:
+
+- left column for the primary record detail and long-form history
+- middle column for operational actions and workflow controls
+- right column for compact snapshots and supporting summary cards
+
+The shared layout is implemented as the admin component `x-admin::layouts.detail-three-column` so future operational detail pages can reuse the same column structure consistently.
+
+The component ships its grid definition explicitly, instead of relying on an arbitrary Tailwind utility class, so the 3-column layout remains stable even when cached assets or production builds are involved.
+
+This shell is intended to be reused by future admin operational pages so we do not keep rebuilding the same layout pattern page by page.
+
 Current `Shipment Ops` capability now includes:
 
 - synced operational shipment records from native Bagisto shipment creation
