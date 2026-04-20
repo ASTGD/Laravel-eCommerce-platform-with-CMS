@@ -53,6 +53,7 @@ Route::group([
             Route::post('{shipmentRecord}/status', 'updateStatus')->middleware('platform.acl:sales.shipment_operations.update_status')->name('admin.sales.shipment-operations.update-status');
             Route::post('{shipmentRecord}/events', 'storeEvent')->middleware('platform.acl:sales.shipment_operations.add_event')->name('admin.sales.shipment-operations.store-event');
             Route::post('{shipmentRecord}/sync-tracking', 'syncTracking')->middleware('platform.acl:sales.shipment_operations.sync_tracking')->name('admin.sales.shipment-operations.sync-tracking');
+            Route::post('{shipmentRecord}/book-with-carrier', 'createCarrierBooking')->middleware('platform.acl:sales.shipment_operations.book_with_carrier')->name('admin.sales.shipment-operations.book-with-carrier');
             Route::post('{shipmentRecord}/booking-references', 'updateBookingReferences')->middleware('platform.acl:sales.shipment_operations.manage_booking_references')->name('admin.sales.shipment-operations.update-booking-references');
             Route::post('{shipmentRecord}/delivery-failure', 'recordDeliveryFailure')->middleware('platform.acl:sales.shipment_operations.record_failure')->name('admin.sales.shipment-operations.record-delivery-failure');
             Route::post('{shipmentRecord}/reattempt', 'approveReattempt')->middleware('platform.acl:sales.shipment_operations.approve_reattempt')->name('admin.sales.shipment-operations.approve-reattempt');

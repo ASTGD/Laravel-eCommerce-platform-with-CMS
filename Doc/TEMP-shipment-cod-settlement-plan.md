@@ -560,6 +560,11 @@ Current follow-up status:
   - shipment records can store carrier booking reference, consignment id, invoice reference, and booked-at timestamp
   - Shipment Ops now includes an admin form for maintaining those external references without changing shipment status
   - booking-reference updates are logged as operational timeline events without triggering shipment notifications
+- the first live courier booking slice is now active:
+  - Shipment Ops can create a `Steadfast` booking directly from the admin screen using the carrier API credentials already stored on the carrier
+  - successful booking responses persist consignment id, invoice reference, booked-at timestamp, and courier tracking code on the shipment record
+  - automated booking creates a non-notifying operational timeline event, so courier IDs are captured without falsely advancing shipment status
+- carrier-specific API notes and future live credential details should be tracked in [Doc/18-shipment-carrier-integrations.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/18-shipment-carrier-integrations.md)
 - manual COD reconciliation hardening is now active:
   - invalid `settled`, `disputed`, and batch-dispute transitions are blocked
   - COD settlements now expose outstanding amount and linked-batch visibility
@@ -569,4 +574,4 @@ Current follow-up status:
   - one imported CSV can create one payout batch and auto-sync linked COD settlement statuses
   - the same import flow is exposed through `platform:cod-settlements:import` for operator automation
 - additional courier adapters beyond `Steadfast` remain deferred
-- richer automated booking capture from live courier booking APIs remains deferred
+- additional live courier booking adapters beyond `Steadfast` remain deferred

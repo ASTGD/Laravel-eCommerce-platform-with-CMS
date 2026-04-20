@@ -208,6 +208,11 @@ Current status:
   - shipment records can now persist carrier booking reference, consignment id, invoice reference, and booked-at timestamp
   - Shipment Ops includes an admin-only booking-reference form so persisted courier ids can be managed before automated booking is implemented
   - Steadfast webhook matching can now resolve shipment records by stored `consignment_id`
+- the first live courier booking slice is now active:
+  - Shipment Ops can create a `Steadfast` booking directly from admin using the configured carrier API credentials
+  - successful courier booking now persists consignment id, invoice reference, booked-at, and tracking code back onto the shipment record
+  - booking capture is logged as an operational event without triggering customer shipment notifications
+- dedicated carrier integration notes now live in [Doc/18-shipment-carrier-integrations.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/18-shipment-carrier-integrations.md)
 - the shipment notifications and communications slice is now active:
   - Shipment Ops events can queue customer/admin operational shipment emails
   - shipment detail now shows queued / skipped / failed communication audit rows

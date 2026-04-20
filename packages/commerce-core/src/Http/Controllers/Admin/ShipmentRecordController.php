@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Platform\CommerceCore\DataGrids\Sales\ShipmentRecordDataGrid;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentBookingReferenceRequest;
+use Platform\CommerceCore\Http\Requests\Admin\ShipmentCarrierBookingRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentDeliveryFailureRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentRecordEventRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentRecordStatusRequest;
@@ -14,14 +15,18 @@ use Platform\CommerceCore\Http\Requests\Admin\ShipmentReattemptRequest;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentReturnOperationRequest;
 use Platform\CommerceCore\Models\ShipmentEvent;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Platform\CommerceCore\Services\CarrierBookingService;
 use Platform\CommerceCore\Services\CarrierTrackingSyncService;
 use Platform\CommerceCore\Services\ShipmentRecordService;
+use Platform\CommerceCore\Support\CarrierBookingProviderRegistry;
 
 class ShipmentRecordController extends Controller
 {
     public function __construct(
         protected ShipmentRecordService $shipmentRecordService,
         protected CarrierTrackingSyncService $carrierTrackingSyncService,
+        protected CarrierBookingService $carrierBookingService,
+        protected CarrierBookingProviderRegistry $carrierBookingProviderRegistry,
     ) {}
 
     public function index()
@@ -50,6 +55,9 @@ class ShipmentRecordController extends Controller
             'statusOptions' => ShipmentRecord::statusLabels(),
             'failureReasonOptions' => ShipmentRecord::failureReasonLabels(),
             'eventTypeOptions' => ShipmentEvent::manualEventLabels(),
+            'canCreateCarrierBooking' => $shipmentRecord->carrier
+                ? $this->carrierBookingProviderRegistry->supportsCarrier($shipmentRecord->carrier)
+                : false,
         ]);
     }
 
@@ -157,5 +165,19 @@ class ShipmentRecordController extends Controller
         return redirect()
             ->route('admin.sales.shipment-operations.view', $shipmentRecord)
             ->with('success', 'Carrier booking references updated.');
+    }
+
+    public function createCarrierBooking(ShipmentCarrierBookingRequest $request, ShipmentRecord $shipmentRecord): RedirectResponse
+    {
+        $result = $this->carrierBookingService->bookShipmentRecord($shipmentRecord, [
+            'actor_admin_id' => auth('admin')->id(),
+            'note' => $request->string('note')->value() ?: null,
+        ]);
+
+        $flashKey = $result->status === 'booked' ? 'success' : ($result->status === 'skipped' ? 'warning' : 'error');
+
+        return redirect()
+            ->route('admin.sales.shipment-operations.view', $shipmentRecord)
+            ->with($flashKey, $result->message);
     }
 }

@@ -102,6 +102,42 @@
                             </div>
                         @endif
 
+                        @if (
+                            $canCreateCarrierBooking
+                            && bouncer()->hasPermission('sales.shipment_operations.book_with_carrier')
+                        )
+                            <form
+                                method="POST"
+                                action="{{ route('admin.sales.shipment-operations.book-with-carrier', $shipmentRecord) }}"
+                                class="grid gap-2 rounded border border-gray-200 p-3 dark:border-gray-800"
+                            >
+                                @csrf
+
+                                <p class="text-sm font-semibold text-gray-800 dark:text-white">
+                                    Courier Booking
+                                </p>
+
+                                <p class="text-sm text-gray-600 dark:text-gray-300">
+                                    Create the Steadfast booking directly from Shipment Ops and persist the returned consignment and tracking identifiers.
+                                </p>
+
+                                <textarea
+                                    name="note"
+                                    rows="2"
+                                    class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                    placeholder="Optional courier note"
+                                >{{ old('note') }}</textarea>
+
+                                <button
+                                    type="submit"
+                                    class="secondary-button"
+                                    @disabled($shipmentRecord->carrier_consignment_id)
+                                >
+                                    {{ $shipmentRecord->carrier_consignment_id ? 'Carrier Booking Already Created' : 'Book With Steadfast' }}
+                                </button>
+                            </form>
+                        @endif
+
                         @if (bouncer()->hasPermission('sales.shipment_operations.manage_booking_references'))
                             <form
                                 method="POST"

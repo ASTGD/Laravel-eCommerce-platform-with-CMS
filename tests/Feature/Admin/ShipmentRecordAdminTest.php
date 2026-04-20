@@ -721,6 +721,125 @@ it('stores carrier booking references on shipment ops without triggering shipmen
     Mail::assertNothingQueued();
 });
 
+it('books a steadfast consignment from shipment ops and persists returned courier references', function () {
+    $fixture = createShipmentRecordFixture();
+
+    Mail::fake();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'integration_driver' => 'steadfast',
+        'tracking_sync_enabled' => true,
+        'api_base_url' => 'https://api.steadfast.test',
+        'api_key' => 'test-key',
+        'api_secret' => 'test-secret',
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
+        'carrier_name_snapshot' => $carrier->name,
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'cod_amount_expected' => 499,
+        'handed_over_at' => now(),
+    ]);
+
+    $expectedInvoice = sprintf('%s-S%s', $fixture['order']->increment_id, $shipmentRecord->id);
+
+    Http::fake([
+        'https://api.steadfast.test/create_order' => Http::response([
+            'status' => 200,
+            'message' => 'Consignment has been created successfully.',
+            'consignment' => [
+                'consignment_id' => 1424107,
+                'invoice' => $expectedInvoice,
+                'tracking_code' => '15BAEB8A',
+                'created_at' => '2026-04-19T07:05:31.000000Z',
+            ],
+        ], 200),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.shipment-operations.book-with-carrier', $shipmentRecord), [
+        'note' => 'Fragile item. Call before delivery.',
+    ])->assertRedirect(route('admin.sales.shipment-operations.view', $shipmentRecord));
+
+    $shipmentRecord->refresh();
+
+    $latestEvent = ShipmentEvent::query()
+        ->where('shipment_record_id', $shipmentRecord->id)
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($shipmentRecord->tracking_number)->toBe('15BAEB8A')
+        ->and($shipmentRecord->carrier_consignment_id)->toBe('1424107')
+        ->and($shipmentRecord->carrier_invoice_reference)->toBe($expectedInvoice)
+        ->and($shipmentRecord->carrier_booked_at?->toIso8601String())->toContain('2026-04-19T07:05:31')
+        ->and($latestEvent->event_type)->toBe(ShipmentEvent::EVENT_CARRIER_BOOKED)
+        ->and($latestEvent->status_after_event)->toBeNull()
+        ->and(data_get($latestEvent->meta, 'external_message'))->toBe('Consignment has been created successfully.')
+        ->and(ShipmentCommunication::query()->where('shipment_record_id', $shipmentRecord->id)->count())->toBe(0);
+
+    Http::assertSent(function ($request) use ($expectedInvoice) {
+        return $request->url() === 'https://api.steadfast.test/create_order'
+            && $request['invoice'] === $expectedInvoice
+            && $request['recipient_name'] !== null
+            && $request['recipient_phone'] !== null
+            && $request['recipient_address'] !== null
+            && (float) $request['cod_amount'] === 499.0
+            && $request['note'] === 'Fragile item. Call before delivery.';
+    });
+
+    Mail::assertNothingQueued();
+});
+
+it('does not create a duplicate automated courier booking when a shipment is already booked', function () {
+    $fixture = createShipmentRecordFixture();
+
+    Http::fake();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'integration_driver' => 'steadfast',
+        'tracking_sync_enabled' => true,
+        'api_base_url' => 'https://api.steadfast.test',
+        'api_key' => 'test-key',
+        'api_secret' => 'test-secret',
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_HANDED_TO_CARRIER,
+        'carrier_name_snapshot' => $carrier->name,
+        'carrier_consignment_id' => 'CONSIGN-EXISTING',
+        'tracking_number' => 'TRACK-EXISTING',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'handed_over_at' => now(),
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.shipment-operations.book-with-carrier', $shipmentRecord), [])
+        ->assertRedirect(route('admin.sales.shipment-operations.view', $shipmentRecord))
+        ->assertSessionHas('warning', 'Carrier booking already exists for this shipment.');
+
+    Http::assertNothingSent();
+});
+
 it('queues shipment tracking sync jobs from the command', function () {
     $fixture = createShipmentRecordFixture();
 

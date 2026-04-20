@@ -37,6 +37,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
         $this->mergeConfigFrom(__DIR__.'/../../config/system.php', 'core');
         $this->mergeConfigFrom(__DIR__.'/../../config/carriers.php', 'carriers');
+        $this->mergeConfigFrom(__DIR__.'/../../config/carrier-booking.php', 'carrier_booking');
         $this->mergeConfigFrom(__DIR__.'/../../config/carrier-tracking.php', 'carrier_tracking');
         $this->mergeConfigFrom(__DIR__.'/../../config/payment-methods.php', 'payment_methods');
         $this->mergeConfigFrom(__DIR__.'/../../config/menu.php', 'menu.admin');
