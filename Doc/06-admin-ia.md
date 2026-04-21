@@ -27,7 +27,6 @@ The `Sales` area stays focused on commercial records and supporting commerce wor
 
 Current custom sales screens:
 
-- Pickup Points
 - Payments
 
 Shipment-related daily work now lives under a dedicated top-level `Shipments` area:
@@ -47,12 +46,13 @@ Configuration UX for shipping is now grouped under one business-facing hub:
 
 - `Configuration > Sales > Shipping`
   - `Courier Services`
+  - `Pickup Points`
   - `Origin & Fulfillment`
   - `Checkout Shipping Methods`
   - `Courier Operations`
   - `Shipment Notifications`
 
-This keeps courier setup, native shipping origin, checkout delivery methods, shipment communications, and the custom shipping workflow mode in one place without changing the underlying saved config keys used by Bagisto or the custom logistics layer.
+This keeps courier setup, pickup locations, native shipping origin, checkout delivery methods, shipment communications, and the custom shipping workflow mode in one place without changing the underlying saved config keys used by Bagisto or the custom logistics layer.
 
 `Courier Services` is the shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
 
@@ -67,6 +67,8 @@ This keeps courier setup, native shipping origin, checkout delivery methods, shi
 In `Manual Basic` mode, the screen stays business-first and hides API, webhook, and automatic delivery-update controls.
 
 In `Advanced Pro` mode, the same screen reveals courier-account connection details, automatic tracking-sync settings, and webhook secrets without changing the underlying carrier data model.
+
+`Pickup Points` lives in the same shipping hub as setup/master data for courier handoff locations and business pickup points. It remains separate from daily shipment operations so store owners can maintain it without entering the `Shipments` area.
 
 `Shipment Ops` is the custom operational shipment board. It is intentionally separate from native `Sales > Shipments` in the current slice so the new domain can coexist with Bagisto's shipment engine while it is being introduced.
 

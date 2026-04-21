@@ -38,6 +38,7 @@ it('hides advanced shipping menus and blocks advanced routes in manual basic mod
         ->assertDontSeeText('Shipment Ops')
         ->assertDontSeeText('COD Settlements')
         ->assertDontSeeText('Settlement Batches')
+        ->assertDontSeeText('Pickup Points')
         ->assertDontSeeText('Courier Services');
 
     get(route('admin.sales.orders.index'))
@@ -63,6 +64,7 @@ it('shows advanced shipping menus and allows advanced routes in advanced pro mod
         ->assertSeeText('Shipment Ops')
         ->assertSeeText('COD Settlements')
         ->assertSeeText('Settlement Batches')
+        ->assertDontSeeText('Pickup Points')
         ->assertDontSeeText('Courier Services');
 
     get(route('admin.sales.orders.index'))
