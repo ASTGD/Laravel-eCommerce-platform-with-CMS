@@ -191,9 +191,20 @@ Current status:
   - shipment registration can now store a shipment-level public tracking URL override
   - customer/public shipment tracking now prefers the shipment-level link when one is saved
 - the manual shipped-orders slice is now active:
-  - `Sales > Shipped Orders` now gives manual-mode stores a simple courier queue without exposing full Shipment Ops
+  - the old manual shipped-orders queue is now represented as `Shipments > In Delivery` for manual-mode stores
   - manual-mode admins can mark shipments as delivered from that page while still using the shared shipment status pipeline
   - delivered COD shipments now move hidden settlement state to `Collected by Carrier` so later remittance work starts from a truthful backend state
+- the manual business-workflow IA refactor is now active:
+  - the Basic-mode `Shipments` menu now uses merchant-facing labels: `To Ship`, `In Delivery`, and `COD Receivables`
+  - `To Ship` is now a dedicated Basic-mode booking page for processing orders that still need a courier handoff
+  - `To Ship` now books shipments through a business-facing modal while still creating the native shipment underneath
+  - `In Delivery` now becomes the business-facing label for the old manual shipped-orders queue and only shows active, not-yet-completed courier deliveries
+  - `In Delivery` now supports a courier filter and dedicated booked-date column so manual follow-up stays courier-first without exposing advanced ops
+  - `COD Receivables` now shows courier-first receivable, received, and pending totals derived from shipment-level COD settlements
+  - `COD Receivables` now records courier payments through a simple modal and allocates them oldest-first across pending COD shipment settlements
+  - marking a Basic-mode COD shipment as delivered now moves it into the courier receivable workflow automatically through the shared shipment and COD settlement pipeline
+  - prepaid deliveries stay out of `COD Receivables`
+  - the old native shipment browse screens now redirect back into the Basic workflow so duplicate shipment pages do not remain exposed in manual mode
 - the advanced-regression hardening slice is now active:
   - mode-split regression coverage now proves `manual_basic` does not leak advanced shipment, COD, or settlement tools through menu, order, or action routes
   - advanced regression coverage now proves `advanced_pro` still exposes the full Shipment Ops operational action surface after the manual-mode split

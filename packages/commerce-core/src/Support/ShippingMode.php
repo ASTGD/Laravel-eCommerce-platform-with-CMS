@@ -18,7 +18,9 @@ class ShippingMode
     ];
 
     protected const MANUAL_ONLY_ADMIN_PERMISSION_PREFIXES = [
+        'sales.to_ship',
         'sales.shipped_orders',
+        'sales.cod_receivables',
     ];
 
     public function current(): string

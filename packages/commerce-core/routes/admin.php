@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentAttemptController;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentRefundController;
 use Platform\CommerceCore\Http\Controllers\Admin\PickupPointController;
+use Platform\CommerceCore\Http\Controllers\Admin\ManualToShipController;
+use Platform\CommerceCore\Http\Controllers\Admin\ManualCodReceivableController;
 use Platform\CommerceCore\Http\Controllers\Admin\ManualShippedOrderController;
 use Platform\CommerceCore\Http\Controllers\Admin\OrderStatusController;
 use Platform\CommerceCore\Http\Controllers\Admin\CodSettlementController;
@@ -46,12 +48,27 @@ Route::group([
             Route::delete('{carrier}', 'destroy')->middleware('platform.acl:sales.carriers.delete')->name('admin.sales.carriers.destroy');
         });
 
+    Route::prefix('sales/to-ship')
+        ->controller(ManualToShipController::class)
+        ->middleware('commerce.shipping-mode:manual_basic')
+        ->group(function () {
+            Route::get('', 'index')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.index');
+        });
+
     Route::prefix('sales/shipped-orders')
         ->controller(ManualShippedOrderController::class)
         ->middleware('commerce.shipping-mode:manual_basic')
         ->group(function () {
             Route::get('', 'index')->middleware('platform.acl:sales.shipped_orders')->name('admin.sales.shipped-orders.index');
             Route::post('{shipmentRecord}/mark-delivered', 'markDelivered')->middleware('platform.acl:sales.shipped_orders.mark_delivered')->name('admin.sales.shipped-orders.mark-delivered');
+        });
+
+    Route::prefix('sales/cod-receivables')
+        ->controller(ManualCodReceivableController::class)
+        ->middleware('commerce.shipping-mode:manual_basic')
+        ->group(function () {
+            Route::get('', 'index')->middleware('platform.acl:sales.cod_receivables')->name('admin.sales.cod-receivables.index');
+            Route::post('record-received', 'recordReceived')->middleware('platform.acl:sales.cod_receivables')->name('admin.sales.cod-receivables.record-received');
         });
 
     Route::prefix('sales/shipment-operations')

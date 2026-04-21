@@ -57,20 +57,30 @@ return [
         'route' => 'admin.sales.carriers.destroy',
         'sort'  => 3,
     ], [
-        'key'   => 'sales.shipped_orders',
-        'name'  => 'Shipped Orders',
-        'route' => 'admin.sales.shipped-orders.index',
+        'key'   => 'sales.to_ship',
+        'name'  => 'To Ship',
+        'route' => 'admin.sales.to-ship.index',
         'sort'  => 11,
+    ], [
+        'key'   => 'sales.shipped_orders',
+        'name'  => 'In Delivery',
+        'route' => 'admin.sales.shipped-orders.index',
+        'sort'  => 12,
     ], [
         'key'   => 'sales.shipped_orders.mark_delivered',
         'name'  => 'Mark Delivered',
         'route' => 'admin.sales.shipped-orders.mark-delivered',
         'sort'  => 1,
     ], [
+        'key'   => 'sales.cod_receivables',
+        'name'  => 'COD Receivables',
+        'route' => 'admin.sales.cod-receivables.index',
+        'sort'  => 13,
+    ], [
         'key'   => 'sales.shipment_operations',
         'name'  => 'Shipment Ops',
         'route' => 'admin.sales.shipment-operations.index',
-        'sort'  => 12,
+        'sort'  => 14,
     ], [
         'key'   => 'sales.shipment_operations.view',
         'name'  => 'View',
@@ -120,7 +130,7 @@ return [
         'key'   => 'sales.cod_settlements',
         'name'  => 'COD Settlements',
         'route' => 'admin.sales.cod-settlements.index',
-        'sort'  => 13,
+        'sort'  => 15,
     ], [
         'key'   => 'sales.cod_settlements.view',
         'name'  => 'View',
@@ -135,7 +145,7 @@ return [
         'key'   => 'sales.settlement_batches',
         'name'  => 'Settlement Batches',
         'route' => 'admin.sales.settlement-batches.index',
-        'sort'  => 14,
+        'sort'  => 16,
     ], [
         'key'   => 'sales.settlement_batches.create',
         'name'  => 'Create',
@@ -155,16 +165,16 @@ return [
         'key'   => 'sales.orders.confirm',
         'name'  => 'Confirm Order',
         'route' => 'admin.sales.orders.confirm',
-        'sort'  => 14,
+        'sort'  => 17,
     ], [
         'key'   => 'sales.orders.reconcile_payment',
         'name'  => 'Reconcile Payment',
         'route' => 'admin.sales.orders.payments.reconcile',
-        'sort'  => 15,
+        'sort'  => 18,
     ], [
         'key'   => 'sales.orders.refresh_refund_status',
         'name'  => 'Refresh Refund Status',
         'route' => 'admin.sales.orders.payment_refunds.refresh',
-        'sort'  => 16,
+        'sort'  => 19,
     ],
 ];

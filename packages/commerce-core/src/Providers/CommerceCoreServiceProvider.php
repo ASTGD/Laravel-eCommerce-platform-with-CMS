@@ -12,6 +12,7 @@ use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Illuminate\Support\Facades\View;
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentController as CommerceShipmentController;
 use Platform\CommerceCore\Http\Middleware\EnsureShippingModeAllowsFeature;
+use Platform\CommerceCore\Http\Middleware\RedirectBasicShipmentBrowseRoutes;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
 use Platform\CommerceCore\Listeners\SyncShipmentRecordFromNativeShipment;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
@@ -58,6 +59,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->app['router']->aliasMiddleware('commerce.shipping-mode', EnsureShippingModeAllowsFeature::class);
+        $this->app['router']->pushMiddlewareToGroup('admin', RedirectBasicShipmentBrowseRoutes::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

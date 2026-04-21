@@ -31,10 +31,12 @@ it('hides advanced shipping menus and blocks advanced routes in manual basic mod
 
     $this->loginAsAdmin();
 
-    get(route('admin.sales.shipments.index'))
+    get(route('admin.sales.to-ship.index'))
         ->assertOk()
-        ->assertSeeText('Order Shipments')
-        ->assertSeeText('Shipped Orders')
+        ->assertSeeText('To Ship')
+        ->assertSeeText('In Delivery')
+        ->assertSeeText('COD Receivables')
+        ->assertDontSeeText('Order Shipments')
         ->assertDontSeeText('Shipment Ops')
         ->assertDontSeeText('COD Settlements')
         ->assertDontSeeText('Settlement Batches')
@@ -46,7 +48,11 @@ it('hides advanced shipping menus and blocks advanced routes in manual basic mod
         ->assertSeeText('Shipments')
         ->assertDontSeeText('Courier Services');
 
+    get(route('admin.sales.shipments.index'))
+        ->assertRedirect(route('admin.sales.shipped-orders.index'));
+
     get(route('admin.sales.shipped-orders.index'))->assertOk();
+    get(route('admin.sales.cod-receivables.index'))->assertOk();
     get(route('admin.sales.shipment-operations.index'))->assertForbidden();
     get(route('admin.sales.cod-settlements.index'))->assertForbidden();
     get(route('admin.sales.settlement-batches.index'))->assertForbidden();
@@ -60,6 +66,9 @@ it('shows advanced shipping menus and allows advanced routes in advanced pro mod
     get(route('admin.sales.shipments.index'))
         ->assertOk()
         ->assertSeeText('Order Shipments')
+        ->assertDontSeeText('To Ship')
+        ->assertDontSeeText('In Delivery')
+        ->assertDontSeeText('COD Receivables')
         ->assertDontSeeText('Shipped Orders')
         ->assertSeeText('Shipment Ops')
         ->assertSeeText('COD Settlements')
@@ -73,6 +82,7 @@ it('shows advanced shipping menus and allows advanced routes in advanced pro mod
         ->assertDontSeeText('Courier Services');
 
     get(route('admin.sales.shipped-orders.index'))->assertForbidden();
+    get(route('admin.sales.cod-receivables.index'))->assertForbidden();
     get(route('admin.sales.shipment-operations.index'))->assertOk();
     get(route('admin.sales.cod-settlements.index'))->assertOk();
     get(route('admin.sales.settlement-batches.index'))->assertOk();

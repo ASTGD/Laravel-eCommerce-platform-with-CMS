@@ -99,6 +99,10 @@ class AdminMenu extends BaseMenu
 
     private function isAuthorizedAdminMenuItem(array $item): bool
     {
+        if (! $this->matchesShippingMode($item)) {
+            return false;
+        }
+
         $permissionKey = $item['permission_key'] ?? $item['key'] ?? null;
 
         if (! $permissionKey) {
@@ -107,6 +111,17 @@ class AdminMenu extends BaseMenu
 
         return bouncer()->hasPermission($permissionKey)
             && $this->shippingMode->allowsAdminPermission($permissionKey);
+    }
+
+    private function matchesShippingMode(array $item): bool
+    {
+        $shippingModes = $item['shipping_modes'] ?? null;
+
+        if (! is_array($shippingModes) || $shippingModes === []) {
+            return true;
+        }
+
+        return in_array($this->shippingMode->current(), $shippingModes, true);
     }
 
     private function pruneEmptyAdminContainers(Collection $items): Collection
@@ -128,7 +143,7 @@ class AdminMenu extends BaseMenu
     {
         return collect($menuItem)
             ->sortBy('sort')
-            ->filter(fn ($value) => is_array($value))
+            ->filter(fn ($value) => is_array($value) && isset($value['key']))
             ->map(function ($subMenuItem) {
                 $subSubMenuItems = $this->processSubMenuItems($subMenuItem);
 

@@ -31,15 +31,16 @@ Current custom sales screens:
 
 Shipment-related daily work now lives under a dedicated top-level `Shipments` area:
 
-- Order Shipments
-- Shipped Orders
+- To Ship
+- In Delivery
+- COD Receivables
 - Shipment Ops
 - COD Settlements
 - Settlement Batches
 
 The shipping admin now supports two operating modes through `Configuration > Sales > Shipping > Courier Operations`:
 
-- `Manual Basic` is the default business-friendly mode. It keeps `Order Shipments`, `Shipped Orders`, and `Courier Services` visible, hides advanced shipment/COD operations, and is intended for store owners who only need simple courier registration and manual shipment handling.
+- `Manual Basic` is the default business-friendly mode. It now uses a merchant-facing workflow with `To Ship`, `In Delivery`, `COD Receivables`, and `Courier Services`, while hiding advanced shipment/COD operations for non-technical store owners.
 - `Advanced Pro` enables the full logistics stack, including `Shipment Ops`, `COD Settlements`, `Settlement Batches`, carrier booking, tracking sync, webhook-driven updates, and advanced courier connection fields.
 
 Configuration UX for shipping is now grouped under one business-facing hub:
@@ -74,18 +75,50 @@ In `Advanced Pro` mode, the same screen reveals courier-account connection detai
 
 `Shipment Ops`, `COD Settlements`, and `Settlement Batches` are available only in `Advanced Pro` mode. Manual-mode users should not see these operational tools in the `Shipments` menu or reach them directly by URL.
 
-`Shipped Orders` is the simple manual-mode shipment queue. It is intended for non-technical store owners and focuses only on:
+`To Ship` is now the manual-mode booking entry point in the `Shipments` menu. It lists processing orders that still need courier booking and presents a business-facing `Book Shipment` modal with:
+
+- courier
+- tracking number
+- tracking URL
+- note
+
+The booking form still creates a native Bagisto shipment underneath, so shipment creation and the custom `ShipmentRecord` sync remain on the existing shared path.
+
+`In Delivery` is the simple manual-mode shipment queue. It is intended for non-technical store owners and focuses only on:
 
 - order reference
 - customer snapshot
 - courier name
-- tracking ID
+- tracking number
 - public tracking link
+- booked date
 - COD amount
 - current shipment status
+- courier filter
 - one-click manual delivery confirmation
 
-When a manual-mode admin marks a shipment as delivered from `Shipped Orders`, the action still runs through the shared shipment status pipeline so shipment timestamps, COD collection amount, and future settlement readiness remain consistent with the advanced domain model.
+When a manual-mode admin marks a shipment as delivered from `In Delivery`, the action still runs through the shared shipment status pipeline so shipment timestamps, COD collection amount, and future settlement readiness remain consistent with the advanced domain model.
+
+For COD shipments in `Manual Basic` mode, that delivered transition now also completes the hidden handoff into `COD Receivables`:
+
+- `delivered_at` is recorded on the shipment
+- `cod_amount_collected` is copied from the expected COD amount
+- the linked shipment-level COD settlement moves into `Collected by Carrier`
+- the courier then appears in `COD Receivables` with updated receivable, received, and pending totals
+
+Prepaid deliveries continue to bypass `COD Receivables` entirely.
+
+`COD Receivables` is now the Basic workflow money page. It keeps the merchant-facing UI courier-first while preserving shipment-level COD settlement records underneath. The page currently supports:
+
+- courier-level receivable summary totals
+- courier-level received totals
+- courier-level pending totals
+- a simple `Record COD Received` action
+- oldest-first automatic allocation of the received amount across that courier's pending shipment-level COD settlements
+
+This keeps the Basic workflow simple for non-technical merchants without replacing the underlying COD settlement model or exposing advanced settlement-batch tooling.
+
+In `Manual Basic` mode, the old native Bagisto shipment browse screens are redirected back into the Basic workflow so store teams are not left with two competing shipment concepts.
 
 The native Bagisto shipment registration flow now stays in place but uses a courier-first business workflow:
 
