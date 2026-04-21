@@ -2,6 +2,7 @@
 
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Webkul\Admin\Tests\AdminTestCase;
+use Webkul\Core\Models\CoreConfig;
 
 use function Pest\Laravel\delete;
 use function Pest\Laravel\get;
@@ -32,6 +33,8 @@ it('shows the courier-first create form', function () {
 });
 
 it('creates and updates a steadfast courier service from admin', function () {
+    setShipmentCarrierShippingMode('advanced_pro');
+
     $this->loginAsAdmin();
 
     post(route('admin.sales.carriers.store'), [
@@ -100,6 +103,8 @@ it('creates and updates a steadfast courier service from admin', function () {
 });
 
 it('creates a pathao courier service with pathao account fields', function () {
+    setShipmentCarrierShippingMode('advanced_pro');
+
     $this->loginAsAdmin();
 
     post(route('admin.sales.carriers.store'), [
@@ -156,6 +161,8 @@ it('keeps a legacy driver when editing it as manual or other', function () {
 });
 
 it('uses business-friendly validation for missing pathao account details', function () {
+    setShipmentCarrierShippingMode('advanced_pro');
+
     $this->loginAsAdmin();
 
     post(route('admin.sales.carriers.store'), [
@@ -185,3 +192,16 @@ it('deletes a shipment carrier from admin', function () {
 
     expect(ShipmentCarrier::query()->find($carrier->id))->toBeNull();
 });
+
+function setShipmentCarrierShippingMode(string $mode): void
+{
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.shipping_workflow.shipping_mode',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => $mode,
+        ],
+    );
+}

@@ -38,7 +38,7 @@ return [
         'sort'  => 2,
     ], [
         'key'   => 'sales.carriers',
-        'name'  => 'Carriers',
+        'name'  => 'Courier Services',
         'route' => 'admin.sales.carriers.index',
         'sort'  => 10,
     ], [
@@ -57,10 +57,20 @@ return [
         'route' => 'admin.sales.carriers.destroy',
         'sort'  => 3,
     ], [
+        'key'   => 'sales.shipped_orders',
+        'name'  => 'Shipped Orders',
+        'route' => 'admin.sales.shipped-orders.index',
+        'sort'  => 11,
+    ], [
+        'key'   => 'sales.shipped_orders.mark_delivered',
+        'name'  => 'Mark Delivered',
+        'route' => 'admin.sales.shipped-orders.mark-delivered',
+        'sort'  => 1,
+    ], [
         'key'   => 'sales.shipment_operations',
         'name'  => 'Shipment Ops',
         'route' => 'admin.sales.shipment-operations.index',
-        'sort'  => 11,
+        'sort'  => 12,
     ], [
         'key'   => 'sales.shipment_operations.view',
         'name'  => 'View',
@@ -110,7 +120,7 @@ return [
         'key'   => 'sales.cod_settlements',
         'name'  => 'COD Settlements',
         'route' => 'admin.sales.cod-settlements.index',
-        'sort'  => 12,
+        'sort'  => 13,
     ], [
         'key'   => 'sales.cod_settlements.view',
         'name'  => 'View',
@@ -125,7 +135,7 @@ return [
         'key'   => 'sales.settlement_batches',
         'name'  => 'Settlement Batches',
         'route' => 'admin.sales.settlement-batches.index',
-        'sort'  => 13,
+        'sort'  => 14,
     ], [
         'key'   => 'sales.settlement_batches.create',
         'name'  => 'Create',

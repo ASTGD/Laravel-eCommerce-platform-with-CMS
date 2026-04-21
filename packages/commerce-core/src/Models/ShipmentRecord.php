@@ -41,6 +41,7 @@ class ShipmentRecord extends Model
         'status',
         'carrier_name_snapshot',
         'tracking_number',
+        'public_tracking_url',
         'carrier_booking_reference',
         'carrier_consignment_id',
         'carrier_invoice_reference',
@@ -160,6 +161,20 @@ class ShipmentRecord extends Model
 
         return static::failureReasonLabels()[$this->delivery_failure_reason]
             ?? str($this->delivery_failure_reason)->replace('_', ' ')->title()->value();
+    }
+
+    public function trackingUrl(): ?string
+    {
+        return $this->public_tracking_url ?: $this->carrier?->trackingUrl($this->tracking_number);
+    }
+
+    public function canBeMarkedDelivered(): bool
+    {
+        return ! in_array($this->status, [
+            self::STATUS_DELIVERED,
+            self::STATUS_RETURNED,
+            self::STATUS_CANCELED,
+        ], true);
     }
 
     public function order(): BelongsTo

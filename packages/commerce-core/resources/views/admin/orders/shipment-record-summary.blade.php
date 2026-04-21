@@ -1,15 +1,17 @@
 @php
+    $shippingMode = app(\Platform\CommerceCore\Support\ShippingMode::class);
     $shipmentRecords = app(\Platform\CommerceCore\Services\ShipmentRecordService::class)->forOrder($order);
     $codSettlements = app(\Platform\CommerceCore\Services\CodSettlementService::class)->forOrder($order);
     $settlementBatches = app(\Platform\CommerceCore\Services\SettlementBatchService::class)->forOrder($order);
 @endphp
 
-<x-admin::accordion>
-    <x-slot:header>
-        <p class="p-2.5 text-base font-semibold text-gray-600 dark:text-gray-300">
-            Shipment Ops ({{ $shipmentRecords->count() }})
-        </p>
-    </x-slot>
+@if ($shippingMode->usesAdvancedPro())
+    <x-admin::accordion>
+        <x-slot:header>
+            <p class="p-2.5 text-base font-semibold text-gray-600 dark:text-gray-300">
+                Shipment Ops ({{ $shipmentRecords->count() }})
+            </p>
+        </x-slot>
 
     <x-slot:content>
         @forelse ($shipmentRecords as $shipmentRecord)
@@ -46,14 +48,14 @@
             </p>
         @endforelse
     </x-slot>
-</x-admin::accordion>
+    </x-admin::accordion>
 
-<x-admin::accordion>
-    <x-slot:header>
-        <p class="p-2.5 text-base font-semibold text-gray-600 dark:text-gray-300">
-            COD Settlements ({{ $codSettlements->count() }})
-        </p>
-    </x-slot>
+    <x-admin::accordion>
+        <x-slot:header>
+            <p class="p-2.5 text-base font-semibold text-gray-600 dark:text-gray-300">
+                COD Settlements ({{ $codSettlements->count() }})
+            </p>
+        </x-slot>
 
     <x-slot:content>
         @forelse ($codSettlements as $codSettlement)
@@ -109,14 +111,14 @@
             </p>
         @endforelse
     </x-slot>
-</x-admin::accordion>
+    </x-admin::accordion>
 
-<x-admin::accordion>
-    <x-slot:header>
-        <p class="p-2.5 text-base font-semibold text-gray-600 dark:text-gray-300">
-            Settlement Batches ({{ $settlementBatches->count() }})
-        </p>
-    </x-slot>
+    <x-admin::accordion>
+        <x-slot:header>
+            <p class="p-2.5 text-base font-semibold text-gray-600 dark:text-gray-300">
+                Settlement Batches ({{ $settlementBatches->count() }})
+            </p>
+        </x-slot>
 
     <x-slot:content>
         @forelse ($settlementBatches as $settlementBatch)
@@ -155,4 +157,5 @@
             </p>
         @endforelse
     </x-slot>
-</x-admin::accordion>
+    </x-admin::accordion>
+@endif

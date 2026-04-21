@@ -8,6 +8,8 @@
     $isManualOther = $selectedCourierService === 'manual_other';
     $supportsCod = (int) old('supports_cod', $carrier->supports_cod ? 1 : 0) === 1;
     $trackingSyncEnabled = (int) old('tracking_sync_enabled', $carrier->tracking_sync_enabled ? 1 : 0) === 1;
+    $showsAdvancedCarrierConfiguration = (bool) $showsAdvancedCarrierConfiguration;
+    $contactDetailsCouriers = $showsAdvancedCarrierConfiguration ? 'pathao,manual_other' : 'steadfast,pathao,manual_other';
 @endphp
 
 <x-admin::layouts>
@@ -31,6 +33,12 @@
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
                     Choose the courier first, then fill only the account details that courier requires.
                 </p>
+
+                @unless ($showsAdvancedCarrierConfiguration)
+                    <p class="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-300">
+                        Manual Basic mode is active. Courier API, webhook, and automatic delivery update settings stay hidden until Shipping Workflow is switched to Advanced Pro.
+                    </p>
+                @endunless
             </div>
 
             <div class="flex items-center gap-x-2.5">
@@ -143,23 +151,24 @@
                     </div>
                 </div>
 
-                <div
-                    class="box-shadow rounded bg-white p-4 dark:bg-gray-900 {{ $isManualOther ? 'hidden' : '' }}"
-                    data-courier-section="steadfast,pathao"
-                >
-                    <p class="mb-1 text-base font-semibold text-gray-800 dark:text-white">
-                        Courier Account Connection
-                    </p>
-
-                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
-                        Paste the account details provided by the courier so the system can create bookings and fetch delivery updates.
-                    </p>
-
+                @if ($showsAdvancedCarrierConfiguration)
                     <div
-                        class="{{ $isSteadfast ? '' : 'hidden' }}"
-                        data-courier-section="steadfast"
+                        class="box-shadow rounded bg-white p-4 dark:bg-gray-900 {{ $isManualOther ? 'hidden' : '' }}"
+                        data-courier-section="steadfast,pathao"
                     >
-                        <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+                        <p class="mb-1 text-base font-semibold text-gray-800 dark:text-white">
+                            Courier Account Connection
+                        </p>
+
+                        <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                            Paste the account details provided by the courier so the system can create bookings and fetch delivery updates.
+                        </p>
+
+                        <div
+                            class="{{ $isSteadfast ? '' : 'hidden' }}"
+                            data-courier-section="steadfast"
+                        >
+                            <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">
                                     Courier API URL
@@ -284,14 +293,14 @@
 
                                 <x-admin::form.control-group.error control-name="webhook_secret" />
                             </x-admin::form.control-group>
+                            </div>
                         </div>
-                    </div>
 
-                    <div
-                        class="{{ $isPathao ? '' : 'hidden' }}"
-                        data-courier-section="pathao"
-                    >
-                        <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+                        <div
+                            class="{{ $isPathao ? '' : 'hidden' }}"
+                            data-courier-section="pathao"
+                        >
+                            <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">
                                     Courier API URL
@@ -435,15 +444,16 @@
                                     </p>
                                 @endif
 
-                                <x-admin::form.control-group.error control-name="webhook_secret" />
+                            <x-admin::form.control-group.error control-name="webhook_secret" />
                             </x-admin::form.control-group>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
 
                 <div
                     class="box-shadow rounded bg-white p-4 dark:bg-gray-900 {{ $isSteadfast ? 'hidden' : '' }}"
-                    data-courier-section="pathao,manual_other"
+                    data-courier-section="{{ $contactDetailsCouriers }}"
                 >
                     <p class="mb-1 text-base font-semibold text-gray-800 dark:text-white">
                         Contact Details
@@ -672,45 +682,47 @@
             </div>
 
             <div class="flex w-[360px] max-w-full flex-col gap-2 max-xl:w-full">
-                <div
-                    class="box-shadow rounded bg-white p-4 dark:bg-gray-900 {{ $isManualOther ? 'hidden' : '' }}"
-                    data-courier-section="steadfast,pathao"
-                >
-                    <p class="mb-1 text-base font-semibold text-gray-800 dark:text-white">
-                        Delivery Update Settings
-                    </p>
-
-                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
-                        Turn this on if you want this courier to send or fetch delivery status updates automatically.
-                    </p>
-
-                    <input
-                        type="hidden"
-                        name="tracking_sync_enabled"
-                        value="0"
+                @if ($showsAdvancedCarrierConfiguration)
+                    <div
+                        class="box-shadow rounded bg-white p-4 dark:bg-gray-900 {{ $isManualOther ? 'hidden' : '' }}"
+                        data-courier-section="steadfast,pathao"
                     >
+                        <p class="mb-1 text-base font-semibold text-gray-800 dark:text-white">
+                            Delivery Update Settings
+                        </p>
 
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            Automatic Delivery Updates
-                        </x-admin::form.control-group.label>
+                        <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                            Turn this on if you want this courier to send or fetch delivery status updates automatically.
+                        </p>
 
-                        <label class="inline-flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                name="tracking_sync_enabled"
-                                value="1"
-                                @checked($trackingSyncEnabled || (! $isEdit && ! $isManualOther))
-                            >
+                        <input
+                            type="hidden"
+                            name="tracking_sync_enabled"
+                            value="0"
+                        >
 
-                            <span class="text-sm text-gray-600 dark:text-gray-300">
-                                Allow the system to sync shipment updates for this courier.
-                            </span>
-                        </label>
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                Automatic Delivery Updates
+                            </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.error control-name="tracking_sync_enabled" />
-                    </x-admin::form.control-group>
-                </div>
+                            <label class="inline-flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    name="tracking_sync_enabled"
+                                    value="1"
+                                    @checked($trackingSyncEnabled || (! $isEdit && ! $isManualOther))
+                                >
+
+                                <span class="text-sm text-gray-600 dark:text-gray-300">
+                                    Allow the system to sync shipment updates for this courier.
+                                </span>
+                            </label>
+
+                            <x-admin::form.control-group.error control-name="tracking_sync_enabled" />
+                        </x-admin::form.control-group>
+                    </div>
+                @endif
 
                 <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
                     <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">

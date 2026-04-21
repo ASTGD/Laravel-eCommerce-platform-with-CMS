@@ -100,7 +100,7 @@ class CustomerShipmentTrackingService
             'id' => $shipmentRecord->id,
             'carrier_name' => $shipmentRecord->carrier?->name ?? $shipmentRecord->carrier_name_snapshot,
             'tracking_number' => $shipmentRecord->tracking_number,
-            'carrier_tracking_url' => $shipmentRecord->carrier?->trackingUrl($shipmentRecord->tracking_number),
+            'carrier_tracking_url' => $shipmentRecord->trackingUrl(),
             'status' => $shipmentRecord->status,
             'status_label' => $this->statusLabel($shipmentRecord),
             'events' => $shipmentRecord->events

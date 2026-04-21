@@ -29,27 +29,54 @@ Current custom sales screens:
 
 - Pickup Points
 - Payments
-- Carriers
+- Courier Services
+- Shipped Orders
 - Shipment Ops
 - COD Settlements
 - Settlement Batches
 
-`Carriers` is the first shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
+The shipping admin now supports two operating modes through `Sales > Shipping Workflow`:
+
+- `Manual Basic` is the default business-friendly mode. It keeps `Courier Services` and `Shipped Orders` visible, hides advanced shipment/COD operations, and is intended for store owners who only need simple courier registration and manual shipment handling.
+- `Advanced Pro` enables the full logistics stack, including `Shipment Ops`, `COD Settlements`, `Settlement Batches`, carrier booking, tracking sync, webhook-driven updates, and advanced courier connection fields.
+
+`Courier Services` is the shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
 
 - contact details
 - tracking URL template
-- integration driver selection
-- tracking sync enable/disable flag
-- API endpoint and credential placeholders
 - COD support flag
 - COD fee defaults
 - return fee defaults
 - payout-method default
 - active and inactive state
 
-This registry is intentionally admin-only in the current slice. It does not yet replace Bagisto's native shipment UI by itself.
+In `Manual Basic` mode, the screen stays business-first and hides API, webhook, and automatic delivery-update controls.
+
+In `Advanced Pro` mode, the same screen reveals courier-account connection details, automatic tracking-sync settings, and webhook secrets without changing the underlying carrier data model.
 
 `Shipment Ops` is the custom operational shipment board. It is intentionally separate from native `Sales > Shipments` in the current slice so the new domain can coexist with Bagisto's shipment engine while it is being introduced.
+
+`Shipment Ops`, `COD Settlements`, and `Settlement Batches` are available only in `Advanced Pro` mode. Manual-mode users should not see these operational tools in the sales menu or reach them directly by URL.
+
+`Shipped Orders` is the simple manual-mode shipment queue. It is intended for non-technical store owners and focuses only on:
+
+- order reference
+- customer snapshot
+- courier name
+- tracking ID
+- public tracking link
+- COD amount
+- current shipment status
+- one-click manual delivery confirmation
+
+When a manual-mode admin marks a shipment as delivered from `Shipped Orders`, the action still runs through the shared shipment status pipeline so shipment timestamps, COD collection amount, and future settlement readiness remain consistent with the advanced domain model.
+
+The native Bagisto shipment registration flow now stays in place but uses a courier-first business workflow:
+
+- select a saved active courier service instead of typing a free-text courier name
+- enter the shipment tracking ID
+- optionally save a shipment-specific public tracking link override
+- keep Bagisto native shipment creation as the source action while syncing those details into the custom shipment record domain
 
 `Shipment Ops` and similar operational detail pages now follow a shared 3-column admin shell:
 
@@ -150,7 +177,7 @@ Current hardening rules now also prevent:
 - marking a COD settlement `Disputed` without a dispute note
 - marking a settlement batch `Disputed` without operator notes
 
-The native admin order detail page now also includes order-level operational summaries through render hooks:
+When `Advanced Pro` mode is enabled, the native admin order detail page also includes order-level operational summaries through render hooks:
 
 - shipment summary with carrier/tracking and direct Shipment Ops link
 - COD settlement summary with status, money snapshot, and direct settlement link

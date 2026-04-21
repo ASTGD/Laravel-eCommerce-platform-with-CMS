@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Platform\CommerceCore\Models\ShipmentCarrier;
+use Platform\CommerceCore\Support\ShippingMode;
 
 class ShipmentCarrierRequest extends FormRequest
 {
@@ -238,6 +239,10 @@ class ShipmentCarrierRequest extends FormRequest
 
     protected function requiresIntegratedApi(string $courierService): bool
     {
+        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+            return false;
+        }
+
         return in_array($courierService, [
             self::COURIER_SERVICE_STEADFAST,
             self::COURIER_SERVICE_PATHAO,
@@ -246,6 +251,10 @@ class ShipmentCarrierRequest extends FormRequest
 
     protected function requiresSecretField(string $field, string $courierService): bool
     {
+        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+            return false;
+        }
+
         if (! in_array($field, self::SECRET_FIELDS, true)) {
             return false;
         }
@@ -324,6 +333,12 @@ class ShipmentCarrierRequest extends FormRequest
 
     protected function resolvedTrackingSyncEnabled(string $integrationDriver, ?ShipmentCarrier $carrier): bool
     {
+        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+            return $carrier?->exists
+                ? (bool) $carrier->tracking_sync_enabled
+                : false;
+        }
+
         if ($this->has('tracking_sync_enabled')) {
             return $this->boolean('tracking_sync_enabled');
         }

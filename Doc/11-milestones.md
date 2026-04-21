@@ -179,8 +179,25 @@ The shipment and COD domain workstream is now active.
 Current status:
 
 - the temporary execution plan is documented in [Doc/TEMP-shipment-cod-settlement-plan.md](/Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS/Doc/TEMP-shipment-cod-settlement-plan.md)
-- the first implementation slice is `Sales > Carriers`
+- the first implementation slice is `Sales > Courier Services`
 - the carrier registry slice is now implemented in `packages/commerce-core`
+- the shipping-mode foundation slice is now active:
+  - `Sales > Shipping Workflow` now controls whether the store runs in `Manual Basic` or `Advanced Pro`
+  - `Manual Basic` is now the default product mode for non-technical store owners
+  - advanced shipment/COD routes are now blocked in `Manual Basic`, not just hidden from the menu
+  - the courier registry remains available in both modes, but advanced API/webhook/tracking-sync fields only appear in `Advanced Pro`
+- the manual shipment registration slice is now active:
+  - native shipment creation now uses a saved-courier dropdown instead of free-text courier entry
+  - shipment registration can now store a shipment-level public tracking URL override
+  - customer/public shipment tracking now prefers the shipment-level link when one is saved
+- the manual shipped-orders slice is now active:
+  - `Sales > Shipped Orders` now gives manual-mode stores a simple courier queue without exposing full Shipment Ops
+  - manual-mode admins can mark shipments as delivered from that page while still using the shared shipment status pipeline
+  - delivered COD shipments now move hidden settlement state to `Collected by Carrier` so later remittance work starts from a truthful backend state
+- the advanced-regression hardening slice is now active:
+  - mode-split regression coverage now proves `manual_basic` does not leak advanced shipment, COD, or settlement tools through menu, order, or action routes
+  - advanced regression coverage now proves `advanced_pro` still exposes the full Shipment Ops operational action surface after the manual-mode split
+  - the shipping-mode UX split is now implemented end to end for both manual and advanced store operation
 - the `Shipment Ops` slice is now active as the custom operational shipment layer
 - native Bagisto shipment creation now syncs into custom shipment records and timeline events
 - shipment timelines now support manual operational events without forcing every update through a pure status-change form

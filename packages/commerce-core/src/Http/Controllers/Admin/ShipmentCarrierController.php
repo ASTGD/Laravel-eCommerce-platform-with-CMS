@@ -10,11 +10,13 @@ use Platform\CommerceCore\DataGrids\Sales\ShipmentCarrierDataGrid;
 use Platform\CommerceCore\Http\Requests\Admin\ShipmentCarrierRequest;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Repositories\ShipmentCarrierRepository;
+use Platform\CommerceCore\Support\ShippingMode;
 
 class ShipmentCarrierController extends Controller
 {
     public function __construct(
         protected ShipmentCarrierRepository $shipmentCarrierRepository,
+        protected ShippingMode $shippingMode,
     ) {}
 
     public function index()
@@ -97,6 +99,7 @@ class ShipmentCarrierController extends Controller
             'legacyDriverLabel' => $legacyDriver ? str($legacyDriver)->replace('_', ' ')->title()->value() : null,
             'codFeeTypes' => ShipmentCarrierRequest::COD_FEE_TYPES,
             'payoutMethods' => ShipmentCarrierRequest::PAYOUT_METHODS,
+            'showsAdvancedCarrierConfiguration' => $this->shippingMode->showsAdvancedCarrierConfiguration(),
         ];
     }
 }

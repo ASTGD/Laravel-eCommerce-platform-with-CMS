@@ -11,6 +11,9 @@ class SyncShipmentRecordFromNativeShipment
 
     public function handle(ShipmentContract $shipment): void
     {
-        $this->shipmentRecordService->syncFromNativeShipment($shipment);
+        $this->shipmentRecordService->syncFromNativeShipment(
+            $shipment,
+            (array) request()->input('shipment', [])
+        );
     }
 }
