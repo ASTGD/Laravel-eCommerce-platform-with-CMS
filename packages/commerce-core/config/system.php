@@ -391,6 +391,51 @@ return [
             ],
         ],
     ], [
+        'key'  => 'sales.shipping.checkout_methods',
+        'name' => 'Checkout Shipping Methods',
+        'info' => 'Manage the shipping choices shown to customers during checkout, including free shipping, flat rate, and district-based courier delivery.',
+        'sort' => 1,
+        'fields' => [
+            [
+                'name' => 'checkout_methods_hub',
+                'title' => 'Checkout Shipping Methods',
+                'type' => 'blade',
+                'path' => 'commerce-core::admin.configuration.shipping-checkout-methods',
+                'channel_based' => true,
+                'locale_based' => false,
+            ],
+        ],
+    ], [
+        'key'  => 'sales.shipping.courier_operations',
+        'name' => 'Courier Operations',
+        'info' => 'Choose whether the store runs on the simple manual courier workflow or the full advanced shipment operations stack.',
+        'sort' => 2,
+        'fields' => [
+            [
+                'name' => 'shipping_workflow_hub',
+                'title' => 'Courier Operations',
+                'type' => 'blade',
+                'path' => 'commerce-core::admin.configuration.shipping-courier-operations',
+                'channel_based' => true,
+                'locale_based' => false,
+            ],
+        ],
+    ], [
+        'key'  => 'sales.shipping.notifications',
+        'name' => 'Shipment Notifications',
+        'info' => 'Choose which shipment update emails should be sent to customers and to your team.',
+        'sort' => 3,
+        'fields' => [
+            [
+                'name' => 'shipment_notifications_hub',
+                'title' => 'Shipment Notifications',
+                'type' => 'blade',
+                'path' => 'commerce-core::admin.configuration.shipping-notifications',
+                'channel_based' => true,
+                'locale_based' => false,
+            ],
+        ],
+    ], [
         'key'  => 'sales.shipping_workflow',
         'name' => 'Shipping Workflow',
         'info' => 'Choose whether the store uses the simple manual shipping workflow or the full advanced logistics workflow.',

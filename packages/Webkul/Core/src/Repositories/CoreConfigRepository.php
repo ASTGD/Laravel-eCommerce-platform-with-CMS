@@ -100,12 +100,18 @@ class CoreConfigRepository extends Repository
                         if (isset($value['delete'])) {
                             parent::delete($coreConfig['id']);
                         } else {
-                            parent::update([
+                            $payload = [
                                 'code' => $fieldName,
                                 'value' => $value,
                                 'locale_code' => $localeBased ? $locale : null,
                                 'channel_code' => $channelBased ? $channel : null,
-                            ], $coreConfig->id);
+                            ];
+
+                            if (! $this->hasConfigChanged($coreConfig, $payload)) {
+                                continue;
+                            }
+
+                            parent::update($payload, $coreConfig->id);
                         }
                     }
                 }
@@ -236,5 +242,29 @@ class CoreConfigRepository extends Repository
         return is_array(reset($array))
             ? $this->countDim(reset($array)) + 1
             : 1;
+    }
+
+    /**
+     * Determine whether the persisted config row needs to be updated.
+     */
+    protected function hasConfigChanged(mixed $coreConfig, array $payload): bool
+    {
+        return ! (
+            $this->valuesMatch($coreConfig->value, $payload['value'] ?? null)
+            && $this->valuesMatch($coreConfig->locale_code, $payload['locale_code'] ?? null)
+            && $this->valuesMatch($coreConfig->channel_code, $payload['channel_code'] ?? null)
+        );
+    }
+
+    /**
+     * Normalize DB and request values for config equality checks.
+     */
+    protected function valuesMatch(mixed $current, mixed $next): bool
+    {
+        if ($current === null || $next === null) {
+            return $current === $next;
+        }
+
+        return (string) $current === (string) $next;
     }
 }

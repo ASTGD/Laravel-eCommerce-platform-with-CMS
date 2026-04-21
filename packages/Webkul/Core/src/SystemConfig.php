@@ -17,6 +17,13 @@ class SystemConfig
     public array $items = [];
 
     /**
+     * Cached config rows grouped by scope for the current request.
+     *
+     * @var array<string, \Illuminate\Support\Collection<string, \Webkul\Core\Models\CoreConfig>>
+     */
+    protected array $coreConfigScopeCache = [];
+
+    /**
      * Create a new class instance.
      *
      * @return void
@@ -164,33 +171,49 @@ class SystemConfig
     {
         $fields = $this->getConfigField($field);
 
-        if (! empty($fields['channel_based'])) {
-            if (! empty($fields['locale_based'])) {
-                $coreConfigValue = $this->coreConfigRepository->findOneWhere([
-                    'code' => $field,
-                    'channel_code' => $channel,
-                    'locale_code' => $locale,
-                ]);
-            } else {
-                $coreConfigValue = $this->coreConfigRepository->findOneWhere([
-                    'code' => $field,
-                    'channel_code' => $channel,
-                ]);
-            }
-        } else {
-            if (! empty($fields['locale_based'])) {
-                $coreConfigValue = $this->coreConfigRepository->findOneWhere([
-                    'code' => $field,
-                    'locale_code' => $locale,
-                ]);
-            } else {
-                $coreConfigValue = $this->coreConfigRepository->findOneWhere([
-                    'code' => $field,
-                ]);
-            }
+        if (! $fields) {
+            return null;
         }
 
-        return $coreConfigValue;
+        return $this->getScopedCoreConfigs(
+            channel: ! empty($fields['channel_based']) ? $channel : null,
+            locale: ! empty($fields['locale_based']) ? $locale : null,
+        )->get($field);
+    }
+
+    /**
+     * Load all config rows for a given scope once per request.
+     *
+     * @return \Illuminate\Support\Collection<string, \Webkul\Core\Models\CoreConfig>
+     */
+    protected function getScopedCoreConfigs(?string $channel, ?string $locale): Collection
+    {
+        $cacheKey = implode('|', [
+            $channel ?? '__null__',
+            $locale ?? '__null__',
+        ]);
+
+        if (isset($this->coreConfigScopeCache[$cacheKey])) {
+            return $this->coreConfigScopeCache[$cacheKey];
+        }
+
+        $query = CoreConfig::query();
+
+        if ($channel) {
+            $query->where('channel_code', $channel);
+        } else {
+            $query->whereNull('channel_code');
+        }
+
+        if ($locale) {
+            $query->where('locale_code', $locale);
+        } else {
+            $query->whereNull('locale_code');
+        }
+
+        return $this->coreConfigScopeCache[$cacheKey] = $query
+            ->get()
+            ->keyBy('code');
     }
 
     /**
