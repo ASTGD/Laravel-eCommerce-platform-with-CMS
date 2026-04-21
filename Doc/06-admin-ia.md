@@ -35,10 +35,20 @@ Current custom sales screens:
 - COD Settlements
 - Settlement Batches
 
-The shipping admin now supports two operating modes through `Sales > Shipping Workflow`:
+The shipping admin now supports two operating modes through `Configuration > Sales > Shipping > Courier Operations`:
 
 - `Manual Basic` is the default business-friendly mode. It keeps `Courier Services` and `Shipped Orders` visible, hides advanced shipment/COD operations, and is intended for store owners who only need simple courier registration and manual shipment handling.
 - `Advanced Pro` enables the full logistics stack, including `Shipment Ops`, `COD Settlements`, `Settlement Batches`, carrier booking, tracking sync, webhook-driven updates, and advanced courier connection fields.
+
+Configuration UX for shipping is now grouped under one business-facing hub:
+
+- `Configuration > Sales > Shipping`
+  - `Origin & Fulfillment`
+  - `Checkout Shipping Methods`
+  - `Courier Operations`
+  - `Shipment Notifications`
+
+This keeps native shipping origin, checkout delivery methods, shipment communications, and the custom shipping workflow mode in one place without changing the underlying saved config keys used by Bagisto or the custom logistics layer.
 
 `Courier Services` is the shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
 

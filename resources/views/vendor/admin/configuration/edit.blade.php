@@ -7,13 +7,25 @@
 
     $activeConfiguration = system_config()->getActiveConfigurationItem();
 
+    $configurationDisplayNames = [
+        'sales.shipping' => 'Shipping',
+        'sales.shipping.origin' => 'Origin & Fulfillment',
+    ];
+
+    $configurationDisplayInfo = [
+        'sales.shipping' => 'Manage shipping origin, checkout delivery methods, courier workflow, and shipment notifications in one place.',
+        'sales.shipping.origin' => 'Set the business address and fulfillment details used for shipping calculations and order paperwork.',
+    ];
+
     $isPaymentMethodConfiguration = request()->route('slug') === 'sales'
         && request()->route('slug2') === 'payment_methods';
+
+    $name = $configurationDisplayNames[$activeConfiguration->getKey()] ?? $activeConfiguration->getName();
 @endphp
 
 <x-admin::layouts>
     <x-slot:title>
-        {{ $name = $activeConfiguration->getName() }}
+        {{ $name }}
     </x-slot>
 
     <x-admin::form
@@ -119,7 +131,35 @@
             @include('vendor.admin.configuration.partials.payment-method-tabs')
         @else
             <div class="mt-6 grid grid-cols-[1fr_2fr] gap-10 max-xl:flex-wrap">
-                @include('vendor.admin.configuration.partials.children-grid', ['children' => $activeConfiguration->getChildren()])
+                @foreach ($activeConfiguration->getChildren() as $child)
+                    @php
+                        $childName = $configurationDisplayNames[$child->getKey()] ?? $child->getName();
+                        $childInfo = $configurationDisplayInfo[$child->getKey()] ?? $child->getInfo();
+                    @endphp
+
+                    <div class="grid content-start gap-2.5">
+                        <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
+                            {{ $childName }}
+                        </p>
+
+                        <p class="leading-[140%] text-gray-600 dark:text-gray-300">
+                            {!! $childInfo !!}
+                        </p>
+                    </div>
+
+                    <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
+                        @foreach ($child->getFields() as $field)
+                            @if (
+                                $field->getType() == 'blade'
+                                && view()->exists($path = $field->getPath())
+                            )
+                                {!! view($path, compact('field', 'child'))->render() !!}
+                            @else
+                                @include('admin::configuration.field-type')
+                            @endif
+                        @endforeach
+                    </div>
+                @endforeach
             </div>
         @endif
     </x-admin::form>
