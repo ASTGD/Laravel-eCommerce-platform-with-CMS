@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentAttemptController;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentRefundController;
 use Platform\CommerceCore\Http\Controllers\Admin\PickupPointController;
+use Platform\CommerceCore\Http\Controllers\Admin\ManualShippedOrderController;
 use Platform\CommerceCore\Http\Controllers\Admin\OrderStatusController;
 use Platform\CommerceCore\Http\Controllers\Admin\CodSettlementController;
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentCarrierController;
@@ -45,8 +46,17 @@ Route::group([
             Route::delete('{carrier}', 'destroy')->middleware('platform.acl:sales.carriers.delete')->name('admin.sales.carriers.destroy');
         });
 
+    Route::prefix('sales/shipped-orders')
+        ->controller(ManualShippedOrderController::class)
+        ->middleware('commerce.shipping-mode:manual_basic')
+        ->group(function () {
+            Route::get('', 'index')->middleware('platform.acl:sales.shipped_orders')->name('admin.sales.shipped-orders.index');
+            Route::post('{shipmentRecord}/mark-delivered', 'markDelivered')->middleware('platform.acl:sales.shipped_orders.mark_delivered')->name('admin.sales.shipped-orders.mark-delivered');
+        });
+
     Route::prefix('sales/shipment-operations')
         ->controller(ShipmentRecordController::class)
+        ->middleware('commerce.shipping-mode:advanced_pro')
         ->group(function () {
             Route::get('', 'index')->middleware('platform.acl:sales.shipment_operations')->name('admin.sales.shipment-operations.index');
             Route::get('{shipmentRecord}', 'show')->middleware('platform.acl:sales.shipment_operations.view')->name('admin.sales.shipment-operations.view');
@@ -63,6 +73,7 @@ Route::group([
 
     Route::prefix('sales/cod-settlements')
         ->controller(CodSettlementController::class)
+        ->middleware('commerce.shipping-mode:advanced_pro')
         ->group(function () {
             Route::get('', 'index')->middleware('platform.acl:sales.cod_settlements')->name('admin.sales.cod-settlements.index');
             Route::get('{codSettlement}', 'show')->middleware('platform.acl:sales.cod_settlements.view')->name('admin.sales.cod-settlements.view');
@@ -71,6 +82,7 @@ Route::group([
 
     Route::prefix('sales/settlement-batches')
         ->controller(SettlementBatchController::class)
+        ->middleware('commerce.shipping-mode:advanced_pro')
         ->group(function () {
             Route::get('', 'index')->middleware('platform.acl:sales.settlement_batches')->name('admin.sales.settlement-batches.index');
             Route::get('create', 'create')->middleware('platform.acl:sales.settlement_batches.create')->name('admin.sales.settlement-batches.create');

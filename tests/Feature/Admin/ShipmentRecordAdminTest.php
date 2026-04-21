@@ -13,6 +13,7 @@ use Platform\CommerceCore\Models\ShipmentCommunication;
 use Platform\CommerceCore\Models\ShipmentEvent;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Jobs\SyncShipmentTrackingJob;
+use Platform\CommerceCore\Services\CustomerShipmentTrackingService;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -34,6 +35,10 @@ use function Pest\Laravel\post;
 use function Pest\Laravel\postJson;
 
 uses(AdminTestCase::class);
+
+beforeEach(function () {
+    setAdminShippingMode('advanced_pro');
+});
 
 it('syncs an operational shipment record from native shipment creation', function () {
     $fixture = createShipmentRecordFixture();
@@ -68,6 +73,65 @@ it('syncs an operational shipment record from native shipment creation', functio
         ->and($shipmentRecord->tracking_number)->toBe($fixture['track_number'])
         ->and((string) $shipmentRecord->cod_amount_expected)->toBe((string) number_format((float) $fixture['order']->base_grand_total, 2, '.', ''))
         ->and(ShipmentEvent::query()->where('shipment_record_id', $shipmentRecord->id)->count())->toBe(1);
+});
+
+it('shows a courier-first shipment drawer on the admin order page', function () {
+    $fixture = createShipmentRecordFixture();
+
+    ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'tracking_url_template' => 'https://carrier.example/track/{tracking_number}',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $this->loginAsAdmin();
+
+    get(route('admin.sales.orders.view', $fixture['order']->id))
+        ->assertOk()
+        ->assertSeeText('Courier Service')
+        ->assertSeeText('Select saved courier')
+        ->assertSeeText('Public Tracking Link (Optional)')
+        ->assertDontSeeText('Carrier Name');
+});
+
+it('registers a native shipment with a saved courier and public tracking override', function () {
+    $fixture = createShipmentRecordFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'tracking_url_template' => 'https://carrier.example/track/{tracking_number}',
+        'supports_cod' => true,
+        'default_cod_fee_type' => 'flat',
+        'default_cod_fee_amount' => 55,
+        'default_return_fee_amount' => 120,
+        'default_payout_method' => 'bkash',
+        'is_active' => true,
+    ]);
+
+    $this->loginAsAdmin();
+
+    postJson(route('admin.sales.shipments.store', $fixture['order']->id), [
+        'shipment' => [
+            'source' => $fixture['source'],
+            'items' => $fixture['items'],
+            'carrier_id' => $carrier->id,
+            'track_number' => $fixture['track_number'],
+            'public_tracking_url' => 'https://tracking.example/shipments/'.$fixture['track_number'],
+        ],
+    ])->assertRedirect(route('admin.sales.orders.view', $fixture['order']->id));
+
+    $nativeShipment = Shipment::query()->latest('id')->firstOrFail();
+    $shipmentRecord = ShipmentRecord::query()->where('native_shipment_id', $nativeShipment->id)->firstOrFail();
+    $timeline = app(CustomerShipmentTrackingService::class)->forOrder($fixture['order']->fresh())->first();
+
+    expect($nativeShipment->carrier_title)->toBe('Steadfast Courier')
+        ->and($shipmentRecord->shipment_carrier_id)->toBe($carrier->id)
+        ->and($shipmentRecord->carrier_name_snapshot)->toBe('Steadfast Courier')
+        ->and($shipmentRecord->public_tracking_url)->toBe('https://tracking.example/shipments/'.$fixture['track_number'])
+        ->and($timeline['carrier_tracking_url'])->toBe('https://tracking.example/shipments/'.$fixture['track_number']);
 });
 
 it('shows shipment ops in the admin order view and shipment ops pages', function () {
@@ -1221,6 +1285,19 @@ function setShipmentNotificationConfig(string $code, mixed $value): void
         ],
         [
             'value' => (string) $value,
+        ],
+    );
+}
+
+function setAdminShippingMode(string $mode): void
+{
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.shipping_workflow.shipping_mode',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => $mode,
         ],
     );
 }

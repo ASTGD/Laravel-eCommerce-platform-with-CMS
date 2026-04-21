@@ -11,6 +11,7 @@ use Webkul\Checkout\Models\CartAddress;
 use Webkul\Checkout\Models\CartItem;
 use Webkul\Checkout\Models\CartPayment;
 use Webkul\Checkout\Models\CartShippingRate;
+use Webkul\Core\Models\CoreConfig;
 use Webkul\Customer\Models\Customer;
 use Webkul\Customer\Models\CustomerAddress;
 use Webkul\Faker\Helpers\Product as ProductFaker;
@@ -24,6 +25,10 @@ use function Pest\Laravel\post;
 use function Pest\Laravel\postJson;
 
 uses(AdminTestCase::class);
+
+beforeEach(function () {
+    setSettlementBatchShippingMode('advanced_pro');
+});
 
 it('creates a settlement batch and attaches many cod settlements to one payout', function () {
     $this->loginAsAdmin();
@@ -386,4 +391,17 @@ function createSettlementBatchShipmentFixture(): array
         'carrier_title' => 'Steadfast Courier',
         'track_number' => 'TRACK-'.fake()->numerify('######'),
     ];
+}
+
+function setSettlementBatchShippingMode(string $mode): void
+{
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.shipping_workflow.shipping_mode',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => $mode,
+        ],
+    );
 }

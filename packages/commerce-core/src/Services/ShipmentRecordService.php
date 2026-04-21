@@ -23,7 +23,7 @@ class ShipmentRecordService
         protected ShipmentCommunicationService $shipmentCommunicationService,
     ) {}
 
-    public function syncFromNativeShipment(Shipment $shipment): ShipmentRecord
+    public function syncFromNativeShipment(Shipment $shipment, array $context = []): ShipmentRecord
     {
         $shipment->loadMissing([
             'order.payment',
@@ -32,11 +32,13 @@ class ShipmentRecordService
             'inventory_source',
         ]);
 
-        return DB::transaction(function () use ($shipment) {
+        return DB::transaction(function () use ($shipment, $context) {
             $order = $shipment->order;
             $shippingAddress = $order->shipping_address;
-            $carrier = $this->resolveCarrier($shipment->carrier_code, $shipment->carrier_title);
+            $selectedCarrierId = isset($context['carrier_id']) ? (int) $context['carrier_id'] : null;
+            $carrier = $this->resolveCarrier($selectedCarrierId, $shipment->carrier_code, $shipment->carrier_title);
             $actorAdminId = Auth::guard('admin')->id();
+            $publicTrackingUrl = trim((string) ($context['public_tracking_url'] ?? ''));
 
             $record = ShipmentRecord::query()->firstOrNew([
                 'native_shipment_id' => $shipment->id,
@@ -54,8 +56,9 @@ class ShipmentRecordService
                 'inventory_source_id' => $shipment->inventory_source_id,
                 'updated_by_admin_id' => $actorAdminId,
                 'status' => $status,
-                'carrier_name_snapshot' => $shipment->carrier_title,
+                'carrier_name_snapshot' => $carrier?->name ?: $shipment->carrier_title,
                 'tracking_number' => $shipment->track_number,
+                'public_tracking_url' => $publicTrackingUrl !== '' ? $publicTrackingUrl : $record->public_tracking_url,
                 'inventory_source_name' => $shipment->inventory_source?->name ?: $shipment->inventory_source_name,
                 'origin_label' => $shipment->inventory_source?->name ?: $shipment->inventory_source_name,
                 'destination_country' => $shippingAddress?->country,
@@ -440,8 +443,16 @@ class ShipmentRecordService
         return $result['shipment_record'];
     }
 
-    protected function resolveCarrier(?string $carrierCode, ?string $carrierTitle): ?ShipmentCarrier
+    protected function resolveCarrier(?int $carrierId, ?string $carrierCode, ?string $carrierTitle): ?ShipmentCarrier
     {
+        if ($carrierId) {
+            $carrier = ShipmentCarrier::query()->find($carrierId);
+
+            if ($carrier) {
+                return $carrier;
+            }
+        }
+
         if ($carrierCode) {
             $carrier = ShipmentCarrier::query()
                 ->whereRaw('LOWER(code) = ?', [mb_strtolower(trim($carrierCode))])

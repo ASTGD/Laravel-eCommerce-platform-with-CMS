@@ -56,12 +56,21 @@ class CodSettlementService
             $remittedAmount = (float) ($settlement->remitted_amount ?? 0);
             $disputedAmount = (float) ($settlement->disputed_amount ?? 0);
             $shortAmount = $this->calculateShortAmount($netAmount, $remittedAmount, $disputedAmount);
+            $status = $this->resolveSyncedStatus($shipmentRecord, $settlement);
+            $collectedAt = $settlement->collected_at;
+
+            if (
+                $status === CodSettlement::STATUS_COLLECTED_BY_CARRIER
+                && ! $collectedAt
+            ) {
+                $collectedAt = $shipmentRecord->delivered_at ?: now();
+            }
 
             $settlement->fill([
                 'order_id' => $shipmentRecord->order_id,
                 'shipment_carrier_id' => $shipmentRecord->shipment_carrier_id,
                 'updated_by_admin_id' => $actorAdminId ?: $shipmentRecord->updated_by_admin_id,
-                'status' => $settlement->status ?: CodSettlement::STATUS_EXPECTED,
+                'status' => $status,
                 'expected_amount' => $expectedAmount,
                 'collected_amount' => $collectedAmount,
                 'carrier_fee_amount' => $carrierFeeAmount,
@@ -69,6 +78,7 @@ class CodSettlementService
                 'return_fee_amount' => $returnFeeAmount,
                 'net_amount' => $netAmount,
                 'short_amount' => $shortAmount,
+                'collected_at' => $collectedAt,
             ]);
 
             if (! $settlement->exists) {
@@ -79,6 +89,20 @@ class CodSettlementService
 
             return $settlement->fresh(['shipmentRecord', 'order', 'carrier']);
         });
+    }
+
+    protected function resolveSyncedStatus(ShipmentRecord $shipmentRecord, CodSettlement $settlement): string
+    {
+        $currentStatus = $settlement->status ?: CodSettlement::STATUS_EXPECTED;
+
+        if (
+            $shipmentRecord->status === ShipmentRecord::STATUS_DELIVERED
+            && $currentStatus === CodSettlement::STATUS_EXPECTED
+        ) {
+            return CodSettlement::STATUS_COLLECTED_BY_CARRIER;
+        }
+
+        return $currentStatus;
     }
 
     public function updateSettlement(CodSettlement $codSettlement, array $data, ?int $actorAdminId = null): CodSettlement

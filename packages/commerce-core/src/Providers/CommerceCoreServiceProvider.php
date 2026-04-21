@@ -9,14 +9,22 @@ use Platform\CommerceCore\Console\Commands\ImportCodSettlementsCommand;
 use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
 use Platform\CommerceCore\Console\Commands\SyncShipmentTrackingCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
+use Illuminate\Support\Facades\View;
+use Platform\CommerceCore\Http\Controllers\Admin\ShipmentController as CommerceShipmentController;
+use Platform\CommerceCore\Http\Middleware\EnsureShippingModeAllowsFeature;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
 use Platform\CommerceCore\Listeners\SyncShipmentRecordFromNativeShipment;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
+use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Payment\PaymentManager;
 use Platform\CommerceCore\Repositories\OrderRepository as CommerceOrderRepository;
 use Platform\CommerceCore\Services\CheckoutGuestAccountService;
+use Platform\CommerceCore\Support\AdminMenu;
 use Platform\CommerceCore\Services\DataSourceResolver;
 use Platform\CommerceCore\Support\CheckoutMode;
+use Platform\CommerceCore\Support\ShippingMode;
+use Webkul\Admin\Http\Controllers\Sales\ShipmentController as BaseShipmentController;
+use Webkul\Core\Menu as BaseMenu;
 use Webkul\Admin\Http\Controllers\Sales\RefundController as BaseRefundController;
 use Webkul\Admin\Listeners\Refund as BaseRefundListener;
 use Webkul\Core\Http\Middleware\PreventRequestsDuringMaintenance;
@@ -30,7 +38,10 @@ class CommerceCoreServiceProvider extends ServiceProvider
     {
         $this->app->singleton(DataSourceResolverContract::class, DataSourceResolver::class);
         $this->app->singleton(CheckoutMode::class);
+        $this->app->singleton(ShippingMode::class);
+        $this->app->bind(BaseMenu::class, AdminMenu::class);
         $this->app->bind(BasePaymentManager::class, PaymentManager::class);
+        $this->app->bind(BaseShipmentController::class, CommerceShipmentController::class);
         $this->app->bind(BaseRefundController::class, CommerceRefundController::class);
         $this->app->bind(BaseRefundListener::class, CommerceRefundListener::class);
         $this->app->bind(BaseOrderRepository::class, CommerceOrderRepository::class);
@@ -46,6 +57,8 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->app['router']->aliasMiddleware('commerce.shipping-mode', EnsureShippingModeAllowsFeature::class);
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ImportCodSettlementsCommand::class,
@@ -65,6 +78,18 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'commerce-core');
+
+        View::composer('admin::sales.shipments.create', static function ($view): void {
+            $view->with('shipmentCarriers', ShipmentCarrier::query()
+                ->active()
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'name',
+                    'tracking_url_template',
+                ]));
+        });
 
         Event::listen('bagisto.admin.sales.order.shipping-method.after', static function (ViewRenderEventManager $viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('commerce-core::admin.orders.pickup-point-details');

@@ -390,5 +390,25 @@ return [
                 'default' => true,
             ],
         ],
+    ], [
+        'key'  => 'sales.shipping_workflow',
+        'name' => 'Shipping Workflow',
+        'info' => 'Choose whether the store uses the simple manual shipping workflow or the full advanced logistics workflow.',
+        'sort' => 5,
+        'fields' => [
+            [
+                'name' => 'shipping_mode',
+                'title' => 'Shipping Mode',
+                'info' => 'Manual Basic keeps courier setup simple and hides advanced shipment operations. Advanced Pro enables booking, tracking sync, webhook updates, and COD settlement operations.',
+                'type' => 'select',
+                'options' => [
+                    ['title' => 'Manual Basic', 'value' => 'manual_basic'],
+                    ['title' => 'Advanced Pro', 'value' => 'advanced_pro'],
+                ],
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => 'manual_basic',
+            ],
+        ],
     ],
 ];
