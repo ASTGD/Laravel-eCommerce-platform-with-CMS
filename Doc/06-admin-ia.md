@@ -23,13 +23,16 @@ Relevant admin areas now exposed:
 
 ## Sales Extensions
 
-The `Sales` area now includes custom operational extensions beyond native Bagisto order and payment workflows.
+The `Sales` area stays focused on commercial records and supporting commerce workflows.
 
 Current custom sales screens:
 
 - Pickup Points
 - Payments
-- Courier Services
+
+Shipment-related daily work now lives under a dedicated top-level `Shipments` area:
+
+- Order Shipments
 - Shipped Orders
 - Shipment Ops
 - COD Settlements
@@ -37,18 +40,19 @@ Current custom sales screens:
 
 The shipping admin now supports two operating modes through `Configuration > Sales > Shipping > Courier Operations`:
 
-- `Manual Basic` is the default business-friendly mode. It keeps `Courier Services` and `Shipped Orders` visible, hides advanced shipment/COD operations, and is intended for store owners who only need simple courier registration and manual shipment handling.
+- `Manual Basic` is the default business-friendly mode. It keeps `Order Shipments`, `Shipped Orders`, and `Courier Services` visible, hides advanced shipment/COD operations, and is intended for store owners who only need simple courier registration and manual shipment handling.
 - `Advanced Pro` enables the full logistics stack, including `Shipment Ops`, `COD Settlements`, `Settlement Batches`, carrier booking, tracking sync, webhook-driven updates, and advanced courier connection fields.
 
 Configuration UX for shipping is now grouped under one business-facing hub:
 
 - `Configuration > Sales > Shipping`
+  - `Courier Services`
   - `Origin & Fulfillment`
   - `Checkout Shipping Methods`
   - `Courier Operations`
   - `Shipment Notifications`
 
-This keeps native shipping origin, checkout delivery methods, shipment communications, and the custom shipping workflow mode in one place without changing the underlying saved config keys used by Bagisto or the custom logistics layer.
+This keeps courier setup, native shipping origin, checkout delivery methods, shipment communications, and the custom shipping workflow mode in one place without changing the underlying saved config keys used by Bagisto or the custom logistics layer.
 
 `Courier Services` is the shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
 
@@ -66,7 +70,7 @@ In `Advanced Pro` mode, the same screen reveals courier-account connection detai
 
 `Shipment Ops` is the custom operational shipment board. It is intentionally separate from native `Sales > Shipments` in the current slice so the new domain can coexist with Bagisto's shipment engine while it is being introduced.
 
-`Shipment Ops`, `COD Settlements`, and `Settlement Batches` are available only in `Advanced Pro` mode. Manual-mode users should not see these operational tools in the sales menu or reach them directly by URL.
+`Shipment Ops`, `COD Settlements`, and `Settlement Batches` are available only in `Advanced Pro` mode. Manual-mode users should not see these operational tools in the `Shipments` menu or reach them directly by URL.
 
 `Shipped Orders` is the simple manual-mode shipment queue. It is intended for non-technical store owners and focuses only on:
 

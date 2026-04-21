@@ -19,13 +19,15 @@ it('shows one unified shipping settings hub from configuration index', function 
         ->assertDontSeeText('Shipping Workflow');
 });
 
-it('shows checkout methods, courier operations, and shipment notifications on the unified shipping page', function () {
+it('shows courier services, checkout methods, courier operations, and shipment notifications on the unified shipping page', function () {
     $this->loginAsAdmin();
 
     get(route('admin.configuration.index', ['slug' => 'sales', 'slug2' => 'shipping']))
         ->assertOk()
         ->assertSeeText('Shipping')
         ->assertSeeText('Origin & Fulfillment')
+        ->assertSeeText('Courier Services')
+        ->assertSeeText('Manage Courier Services')
         ->assertSeeText('Checkout Shipping Methods')
         ->assertSeeText('Courier Operations')
         ->assertSeeText('Shipment Notifications')
@@ -67,6 +69,7 @@ function shippingConfigurationPayload(array $override = []): array
         'keys' => collect(config('core'))
             ->filter(fn (array $item) => in_array($item['key'], [
                 'sales.shipping.origin',
+                'sales.shipping.courier_services',
                 'sales.carriers.free',
                 'sales.carriers.flatrate',
                 'sales.carriers.courier',
