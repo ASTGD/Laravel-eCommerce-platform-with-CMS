@@ -9,6 +9,10 @@ use Webkul\Core\Menu\MenuItem;
 
 class AdminMenu extends BaseMenu
 {
+    protected const HIDDEN_ADMIN_MENU_KEYS = [
+        'sales.shipments',
+    ];
+
     private array $items = [];
 
     private array $configMenu = [];
@@ -29,10 +33,11 @@ class AdminMenu extends BaseMenu
 
         switch ($area) {
             case self::ADMIN:
-                $this->configMenu = $configMenu
-                    ->filter(fn ($item) => bouncer()->hasPermission($item['key']))
-                    ->filter(fn ($item) => $this->shippingMode->allowsAdminPermission($item['key']))
-                    ->toArray();
+                $this->configMenu = $this->pruneEmptyAdminContainers(
+                    $this->prepareAdminConfigMenu($configMenu)
+                    ->filter(fn ($item) => $this->isAuthorizedAdminMenuItem($item))
+                    ->values()
+                )->toArray();
                 break;
 
             case self::CUSTOMER:
@@ -83,6 +88,40 @@ class AdminMenu extends BaseMenu
                 children: $subMenuItems,
             );
         }
+    }
+
+    private function prepareAdminConfigMenu(Collection $configMenu): Collection
+    {
+        return $configMenu
+            ->reject(fn (array $item) => in_array($item['key'], self::HIDDEN_ADMIN_MENU_KEYS, true))
+            ->values();
+    }
+
+    private function isAuthorizedAdminMenuItem(array $item): bool
+    {
+        $permissionKey = $item['permission_key'] ?? $item['key'] ?? null;
+
+        if (! $permissionKey) {
+            return true;
+        }
+
+        return bouncer()->hasPermission($permissionKey)
+            && $this->shippingMode->allowsAdminPermission($permissionKey);
+    }
+
+    private function pruneEmptyAdminContainers(Collection $items): Collection
+    {
+        return $items
+            ->filter(function (array $item) use ($items): bool {
+                if (($item['permission_key'] ?? '__missing__') !== null) {
+                    return true;
+                }
+
+                $prefix = $item['key'].'.';
+
+                return $items->contains(fn (array $candidate) => str_starts_with($candidate['key'], $prefix));
+            })
+            ->values();
     }
 
     private function processSubMenuItems($menuItem): Collection

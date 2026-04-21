@@ -31,13 +31,19 @@ it('hides advanced shipping menus and blocks advanced routes in manual basic mod
 
     $this->loginAsAdmin();
 
-    get(route('admin.sales.carriers.index'))
+    get(route('admin.sales.shipments.index'))
         ->assertOk()
-        ->assertSeeText('Courier Services')
+        ->assertSeeText('Order Shipments')
         ->assertSeeText('Shipped Orders')
         ->assertDontSeeText('Shipment Ops')
         ->assertDontSeeText('COD Settlements')
-        ->assertDontSeeText('Settlement Batches');
+        ->assertDontSeeText('Settlement Batches')
+        ->assertDontSeeText('Courier Services');
+
+    get(route('admin.sales.orders.index'))
+        ->assertOk()
+        ->assertSeeText('Shipments')
+        ->assertDontSeeText('Courier Services');
 
     get(route('admin.sales.shipped-orders.index'))->assertOk();
     get(route('admin.sales.shipment-operations.index'))->assertForbidden();
@@ -50,13 +56,19 @@ it('shows advanced shipping menus and allows advanced routes in advanced pro mod
 
     $this->loginAsAdmin();
 
-    get(route('admin.sales.carriers.index'))
+    get(route('admin.sales.shipments.index'))
         ->assertOk()
-        ->assertSeeText('Courier Services')
+        ->assertSeeText('Order Shipments')
         ->assertDontSeeText('Shipped Orders')
         ->assertSeeText('Shipment Ops')
         ->assertSeeText('COD Settlements')
-        ->assertSeeText('Settlement Batches');
+        ->assertSeeText('Settlement Batches')
+        ->assertDontSeeText('Courier Services');
+
+    get(route('admin.sales.orders.index'))
+        ->assertOk()
+        ->assertSeeText('Shipments')
+        ->assertDontSeeText('Courier Services');
 
     get(route('admin.sales.shipped-orders.index'))->assertForbidden();
     get(route('admin.sales.shipment-operations.index'))->assertOk();
