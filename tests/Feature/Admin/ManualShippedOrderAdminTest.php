@@ -28,7 +28,7 @@ beforeEach(function () {
     setManualShippedOrdersShippingMode('manual_basic');
 });
 
-it('shows a simple shipped orders list in manual basic mode', function () {
+it('shows a simple in delivery list in manual basic mode', function () {
     $fixture = createManualShippedOrderFixture();
 
     $carrier = ShipmentCarrier::query()->create([
@@ -59,12 +59,71 @@ it('shows a simple shipped orders list in manual basic mode', function () {
 
     get(route('admin.sales.shipped-orders.index'))
         ->assertOk()
-        ->assertSeeText('Shipped Orders')
+        ->assertSeeText('In Delivery')
+        ->assertSeeText('Booked Date')
+        ->assertSeeText('Shipment Status')
+        ->assertSeeText('All couriers')
         ->assertSeeText((string) $fixture['order']->increment_id)
         ->assertSeeText('Steadfast Courier')
         ->assertSeeText('TRACK-MANUAL-001')
         ->assertSeeText('Open tracking link')
         ->assertSeeText('Mark Delivered');
+});
+
+it('filters the in delivery queue by courier', function () {
+    $fixture = createManualShippedOrderFixture();
+
+    $pathaoCarrier = ShipmentCarrier::query()->create([
+        'code' => 'pathao',
+        'name' => 'Pathao Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $steadfastCarrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast',
+        'name' => 'Steadfast Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $pathaoCarrier->id,
+        'status' => ShipmentRecord::STATUS_IN_TRANSIT,
+        'carrier_name_snapshot' => $pathaoCarrier->name,
+        'tracking_number' => 'TRACK-PATHAO-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'handed_over_at' => now()->subHours(2),
+    ]);
+
+    ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $steadfastCarrier->id,
+        'status' => ShipmentRecord::STATUS_OUT_FOR_DELIVERY,
+        'carrier_name_snapshot' => $steadfastCarrier->name,
+        'tracking_number' => 'TRACK-STEADFAST-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'handed_over_at' => now()->subHour(),
+    ]);
+
+    $this->loginAsAdmin();
+
+    get(route('admin.sales.shipped-orders.index', ['carrier_id' => $pathaoCarrier->id]))
+        ->assertOk()
+        ->assertSeeText('Pathao Courier')
+        ->assertSeeText('TRACK-PATHAO-001')
+        ->assertDontSeeText('TRACK-STEADFAST-001');
 });
 
 it('marks a manual shipped order as delivered and moves hidden cod state to collected by carrier', function () {
@@ -113,6 +172,10 @@ it('marks a manual shipped order as delivered and moves hidden cod state to coll
         ->and($codSettlement->status)->toBe(CodSettlement::STATUS_COLLECTED_BY_CARRIER)
         ->and((float) $codSettlement->collected_amount)->toBe(1799.0)
         ->and($codSettlement->collected_at)->not->toBeNull();
+
+    get(route('admin.sales.shipped-orders.index'))
+        ->assertOk()
+        ->assertDontSeeText('TRACK-MANUAL-DELIVERED');
 });
 
 function setManualShippedOrdersShippingMode(string $mode): void

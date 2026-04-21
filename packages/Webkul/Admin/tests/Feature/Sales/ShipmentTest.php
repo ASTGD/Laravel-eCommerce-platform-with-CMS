@@ -23,6 +23,35 @@ use Webkul\Shop\Mail\Order\ShippedNotification as ShopShippedNotification;
 use function Pest\Laravel\get;
 use function Pest\Laravel\postJson;
 
+beforeEach(function () {
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.shipping_workflow.shipping_mode',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => 'advanced_pro',
+        ],
+    );
+
+    foreach ([
+        'emails.general.notifications.emails.general.notifications.new_shipment',
+        'emails.general.notifications.emails.general.notifications.new_shipment_mail_to_admin',
+        'emails.general.notifications.emails.general.notifications.new_inventory_source',
+    ] as $configCode) {
+        CoreConfig::query()->updateOrCreate(
+            [
+                'code' => $configCode,
+                'channel_code' => 'default',
+                'locale_code' => null,
+            ],
+            [
+                'value' => 0,
+            ],
+        );
+    }
+});
+
 it('should returns the shipment page', function () {
     // Act and Assert.
     $this->loginAsAdmin();

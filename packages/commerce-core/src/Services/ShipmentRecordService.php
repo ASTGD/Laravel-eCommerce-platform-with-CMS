@@ -39,6 +39,7 @@ class ShipmentRecordService
             $carrier = $this->resolveCarrier($selectedCarrierId, $shipment->carrier_code, $shipment->carrier_title);
             $actorAdminId = Auth::guard('admin')->id();
             $publicTrackingUrl = trim((string) ($context['public_tracking_url'] ?? ''));
+            $bookingNote = trim((string) ($context['note'] ?? ''));
 
             $record = ShipmentRecord::query()->firstOrNew([
                 'native_shipment_id' => $shipment->id,
@@ -73,6 +74,7 @@ class ShipmentRecordService
                 'return_fee_amount' => $returnFeeAmount,
                 'net_remittable_amount' => max(0, $codExpectedAmount - $carrierFeeAmount - $codFeeAmount - $returnFeeAmount),
                 'handed_over_at' => $record->handed_over_at ?: now(),
+                'notes' => $bookingNote !== '' ? $bookingNote : $record->notes,
             ]);
 
             if (! $record->exists) {
@@ -82,7 +84,7 @@ class ShipmentRecordService
             $record->save();
 
             $this->syncItems($record, $shipment);
-            $this->ensureInitialEvent($record, $actorAdminId);
+            $this->ensureInitialEvent($record, $actorAdminId, $bookingNote);
             $this->codSettlementService->syncFromShipmentRecord($record, $actorAdminId);
 
             return $record->fresh(['carrier', 'items', 'events', 'communications', 'nativeShipment', 'order', 'codSettlement']);
@@ -512,7 +514,7 @@ class ShipmentRecordService
             ->delete();
     }
 
-    protected function ensureInitialEvent(ShipmentRecord $shipmentRecord, ?int $actorAdminId): void
+    protected function ensureInitialEvent(ShipmentRecord $shipmentRecord, ?int $actorAdminId, ?string $bookingNote = null): void
     {
         if ($shipmentRecord->events()->exists()) {
             return;
@@ -524,7 +526,9 @@ class ShipmentRecordService
             'event_type' => ShipmentEvent::EVENT_SHIPMENT_CREATED,
             'status_after_event' => $shipmentRecord->status,
             'event_at' => $shipmentRecord->handed_over_at ?: now(),
-            'note' => 'Operational shipment record created from native shipment creation.',
+            'note' => blank($bookingNote)
+                ? 'Operational shipment record created from native shipment creation.'
+                : trim((string) $bookingNote),
             'meta' => [
                 'native_shipment_id' => $shipmentRecord->native_shipment_id,
                 'tracking_number' => $shipmentRecord->tracking_number,
