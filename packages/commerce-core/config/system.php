@@ -406,10 +406,25 @@ return [
             ],
         ],
     ], [
+        'key'  => 'sales.shipping.pickup_points',
+        'name' => 'Pickup Points',
+        'info' => 'Manage the pickup locations and handoff points your couriers use during fulfillment.',
+        'sort' => 2,
+        'fields' => [
+            [
+                'name' => 'pickup_points_hub',
+                'title' => 'Pickup Points',
+                'type' => 'blade',
+                'path' => 'commerce-core::admin.configuration.shipping-pickup-points',
+                'channel_based' => true,
+                'locale_based' => false,
+            ],
+        ],
+    ], [
         'key'  => 'sales.shipping.checkout_methods',
         'name' => 'Checkout Shipping Methods',
         'info' => 'Manage the shipping choices shown to customers during checkout, including free shipping, flat rate, and district-based courier delivery.',
-        'sort' => 2,
+        'sort' => 3,
         'fields' => [
             [
                 'name' => 'checkout_methods_hub',
@@ -424,7 +439,7 @@ return [
         'key'  => 'sales.shipping.courier_operations',
         'name' => 'Courier Operations',
         'info' => 'Choose whether the store runs on the simple manual courier workflow or the full advanced shipment operations stack.',
-        'sort' => 3,
+        'sort' => 4,
         'fields' => [
             [
                 'name' => 'shipping_workflow_hub',
@@ -439,7 +454,7 @@ return [
         'key'  => 'sales.shipping.notifications',
         'name' => 'Shipment Notifications',
         'info' => 'Choose which shipment update emails should be sent to customers and to your team.',
-        'sort' => 4,
+        'sort' => 5,
         'fields' => [
             [
                 'name' => 'shipment_notifications_hub',
@@ -454,7 +469,7 @@ return [
         'key'  => 'sales.shipping_workflow',
         'name' => 'Shipping Workflow',
         'info' => 'Choose whether the store uses the simple manual shipping workflow or the full advanced logistics workflow.',
-        'sort' => 5,
+        'sort' => 6,
         'fields' => [
             [
                 'name' => 'shipping_mode',

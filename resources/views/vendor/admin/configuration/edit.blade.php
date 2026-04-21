@@ -13,7 +13,7 @@
     ];
 
     $configurationDisplayInfo = [
-        'sales.shipping' => 'Manage shipping origin, checkout delivery methods, courier workflow, and shipment notifications in one place.',
+        'sales.shipping' => 'Manage shipping origin, pickup points, checkout delivery methods, courier workflow, and shipment notifications in one place.',
         'sales.shipping.origin' => 'Set the business address and fulfillment details used for shipping calculations and order paperwork.',
     ];
 
