@@ -112,10 +112,14 @@ it('keeps the courier form business-only in manual basic mode', function () {
         ->assertOk()
         ->assertSeeText('Add Courier Service')
         ->assertSeeText('Manual Basic mode is active')
-        ->assertDontSeeText('Courier Account Connection')
-        ->assertDontSeeText('Delivery Update Settings')
+        ->assertSeeText('Courier Name')
+        ->assertSeeText('Courier Code')
+        ->assertSeeText('Contact Person')
+        ->assertSeeText('Address')
+        ->assertDontSeeText('Automation & API Connection (Pro)')
+        ->assertDontSeeText('Automation Type')
         ->assertDontSeeText('Status Update Secret')
-        ->assertDontSeeText('Courier API URL');
+        ->assertDontSeeText('API URL');
 });
 
 it('shows advanced courier connection fields in advanced pro mode', function () {
@@ -125,8 +129,9 @@ it('shows advanced courier connection fields in advanced pro mode', function () 
 
     get(route('admin.sales.carriers.create'))
         ->assertOk()
-        ->assertSeeText('Courier Account Connection')
-        ->assertSeeText('Delivery Update Settings');
+        ->assertSeeText('Automation & API Connection (Pro)')
+        ->assertSeeText('Automation Type')
+        ->assertSeeText('Courier Payment Defaults');
 });
 
 it('hides advanced shipment summaries and blocks advanced action posts in manual basic mode', function () {

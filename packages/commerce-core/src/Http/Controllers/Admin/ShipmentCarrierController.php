@@ -31,6 +31,7 @@ class ShipmentCarrierController extends Controller
     public function create(): View
     {
         return view('commerce-core::admin.carriers.form', $this->formViewData(new ShipmentCarrier([
+            'address' => null,
             'supports_cod' => true,
             'default_cod_fee_type' => 'flat',
             'default_payout_method' => 'bank_transfer',
@@ -41,10 +42,10 @@ class ShipmentCarrierController extends Controller
 
     public function store(ShipmentCarrierRequest $request): RedirectResponse
     {
-        $carrier = $this->shipmentCarrierRepository->create($request->payload());
+        $this->shipmentCarrierRepository->create($request->payload());
 
         return redirect()
-            ->route('admin.sales.carriers.edit', $carrier)
+            ->route('admin.sales.carriers.create')
             ->with('success', 'Courier service added.');
     }
 
@@ -83,6 +84,7 @@ class ShipmentCarrierController extends Controller
         $legacyDriver = $carrier->exists && $selectedCourierService === ShipmentCarrierRequest::COURIER_SERVICE_MANUAL_OTHER
             ? $carrier->trackingDriver()
             : null;
+        $preservedConnectionLabel = null;
 
         if (in_array($legacyDriver, [
             null,
@@ -92,11 +94,21 @@ class ShipmentCarrierController extends Controller
             $legacyDriver = null;
         }
 
+        if ($carrier->exists && ! $this->shippingMode->showsAdvancedCarrierConfiguration()) {
+            $preservedConnectionLabel = match ($carrier->trackingDriver()) {
+                ShipmentCarrierRequest::COURIER_SERVICE_STEADFAST => 'Steadfast',
+                ShipmentCarrierRequest::COURIER_SERVICE_PATHAO => 'Pathao',
+                ShipmentCarrier::INTEGRATION_DRIVER_MANUAL, null, '' => null,
+                default => str($carrier->trackingDriver())->replace('_', ' ')->title()->value(),
+            };
+        }
+
         return [
             'carrier' => $carrier,
-            'courierOptions' => ShipmentCarrierRequest::courierOptions(),
+            'integrationOptions' => ShipmentCarrierRequest::courierOptions(),
             'selectedCourierService' => $selectedCourierService,
             'legacyDriverLabel' => $legacyDriver ? str($legacyDriver)->replace('_', ' ')->title()->value() : null,
+            'preservedConnectionLabel' => $preservedConnectionLabel,
             'codFeeTypes' => ShipmentCarrierRequest::COD_FEE_TYPES,
             'payoutMethods' => ShipmentCarrierRequest::PAYOUT_METHODS,
             'showsAdvancedCarrierConfiguration' => $this->shippingMode->showsAdvancedCarrierConfiguration(),

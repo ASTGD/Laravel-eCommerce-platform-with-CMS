@@ -58,6 +58,7 @@ This keeps courier setup, pickup locations, native shipping origin, checkout del
 `Courier Services` is the shipment-domain registry screen. It stores courier agencies and their operational defaults for later shipment and COD-settlement slices:
 
 - contact details
+- office or pickup address
 - tracking URL template
 - COD support flag
 - COD fee defaults
@@ -65,9 +66,9 @@ This keeps courier setup, pickup locations, native shipping origin, checkout del
 - payout-method default
 - active and inactive state
 
-In `Manual Basic` mode, the screen stays business-first and hides API, webhook, and automatic delivery-update controls.
+In `Manual Basic` mode, the create/edit form becomes a manual-first courier registry. Store owners only see business fields such as courier name, code, contact person, phone, address, tracking URL template, COD support, and active status. API, webhook, and automatic delivery-update controls stay hidden, and any previously saved advanced connection data remains preserved in the background.
 
-In `Advanced Pro` mode, the same screen reveals courier-account connection details, automatic tracking-sync settings, and webhook secrets without changing the underlying carrier data model.
+In `Advanced Pro` mode, the same form keeps those business fields first and then reveals a separate `Automation & API Connection (Pro)` section. That section adds conditional Steadfast or Pathao connection fields, automatic tracking-sync settings, and webhook secrets without changing the underlying carrier data model.
 
 `Pickup Points` lives in the same shipping hub as setup/master data for courier handoff locations and business pickup points. It remains separate from daily shipment operations so store owners can maintain it without entering the `Shipments` area.
 

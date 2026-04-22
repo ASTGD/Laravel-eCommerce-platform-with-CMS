@@ -16,6 +16,7 @@ class ShipmentCarrier extends Model
         'name',
         'contact_name',
         'contact_phone',
+        'address',
         'contact_email',
         'tracking_url_template',
         'integration_driver',
