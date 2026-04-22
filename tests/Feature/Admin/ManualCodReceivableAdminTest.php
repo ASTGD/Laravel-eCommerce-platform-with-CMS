@@ -4,6 +4,7 @@ use Illuminate\Support\Arr;
 use Platform\CommerceCore\Models\CodSettlement;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -25,6 +26,16 @@ use function Pest\Laravel\post;
 uses(AdminTestCase::class);
 
 beforeEach(function () {
+    Schema::disableForeignKeyConstraints();
+
+    try {
+        CodSettlement::query()->delete();
+        ShipmentRecord::query()->delete();
+        ShipmentCarrier::query()->delete();
+    } finally {
+        Schema::enableForeignKeyConstraints();
+    }
+
     CoreConfig::query()->updateOrCreate(
         [
             'code' => 'sales.shipping_workflow.shipping_mode',
@@ -80,6 +91,9 @@ it('shows courier-first cod receivable totals in manual basic mode', function ()
     get(route('admin.sales.cod-receivables.index'))
         ->assertOk()
         ->assertSeeText('COD Receivables')
+        ->assertSeeText('Search couriers')
+        ->assertSeeText('Filter')
+        ->assertSeeText('Per Page')
         ->assertSeeText('Record COD Received')
         ->assertSeeText('Steadfast Courier')
         ->assertSeeText('Pathao Courier')
@@ -87,7 +101,12 @@ it('shows courier-first cod receivable totals in manual basic mode', function ()
         ->assertSeeText(core()->formatBasePrice(300))
         ->assertSeeText(core()->formatBasePrice(1500))
         ->assertSeeText(core()->formatBasePrice(500))
-        ->assertSeeText('Up to date');
+        ->assertSeeText('Up to date')
+        ->assertDontSeeText('Manual Basic mode')
+        ->assertDontSeeText('Courier totals stay simple here, while shipment-level records remain accurate underneath.')
+        ->assertDontSeeText('COD already collected by the courier from customers.')
+        ->assertDontSeeText('Money your business has already received from the courier.')
+        ->assertDontSeeText('Money still pending from the courier to your business.');
 });
 
 it('records courier cod receipt and allocates it oldest first across shipment settlements', function () {

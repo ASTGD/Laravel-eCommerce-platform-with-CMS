@@ -4,6 +4,7 @@ use Illuminate\Support\Arr;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentEvent;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -26,6 +27,16 @@ use function Pest\Laravel\post;
 uses(AdminTestCase::class);
 
 beforeEach(function () {
+    Schema::disableForeignKeyConstraints();
+
+    try {
+        ShipmentEvent::query()->delete();
+        ShipmentRecord::query()->delete();
+        ShipmentCarrier::query()->delete();
+    } finally {
+        Schema::enableForeignKeyConstraints();
+    }
+
     CoreConfig::query()->updateOrCreate(
         [
             'code' => 'sales.shipping_workflow.shipping_mode',
@@ -52,9 +63,13 @@ it('shows the basic to ship page with business-facing booking columns', function
     get(route('admin.sales.to-ship.index'))
         ->assertOk()
         ->assertSeeText('To Ship')
+        ->assertSeeText('Search orders')
+        ->assertSeeText('Filter')
+        ->assertSeeText('Per Page')
         ->assertSeeText((string) $fixture['order']->increment_id)
         ->assertSeeText('COD')
-        ->assertSeeText('Ready')
+        ->assertDontSeeText('Manual Basic mode')
+        ->assertDontSeeText('Stock Check')
         ->assertSeeText('Book Shipment');
 });
 

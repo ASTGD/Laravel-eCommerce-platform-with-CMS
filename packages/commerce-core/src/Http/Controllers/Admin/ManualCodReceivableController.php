@@ -16,8 +16,12 @@ class ManualCodReceivableController extends Controller
 
     public function index(): View
     {
+        $search = trim((string) request('search')) ?: null;
+        $perPage = (int) request('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
+
         return view('commerce-core::admin.manual-cod-receivables.index', [
-            'courierSummaries' => $this->manualCodReceivableService->courierSummaries(),
+            'courierSummaries' => $this->manualCodReceivableService->courierSummaries($perPage, $search),
         ]);
     }
 

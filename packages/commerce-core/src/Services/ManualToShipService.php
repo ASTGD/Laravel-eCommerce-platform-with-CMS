@@ -4,13 +4,14 @@ namespace Platform\CommerceCore\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Models\OrderItem;
 
 class ManualToShipService
 {
-    public function paginateOrders(int $perPage = 15): LengthAwarePaginator
+    public function paginateOrders(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
         $orders = Order::query()
             ->with([
@@ -24,6 +25,15 @@ class ManualToShipService
             ->get()
             ->filter(fn (Order $order) => $order->canShip())
             ->values();
+
+        if ($search = $this->normalizeSearchTerm($search)) {
+            $orders = $orders->filter(function (Order $order) use ($search) {
+                return Str::contains(
+                    $this->searchableOrderText($order),
+                    $search,
+                );
+            })->values();
+        }
 
         $page = LengthAwarePaginator::resolveCurrentPage();
         $items = $orders
@@ -41,6 +51,29 @@ class ManualToShipService
                 'query' => request()->query(),
             ],
         );
+    }
+
+    protected function normalizeSearchTerm(?string $search): ?string
+    {
+        $search = trim((string) $search);
+
+        return $search !== '' ? Str::lower($search) : null;
+    }
+
+    protected function searchableOrderText(Order $order): string
+    {
+        $shippingAddress = $order->shipping_address;
+
+        return Str::lower(implode(' ', array_filter([
+            $order->increment_id,
+            $order->customer_full_name,
+            $order->customer_email,
+            $shippingAddress?->phone,
+            $shippingAddress?->address,
+            $shippingAddress?->city,
+            $shippingAddress?->state,
+            $shippingAddress?->country,
+        ])));
     }
 
     public function activeCarriers()

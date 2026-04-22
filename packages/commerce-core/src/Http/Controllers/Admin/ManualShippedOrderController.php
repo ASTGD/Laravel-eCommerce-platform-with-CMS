@@ -21,6 +21,9 @@ class ManualShippedOrderController extends Controller
         $carrierId = $request->filled('carrier_id')
             ? (int) $request->input('carrier_id')
             : null;
+        $search = trim((string) $request->input('search')) ?: null;
+        $perPage = (int) $request->input('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
         $shipmentRecordsQuery = ShipmentRecord::query()
             ->with(['order', 'carrier', 'codSettlement'])
@@ -35,10 +38,29 @@ class ManualShippedOrderController extends Controller
             $shipmentRecordsQuery->where('shipment_carrier_id', $carrierId);
         }
 
+        if ($search) {
+            $shipmentRecordsQuery->where(function ($query) use ($search) {
+                $query
+                    ->where('tracking_number', 'like', '%'.$search.'%')
+                    ->orWhere('public_tracking_url', 'like', '%'.$search.'%')
+                    ->orWhere('carrier_name_snapshot', 'like', '%'.$search.'%')
+                    ->orWhere('recipient_name', 'like', '%'.$search.'%')
+                    ->orWhere('recipient_phone', 'like', '%'.$search.'%')
+                    ->orWhere('recipient_address', 'like', '%'.$search.'%')
+                    ->orWhereHas('order', function ($orderQuery) use ($search) {
+                        $orderQuery
+                            ->where('increment_id', 'like', '%'.$search.'%')
+                            ->orWhere('customer_first_name', 'like', '%'.$search.'%')
+                            ->orWhere('customer_last_name', 'like', '%'.$search.'%')
+                            ->orWhere('customer_email', 'like', '%'.$search.'%');
+                    });
+            });
+        }
+
         $shipmentRecords = $shipmentRecordsQuery
             ->orderByDesc('handed_over_at')
             ->orderByDesc('id')
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
 
         $carriers = ShipmentCarrier::query()
@@ -56,7 +78,7 @@ class ManualShippedOrderController extends Controller
 
         return view('commerce-core::admin.manual-shipped-orders.index', [
             'shipmentRecords' => $shipmentRecords,
-            'carriers'        => $carriers,
+            'carriers'          => $carriers,
             'selectedCarrierId' => $carrierId,
         ]);
     }

@@ -6,6 +6,7 @@ use Platform\CommerceCore\Models\SettlementBatch;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentEvent;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -25,6 +26,20 @@ use function Pest\Laravel\get;
 use function Pest\Laravel\post;
 
 uses(AdminTestCase::class);
+
+beforeEach(function () {
+    Schema::disableForeignKeyConstraints();
+
+    try {
+        ShipmentEvent::query()->delete();
+        CodSettlement::query()->delete();
+        SettlementBatch::query()->delete();
+        ShipmentRecord::query()->delete();
+        ShipmentCarrier::query()->delete();
+    } finally {
+        Schema::enableForeignKeyConstraints();
+    }
+});
 
 it('hides advanced shipping menus and blocks advanced routes in manual basic mode', function () {
     setShippingModeForAdminTests('manual_basic');

@@ -4,47 +4,37 @@
     </x-slot>
 
     <div class="grid gap-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="grid gap-1">
-                    <p class="text-xl font-bold text-gray-900 dark:text-white">
-                        COD Receivables
-                    </p>
-
-                    <p class="max-w-3xl text-sm text-gray-600 dark:text-gray-300">
-                        This page shows how much each courier still owes your business for delivered COD orders. In this workflow, "collected by courier" means the customer paid the courier, while "received by merchant" means the courier has already remitted that money to your business.
-                    </p>
-                </div>
-
-                <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <p class="font-semibold">Manual Basic mode</p>
-                    <p>Courier totals stay simple here, while shipment-level records remain accurate underneath.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid gap-4 md:grid-cols-3">
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <p class="text-sm font-semibold text-gray-900 dark:text-white">Receivable Amount Total</p>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    COD already collected by the courier from customers.
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="grid gap-1">
+                <p class="text-xl font-bold text-gray-800 dark:text-white">
+                    COD Receivables
                 </p>
-            </div>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <p class="text-sm font-semibold text-gray-900 dark:text-white">Received Amount Total</p>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    Money your business has already received from the courier.
-                </p>
-            </div>
-
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <p class="text-sm font-semibold text-gray-900 dark:text-white">Pending Amount Total</p>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    Money still pending from the courier to your business.
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Track how much each courier still owes your business for delivered COD orders. "Collected by courier" means the customer paid the courier, while "received by merchant" means the courier has already remitted that money to your business.
                 </p>
             </div>
         </div>
+
+        <x-commerce-core::admin.basic-list-toolbar
+            :paginator="$courierSummaries"
+            search-placeholder="Search couriers"
+            :search-value="request('search')"
+            :per-page="(int) request('per_page', $courierSummaries->perPage())"
+            :preserve-query="request()->query()"
+        >
+            <x-slot:filters>
+                <div class="grid gap-3 p-4 text-sm text-gray-600 dark:text-gray-300">
+                    <p>
+                        Search couriers by name.
+                    </p>
+
+                    <p>
+                        This page stays courier-first for merchants, while shipment-level COD records remain accurate underneath.
+                    </p>
+                </div>
+            </x-slot>
+        </x-commerce-core::admin.basic-list-toolbar>
 
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
             @if ($courierSummaries->isEmpty())
@@ -99,7 +89,10 @@
 
                                     <x-admin::table.td class="whitespace-normal">
                                         @if ($summary['can_record_receipt'])
-                                            <x-admin::modal :is-active="$isRestoringModal">
+                                            <x-admin::modal
+                                                :is-active="$isRestoringModal"
+                                                box-style="width: min(900px, calc(100vw - 2rem)); max-width: min(900px, calc(100vw - 2rem));"
+                                            >
                                                 <x-slot:toggle>
                                                     <button
                                                         type="button"
@@ -114,10 +107,6 @@
                                                         <p class="text-lg font-bold text-gray-800 dark:text-white">
                                                             Record COD Received
                                                         </p>
-
-                                                        <p class="text-sm font-normal text-gray-600 dark:text-gray-300">
-                                                            {{ $summary['courier_name'] }} still has {{ $summary['pending_total_formatted'] }} pending. The amount you enter is treated as money received by the merchant and will be applied to the oldest pending deliveries first.
-                                                        </p>
                                                     </div>
                                                 </x-slot>
 
@@ -129,6 +118,13 @@
                                                         <input type="hidden" name="shipment_carrier_id" value="{{ $summary['carrier_id'] }}">
 
                                                         <div class="grid gap-4">
+                                                            <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                                                <p class="font-semibold">{{ $summary['courier_name'] }}</p>
+                                                                <p>
+                                                                    {{ $summary['pending_total_formatted'] }} pending. Recorded receipts are applied oldest-first to the courier's delivered COD shipments.
+                                                                </p>
+                                                            </div>
+
                                                             <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                                                                 <p class="font-semibold">Pending amount</p>
                                                                 <p>{{ $summary['pending_total_formatted'] }}</p>

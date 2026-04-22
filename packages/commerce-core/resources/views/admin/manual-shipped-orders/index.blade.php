@@ -4,72 +4,86 @@
     </x-slot>
 
     <div class="grid gap-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="grid gap-1">
-                    <p class="text-xl font-bold text-gray-900 dark:text-white">
-                        In Delivery
-                    </p>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="grid gap-1">
+                <p class="text-xl font-bold text-gray-800 dark:text-white">
+                    In Delivery
+                </p>
 
-                    <p class="max-w-3xl text-sm text-gray-600 dark:text-gray-300">
-                        This is the daily follow-up queue for shipments already booked with a courier. Review tracking details, filter by courier, and mark delivery here without opening advanced shipment operations.
-                    </p>
-                </div>
-
-                <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <p class="font-semibold">Manual Basic mode</p>
-                    <p>When a COD order is marked delivered, it moves to COD Receivables as collected by the courier.</p>
-                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Daily follow-up queue for shipments already booked with a courier. Mark delivery here without opening advanced shipment operations.
+                </p>
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="border-b border-slate-200 px-6 py-4 dark:border-gray-800">
-                <form method="GET" action="{{ route('admin.sales.shipped-orders.index') }}" class="flex flex-wrap items-end gap-4">
-                    <div class="grid gap-1.5">
-                        <label for="carrier_id" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            Courier
-                        </label>
+        <x-commerce-core::admin.basic-list-toolbar
+            :paginator="$shipmentRecords"
+            search-placeholder="Search shipments"
+            :search-value="request('search')"
+            :per-page="(int) request('per_page', $shipmentRecords->perPage())"
+            :preserve-query="request()->query()"
+        >
+            <x-slot:filters>
+                <div class="grid gap-4 p-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        Search shipments by order number, courier, tracking number, phone, or address.
+                    </p>
 
-                        <select
-                            id="carrier_id"
-                            name="carrier_id"
-                            class="min-w-[220px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                        >
-                            <option value="">All couriers</option>
+                    <form method="GET" action="{{ route('admin.sales.shipped-orders.index') }}" class="grid gap-4">
+                        <input type="hidden" name="search" value="{{ request('search') }}">
+                        <input type="hidden" name="per_page" value="{{ request('per_page', $shipmentRecords->perPage()) }}">
+                        <input type="hidden" name="page" value="1">
 
-                            @foreach ($carriers as $carrier)
-                                <option value="{{ $carrier->id }}" @selected($selectedCarrierId === $carrier->id)>
-                                    {{ $carrier->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="grid gap-1.5">
+                            <label for="carrier_id" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                Courier
+                            </label>
 
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Use this filter when you need to review one courier's active deliveries only.
-                        </p>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            type="submit"
-                            class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                        >
-                            Apply Filter
-                        </button>
-
-                        @if ($selectedCarrierId)
-                            <a
-                                href="{{ route('admin.sales.shipped-orders.index') }}"
-                                class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                            <select
+                                id="carrier_id"
+                                name="carrier_id"
+                                class="min-w-[220px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                             >
-                                Clear
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
+                                <option value="">All couriers</option>
 
+                                @foreach ($carriers as $carrier)
+                                    <option value="{{ $carrier->id }}" @selected($selectedCarrierId === $carrier->id)>
+                                        {{ $carrier->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Use this filter when you need to review one courier's active deliveries only.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                type="submit"
+                                class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                            >
+                                Apply Filter
+                            </button>
+
+                            @if ($selectedCarrierId)
+                                <a
+                                    href="{{ route('admin.sales.shipped-orders.index', array_filter([
+                                        'search' => request('search'),
+                                        'per_page' => request('per_page'),
+                                    ])) }}"
+                                    class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                >
+                                    Clear
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+            </x-slot>
+        </x-commerce-core::admin.basic-list-toolbar>
+
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
             @if ($shipmentRecords->isEmpty())
                 <div class="p-10 text-center text-sm text-gray-600 dark:text-gray-300">
                     @if ($selectedCarrierId)
@@ -171,20 +185,39 @@
                                     </x-admin::table.td>
 
                                     <x-admin::table.td class="whitespace-normal">
+                                        @php
+                                            $deliveryPrompt = sprintf(
+                                                'Mark order #%s as delivered? This will move any COD amount into COD Receivables.',
+                                                $shipmentRecord->order?->increment_id ?: $shipmentRecord->order_id
+                                            );
+                                        @endphp
+
                                         <form
                                             method="POST"
+                                            ref="markDeliveredForm{{ $shipmentRecord->id }}"
                                             action="{{ route('admin.sales.shipped-orders.mark-delivered', $shipmentRecord) }}"
-                                            onsubmit="return confirm('Mark this shipment as delivered?');"
+                                            class="hidden"
                                         >
                                             @csrf
-
-                                            <button
-                                                type="submit"
-                                                class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                                            >
-                                                Mark Delivered
-                                            </button>
                                         </form>
+
+                                        <button
+                                            type="button"
+                                            class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                            @click="$emitter.emit('open-confirm-modal', {
+                                                title: @js('Confirm Delivery'),
+                                                message: @js($deliveryPrompt),
+                                                options: {
+                                                    btnDisagree: @js('Cancel'),
+                                                    btnAgree: @js('Mark Delivered'),
+                                                },
+                                                agree: () => {
+                                                    this.$refs['markDeliveredForm{{ $shipmentRecord->id }}'].submit()
+                                                }
+                                            })"
+                                        >
+                                            Mark Delivered
+                                        </button>
                                     </x-admin::table.td>
                                 </tr>
                             @endforeach
