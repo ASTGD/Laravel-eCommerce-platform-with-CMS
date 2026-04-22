@@ -118,6 +118,10 @@ Prepaid deliveries continue to bypass `COD Receivables` entirely.
 
 This keeps the Basic workflow simple for non-technical merchants without replacing the underlying COD settlement model or exposing advanced settlement-batch tooling.
 
+The three Basic shipment pages now share the reusable Bagisto-style list toolbar component `x-commerce-core::admin.basic-list-toolbar`, so future merchant-facing list pages can use the same search, filter, per-page, and pagination pattern consistently.
+
+Bagisto modal width tuning for these Basic pages now uses the shared `x-admin::modal` `box-class` prop, so future shipment and money-operation popups can widen the dialog without relying on page-specific selector hacks.
+
 In `Manual Basic` mode, the old native Bagisto shipment browse screens are redirected back into the Basic workflow so store teams are not left with two competing shipment concepts.
 
 The native Bagisto shipment registration flow now stays in place but uses a courier-first business workflow:

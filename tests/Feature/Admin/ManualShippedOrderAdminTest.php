@@ -4,6 +4,7 @@ use Illuminate\Support\Arr;
 use Platform\CommerceCore\Models\CodSettlement;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -25,6 +26,16 @@ use function Pest\Laravel\post;
 uses(AdminTestCase::class);
 
 beforeEach(function () {
+    Schema::disableForeignKeyConstraints();
+
+    try {
+        CodSettlement::query()->delete();
+        ShipmentRecord::query()->delete();
+        ShipmentCarrier::query()->delete();
+    } finally {
+        Schema::enableForeignKeyConstraints();
+    }
+
     setManualShippedOrdersShippingMode('manual_basic');
 });
 
@@ -60,6 +71,10 @@ it('shows a simple in delivery list in manual basic mode', function () {
     get(route('admin.sales.shipped-orders.index'))
         ->assertOk()
         ->assertSeeText('In Delivery')
+        ->assertSeeText('Search shipments')
+        ->assertSeeText('Filter')
+        ->assertSeeText('Per Page')
+        ->assertDontSeeText('Manual Basic mode')
         ->assertSeeText('Booked Date')
         ->assertSeeText('Shipment Status')
         ->assertSeeText('All couriers')

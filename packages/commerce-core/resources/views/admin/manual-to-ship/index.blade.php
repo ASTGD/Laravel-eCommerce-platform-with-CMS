@@ -4,24 +4,37 @@
     </x-slot>
 
     <div class="grid gap-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="grid gap-1">
-                    <p class="text-xl font-bold text-gray-900 dark:text-white">
-                        To Ship
-                    </p>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="grid gap-1">
+                <p class="text-xl font-bold text-gray-800 dark:text-white">
+                    To Ship
+                </p>
 
-                    <p class="max-w-3xl text-sm text-gray-600 dark:text-gray-300">
-                        Review confirmed orders that are ready to hand over to a courier. Book the shipment once, follow it from In Delivery, and track COD money later from COD Receivables.
-                    </p>
-                </div>
-
-                <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    <p class="font-semibold">Manual Basic mode</p>
-                    <p>This page is the first step of the simple merchant shipping workflow.</p>
-                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Confirmed orders waiting for courier booking. Once booked, they move to In Delivery.
+                </p>
             </div>
         </div>
+
+        <x-commerce-core::admin.basic-list-toolbar
+            :paginator="$orders"
+            search-placeholder="Search orders"
+            :search-value="request('search')"
+            :per-page="(int) request('per_page', $orders->perPage())"
+            :preserve-query="request()->query()"
+        >
+            <x-slot:filters>
+                <div class="grid gap-3 p-4 text-sm text-gray-600 dark:text-gray-300">
+                    <p>
+                        Search orders by order number, customer, phone, or address.
+                    </p>
+
+                    <p>
+                        There are no extra filters on this page yet. Use this list to find orders that are ready to book.
+                    </p>
+                </div>
+            </x-slot>
+        </x-commerce-core::admin.basic-list-toolbar>
 
         @if ($shipmentCarriers->isEmpty())
             <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100">
@@ -52,7 +65,6 @@
                                 <x-admin::table.th>Address</x-admin::table.th>
                                 <x-admin::table.th>COD / Prepaid</x-admin::table.th>
                                 <x-admin::table.th>Order Amount</x-admin::table.th>
-                                <x-admin::table.th>Stock Check</x-admin::table.th>
                                 <x-admin::table.th>Action</x-admin::table.th>
                             </tr>
                         </thead>
@@ -62,11 +74,6 @@
                                 @php
                                     $order = $row['order'];
                                     $isRestoringModal = (string) old('booking_order_id') === (string) $order->id;
-                                    $stockCheckTone = match ($row['stock_check_label']) {
-                                        'Ready' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300',
-                                        'Needs stock check' => 'bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
-                                        default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-                                    };
                                 @endphp
 
                                 <tr class="border-t border-slate-200 align-top dark:border-gray-800">
@@ -108,20 +115,11 @@
                                     </x-admin::table.td>
 
                                     <x-admin::table.td class="whitespace-normal">
-                                        <div class="grid gap-2">
-                                            <span class="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold {{ $stockCheckTone }}">
-                                                {{ $row['stock_check_label'] }}
-                                            </span>
-
-                                            <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                {{ $row['stock_check_reason'] }}
-                                            </span>
-                                        </div>
-                                    </x-admin::table.td>
-
-                                    <x-admin::table.td class="whitespace-normal">
                                         @if (bouncer()->hasPermission('sales.shipments.create') && $row['can_book'] && $shipmentCarriers->isNotEmpty())
-                                            <x-admin::modal :is-active="$isRestoringModal">
+                                            <x-admin::modal
+                                                :is-active="$isRestoringModal"
+                                                box-style="width: min(900px, calc(100vw - 2rem)); max-width: min(900px, calc(100vw - 2rem));"
+                                            >
                                                 <x-slot:toggle>
                                                     <button
                                                         type="button"
@@ -137,7 +135,7 @@
                                                             Book Shipment
                                                         </p>
 
-                    <p class="text-sm font-normal text-gray-600 dark:text-gray-300">
+                                                        <p class="text-sm font-normal text-gray-600 dark:text-gray-300">
                                                             Order #{{ $order->increment_id }} will move to In Delivery after booking.
                                                         </p>
                                                     </div>

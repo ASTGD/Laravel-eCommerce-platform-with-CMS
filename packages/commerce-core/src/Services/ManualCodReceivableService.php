@@ -2,10 +2,12 @@
 
 namespace Platform\CommerceCore\Services;
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Platform\CommerceCore\Models\CodSettlement;
+use Illuminate\Support\Str;
 
 class ManualCodReceivableService
 {
@@ -13,9 +15,9 @@ class ManualCodReceivableService
         protected CodSettlementService $codSettlementService,
     ) {}
 
-    public function courierSummaries(): Collection
+    public function courierSummaries(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        return CodSettlement::query()
+        $summaries = CodSettlement::query()
             ->with('carrier:id,name')
             ->whereNotNull('shipment_carrier_id')
             ->whereIn('status', $this->summaryStatuses())
@@ -43,6 +45,14 @@ class ManualCodReceivableService
             })
             ->sortBy('courier_name')
             ->values();
+
+        if ($search = $this->normalizeSearchTerm($search)) {
+            $summaries = $summaries->filter(function (array $summary) use ($search) {
+                return Str::contains(Str::lower($summary['courier_name']), $search);
+            })->values();
+        }
+
+        return $this->paginateCollection($summaries, $perPage);
     }
 
     public function recordReceipt(
@@ -126,6 +136,32 @@ class ManualCodReceivableService
             CodSettlement::STATUS_REMITTED,
             CodSettlement::STATUS_SETTLED,
         ];
+    }
+
+    protected function normalizeSearchTerm(?string $search): ?string
+    {
+        $search = trim((string) $search);
+
+        return $search !== '' ? Str::lower($search) : null;
+    }
+
+    protected function paginateCollection(Collection $collection, int $perPage): LengthAwarePaginator
+    {
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $items = $collection
+            ->slice(($page - 1) * $perPage, $perPage)
+            ->values();
+
+        return new LengthAwarePaginator(
+            items: $items,
+            total: $collection->count(),
+            perPage: $perPage,
+            currentPage: $page,
+            options: [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ],
+        );
     }
 
     protected function allocatableStatuses(): array
