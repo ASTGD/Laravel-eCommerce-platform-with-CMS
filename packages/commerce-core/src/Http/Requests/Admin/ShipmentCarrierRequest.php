@@ -46,9 +46,9 @@ class ShipmentCarrierRequest extends FormRequest
     ];
 
     public const COURIER_OPTIONS = [
-        self::COURIER_SERVICE_STEADFAST   => 'Steadfast',
-        self::COURIER_SERVICE_PATHAO      => 'Pathao',
-        self::COURIER_SERVICE_MANUAL_OTHER => 'Manual / Other',
+        self::COURIER_SERVICE_MANUAL_OTHER => 'Manual',
+        self::COURIER_SERVICE_STEADFAST    => 'Steadfast',
+        self::COURIER_SERVICE_PATHAO       => 'Pathao',
     ];
 
     public function authorize(): bool
@@ -65,7 +65,7 @@ class ShipmentCarrierRequest extends FormRequest
         $this->merge([
             'courier_service' => $courierService,
             'integration_driver' => $integrationDriver,
-            'code' => $this->resolvedCode($courierService, $carrier),
+            'code' => $this->resolvedCode($carrier),
             'tracking_sync_enabled' => $this->resolvedTrackingSyncEnabled($integrationDriver, $carrier),
             'supports_cod' => $this->resolvedBoolean('supports_cod', $carrier?->supports_cod ?? true),
             'is_active' => $this->resolvedBoolean('is_active', $carrier?->is_active ?? true),
@@ -79,12 +79,13 @@ class ShipmentCarrierRequest extends FormRequest
 
         return [
             'courier_service' => ['required', Rule::in(array_keys(self::COURIER_OPTIONS))],
-            'code' => ['required', 'string', 'max:100', 'alpha_dash', Rule::unique('shipment_carriers', 'code')->ignore($carrierId)],
+            'code' => ['nullable', 'string', 'max:100', 'alpha_dash', Rule::unique('shipment_carriers', 'code')->ignore($carrierId)],
             'name' => ['required', 'string', 'max:255'],
             'contact_name' => ['nullable', 'string', 'max:255'],
-            'contact_phone' => $courierService === self::COURIER_SERVICE_PATHAO
+            'contact_phone' => $courierService === self::COURIER_SERVICE_PATHAO && $this->usesAdvancedCarrierConfiguration()
                 ? ['required', 'string', 'max:50']
                 : ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:1000'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'tracking_url_template' => ['nullable', 'string', 'max:500'],
             'integration_driver' => ['nullable', Rule::in(self::INTEGRATION_DRIVERS)],
@@ -92,10 +93,10 @@ class ShipmentCarrierRequest extends FormRequest
             'api_base_url' => $this->requiresIntegratedApi($courierService)
                 ? ['required', 'url', 'max:500']
                 : ['nullable', 'url', 'max:500'],
-            'api_store_id' => $courierService === self::COURIER_SERVICE_PATHAO
+            'api_store_id' => $courierService === self::COURIER_SERVICE_PATHAO && $this->usesAdvancedCarrierConfiguration()
                 ? ['required', 'integer', 'min:1']
                 : ['nullable', 'integer', 'min:1'],
-            'api_username' => $courierService === self::COURIER_SERVICE_PATHAO
+            'api_username' => $courierService === self::COURIER_SERVICE_PATHAO && $this->usesAdvancedCarrierConfiguration()
                 ? ['required', 'string', 'max:255']
                 : ['nullable', 'string', 'max:255'],
             'api_password' => $this->requiresSecretField('api_password', $courierService)
@@ -122,20 +123,22 @@ class ShipmentCarrierRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'courier_service' => 'courier service',
-            'name' => 'display name',
+            'courier_service' => 'automation type',
+            'code' => 'courier code',
+            'name' => 'courier name',
             'contact_name' => 'contact person',
-            'contact_phone' => 'pickup phone number',
-            'contact_email' => 'support email address',
-            'tracking_url_template' => 'public tracking link',
-            'api_base_url' => 'courier API URL',
-            'api_store_id' => 'Pathao store ID',
-            'api_username' => 'Pathao username',
-            'api_password' => 'Pathao password',
+            'contact_phone' => 'phone',
+            'address' => 'address',
+            'contact_email' => 'support email',
+            'tracking_url_template' => 'tracking URL template',
+            'api_base_url' => 'API URL',
+            'api_store_id' => 'store ID',
+            'api_username' => 'username',
+            'api_password' => 'password',
             'api_key' => 'API key',
             'api_secret' => 'API secret',
             'webhook_secret' => 'status update secret',
-            'default_cod_fee_type' => 'cash collection fee type',
+            'default_cod_fee_type' => 'COD fee type',
             'default_cod_fee_amount' => 'default COD fee',
             'default_return_fee_amount' => 'default return fee',
             'default_payout_method' => 'default payout method',
@@ -145,16 +148,16 @@ class ShipmentCarrierRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'courier_service.required' => 'Choose the courier service you want to add.',
-            'name.required' => 'Enter the display name you want to see in shipment operations.',
-            'contact_phone.required' => 'Enter the pickup phone number from your Pathao merchant account.',
-            'api_base_url.required' => 'Enter the courier API URL provided by '.$this->selectedCourierLabel().'.',
-            'api_base_url.url' => 'Enter a valid courier API URL.',
+            'name.required' => 'Enter the courier name your team uses.',
+            'code.alpha_dash' => 'Courier code can only use letters, numbers, dashes, and underscores.',
+            'contact_phone.required' => 'Enter the phone number linked to your Pathao merchant account.',
+            'api_base_url.required' => 'Enter the API URL provided for '.$this->selectedCourierLabel().'.',
+            'api_base_url.url' => 'Enter a valid API URL.',
             'api_store_id.required' => 'Enter the Pathao store ID from your merchant account.',
             'api_username.required' => 'Enter the Pathao username from your merchant account.',
             'api_password.required' => 'Enter the Pathao password from your merchant account.',
-            'api_key.required' => 'Enter the API key provided by the courier.',
-            'api_secret.required' => 'Enter the API secret provided by the courier.',
+            'api_key.required' => 'Enter the API key provided for this courier connection.',
+            'api_secret.required' => 'Enter the API secret provided for this courier connection.',
             'default_cod_fee_amount.min' => 'Default COD fee cannot be negative.',
             'default_return_fee_amount.min' => 'Default return fee cannot be negative.',
         ];
@@ -167,19 +170,42 @@ class ShipmentCarrierRequest extends FormRequest
 
         unset($payload['courier_service']);
 
-        $payload['code'] = Str::lower($payload['code']);
-        $payload['integration_driver'] = $payload['integration_driver'] ?? ShipmentCarrier::INTEGRATION_DRIVER_MANUAL;
-        $payload['tracking_sync_enabled'] = (bool) ($payload['tracking_sync_enabled'] ?? false);
+        $payload['code'] = Str::lower($this->resolvedCode($carrier));
+        $payload['integration_driver'] = $payload['integration_driver'] ?? ($carrier?->trackingDriver() ?? ShipmentCarrier::INTEGRATION_DRIVER_MANUAL);
+        $payload['tracking_sync_enabled'] = array_key_exists('tracking_sync_enabled', $payload)
+            ? (bool) $payload['tracking_sync_enabled']
+            : ($carrier?->exists ? (bool) $carrier->tracking_sync_enabled : false);
         $payload['supports_cod'] = (bool) ($payload['supports_cod'] ?? false);
         $payload['is_active'] = (bool) ($payload['is_active'] ?? false);
-        $payload['sort_order'] = (int) ($payload['sort_order'] ?? 0);
-        $payload['default_cod_fee_amount'] = round((float) ($payload['default_cod_fee_amount'] ?? 0), 2);
-        $payload['default_return_fee_amount'] = round((float) ($payload['default_return_fee_amount'] ?? 0), 2);
 
-        foreach (['contact_name', 'contact_phone', 'contact_email', 'tracking_url_template', 'api_base_url', 'api_username', 'api_store_id', 'notes'] as $field) {
-            if (array_key_exists($field, $payload) && blank($payload[$field])) {
-                $payload[$field] = null;
-            }
+        $this->normalizeNullableField($payload, 'contact_name', $carrier);
+        $this->normalizeNullableField($payload, 'contact_phone', $carrier);
+        $this->normalizeNullableField($payload, 'address', $carrier);
+        $this->normalizeNullableField($payload, 'contact_email', $carrier);
+        $this->normalizeNullableField($payload, 'tracking_url_template', $carrier);
+        $this->normalizeNullableField($payload, 'api_base_url', $carrier);
+        $this->normalizeNullableField($payload, 'api_username', $carrier);
+        $this->normalizeNullableField($payload, 'notes', $carrier);
+
+        $this->normalizeNullableIntegerField($payload, 'api_store_id', $carrier);
+        $this->normalizeIntegerField($payload, 'sort_order', $carrier, 0);
+        $this->normalizeDecimalField($payload, 'default_cod_fee_amount', $carrier, 0.0);
+        $this->normalizeDecimalField($payload, 'default_return_fee_amount', $carrier, 0.0);
+
+        if (array_key_exists('default_cod_fee_type', $payload)) {
+            $payload['default_cod_fee_type'] = blank($payload['default_cod_fee_type']) ? null : $payload['default_cod_fee_type'];
+        } elseif ($carrier?->exists) {
+            unset($payload['default_cod_fee_type']);
+        } else {
+            $payload['default_cod_fee_type'] = null;
+        }
+
+        if (array_key_exists('default_payout_method', $payload)) {
+            $payload['default_payout_method'] = blank($payload['default_payout_method']) ? null : $payload['default_payout_method'];
+        } elseif ($carrier?->exists) {
+            unset($payload['default_payout_method']);
+        } else {
+            $payload['default_payout_method'] = null;
         }
 
         foreach (self::SECRET_FIELDS as $field) {
@@ -195,6 +221,7 @@ class ShipmentCarrierRequest extends FormRequest
         if (! $payload['supports_cod']) {
             $payload['default_cod_fee_type'] = null;
             $payload['default_cod_fee_amount'] = 0.0;
+            $payload['default_return_fee_amount'] = 0.0;
             $payload['default_payout_method'] = null;
         }
 
@@ -209,14 +236,14 @@ class ShipmentCarrierRequest extends FormRequest
     public static function courierServiceForDriver(?string $driver): string
     {
         return match ($driver) {
+            self::COURIER_SERVICE_STEADFAST => self::COURIER_SERVICE_STEADFAST,
+            self::COURIER_SERVICE_PATHAO => self::COURIER_SERVICE_PATHAO,
             ShipmentCarrier::INTEGRATION_DRIVER_MANUAL,
             'custom_api',
             'paperfly',
             'redx',
             null,
             '' => self::COURIER_SERVICE_MANUAL_OTHER,
-            self::COURIER_SERVICE_STEADFAST => self::COURIER_SERVICE_STEADFAST,
-            self::COURIER_SERVICE_PATHAO => self::COURIER_SERVICE_PATHAO,
             default => self::COURIER_SERVICE_MANUAL_OTHER,
         };
     }
@@ -237,9 +264,14 @@ class ShipmentCarrierRequest extends FormRequest
         return self::COURIER_OPTIONS[$this->selectedCourierService()] ?? 'the selected courier';
     }
 
+    protected function usesAdvancedCarrierConfiguration(): bool
+    {
+        return app(ShippingMode::class)->showsAdvancedCarrierConfiguration();
+    }
+
     protected function requiresIntegratedApi(string $courierService): bool
     {
-        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+        if (! $this->usesAdvancedCarrierConfiguration()) {
             return false;
         }
 
@@ -251,7 +283,7 @@ class ShipmentCarrierRequest extends FormRequest
 
     protected function requiresSecretField(string $field, string $courierService): bool
     {
-        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+        if (! $this->usesAdvancedCarrierConfiguration()) {
             return false;
         }
 
@@ -276,6 +308,12 @@ class ShipmentCarrierRequest extends FormRequest
 
     protected static function resolveIntegrationDriver(string $courierService, ?ShipmentCarrier $carrier): string
     {
+        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+            return $carrier?->exists
+                ? $carrier->trackingDriver()
+                : ShipmentCarrier::INTEGRATION_DRIVER_MANUAL;
+        }
+
         return match ($courierService) {
             self::COURIER_SERVICE_STEADFAST => self::COURIER_SERVICE_STEADFAST,
             self::COURIER_SERVICE_PATHAO => self::COURIER_SERVICE_PATHAO,
@@ -300,7 +338,7 @@ class ShipmentCarrierRequest extends FormRequest
         return ShipmentCarrier::INTEGRATION_DRIVER_MANUAL;
     }
 
-    protected function resolvedCode(string $courierService, ?ShipmentCarrier $carrier): string
+    protected function resolvedCode(?ShipmentCarrier $carrier): string
     {
         $providedCode = trim((string) $this->input('code'));
 
@@ -315,9 +353,7 @@ class ShipmentCarrierRequest extends FormRequest
         $base = Str::slug(trim((string) $this->input('name')), '_');
 
         if ($base === '') {
-            $base = $courierService === self::COURIER_SERVICE_MANUAL_OTHER
-                ? 'courier_service'
-                : $courierService;
+            $base = 'courier';
         }
 
         $candidate = $base;
@@ -333,7 +369,7 @@ class ShipmentCarrierRequest extends FormRequest
 
     protected function resolvedTrackingSyncEnabled(string $integrationDriver, ?ShipmentCarrier $carrier): bool
     {
-        if (! app(ShippingMode::class)->showsAdvancedCarrierConfiguration()) {
+        if (! $this->usesAdvancedCarrierConfiguration()) {
             return $carrier?->exists
                 ? (bool) $carrier->tracking_sync_enabled
                 : false;
@@ -362,5 +398,61 @@ class ShipmentCarrierRequest extends FormRequest
         }
 
         return $default;
+    }
+
+    protected function normalizeNullableField(array &$payload, string $field, ?ShipmentCarrier $carrier): void
+    {
+        if (! array_key_exists($field, $payload)) {
+            if (! $carrier?->exists) {
+                $payload[$field] = null;
+            }
+
+            return;
+        }
+
+        $payload[$field] = blank($payload[$field]) ? null : $payload[$field];
+    }
+
+    protected function normalizeNullableIntegerField(array &$payload, string $field, ?ShipmentCarrier $carrier): void
+    {
+        if (! array_key_exists($field, $payload)) {
+            if (! $carrier?->exists) {
+                $payload[$field] = null;
+            }
+
+            return;
+        }
+
+        $payload[$field] = blank($payload[$field]) ? null : (int) $payload[$field];
+    }
+
+    protected function normalizeIntegerField(array &$payload, string $field, ?ShipmentCarrier $carrier, int $default): void
+    {
+        if (! array_key_exists($field, $payload)) {
+            if ($carrier?->exists) {
+                unset($payload[$field]);
+            } else {
+                $payload[$field] = $default;
+            }
+
+            return;
+        }
+
+        $payload[$field] = blank($payload[$field]) ? $default : (int) $payload[$field];
+    }
+
+    protected function normalizeDecimalField(array &$payload, string $field, ?ShipmentCarrier $carrier, float $default): void
+    {
+        if (! array_key_exists($field, $payload)) {
+            if ($carrier?->exists) {
+                unset($payload[$field]);
+            } else {
+                $payload[$field] = $default;
+            }
+
+            return;
+        }
+
+        $payload[$field] = round(blank($payload[$field]) ? $default : (float) $payload[$field], 2);
     }
 }
