@@ -79,6 +79,7 @@ class ManualToShipService
         }
 
         return $query
+            ->orderBy('shipment_carrier_id')
             ->orderByDesc('packed_at')
             ->orderByDesc('id')
             ->paginate($perPage, ['*'], $pageName)

@@ -1,6 +1,41 @@
 @php
     $needsBookingOrders ??= collect();
     $readyShipments ??= collect();
+    $oldSelectedShipmentIds = collect(old('shipment_record_ids', []))
+        ->map(fn ($id) => (string) $id)
+        ->filter()
+        ->values();
+    $readyShipmentGroups = $readyShipments->getCollection()
+        ->groupBy(function ($shipmentRecord) {
+            return (string) ($shipmentRecord->shipment_carrier_id ?: ('manual-'.md5((string) $shipmentRecord->carrier_name_snapshot)));
+        })
+        ->map(function ($shipments, $groupKey) {
+            $firstShipment = $shipments->first();
+            $carrierName = $firstShipment->carrier?->name ?: $firstShipment->carrier_name_snapshot ?: 'Manual Courier';
+
+            return [
+                'key' => (string) $groupKey,
+                'dom_id' => 'ready-group-'.($firstShipment->shipment_carrier_id ?: md5($carrierName)),
+                'carrier_id' => $firstShipment->shipment_carrier_id,
+                'carrier_name' => $carrierName,
+                'shipments' => $shipments,
+                'shipment_count' => $shipments->count(),
+                'parcel_count' => (int) $shipments->sum(fn ($shipmentRecord) => max(1, (int) $shipmentRecord->package_count)),
+                'total_cod_amount' => round((float) $shipments->sum('cod_amount_expected'), 2),
+            ];
+        })
+        ->sortBy(fn (array $group) => strtolower($group['carrier_name']))
+        ->values();
+    $restoreHandoverModal = filled(old('handover_action')) || $errors->hasAny([
+        'shipment_record_ids',
+        'shipment_record_ids.*',
+        'handover_type',
+        'handover_at',
+        'receiver_name',
+        'notes',
+        'selected_shipments',
+    ]);
+    $restoredHandoverAction = old('handover_action', 'draft');
     $needsSectionQuery = array_filter([
         'ready_search' => request('ready_search'),
         'ready_per_page' => request('ready_per_page'),
@@ -756,72 +791,26 @@
                         No parcels are waiting for actual courier handover right now.
                     </div>
                 @else
-                    <form method="POST" id="handover-batch-form" class="grid gap-4">
+                    <form method="POST" id="handover-batch-form" class="grid gap-4 p-4">
                         @csrf
 
-                        <div class="border-b border-slate-200 p-4 dark:border-gray-800">
-                            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                                    <div class="grid gap-1.5">
-                                        <label for="handover_at" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                            Handover Date &amp; Time
-                                        </label>
+                        <input type="hidden" id="handover_action" name="handover_action" value="{{ $restoredHandoverAction }}">
 
-                                        <input
-                                            id="handover_at"
-                                            type="datetime-local"
-                                            name="handover_at"
-                                            value="{{ old('handover_at', now()->format('Y-m-d\TH:i')) }}"
-                                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                                        >
+                        <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-gray-800 dark:bg-gray-950/30">
+                            <div class="flex flex-wrap items-start justify-between gap-4">
+                                <div class="grid gap-1">
+                                    <div
+                                        id="ready-shipment-selection-summary"
+                                        class="text-sm font-semibold text-gray-800 dark:text-gray-100"
+                                    >
+                                        No parcels selected
                                     </div>
 
-                                    <div class="grid gap-1.5">
-                                        <label for="handover_type" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                            Handover Type
-                                        </label>
-
-                                        <select
-                                            id="handover_type"
-                                            name="handover_type"
-                                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                                        >
-                                            @foreach ($batchHandoverTypes as $handoverTypeValue => $handoverTypeLabel)
-                                                <option value="{{ $handoverTypeValue }}" @selected(old('handover_type', \Platform\CommerceCore\Models\ShipmentHandoverBatch::TYPE_COURIER_PICKUP) === $handoverTypeValue)>
-                                                    {{ $handoverTypeLabel }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="grid gap-1.5">
-                                        <label for="receiver_name" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                            Receiver / Driver Name
-                                        </label>
-
-                                        <input
-                                            id="receiver_name"
-                                            type="text"
-                                            name="receiver_name"
-                                            value="{{ old('receiver_name') }}"
-                                            placeholder="Optional"
-                                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                                        >
-                                    </div>
-
-                                    <div class="grid gap-1.5 md:col-span-2 xl:col-span-1">
-                                        <label for="handover_notes" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                            Handover Notes
-                                        </label>
-
-                                        <input
-                                            id="handover_notes"
-                                            type="text"
-                                            name="notes"
-                                            value="{{ old('notes') }}"
-                                            placeholder="Optional batch note"
-                                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                                        >
+                                    <div
+                                        id="ready-shipment-selection-hint"
+                                        class="text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        Select parcels from one courier to create a handover sheet or manifest.
                                     </div>
                                 </div>
 
@@ -835,51 +824,53 @@
                                     </button>
 
                                     <button
-                                        type="submit"
-                                        formaction="{{ route('admin.sales.to-ship.create-handover-batch') }}"
-                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                        type="button"
+                                        data-handover-bulk-action="draft"
+                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                        disabled
                                     >
-                                        Create Handover Batch
+                                        Create Handover Sheet
                                     </button>
 
                                     <button
-                                        type="submit"
-                                        formaction="{{ route('admin.sales.to-ship.print-manifest') }}"
-                                        formtarget="_blank"
-                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                        type="button"
+                                        data-handover-bulk-action="print"
+                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                        disabled
                                     >
-                                        Print Handover Sheet / Manifest
+                                        Print Manifest
                                     </button>
 
                                     <button
-                                        type="submit"
-                                        formaction="{{ route('admin.sales.to-ship.confirm-handover') }}"
-                                        class="primary-button"
+                                        type="button"
+                                        data-handover-bulk-action="confirm"
+                                        class="primary-button disabled:cursor-not-allowed disabled:opacity-50"
+                                        disabled
                                     >
                                         Confirm Handover
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                                Select one or more ready parcels for the same courier. Confirm Handover is what moves them to In Delivery.
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                Use the courier parent checkbox to select every parcel for that courier, or choose parcel rows individually.
                             </div>
                         </div>
 
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800">
                             <x-admin::table class="min-w-[1320px]">
-                                <thead class="bg-slate-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+                                <thead class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
                                     <tr>
                                         <x-admin::table.th class="w-[56px]">
                                             <input
                                                 type="checkbox"
+                                                data-ready-select-all
                                                 class="h-4 w-4 rounded border-slate-300 text-blue-600"
                                                 onchange="window.toggleReadyShipmentSelection(this.checked)"
                                             >
                                         </x-admin::table.th>
-                                        <x-admin::table.th>Order</x-admin::table.th>
-                                        <x-admin::table.th>Customer</x-admin::table.th>
-                                        <x-admin::table.th>Courier</x-admin::table.th>
+                                        <x-admin::table.th>Order / Courier</x-admin::table.th>
+                                        <x-admin::table.th>Customer / Selection</x-admin::table.th>
                                         <x-admin::table.th>Tracking Number</x-admin::table.th>
                                         <x-admin::table.th>Parcel Count</x-admin::table.th>
                                         <x-admin::table.th>COD Amount</x-admin::table.th>
@@ -890,137 +881,367 @@
                                 </thead>
 
                                 <tbody>
-                                    @foreach ($readyShipments as $shipmentRecord)
-                                        <tr class="border-t border-slate-200 align-top dark:border-gray-800">
-                                            <x-admin::table.td>
-                                                <input
-                                                    type="checkbox"
-                                                    name="shipment_record_ids[]"
-                                                    value="{{ $shipmentRecord->id }}"
-                                                    data-ready-checkbox
-                                                    class="h-4 w-4 rounded border-slate-300 text-blue-600"
-                                                    @checked(collect(old('shipment_record_ids', []))->contains((string) $shipmentRecord->id) || collect(old('shipment_record_ids', []))->contains($shipmentRecord->id))
-                                                >
-                                            </x-admin::table.td>
-
-                                            <x-admin::table.td class="whitespace-normal">
-                                                <div class="grid gap-1">
-                                                    <a
-                                                        href="{{ route('admin.sales.orders.view', $shipmentRecord->order_id) }}"
-                                                        class="font-semibold text-blue-600 hover:underline"
-                                                    >
-                                                        #{{ $shipmentRecord->order?->increment_id ?: $shipmentRecord->order_id }}
-                                                    </a>
-
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                        Ready for courier handover
-                                                    </span>
-                                                </div>
-                                            </x-admin::table.td>
-
-                                            <x-admin::table.td class="whitespace-normal">
-                                                <div class="grid gap-1">
-                                                    <span class="font-semibold text-gray-800 dark:text-gray-100">
-                                                        {{ $shipmentRecord->recipient_name ?: $shipmentRecord->order?->customer_full_name ?: 'N/A' }}
-                                                    </span>
-
-                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                        {{ $shipmentRecord->recipient_phone ?: 'No phone added' }}
-                                                    </span>
-                                                </div>
-                                            </x-admin::table.td>
-
-                                            <x-admin::table.td class="whitespace-normal">
-                                                {{ $shipmentRecord->carrier?->name ?: $shipmentRecord->carrier_name_snapshot ?: 'Manual Courier' }}
-                                            </x-admin::table.td>
-
-                                            <x-admin::table.td class="whitespace-normal">
-                                                <div class="grid gap-1">
-                                                    <span>{{ $shipmentRecord->tracking_number ?: 'Not added' }}</span>
-
-                                                    @if ($shipmentRecord->trackingUrl())
-                                                        <a
-                                                            href="{{ $shipmentRecord->trackingUrl() }}"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            class="text-xs text-blue-600 hover:underline"
+                                    @foreach ($readyShipmentGroups as $group)
+                                        <tr
+                                            data-ready-group-block="{{ $group['dom_id'] }}"
+                                            data-ready-carrier-name="{{ $group['carrier_name'] }}"
+                                            class="border-t border-slate-200 align-top dark:border-gray-800"
+                                        >
+                                            <x-admin::table.td colspan="9" class="!p-0">
+                                                <div class="flex items-start justify-between gap-4 bg-slate-100 px-4 py-4 dark:bg-gray-950/60">
+                                                    <div class="flex min-w-0 items-start gap-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            data-ready-parent-checkbox="{{ $group['dom_id'] }}"
+                                                            class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
+                                                            onchange="window.toggleReadyShipmentGroupSelection('{{ $group['dom_id'] }}', this.checked)"
                                                         >
-                                                            Open tracking link
-                                                        </a>
-                                                    @endif
-                                                </div>
-                                            </x-admin::table.td>
 
-                                            <x-admin::table.td>
-                                                {{ max(1, (int) $shipmentRecord->package_count) }}
-                                            </x-admin::table.td>
+                                                        <div class="flex min-w-0 flex-col items-start gap-3">
+                                                            <button
+                                                                type="button"
+                                                                class="truncate text-left text-xl font-bold leading-tight text-gray-800 transition hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400"
+                                                                onclick="window.toggleReadyShipmentGroupRows('{{ $group['dom_id'] }}')"
+                                                            >
+                                                                {{ $group['carrier_name'] }}
+                                                            </button>
 
-                                            <x-admin::table.td>
-                                                @if ((float) $shipmentRecord->cod_amount_expected > 0)
-                                                    {{ core()->formatBasePrice((float) $shipmentRecord->cod_amount_expected) }}
-                                                @else
-                                                    No COD
-                                                @endif
-                                            </x-admin::table.td>
+                                                            <div
+                                                                class="flex shrink-0 flex-wrap items-center gap-4 whitespace-nowrap"
+                                                            >
+                                                                <span
+                                                                    class="text-sm font-semibold"
+                                                                    style="color: #0f766e;"
+                                                                >
+                                                                    {{ $group['parcel_count'] }} parcel{{ $group['parcel_count'] > 1 ? 's' : '' }}
+                                                                </span>
 
-                                            <x-admin::table.td class="whitespace-normal">
-                                                <div class="grid gap-1">
-                                                    <span>{{ optional($shipmentRecord->packed_at ?: $shipmentRecord->created_at)->format('d M Y, h:i A') }}</span>
+                                                                <span
+                                                                    class="text-sm font-semibold"
+                                                                    style="color: #F25022;"
+                                                                >
+                                                                    {{ core()->formatBasePrice($group['total_cod_amount']) }} COD
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
-                                                    @if ($shipmentRecord->packer?->name)
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                            Packed by {{ $shipmentRecord->packer->name }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </x-admin::table.td>
+                                                    <div class="flex shrink-0 items-center justify-end">
+                                                        <button
+                                                            type="button"
+                                                            data-ready-group-toggle="{{ $group['dom_id'] }}"
+                                                            data-ready-group-expanded="false"
+                                                            aria-expanded="false"
+                                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition hover:border-slate-400 hover:text-slate-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100"
+                                                            onclick="window.toggleReadyShipmentGroupRows('{{ $group['dom_id'] }}')"
+                                                        >
+                                                            <span
+                                                                class="sr-only"
+                                                                data-ready-group-toggle-label="{{ $group['dom_id'] }}"
+                                                            >
+                                                                Expand
+                                                            </span>
 
-                                            <x-admin::table.td class="whitespace-normal">
-                                                {{ $shipmentRecord->handover_mode_label ?: 'Not set' }}
-                                            </x-admin::table.td>
-
-                                            <x-admin::table.td class="whitespace-normal">
-                                                <div class="grid gap-1 text-sm text-gray-700 dark:text-gray-300">
-                                                    @if ($shipmentRecord->handoverBatch?->reference)
-                                                        <span class="font-semibold text-gray-800 dark:text-gray-100">
-                                                            Batch {{ $shipmentRecord->handoverBatch->reference }}
-                                                        </span>
-                                                    @endif
-
-                                                    @if ($shipmentRecord->is_fragile || filled($shipmentRecord->special_handling))
-                                                        <span>
-                                                            {{ $shipmentRecord->is_fragile ? 'Fragile parcel' : 'Special handling' }}
-                                                        </span>
-                                                    @endif
-
-                                                    @if ($shipmentRecord->internal_note)
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ \Illuminate\Support\Str::limit($shipmentRecord->internal_note, 90) }}
-                                                        </span>
-                                                    @elseif ($shipmentRecord->courier_note)
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ \Illuminate\Support\Str::limit($shipmentRecord->courier_note, 90) }}
-                                                        </span>
-                                                    @else
-                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                            Waiting for courier handover confirmation.
-                                                        </span>
-                                                    @endif
+                                                            <span
+                                                                data-ready-group-toggle-icon="{{ $group['dom_id'] }}"
+                                                                class="icon-sort-down text-base"
+                                                                aria-hidden="true"
+                                                            ></span>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </x-admin::table.td>
                                         </tr>
+
+                                        @foreach ($group['shipments'] as $shipmentRecord)
+                                            <tr
+                                                data-ready-child-row="{{ $group['dom_id'] }}"
+                                                class="hidden border-t border-slate-200 align-top bg-white dark:border-gray-800 dark:bg-gray-900/40"
+                                            >
+                                                <x-admin::table.td>
+                                                    <input
+                                                        type="checkbox"
+                                                        name="shipment_record_ids[]"
+                                                        value="{{ $shipmentRecord->id }}"
+                                                        data-ready-checkbox
+                                                        data-ready-group="{{ $group['dom_id'] }}"
+                                                        data-carrier-id="{{ $shipmentRecord->shipment_carrier_id }}"
+                                                        data-carrier-name="{{ $group['carrier_name'] }}"
+                                                        data-cod-amount="{{ (float) $shipmentRecord->cod_amount_expected }}"
+                                                        class="h-4 w-4 rounded border-slate-300 text-blue-600"
+                                                        @checked($oldSelectedShipmentIds->contains((string) $shipmentRecord->id))
+                                                    >
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td class="whitespace-normal">
+                                                    <div class="ml-4 border-l-2 border-slate-200 pl-4 dark:border-gray-700">
+                                                        <div class="grid gap-1">
+                                                            <a
+                                                                href="{{ route('admin.sales.orders.view', $shipmentRecord->order_id) }}"
+                                                                class="font-semibold text-blue-600 hover:underline"
+                                                            >
+                                                                #{{ $shipmentRecord->order?->increment_id ?: $shipmentRecord->order_id }}
+                                                            </a>
+
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                Ready for courier handover
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td class="whitespace-normal">
+                                                    <div class="grid gap-1">
+                                                        <span class="font-semibold text-gray-800 dark:text-gray-100">
+                                                            {{ $shipmentRecord->recipient_name ?: $shipmentRecord->order?->customer_full_name ?: 'N/A' }}
+                                                        </span>
+
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ $shipmentRecord->recipient_phone ?: 'No phone added' }}
+                                                        </span>
+                                                    </div>
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td class="whitespace-normal">
+                                                    <div class="grid gap-1">
+                                                        <span>{{ $shipmentRecord->tracking_number ?: 'Not added' }}</span>
+
+                                                        @if ($shipmentRecord->trackingUrl())
+                                                            <a
+                                                                href="{{ $shipmentRecord->trackingUrl() }}"
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                class="text-xs text-blue-600 hover:underline"
+                                                            >
+                                                                Open tracking link
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td>
+                                                    {{ max(1, (int) $shipmentRecord->package_count) }}
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td>
+                                                    @if ((float) $shipmentRecord->cod_amount_expected > 0)
+                                                        {{ core()->formatBasePrice((float) $shipmentRecord->cod_amount_expected) }}
+                                                    @else
+                                                        No COD
+                                                    @endif
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td class="whitespace-normal">
+                                                    <div class="grid gap-1">
+                                                        <span>{{ optional($shipmentRecord->packed_at ?: $shipmentRecord->created_at)->format('d M Y, h:i A') }}</span>
+
+                                                        @if ($shipmentRecord->packer?->name)
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                Packed by {{ $shipmentRecord->packer->name }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td class="whitespace-normal">
+                                                    {{ $shipmentRecord->handover_mode_label ?: 'Not set' }}
+                                                </x-admin::table.td>
+
+                                                <x-admin::table.td class="whitespace-normal">
+                                                    <div class="grid gap-1 text-sm text-gray-700 dark:text-gray-300">
+                                                        @if ($shipmentRecord->handoverBatch?->reference)
+                                                            <span class="font-semibold text-gray-800 dark:text-gray-100">
+                                                                Batch {{ $shipmentRecord->handoverBatch->reference }}
+                                                            </span>
+                                                        @endif
+
+                                                        @if ($shipmentRecord->is_fragile || filled($shipmentRecord->special_handling))
+                                                            <span>
+                                                                {{ $shipmentRecord->is_fragile ? 'Fragile parcel' : 'Special handling' }}
+                                                            </span>
+                                                        @endif
+
+                                                        @if ($shipmentRecord->internal_note)
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                {{ \Illuminate\Support\Str::limit($shipmentRecord->internal_note, 90) }}
+                                                            </span>
+                                                        @elseif ($shipmentRecord->courier_note)
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                {{ \Illuminate\Support\Str::limit($shipmentRecord->courier_note, 90) }}
+                                                            </span>
+                                                        @else
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                Waiting for courier handover confirmation.
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </x-admin::table.td>
+                                            </tr>
+                                        @endforeach
                                     @endforeach
                                 </tbody>
                             </x-admin::table>
                         </div>
 
-                        <div class="border-t border-slate-200 px-6 py-4 dark:border-gray-800">
+                        <div class="border-t border-slate-200 px-2 pt-2 dark:border-gray-800">
                             {{ $readyShipments->links() }}
                         </div>
                     </form>
                 @endif
             </div>
         </section>
+    </div>
+
+    <div
+        id="handover-batch-modal"
+        class="fixed inset-0 z-[10001] hidden items-center justify-center bg-black/60 p-4"
+        aria-hidden="true"
+    >
+        <div
+            id="handover-batch-modal-box"
+            class="relative z-[10002] flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+        >
+            <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-gray-800">
+                <div class="grid gap-1">
+                    <p id="handover-batch-modal-title" class="text-lg font-semibold text-gray-800 dark:text-white">
+                        Prepare Handover
+                    </p>
+
+                    <p id="handover-batch-modal-description" class="text-sm text-gray-600 dark:text-gray-300">
+                        Add batch details for the selected parcels.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onclick="window.closeHandoverBatchModal && window.closeHandoverBatchModal()"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-xl text-gray-600 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    aria-label="Close handover batch modal"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div class="grid gap-5 px-6 py-5">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/60">
+                    <div id="handover-batch-modal-summary" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        No parcels selected
+                    </div>
+
+                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Batch operations should be prepared for one courier at a time.
+                    </div>
+                </div>
+
+                @if ($errors->has('selected_shipments'))
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100">
+                        {{ $errors->first('selected_shipments') }}
+                    </div>
+                @endif
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="grid gap-1.5">
+                        <label for="handover_at" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                            Handover Date &amp; Time
+                        </label>
+
+                        <input
+                            id="handover_at"
+                            type="datetime-local"
+                            name="handover_at"
+                            form="handover-batch-form"
+                            value="{{ old('handover_at', now()->format('Y-m-d\TH:i')) }}"
+                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                        >
+
+                        @error('handover_at')
+                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="grid gap-1.5">
+                        <label for="handover_type" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                            Handover Type
+                        </label>
+
+                        <select
+                            id="handover_type"
+                            name="handover_type"
+                            form="handover-batch-form"
+                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                        >
+                            @foreach ($batchHandoverTypes as $handoverTypeValue => $handoverTypeLabel)
+                                <option value="{{ $handoverTypeValue }}" @selected(old('handover_type', \Platform\CommerceCore\Models\ShipmentHandoverBatch::TYPE_COURIER_PICKUP) === $handoverTypeValue)>
+                                    {{ $handoverTypeLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('handover_type')
+                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="grid gap-1.5">
+                        <label for="receiver_name" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                            Receiver / Driver Name
+                        </label>
+
+                        <input
+                            id="receiver_name"
+                            type="text"
+                            name="receiver_name"
+                            form="handover-batch-form"
+                            value="{{ old('receiver_name') }}"
+                            placeholder="Optional"
+                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                        >
+
+                        @error('receiver_name')
+                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="grid gap-1.5 md:col-span-2">
+                        <label for="handover_notes" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                            Handover Notes
+                        </label>
+
+                        <textarea
+                            id="handover_notes"
+                            name="notes"
+                            form="handover-batch-form"
+                            rows="3"
+                            placeholder="Optional batch note"
+                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                        >{{ old('notes') }}</textarea>
+
+                        @error('notes')
+                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-gray-800">
+                <button
+                    type="button"
+                    onclick="window.closeHandoverBatchModal && window.closeHandoverBatchModal()"
+                    class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    id="handover-batch-submit-button"
+                    form="handover-batch-form"
+                    class="primary-button"
+                >
+                    Continue
+                </button>
+            </div>
+        </div>
     </div>
 
     <div
@@ -1084,7 +1305,7 @@
 </x-admin::layouts>
 
 <script>
-    window.showShipmentPrintWarning = function (message) {
+    window.showShipmentWorkflowWarning = function (message) {
         if (window.app?.config?.globalProperties?.$emitter) {
             window.app.config.globalProperties.$emitter.emit('add-flash', {
                 type: 'warning',
@@ -1095,6 +1316,30 @@
         }
 
         window.alert(message);
+    };
+
+    window.handoverBatchConfig = {
+        draft: {
+            title: 'Create Handover Sheet',
+            description: 'Add the batch details for the selected parcels, then save a handover sheet for warehouse follow-up.',
+            submitLabel: 'Create Handover Sheet',
+            formAction: @js(route('admin.sales.to-ship.create-handover-batch')),
+            formTarget: '_self',
+        },
+        print: {
+            title: 'Print Manifest',
+            description: 'Add the batch details for the selected parcels, then open the handover sheet / manifest in a new tab.',
+            submitLabel: 'Print Manifest',
+            formAction: @js(route('admin.sales.to-ship.print-manifest')),
+            formTarget: '_blank',
+        },
+        confirm: {
+            title: 'Confirm Handover',
+            description: 'Add the batch details and confirm these parcels were physically handed over to the courier.',
+            submitLabel: 'Confirm Handover',
+            formAction: @js(route('admin.sales.to-ship.confirm-handover')),
+            formTarget: '_self',
+        },
     };
 
     window.validateShipmentPrintPreviewForm = function (form) {
@@ -1119,19 +1364,255 @@
 
             if (! value) {
                 field?.focus?.();
-                window.showShipmentPrintWarning(check.message);
+                window.showShipmentWorkflowWarning(check.message);
 
                 return false;
             }
         }
 
         if (typeof form.reportValidity === 'function' && ! form.reportValidity()) {
-            window.showShipmentPrintWarning('Complete the required booking fields before opening print preview.');
+            window.showShipmentWorkflowWarning('Complete the required booking fields before opening print preview.');
 
             return false;
         }
 
         return true;
+    };
+
+    window.readyShipmentMoneyTemplate = @js(core()->formatBasePrice(0));
+
+    window.formatReadyShipmentMoney = function (amount) {
+        const template = window.readyShipmentMoneyTemplate || '0.00';
+        const numericValue = Number(amount || 0);
+        const formattedNumber = numericValue.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        const amountPattern = /[-+]?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?/;
+
+        if (! amountPattern.test(template)) {
+            return formattedNumber;
+        }
+
+        return template.replace(amountPattern, formattedNumber);
+    };
+
+    window.selectedReadyShipmentCheckboxes = function () {
+        return Array.from(document.querySelectorAll('[data-ready-checkbox]:checked'));
+    };
+
+    window.selectedReadyCarrierIds = function () {
+        return [...new Set(
+            window.selectedReadyShipmentCheckboxes()
+                .map((element) => element.dataset.carrierId)
+                .filter(Boolean)
+        )];
+    };
+
+    window.selectedReadyShipmentCodTotal = function () {
+        return window.selectedReadyShipmentCheckboxes().reduce((total, element) => {
+            return total + Number(element.dataset.codAmount || 0);
+        }, 0);
+    };
+
+    window.syncReadyShipmentSelectionUi = function () {
+        const selected = window.selectedReadyShipmentCheckboxes();
+        const summary = document.getElementById('ready-shipment-selection-summary');
+        const hint = document.getElementById('ready-shipment-selection-hint');
+        const buttons = document.querySelectorAll('[data-handover-bulk-action]');
+        const selectAllCheckbox = document.querySelector('[data-ready-select-all]');
+        const carrierIds = window.selectedReadyCarrierIds();
+        const carrierNames = [...new Set(selected.map((element) => element.dataset.carrierName).filter(Boolean))];
+        const selectedCodTotal = window.selectedReadyShipmentCodTotal();
+
+        buttons.forEach((button) => {
+            button.disabled = selected.length === 0 || carrierIds.length !== 1;
+        });
+
+        if (selectAllCheckbox) {
+            const allCheckboxes = document.querySelectorAll('[data-ready-checkbox]');
+            selectAllCheckbox.checked = selected.length > 0 && selected.length === allCheckboxes.length;
+            selectAllCheckbox.indeterminate = selected.length > 0 && selected.length < allCheckboxes.length;
+        }
+
+        document.querySelectorAll('[data-ready-parent-checkbox]').forEach((parentCheckbox) => {
+            const groupKey = parentCheckbox.dataset.readyParentCheckbox;
+            const groupCheckboxes = Array.from(document.querySelectorAll(`[data-ready-checkbox][data-ready-group="${groupKey}"]`));
+            const groupSelected = groupCheckboxes.filter((element) => element.checked);
+            const parentSelection = document.querySelector(`[data-ready-parent-selection="${groupKey}"]`);
+            const groupTotal = groupCheckboxes.length;
+
+            parentCheckbox.checked = groupSelected.length > 0 && groupSelected.length === groupTotal;
+            parentCheckbox.indeterminate = groupSelected.length > 0 && groupSelected.length < groupTotal;
+
+            if (! parentSelection) {
+                return;
+            }
+
+            if (groupSelected.length === 0) {
+                parentSelection.textContent = '0 selected';
+
+                return;
+            }
+
+            if (groupSelected.length === groupTotal) {
+                parentSelection.textContent = `${groupTotal} selected`;
+
+                return;
+            }
+
+            parentSelection.textContent = `${groupSelected.length} of ${groupTotal} selected`;
+        });
+
+        if (! summary || ! hint) {
+            return;
+        }
+
+        if (selected.length === 0) {
+            summary.textContent = 'No parcels selected';
+            hint.textContent = 'Select parcels from one courier to create a handover sheet or manifest.';
+            hint.classList.remove('text-amber-700', 'dark:text-amber-300');
+            hint.classList.add('text-gray-500', 'dark:text-gray-400');
+
+            return;
+        }
+
+        if (carrierIds.length === 1) {
+            const carrierName = carrierNames[0] || 'Selected courier';
+            const groupKey = selected[0]?.dataset.readyGroup;
+            const groupTotal = groupKey
+                ? document.querySelectorAll(`[data-ready-checkbox][data-ready-group="${groupKey}"]`).length
+                : selected.length;
+            const selectionLabel = selected.length === groupTotal
+                ? `${selected.length} parcel${selected.length > 1 ? 's' : ''} selected`
+                : `${selected.length} of ${groupTotal} parcels selected`;
+
+            summary.textContent = `${carrierName} — ${selectionLabel} · COD ${window.formatReadyShipmentMoney(selectedCodTotal)}`;
+            hint.textContent = `Ready to create one handover sheet for ${carrierName}.`;
+            hint.classList.remove('text-amber-700', 'dark:text-amber-300');
+            hint.classList.add('text-gray-500', 'dark:text-gray-400');
+
+            return;
+        }
+
+        summary.textContent = `${selected.length} parcels selected across ${carrierIds.length} couriers`;
+        hint.textContent = 'Select parcels from one courier only to create a handover sheet.';
+        hint.classList.remove('text-gray-500', 'dark:text-gray-400');
+        hint.classList.add('text-amber-700', 'dark:text-amber-300');
+    };
+
+    window.toggleReadyShipmentSelection = function (checked) {
+        document.querySelectorAll('[data-ready-checkbox]').forEach((element) => {
+            element.checked = checked;
+        });
+
+        window.syncReadyShipmentSelectionUi();
+    };
+
+    window.toggleReadyShipmentGroupSelection = function (groupKey, checked) {
+        if (! groupKey) {
+            return;
+        }
+
+        document.querySelectorAll(`[data-ready-checkbox][data-ready-group="${groupKey}"]`).forEach((element) => {
+            element.checked = checked;
+        });
+
+        window.syncReadyShipmentSelectionUi();
+    };
+
+    window.toggleReadyShipmentGroupRows = function (groupKey) {
+        if (! groupKey) {
+            return;
+        }
+
+        const toggleButton = document.querySelector(`[data-ready-group-toggle="${groupKey}"]`);
+        const toggleLabel = document.querySelector(`[data-ready-group-toggle-label="${groupKey}"]`);
+        const toggleIcon = document.querySelector(`[data-ready-group-toggle-icon="${groupKey}"]`);
+        const childRows = document.querySelectorAll(`[data-ready-child-row="${groupKey}"]`);
+
+        if (! toggleButton || ! toggleLabel || ! toggleIcon || ! childRows.length) {
+            return;
+        }
+
+        const isExpanded = toggleButton.dataset.readyGroupExpanded !== 'false';
+        const nextExpanded = ! isExpanded;
+
+        childRows.forEach((row) => {
+            row.classList.toggle('hidden', ! nextExpanded);
+        });
+
+        toggleButton.dataset.readyGroupExpanded = nextExpanded ? 'true' : 'false';
+        toggleButton.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
+        toggleLabel.textContent = nextExpanded ? 'Collapse' : 'Expand';
+        toggleIcon.classList.remove('icon-sort-up', 'icon-sort-down');
+        toggleIcon.classList.add(nextExpanded ? 'icon-sort-up' : 'icon-sort-down');
+    };
+
+    window.openHandoverBatchModal = function (action) {
+        const modal = document.getElementById('handover-batch-modal');
+        const form = document.getElementById('handover-batch-form');
+        const actionInput = document.getElementById('handover_action');
+        const titleElement = document.getElementById('handover-batch-modal-title');
+        const descriptionElement = document.getElementById('handover-batch-modal-description');
+        const summaryElement = document.getElementById('handover-batch-modal-summary');
+        const submitButton = document.getElementById('handover-batch-submit-button');
+        const selected = window.selectedReadyShipmentCheckboxes();
+        const carrierIds = window.selectedReadyCarrierIds();
+        const carrierNames = [...new Set(
+            selected
+                .map((element) => element.dataset.carrierName)
+                .filter(Boolean)
+        )];
+        const config = window.handoverBatchConfig[action] || window.handoverBatchConfig.draft;
+
+        if (! selected.length) {
+            window.showShipmentWorkflowWarning('Select at least one parcel from Parcel Ready for Handover.');
+
+            return;
+        }
+
+        if (carrierIds.length !== 1) {
+            window.showShipmentWorkflowWarning('Select parcels for one courier at a time before preparing a handover.');
+
+            return;
+        }
+
+        if (! modal || ! form || ! actionInput || ! titleElement || ! descriptionElement || ! summaryElement || ! submitButton) {
+            return;
+        }
+
+        actionInput.value = action;
+        form.action = config.formAction;
+        form.target = config.formTarget;
+        titleElement.textContent = config.title;
+        descriptionElement.textContent = config.description;
+        submitButton.textContent = config.submitLabel;
+        summaryElement.textContent = `${carrierNames[0] || 'Selected courier'} — ${selected.length} parcel${selected.length > 1 ? 's' : ''} selected · COD ${window.formatReadyShipmentMoney(window.selectedReadyShipmentCodTotal())}.`;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+    };
+
+    window.closeHandoverBatchModal = function () {
+        const modal = document.getElementById('handover-batch-modal');
+        const form = document.getElementById('handover-batch-form');
+
+        if (! modal) {
+            return;
+        }
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
+
+        if (form) {
+            form.target = '_self';
+        }
+
+        document.body.classList.remove('overflow-hidden');
     };
 
     window.openShipmentPrintPreview = async function (button, actionUrl, title) {
@@ -1231,25 +1712,40 @@
         iframe?.contentWindow?.print();
     };
 
-    window.toggleReadyShipmentSelection = function (checked) {
-        document.querySelectorAll('[data-ready-checkbox]').forEach((element) => {
-            element.checked = checked;
-        });
-    };
-
     document.addEventListener('click', function (event) {
         const previewButton = event.target.closest('[data-shipment-print-preview]');
 
-        if (! previewButton) {
+        if (previewButton) {
+            event.preventDefault();
+
+            window.openShipmentPrintPreview(
+                previewButton,
+                previewButton.dataset.shipmentPrintPreview,
+                previewButton.dataset.printTitle
+            );
+
             return;
         }
 
-        event.preventDefault();
+        const handoverActionButton = event.target.closest('[data-handover-bulk-action]');
 
-        window.openShipmentPrintPreview(
-            previewButton,
-            previewButton.dataset.shipmentPrintPreview,
-            previewButton.dataset.printTitle
-        );
+        if (handoverActionButton) {
+            event.preventDefault();
+            window.openHandoverBatchModal(handoverActionButton.dataset.handoverBulkAction);
+        }
+    });
+
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('[data-ready-checkbox]') || event.target.matches('[data-ready-select-all]')) {
+            window.syncReadyShipmentSelectionUi();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        window.syncReadyShipmentSelectionUi();
+
+        @if ($restoreHandoverModal)
+            window.openHandoverBatchModal(@js($restoredHandoverAction));
+        @endif
     });
 </script>
