@@ -103,6 +103,10 @@ Saving the booking no longer moves the parcel directly to `In Delivery`. The boo
 
 The Basic-mode handover sheet is domestic-focused and includes merchant, courier, parcel count, COD total, shipment rows, and signature areas for signed proof of handover.
 
+Follow-up note:
+
+- saved handover batches now exist in the backend and are linked to shipment records, but Basic mode still needs a dedicated `Handover History` screen so admins can browse, reopen, and reprint past handover sheets by batch reference, courier, and date
+
 `In Delivery` is the simple manual-mode shipment queue. It is intended for non-technical store owners and focuses only on:
 
 - order reference

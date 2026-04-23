@@ -56,6 +56,8 @@ Route::group([
             Route::post('{order}/print/{document}', 'printDocuments')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.print-documents');
             Route::post('handover-batches', 'createHandoverBatch')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.create-handover-batch');
             Route::post('handover-batches/print', 'printManifest')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.print-manifest');
+            Route::get('handover-batches/{handoverBatch}/sheet', 'showHandoverSheet')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.handover-sheet.preview');
+            Route::get('handover-batches/{handoverBatch}/sheet/pdf', 'downloadHandoverSheetPdf')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.handover-sheet.pdf');
             Route::post('handover-batches/confirm', 'confirmHandover')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.confirm-handover');
         });
 
