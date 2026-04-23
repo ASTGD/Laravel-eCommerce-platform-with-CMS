@@ -196,10 +196,14 @@ Current status:
   - delivered COD shipments now move hidden settlement state to `Collected by Carrier` so later remittance work starts from a truthful backend state
 - the manual business-workflow IA refactor is now active:
   - the Basic-mode `Shipments` menu now uses merchant-facing labels: `To Ship`, `In Delivery`, and `COD Receivables`
-  - `To Ship` is now a dedicated Basic-mode booking page for processing orders that still need a courier handoff
-  - `To Ship` now books shipments through a business-facing modal while still creating the native shipment underneath
-  - `In Delivery` now becomes the business-facing label for the old manual shipped-orders queue and only shows active, not-yet-completed courier deliveries
-  - `In Delivery` now supports a courier filter and dedicated booked-date column so manual follow-up stays courier-first without exposing advanced ops
+  - `To Ship` is now a dedicated Basic-mode operational page with one same-screen 2-layer layout:
+    - `Needs Booking`
+    - `Parcel Ready for Handover`
+  - the `Book Shipment` interaction now captures order snapshot, pick-and-pack data, courier booking data, and domestic print actions while still creating the native shipment underneath
+  - saving a booking now leaves the parcel in `To Ship` under `Parcel Ready for Handover` instead of moving it directly to `In Delivery`
+  - `To Ship` now supports draft handover batches, printable courier manifest generation, and final handover confirmation for selected prepared parcels
+  - `In Delivery` now becomes the business-facing label for parcels that have been physically handed over to the courier, not merely booked in the system
+  - `In Delivery` now supports a courier filter and dedicated handed-over date column so manual follow-up stays courier-first without exposing advanced ops
   - `COD Receivables` now shows courier-first receivable, received, and pending totals derived from shipment-level COD settlements
   - `COD Receivables` now records courier payments through a simple modal and allocates them oldest-first across pending COD shipment settlements
   - marking a Basic-mode COD shipment as delivered now moves it into the courier receivable workflow automatically through the shared shipment and COD settlement pipeline

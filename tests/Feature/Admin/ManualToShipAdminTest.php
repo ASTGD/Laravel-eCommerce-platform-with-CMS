@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentEvent;
+use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
-use Illuminate\Support\Facades\Schema;
+use Platform\CommerceCore\Services\ManualToShipService;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -32,6 +34,7 @@ beforeEach(function () {
     try {
         ShipmentEvent::query()->delete();
         ShipmentRecord::query()->delete();
+        ShipmentHandoverBatch::query()->delete();
         ShipmentCarrier::query()->delete();
     } finally {
         Schema::enableForeignKeyConstraints();
@@ -48,14 +51,32 @@ beforeEach(function () {
     );
 });
 
-it('shows the basic to ship page with business-facing booking columns', function () {
-    $fixture = createManualToShipFixture();
+it('shows the to ship page with needs booking and parcel ready for handover layers', function () {
+    $needsBookingFixture = createManualToShipFixture();
+    $readyFixture = createManualToShipFixture();
 
-    ShipmentCarrier::query()->create([
-        'code' => 'steadfast',
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'steadfast_manual_to_ship_test',
         'name' => 'Steadfast Courier',
         'supports_cod' => true,
         'is_active' => true,
+    ]);
+
+    ShipmentRecord::query()->create([
+        'order_id' => $readyFixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'READY-SAME-SCREEN-001',
+        'recipient_name' => $readyFixture['order']->customer_full_name,
+        'recipient_phone' => $readyFixture['order']->shipping_address->phone,
+        'recipient_address' => $readyFixture['order']->shipping_address->address,
+        'destination_country' => $readyFixture['order']->shipping_address->country,
+        'destination_region' => $readyFixture['order']->shipping_address->state,
+        'destination_city' => $readyFixture['order']->shipping_address->city,
+        'packed_at' => now()->subHour(),
+        'package_count' => 1,
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
     ]);
 
     $this->loginAsAdmin();
@@ -63,21 +84,19 @@ it('shows the basic to ship page with business-facing booking columns', function
     get(route('admin.sales.to-ship.index'))
         ->assertOk()
         ->assertSeeText('To Ship')
-        ->assertSeeText('Search orders')
-        ->assertSeeText('Filter')
-        ->assertSeeText('Per Page')
-        ->assertSeeText((string) $fixture['order']->increment_id)
-        ->assertSeeText('COD')
-        ->assertDontSeeText('Manual Basic mode')
-        ->assertDontSeeText('Stock Check')
+        ->assertSeeText('Needs Booking')
+        ->assertSeeText('Parcel Ready for Handover')
+        ->assertSeeText((string) $needsBookingFixture['order']->increment_id)
+        ->assertSeeText('READY-SAME-SCREEN-001')
+        ->assertSeeText('Create Handover Batch')
         ->assertSeeText('Book Shipment');
 });
 
-it('books a shipment from to ship and moves it into the in delivery queue', function () {
+it('books a shipment into parcel ready for handover instead of in delivery', function () {
     $fixture = createManualToShipFixture();
 
     $carrier = ShipmentCarrier::query()->create([
-        'code' => 'pathao',
+        'code' => 'pathao_manual_to_ship_test',
         'name' => 'Pathao Courier',
         'tracking_url_template' => 'https://pathao.example/track/{tracking_number}',
         'supports_cod' => true,
@@ -92,36 +111,193 @@ it('books a shipment from to ship and moves it into the in delivery queue', func
         'shipment' => [
             'source' => $fixture['source'],
             'items' => $fixture['items'],
+            'workflow_stage' => 'ready_for_handover',
             'carrier_id' => $carrier->id,
             'track_number' => 'TRACK-BASIC-001',
             'public_tracking_url' => 'https://pathao.example/track/TRACK-BASIC-001',
-            'note' => 'Packed and handed over to the courier desk.',
+            'stock_checked' => 1,
+            'package_count' => 2,
+            'package_weight_kg' => '1.50',
+            'package_dimensions' => '12 x 8 x 5 in',
+            'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+            'is_fragile' => 1,
+            'special_handling' => 'Glass items inside.',
+            'internal_note' => 'Packed by warehouse team.',
+            'courier_note' => 'Pickup from front desk.',
         ],
-    ])->assertRedirect(route('admin.sales.to-ship.index'));
+    ])->assertRedirect(route('admin.sales.to-ship.index').'#parcel-ready-for-handover');
 
     $nativeShipment = Shipment::query()->latest('id')->firstOrFail();
     $shipmentRecord = ShipmentRecord::query()->where('native_shipment_id', $nativeShipment->id)->firstOrFail();
-    $initialEvent = ShipmentEvent::query()
-        ->where('shipment_record_id', $shipmentRecord->id)
-        ->latest('id')
-        ->firstOrFail();
 
-    expect($shipmentRecord->shipment_carrier_id)->toBe($carrier->id)
+    expect($shipmentRecord->status)->toBe(ShipmentRecord::STATUS_READY_FOR_PICKUP)
+        ->and($shipmentRecord->shipment_carrier_id)->toBe($carrier->id)
         ->and($shipmentRecord->tracking_number)->toBe('TRACK-BASIC-001')
         ->and($shipmentRecord->public_tracking_url)->toBe('https://pathao.example/track/TRACK-BASIC-001')
-        ->and($shipmentRecord->notes)->toBe('Packed and handed over to the courier desk.')
-        ->and($initialEvent->note)->toBe('Packed and handed over to the courier desk.');
+        ->and($shipmentRecord->stock_checked)->toBeTrue()
+        ->and($shipmentRecord->package_count)->toBe(2)
+        ->and((string) $shipmentRecord->package_weight_kg)->toBe('1.50')
+        ->and($shipmentRecord->package_dimensions)->toBe('12 x 8 x 5 in')
+        ->and($shipmentRecord->handover_mode)->toBe(ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+        ->and($shipmentRecord->is_fragile)->toBeTrue()
+        ->and($shipmentRecord->special_handling)->toBe('Glass items inside.')
+        ->and($shipmentRecord->internal_note)->toBe('Packed by warehouse team.')
+        ->and($shipmentRecord->courier_note)->toBe('Pickup from front desk.')
+        ->and($shipmentRecord->handed_over_at)->toBeNull();
+
+    $manualToShipService = app(ManualToShipService::class);
+    $needsBookingOrderIds = collect($manualToShipService->paginateNeedsBookingOrders(100)->items())
+        ->map(fn (array $row) => $row['order']->id)
+        ->all();
+    $readyShipmentIds = collect($manualToShipService->paginateReadyShipments(100)->items())
+        ->map(fn (ShipmentRecord $record) => $record->id)
+        ->all();
+
+    expect($needsBookingOrderIds)->not->toContain($fixture['order']->id)
+        ->and($readyShipmentIds)->toContain($shipmentRecord->id);
 
     get(route('admin.sales.to-ship.index'))
         ->assertOk()
-        ->assertDontSeeText((string) $fixture['order']->increment_id);
-
-    get(route('admin.sales.shipped-orders.index'))
-        ->assertOk()
-        ->assertSeeText('In Delivery')
+        ->assertSeeText('Parcel Ready for Handover')
         ->assertSeeText((string) $fixture['order']->increment_id)
         ->assertSeeText('Pathao Courier')
         ->assertSeeText('TRACK-BASIC-001');
+
+    get(route('admin.sales.shipped-orders.index'))
+        ->assertOk()
+        ->assertDontSeeText('TRACK-BASIC-001');
+});
+
+it('prints parcel documents from the booking flow', function () {
+    $fixture = createManualToShipFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'print_manual_to_ship_test',
+        'name' => 'Print Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.to-ship.print-documents', [$fixture['order']->id, 'document' => 'both']), [
+        'shipment' => [
+            'carrier_id' => $carrier->id,
+            'track_number' => 'TRACK-PRINT-001',
+            'public_tracking_url' => 'https://print.example/TRACK-PRINT-001',
+            'stock_checked' => 1,
+            'package_count' => 1,
+            'handover_mode' => ShipmentRecord::HANDOVER_MODE_STAFF_DROPOFF,
+        ],
+    ])->assertOk()
+        ->assertSeeText('Parcel Label')
+        ->assertSeeText('Invoice')
+        ->assertSeeText('TRACK-PRINT-001')
+        ->assertSeeText((string) $fixture['order']->increment_id);
+});
+
+it('returns a warning response for print preview when required booking fields are missing', function () {
+    $fixture = createManualToShipFixture();
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.to-ship.print-documents', [$fixture['order']->id, 'document' => 'label']), [
+        'shipment' => [
+            'package_count' => 1,
+        ],
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'Complete the required booking fields before opening print preview.')
+        ->assertJsonValidationErrors([
+            'shipment.carrier_id',
+            'shipment.track_number',
+            'shipment.handover_mode',
+        ]);
+});
+
+it('creates a draft handover batch, prints a manifest, and confirms handover into in delivery', function () {
+    $fixture = createManualToShipFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'handover_manual_to_ship_test',
+        'name' => 'Steadfast Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'READY-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'cod_amount_expected' => 1499,
+        'stock_checked' => true,
+        'packed_at' => now()->subHour(),
+        'package_count' => 2,
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+        'internal_note' => 'Packed and waiting near dispatch desk.',
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.to-ship.create-handover-batch'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->format('Y-m-d H:i:s'),
+        'receiver_name' => 'Driver Rahim',
+        'notes' => 'Morning pickup batch',
+    ])->assertRedirect(route('admin.sales.to-ship.index').'#parcel-ready-for-handover');
+
+    $batch = ShipmentHandoverBatch::query()->latest('id')->firstOrFail();
+    $shipmentRecord->refresh();
+
+    expect($batch->reference)->toStartWith('HB-')
+        ->and($batch->shipment_carrier_id)->toBe($carrier->id)
+        ->and($batch->parcel_count)->toBe(2)
+        ->and((float) $batch->total_cod_amount)->toBe(1499.0)
+        ->and($shipmentRecord->handover_batch_id)->toBe($batch->id);
+
+    post(route('admin.sales.to-ship.print-manifest'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->format('Y-m-d H:i:s'),
+        'receiver_name' => 'Driver Rahim',
+        'notes' => 'Morning pickup batch',
+    ])->assertOk()
+        ->assertSeeText('Handover Sheet / Manifest')
+        ->assertSeeText('READY-001')
+        ->assertSeeText((string) $fixture['order']->increment_id);
+
+    post(route('admin.sales.to-ship.confirm-handover'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->format('Y-m-d H:i:s'),
+        'receiver_name' => 'Driver Rahim',
+        'notes' => 'Morning pickup batch',
+    ])->assertRedirect(route('admin.sales.shipped-orders.index'));
+
+    $shipmentRecord->refresh();
+    $batch->refresh();
+
+    expect($shipmentRecord->status)->toBe(ShipmentRecord::STATUS_HANDED_TO_CARRIER)
+        ->and($shipmentRecord->handed_over_at)->not->toBeNull()
+        ->and($shipmentRecord->handover_mode)->toBe(ShipmentHandoverBatch::TYPE_COURIER_PICKUP)
+        ->and($shipmentRecord->handover_batch_id)->toBe($batch->id)
+        ->and($batch->confirmed_at)->not->toBeNull();
+
+    get(route('admin.sales.shipped-orders.index'))
+        ->assertOk()
+        ->assertSeeText('READY-001')
+        ->assertSeeText('Steadfast Courier');
 });
 
 function createManualToShipFixture(): array

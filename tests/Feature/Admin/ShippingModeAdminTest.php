@@ -64,7 +64,7 @@ it('hides advanced shipping menus and blocks advanced routes in manual basic mod
         ->assertDontSeeText('Courier Services');
 
     get(route('admin.sales.shipments.index'))
-        ->assertRedirect(route('admin.sales.shipped-orders.index'));
+        ->assertRedirect(route('admin.sales.to-ship.index'));
 
     get(route('admin.sales.shipped-orders.index'))->assertOk();
     get(route('admin.sales.cod-receivables.index'))->assertOk();
@@ -111,7 +111,6 @@ it('keeps the courier form business-only in manual basic mode', function () {
     get(route('admin.sales.carriers.create'))
         ->assertOk()
         ->assertSeeText('Add Courier Service')
-        ->assertSeeText('Manual Basic mode is active')
         ->assertSeeText('Courier Name')
         ->assertSeeText('Courier Code')
         ->assertSeeText('Contact Person')

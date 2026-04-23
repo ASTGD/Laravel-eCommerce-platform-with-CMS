@@ -53,6 +53,12 @@
 - `seo_meta`
 - `audit_logs`
 - `pickup_points`
+- `shipment_carriers`
+- `shipment_records`
+- `shipment_events`
+- `shipment_handover_batches`
+- `cod_settlements`
+- `settlement_batches`
 - `payment_attempts`
 - `payment_gateway_events`
 - `payment_refunds`
@@ -67,6 +73,12 @@
 - Menus have nested items.
 - Header/footer configs and theme presets are resolved globally or per page later.
 - A `pickup_point` is selected against checkout shipping context and copied into the final order shipping snapshot.
+- A `shipment_carrier` stores the business-facing courier registry together with optional advanced automation settings.
+- A native Bagisto shipment can sync into one `shipment_record`, which becomes the shared operational shipment domain for both Basic and Advanced workflows.
+- A `shipment_record` can hold manual parcel-preparation data such as packed state, parcel count, handover mode, and internal courier notes without replacing the native shipment source action.
+- A `shipment_handover_batch` groups one or many ready parcels for courier pickup or staff drop-off and preserves manifest-level proof of handover without replacing per-shipment traceability.
+- A `cod_settlement` still remains shipment-based even when Basic-mode UI summarizes receivables courier-first.
+- A `settlement_batch` groups many `cod_settlements` for advanced remittance and reconciliation workflows.
 - A `payment_attempt` tracks one external gateway payment session for one cart and optionally one finalized order.
 - A `payment_attempt.provider` currently resolves either `sslcommerz` or direct `bkash`, so payment operations remain provider-aware without forking the order model.
 - A `payment_gateway_event` stores each inbound redirect/IPN payload for audit and idempotent gateway reconciliation.

@@ -75,7 +75,7 @@ it('shows a simple in delivery list in manual basic mode', function () {
         ->assertSeeText('Filter')
         ->assertSeeText('Per Page')
         ->assertDontSeeText('Manual Basic mode')
-        ->assertSeeText('Booked Date')
+        ->assertSeeText('Handed Over Date')
         ->assertSeeText('Shipment Status')
         ->assertSeeText('All couriers')
         ->assertSeeText((string) $fixture['order']->increment_id)
@@ -83,6 +83,41 @@ it('shows a simple in delivery list in manual basic mode', function () {
         ->assertSeeText('TRACK-MANUAL-001')
         ->assertSeeText('Open tracking link')
         ->assertSeeText('Mark Delivered');
+});
+
+it('does not show parcels that are only ready for handover in the in delivery queue', function () {
+    $fixture = createManualShippedOrderFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'handover-ready-only-test',
+        'name' => 'Ready Queue Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'TRACK-READY-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'packed_at' => now()->subHour(),
+        'package_count' => 1,
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+    ]);
+
+    $this->loginAsAdmin();
+
+    get(route('admin.sales.shipped-orders.index'))
+        ->assertOk()
+        ->assertDontSeeText('TRACK-READY-001')
+        ->assertSeeText('No active shipments are in delivery yet. Confirm a courier handover from To Ship first, and it will appear here.');
 });
 
 it('filters the in delivery queue by courier', function () {
