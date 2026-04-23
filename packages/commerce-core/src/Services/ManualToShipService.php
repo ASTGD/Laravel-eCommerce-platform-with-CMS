@@ -46,7 +46,12 @@ class ManualToShipService
         string $pageName = 'page',
     ): LengthAwarePaginator {
         $query = ShipmentRecord::query()
-            ->with(['order', 'carrier', 'packer', 'handoverBatch'])
+            ->with([
+                'order',
+                'carrier',
+                'packer',
+                'handoverBatch' => fn ($query) => $query->withCount('shipments'),
+            ])
             ->where('status', ShipmentRecord::STATUS_READY_FOR_PICKUP);
 
         if ($carrierId) {

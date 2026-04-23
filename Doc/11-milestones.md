@@ -202,6 +202,7 @@ Current status:
   - the `Book Shipment` interaction now captures order snapshot, pick-and-pack data, courier booking data, and domestic print actions while still creating the native shipment underneath
   - saving a booking now leaves the parcel in `To Ship` under `Parcel Ready for Handover` instead of moving it directly to `In Delivery`
   - `To Ship` now supports draft handover batches, printable courier manifest generation, and final handover confirmation for selected prepared parcels
+  - a future follow-up slice is still needed for a dedicated Basic-mode `Handover History` screen so saved handover batches can be searched, reviewed, and reprinted after they leave the live `To Ship` queue
   - `In Delivery` now becomes the business-facing label for parcels that have been physically handed over to the courier, not merely booked in the system
   - `In Delivery` now supports a courier filter and dedicated handed-over date column so manual follow-up stays courier-first without exposing advanced ops
   - `COD Receivables` now shows courier-first receivable, received, and pending totals derived from shipment-level COD settlements

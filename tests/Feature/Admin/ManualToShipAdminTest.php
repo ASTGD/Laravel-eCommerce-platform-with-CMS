@@ -116,8 +116,9 @@ it('shows the to ship page with needs booking and parcel ready for handover laye
         ->assertSeeText('PaperFly Courier')
         ->assertSeeText('READY-SAME-SCREEN-001')
         ->assertSeeText('READY-SAME-SCREEN-002')
-        ->assertSeeText('Create Handover Sheet')
-        ->assertSeeText('Print Manifest')
+        ->assertSeeText('Create/Print Handover Sheet')
+        ->assertDontSeeText('Print Manifest')
+        ->assertDontSeeText('Select All')
         ->assertSeeText('Book Shipment');
 });
 
@@ -246,7 +247,7 @@ it('returns a warning response for print preview when required booking fields ar
         ]);
 });
 
-it('creates a draft handover batch, prints a manifest, and confirms handover into in delivery', function () {
+it('prepares a handover sheet preview and confirms handover into in delivery', function () {
     $fixture = createManualToShipFixture();
 
     $carrier = ShipmentCarrier::query()->create([
@@ -278,16 +279,30 @@ it('creates a draft handover batch, prints a manifest, and confirms handover int
 
     $this->loginAsAdmin();
 
-    post(route('admin.sales.to-ship.create-handover-batch'), [
+    post(route('admin.sales.to-ship.confirm-handover'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+    ])->assertSessionHasErrors('selected_shipments');
+
+    $prepareResponse = post(route('admin.sales.to-ship.create-handover-batch'), [
         'shipment_record_ids' => [$shipmentRecord->id],
         'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
         'handover_at' => now()->format('Y-m-d H:i:s'),
         'receiver_name' => 'Driver Rahim',
         'notes' => 'Morning pickup batch',
-    ])->assertRedirect(route('admin.sales.to-ship.index').'#parcel-ready-for-handover');
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk();
 
     $batch = ShipmentHandoverBatch::query()->latest('id')->firstOrFail();
     $shipmentRecord->refresh();
+
+    $prepareResponse
+        ->assertJsonPath('batch.id', $batch->id)
+        ->assertJsonPath('batch.reference', $batch->reference)
+        ->assertJsonPath('batch.shipment_count', 1)
+        ->assertJsonPath('batch.parcel_count', 2)
+        ->assertJsonPath('batch.carrier_name', 'Steadfast Courier');
 
     expect($batch->reference)->toStartWith('HB-')
         ->and($batch->shipment_carrier_id)->toBe($carrier->id)
@@ -295,23 +310,19 @@ it('creates a draft handover batch, prints a manifest, and confirms handover int
         ->and((float) $batch->total_cod_amount)->toBe(1499.0)
         ->and($shipmentRecord->handover_batch_id)->toBe($batch->id);
 
-    post(route('admin.sales.to-ship.print-manifest'), [
-        'shipment_record_ids' => [$shipmentRecord->id],
-        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
-        'handover_at' => now()->format('Y-m-d H:i:s'),
-        'receiver_name' => 'Driver Rahim',
-        'notes' => 'Morning pickup batch',
-    ])->assertOk()
-        ->assertSeeText('Handover Sheet / Manifest')
+    get(route('admin.sales.to-ship.handover-sheet.preview', $batch))
+        ->assertOk()
+        ->assertSeeText('Handover Sheet Preview')
+        ->assertSeeText('Download PDF')
         ->assertSeeText('READY-001')
         ->assertSeeText((string) $fixture['order']->increment_id);
 
+    get(route('admin.sales.to-ship.handover-sheet.pdf', $batch))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/pdf');
+
     post(route('admin.sales.to-ship.confirm-handover'), [
         'shipment_record_ids' => [$shipmentRecord->id],
-        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
-        'handover_at' => now()->format('Y-m-d H:i:s'),
-        'receiver_name' => 'Driver Rahim',
-        'notes' => 'Morning pickup batch',
     ])->assertRedirect(route('admin.sales.shipped-orders.index'));
 
     $shipmentRecord->refresh();
@@ -327,6 +338,138 @@ it('creates a draft handover batch, prints a manifest, and confirms handover int
         ->assertOk()
         ->assertSeeText('READY-001')
         ->assertSeeText('Steadfast Courier');
+});
+
+it('can generate a new handover sheet when a ready parcel still has a previously confirmed batch', function () {
+    $fixture = createManualToShipFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'pathao_stale_handover_batch_test',
+        'name' => 'Pathao',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $confirmedBatch = ShipmentHandoverBatch::query()->create([
+        'reference' => 'HB-20260423-0003',
+        'shipment_carrier_id' => $carrier->id,
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->subDay(),
+        'parcel_count' => 1,
+        'total_cod_amount' => 2619.00,
+        'confirmed_at' => now()->subDay(),
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'handover_batch_id' => $confirmedBatch->id,
+        'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'READY-STALE-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'cod_amount_expected' => 2619.00,
+        'stock_checked' => true,
+        'packed_at' => now()->subHour(),
+        'package_count' => 1,
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.to-ship.create-handover-batch'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->format('Y-m-d H:i:s'),
+        'receiver_name' => 'Himel',
+        'notes' => 'Fresh handover cycle',
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonMissingPath('errors.selected_shipments');
+
+    $shipmentRecord->refresh();
+    $newBatch = ShipmentHandoverBatch::query()
+        ->whereKeyNot($confirmedBatch->id)
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($shipmentRecord->handover_batch_id)->toBe($newBatch->id)
+        ->and($newBatch->confirmed_at)->toBeNull()
+        ->and($confirmedBatch->fresh()->confirmed_at)->not->toBeNull();
+});
+
+it('reuses the same draft handover sheet for the same ready selection', function () {
+    $fixture = createManualToShipFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'pathao_existing_draft_handover_sheet_test',
+        'name' => 'Pathao',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $fixture['order']->id,
+        'shipment_carrier_id' => $carrier->id,
+        'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
+        'carrier_name_snapshot' => $carrier->name,
+        'tracking_number' => 'READY-DRAFT-001',
+        'recipient_name' => $fixture['order']->customer_full_name,
+        'recipient_phone' => $fixture['order']->shipping_address->phone,
+        'recipient_address' => $fixture['order']->shipping_address->address,
+        'destination_country' => $fixture['order']->shipping_address->country,
+        'destination_region' => $fixture['order']->shipping_address->state,
+        'destination_city' => $fixture['order']->shipping_address->city,
+        'cod_amount_expected' => 2619.00,
+        'stock_checked' => true,
+        'packed_at' => now()->subHour(),
+        'package_count' => 1,
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+    ]);
+
+    $this->loginAsAdmin();
+
+    $firstResponse = post(route('admin.sales.to-ship.create-handover-batch'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->format('Y-m-d H:i:s'),
+        'receiver_name' => 'Himel',
+        'notes' => 'Initial draft',
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk();
+
+    $existingBatch = ShipmentHandoverBatch::query()->latest('id')->firstOrFail();
+
+    $secondResponse = post(route('admin.sales.to-ship.create-handover-batch'), [
+        'shipment_record_ids' => [$shipmentRecord->id],
+        'handover_type' => ShipmentHandoverBatch::TYPE_COURIER_PICKUP,
+        'handover_at' => now()->addHour()->format('Y-m-d H:i:s'),
+        'receiver_name' => 'Driver Rafiq',
+        'notes' => 'Updated same selection',
+    ], [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk();
+
+    $existingBatch->refresh();
+    $shipmentRecord->refresh();
+
+    $firstResponse->assertJsonPath('batch.id', $existingBatch->id);
+    $secondResponse->assertJsonPath('batch.id', $existingBatch->id);
+
+    expect(ShipmentHandoverBatch::query()->count())->toBe(1)
+        ->and($shipmentRecord->handover_batch_id)->toBe($existingBatch->id)
+        ->and($existingBatch->receiver_name)->toBe('Driver Rafiq')
+        ->and($existingBatch->notes)->toBe('Updated same selection');
 });
 
 function createManualToShipFixture(): array

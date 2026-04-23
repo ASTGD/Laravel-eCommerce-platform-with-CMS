@@ -26,16 +26,6 @@
         })
         ->sortBy(fn (array $group) => strtolower($group['carrier_name']))
         ->values();
-    $restoreHandoverModal = filled(old('handover_action')) || $errors->hasAny([
-        'shipment_record_ids',
-        'shipment_record_ids.*',
-        'handover_type',
-        'handover_at',
-        'receiver_name',
-        'notes',
-        'selected_shipments',
-    ]);
-    $restoredHandoverAction = old('handover_action', 'draft');
     $needsSectionQuery = array_filter([
         'ready_search' => request('ready_search'),
         'ready_per_page' => request('ready_per_page'),
@@ -791,11 +781,7 @@
                         No parcels are waiting for actual courier handover right now.
                     </div>
                 @else
-                    <form method="POST" id="handover-batch-form" class="grid gap-4 p-4">
-                        @csrf
-
-                        <input type="hidden" id="handover_action" name="handover_action" value="{{ $restoredHandoverAction }}">
-
+                    <div class="grid gap-4 p-4">
                         <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-gray-800 dark:bg-gray-950/30">
                             <div class="flex flex-wrap items-start justify-between gap-4">
                                 <div class="grid gap-1">
@@ -810,35 +796,18 @@
                                         id="ready-shipment-selection-hint"
                                         class="text-xs text-gray-500 dark:text-gray-400"
                                     >
-                                        Select parcels from one courier to create a handover sheet or manifest.
+                                        Select parcels from one courier to prepare its handover sheet.
                                     </div>
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-2">
                                     <button
                                         type="button"
-                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                                        onclick="window.toggleReadyShipmentSelection(true)"
-                                    >
-                                        Select All
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        data-handover-bulk-action="draft"
+                                        data-handover-bulk-action="prepare"
                                         class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                                         disabled
                                     >
-                                        Create Handover Sheet
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        data-handover-bulk-action="print"
-                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                                        disabled
-                                    >
-                                        Print Manifest
+                                        Create/Print Handover Sheet
                                     </button>
 
                                     <button
@@ -857,18 +826,17 @@
                             </div>
                         </div>
 
+                        @if ($errors->has('selected_shipments'))
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100">
+                                {{ $errors->first('selected_shipments') }}
+                            </div>
+                        @endif
+
                         <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800">
                             <x-admin::table class="min-w-[1320px]">
                                 <thead class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
                                     <tr>
-                                        <x-admin::table.th class="w-[56px]">
-                                            <input
-                                                type="checkbox"
-                                                data-ready-select-all
-                                                class="h-4 w-4 rounded border-slate-300 text-blue-600"
-                                                onchange="window.toggleReadyShipmentSelection(this.checked)"
-                                            >
-                                        </x-admin::table.th>
+                                        <x-admin::table.th class="w-[56px]"></x-admin::table.th>
                                         <x-admin::table.th>Order / Courier</x-admin::table.th>
                                         <x-admin::table.th>Customer / Selection</x-admin::table.th>
                                         <x-admin::table.th>Tracking Number</x-admin::table.th>
@@ -953,11 +921,12 @@
                                             </x-admin::table.td>
                                         </tr>
 
-                                        @foreach ($group['shipments'] as $shipmentRecord)
-                                            <tr
-                                                data-ready-child-row="{{ $group['dom_id'] }}"
-                                                class="hidden border-t border-slate-200 align-top bg-white dark:border-gray-800 dark:bg-gray-900/40"
-                                            >
+                                    @foreach ($group['shipments'] as $shipmentRecord)
+                                        @php($activeReadyBatch = $shipmentRecord->handoverBatch && ! $shipmentRecord->handoverBatch->confirmed_at ? $shipmentRecord->handoverBatch : null)
+                                        <tr
+                                            data-ready-child-row="{{ $group['dom_id'] }}"
+                                            class="hidden border-t border-slate-200 align-top bg-white dark:border-gray-800 dark:bg-gray-900/40"
+                                        >
                                                 <x-admin::table.td>
                                                     <input
                                                         type="checkbox"
@@ -968,6 +937,13 @@
                                                         data-carrier-id="{{ $shipmentRecord->shipment_carrier_id }}"
                                                         data-carrier-name="{{ $group['carrier_name'] }}"
                                                         data-cod-amount="{{ (float) $shipmentRecord->cod_amount_expected }}"
+                                                        data-ready-batch-id="{{ (string) ($activeReadyBatch?->id ?: '') }}"
+                                                        data-ready-batch-reference="{{ (string) ($activeReadyBatch?->reference ?: '') }}"
+                                                        data-ready-batch-shipment-count="{{ (int) ($activeReadyBatch?->shipments_count ?: 0) }}"
+                                                        data-ready-batch-handover-at="{{ $activeReadyBatch?->handover_at?->format('Y-m-d\\TH:i') ?: '' }}"
+                                                        data-ready-batch-handover-type="{{ (string) ($activeReadyBatch?->handover_type ?: '') }}"
+                                                        data-ready-batch-receiver-name="{{ (string) ($activeReadyBatch?->receiver_name ?: '') }}"
+                                                        data-ready-batch-notes="{{ (string) ($activeReadyBatch?->notes ?: '') }}"
                                                         class="h-4 w-4 rounded border-slate-300 text-blue-600"
                                                         @checked($oldSelectedShipmentIds->contains((string) $shipmentRecord->id))
                                                     >
@@ -1049,9 +1025,9 @@
 
                                                 <x-admin::table.td class="whitespace-normal">
                                                     <div class="grid gap-1 text-sm text-gray-700 dark:text-gray-300">
-                                                        @if ($shipmentRecord->handoverBatch?->reference)
+                                                        @if ($activeReadyBatch?->reference)
                                                             <span class="font-semibold text-gray-800 dark:text-gray-100">
-                                                                Batch {{ $shipmentRecord->handoverBatch->reference }}
+                                                                Batch {{ $activeReadyBatch->reference }}
                                                             </span>
                                                         @endif
 
@@ -1086,7 +1062,7 @@
                         <div class="border-t border-slate-200 px-2 pt-2 dark:border-gray-800">
                             {{ $readyShipments->links() }}
                         </div>
-                    </form>
+                    </div>
                 @endif
             </div>
         </section>
@@ -1099,16 +1075,17 @@
     >
         <div
             id="handover-batch-modal-box"
-            class="relative z-[10002] flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+            class="relative z-[10002] flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+            style="max-width: 820px; max-height: calc(100vh - 3rem);"
         >
             <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-gray-800">
                 <div class="grid gap-1">
                     <p id="handover-batch-modal-title" class="text-lg font-semibold text-gray-800 dark:text-white">
-                        Prepare Handover
+                        Prepare Handover Sheet
                     </p>
 
                     <p id="handover-batch-modal-description" class="text-sm text-gray-600 dark:text-gray-300">
-                        Add batch details for the selected parcels.
+                        Add the courier handover details, then generate the handover sheet preview.
                     </p>
                 </div>
 
@@ -1122,22 +1099,30 @@
                 </button>
             </div>
 
-            <div class="grid gap-5 px-6 py-5">
-                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/60">
-                    <div id="handover-batch-modal-summary" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        No parcels selected
-                    </div>
+            <div class="grid gap-5 overflow-y-auto px-6 py-5">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-gray-800 dark:bg-gray-800/60">
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Courier</div>
+                            <div id="handover-batch-modal-courier" class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">Not selected</div>
+                        </div>
 
-                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Batch operations should be prepared for one courier at a time.
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Selected Parcels</div>
+                            <div id="handover-batch-modal-parcels" class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">0</div>
+                        </div>
+
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total COD Amount</div>
+                            <div id="handover-batch-modal-cod" class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">{{ core()->formatBasePrice(0) }}</div>
+                        </div>
                     </div>
                 </div>
 
-                @if ($errors->has('selected_shipments'))
-                    <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100">
-                        {{ $errors->first('selected_shipments') }}
-                    </div>
-                @endif
+                <div
+                    id="handover-batch-modal-error"
+                    class="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-200"
+                ></div>
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="grid gap-1.5">
@@ -1148,15 +1133,11 @@
                         <input
                             id="handover_at"
                             type="datetime-local"
-                            name="handover_at"
-                            form="handover-batch-form"
-                            value="{{ old('handover_at', now()->format('Y-m-d\TH:i')) }}"
+                            value="{{ now()->format('Y-m-d\TH:i') }}"
                             class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                         >
 
-                        @error('handover_at')
-                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="handover_at"></p>
                     </div>
 
                     <div class="grid gap-1.5">
@@ -1166,23 +1147,19 @@
 
                         <select
                             id="handover_type"
-                            name="handover_type"
-                            form="handover-batch-form"
                             class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                         >
                             @foreach ($batchHandoverTypes as $handoverTypeValue => $handoverTypeLabel)
-                                <option value="{{ $handoverTypeValue }}" @selected(old('handover_type', \Platform\CommerceCore\Models\ShipmentHandoverBatch::TYPE_COURIER_PICKUP) === $handoverTypeValue)>
+                                <option value="{{ $handoverTypeValue }}" @selected(\Platform\CommerceCore\Models\ShipmentHandoverBatch::TYPE_COURIER_PICKUP === $handoverTypeValue)>
                                     {{ $handoverTypeLabel }}
                                 </option>
                             @endforeach
                         </select>
 
-                        @error('handover_type')
-                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="handover_type"></p>
                     </div>
 
-                    <div class="grid gap-1.5">
+                    <div class="grid gap-1.5 md:col-span-2">
                         <label for="receiver_name" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
                             Receiver / Driver Name
                         </label>
@@ -1190,16 +1167,11 @@
                         <input
                             id="receiver_name"
                             type="text"
-                            name="receiver_name"
-                            form="handover-batch-form"
-                            value="{{ old('receiver_name') }}"
                             placeholder="Optional"
                             class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                         >
 
-                        @error('receiver_name')
-                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="receiver_name"></p>
                     </div>
 
                     <div class="grid gap-1.5 md:col-span-2">
@@ -1209,16 +1181,12 @@
 
                         <textarea
                             id="handover_notes"
-                            name="notes"
-                            form="handover-batch-form"
                             rows="3"
                             placeholder="Optional batch note"
                             class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-                        >{{ old('notes') }}</textarea>
+                        ></textarea>
 
-                        @error('notes')
-                            <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
+                        <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="notes"></p>
                     </div>
                 </div>
             </div>
@@ -1233,12 +1201,66 @@
                 </button>
 
                 <button
-                    type="submit"
+                    type="button"
                     id="handover-batch-submit-button"
-                    form="handover-batch-form"
                     class="primary-button"
                 >
-                    Continue
+                    Generate Handover Sheet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div
+        id="handover-confirm-modal"
+        class="fixed inset-0 z-[10001] hidden items-center justify-center bg-black/60 p-4"
+        aria-hidden="true"
+    >
+        <div
+            class="relative z-[10002] flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+            style="width: min(760px, calc(100vw - 2rem)); max-width: min(760px, calc(100vw - 2rem));"
+        >
+            <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-gray-800">
+                <div class="grid gap-1">
+                    <p class="text-lg font-semibold text-gray-800 dark:text-white">Confirm Handover</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Use this only after the courier has physically received the selected parcels.</p>
+                </div>
+
+                <button
+                    type="button"
+                    onclick="window.closeHandoverConfirmModal && window.closeHandoverConfirmModal()"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-xl text-gray-600 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    aria-label="Close confirm handover modal"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div class="grid gap-4 px-6 py-5">
+                <div id="handover-confirm-modal-summary" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-gray-800 dark:border-gray-800 dark:bg-gray-800/60 dark:text-gray-100">
+                    No parcels selected
+                </div>
+
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Confirming handover will move the selected parcels from Parcel Ready for Handover to In Delivery.
+                </p>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-gray-800">
+                <button
+                    type="button"
+                    onclick="window.closeHandoverConfirmModal && window.closeHandoverConfirmModal()"
+                    class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    id="handover-confirm-submit-button"
+                    class="primary-button"
+                >
+                    Confirm Handover
                 </button>
             </div>
         </div>
@@ -1318,29 +1340,10 @@
         window.alert(message);
     };
 
-    window.handoverBatchConfig = {
-        draft: {
-            title: 'Create Handover Sheet',
-            description: 'Add the batch details for the selected parcels, then save a handover sheet for warehouse follow-up.',
-            submitLabel: 'Create Handover Sheet',
-            formAction: @js(route('admin.sales.to-ship.create-handover-batch')),
-            formTarget: '_self',
-        },
-        print: {
-            title: 'Print Manifest',
-            description: 'Add the batch details for the selected parcels, then open the handover sheet / manifest in a new tab.',
-            submitLabel: 'Print Manifest',
-            formAction: @js(route('admin.sales.to-ship.print-manifest')),
-            formTarget: '_blank',
-        },
-        confirm: {
-            title: 'Confirm Handover',
-            description: 'Add the batch details and confirm these parcels were physically handed over to the courier.',
-            submitLabel: 'Confirm Handover',
-            formAction: @js(route('admin.sales.to-ship.confirm-handover')),
-            formTarget: '_self',
-        },
-    };
+    window.prepareHandoverSheetUrl = @js(route('admin.sales.to-ship.create-handover-batch'));
+    window.confirmPreparedHandoverUrl = @js(route('admin.sales.to-ship.confirm-handover'));
+    window.handoverSheetPreviewUrlTemplate = @js(route('admin.sales.to-ship.handover-sheet.preview', ['handoverBatch' => '__BATCH__']));
+    window.csrfToken = @js(csrf_token());
 
     window.validateShipmentPrintPreviewForm = function (form) {
         const checks = [
@@ -1415,98 +1418,139 @@
         }, 0);
     };
 
-    window.syncReadyShipmentSelectionUi = function () {
+    window.currentReadyShipmentSelectionState = function () {
         const selected = window.selectedReadyShipmentCheckboxes();
-        const summary = document.getElementById('ready-shipment-selection-summary');
-        const hint = document.getElementById('ready-shipment-selection-hint');
-        const buttons = document.querySelectorAll('[data-handover-bulk-action]');
-        const selectAllCheckbox = document.querySelector('[data-ready-select-all]');
         const carrierIds = window.selectedReadyCarrierIds();
         const carrierNames = [...new Set(selected.map((element) => element.dataset.carrierName).filter(Boolean))];
+        const carrierName = carrierNames[0] || 'Selected courier';
         const selectedCodTotal = window.selectedReadyShipmentCodTotal();
+        const groupKey = selected[0]?.dataset.readyGroup;
+        const groupTotal = groupKey
+            ? document.querySelectorAll(`[data-ready-checkbox][data-ready-group="${groupKey}"]`).length
+            : selected.length;
+        const selectionLabel = selected.length === groupTotal
+            ? `${selected.length} parcel${selected.length > 1 ? 's' : ''} selected`
+            : `${selected.length} of ${groupTotal} parcels selected`;
 
-        buttons.forEach((button) => {
-            button.disabled = selected.length === 0 || carrierIds.length !== 1;
-        });
+        if (! selected.length) {
+            return {
+                selected,
+                carrierIds,
+                carrierName: null,
+                selectedCodTotal,
+                summaryText: 'No parcels selected',
+                hintText: 'Select parcels under one courier to prepare the handover sheet.',
+                hintTone: 'muted',
+                canPrepare: false,
+                canConfirm: false,
+                preparedBatch: null,
+            };
+        }
 
-        if (selectAllCheckbox) {
-            const allCheckboxes = document.querySelectorAll('[data-ready-checkbox]');
-            selectAllCheckbox.checked = selected.length > 0 && selected.length === allCheckboxes.length;
-            selectAllCheckbox.indeterminate = selected.length > 0 && selected.length < allCheckboxes.length;
+        if (carrierIds.length !== 1) {
+            return {
+                selected,
+                carrierIds,
+                carrierName: null,
+                selectedCodTotal,
+                summaryText: `${selected.length} parcels selected across ${carrierIds.length} couriers`,
+                hintText: 'Select parcels from one courier only.',
+                hintTone: 'warning',
+                canPrepare: false,
+                canConfirm: false,
+                preparedBatch: null,
+            };
+        }
+
+        const batchIds = [...new Set(selected.map((element) => element.dataset.readyBatchId).filter(Boolean))];
+        const batchReferences = [...new Set(selected.map((element) => element.dataset.readyBatchReference).filter(Boolean))];
+        const batchShipmentCounts = [...new Set(
+            selected
+                .map((element) => Number(element.dataset.readyBatchShipmentCount || 0))
+                .filter((count) => count > 0)
+        )];
+        const isPreparedSelection = batchIds.length === 1
+            && batchReferences.length === 1
+            && batchShipmentCounts.length === 1
+            && batchShipmentCounts[0] === selected.length
+            && selected.every((element) => element.dataset.readyBatchId === batchIds[0]);
+
+        if (isPreparedSelection) {
+            return {
+                selected,
+                carrierIds,
+                carrierName,
+                selectedCodTotal,
+                summaryText: `Handover sheet ready for ${carrierName} — ${selected.length} parcel${selected.length > 1 ? 's' : ''}`,
+                hintText: `Batch ${batchReferences[0]} is ready. You can print it again or confirm handover.`,
+                hintTone: 'muted',
+                canPrepare: true,
+                canConfirm: true,
+                preparedBatch: {
+                    id: batchIds[0],
+                    reference: batchReferences[0],
+                    shipmentCount: batchShipmentCounts[0],
+                },
+            };
+        }
+
+        return {
+            selected,
+            carrierIds,
+            carrierName,
+            selectedCodTotal,
+            summaryText: `${carrierName} — ${selectionLabel} · COD ${window.formatReadyShipmentMoney(selectedCodTotal)}`,
+            hintText: 'Prepare the handover sheet before confirming handover.',
+            hintTone: 'muted',
+            canPrepare: true,
+            canConfirm: false,
+            preparedBatch: null,
+        };
+    };
+
+    window.syncReadyShipmentSelectionUi = function () {
+        const state = window.currentReadyShipmentSelectionState();
+        const summary = document.getElementById('ready-shipment-selection-summary');
+        const hint = document.getElementById('ready-shipment-selection-hint');
+        const prepareButton = document.querySelector('[data-handover-bulk-action="prepare"]');
+        const confirmButton = document.querySelector('[data-handover-bulk-action="confirm"]');
+
+        if (prepareButton) {
+            prepareButton.disabled = ! state.canPrepare;
+            prepareButton.textContent = state.preparedBatch
+                ? 'View Handover Sheet'
+                : 'Create/Print Handover Sheet';
+        }
+
+        if (confirmButton) {
+            confirmButton.disabled = ! state.canConfirm;
         }
 
         document.querySelectorAll('[data-ready-parent-checkbox]').forEach((parentCheckbox) => {
             const groupKey = parentCheckbox.dataset.readyParentCheckbox;
             const groupCheckboxes = Array.from(document.querySelectorAll(`[data-ready-checkbox][data-ready-group="${groupKey}"]`));
             const groupSelected = groupCheckboxes.filter((element) => element.checked);
-            const parentSelection = document.querySelector(`[data-ready-parent-selection="${groupKey}"]`);
             const groupTotal = groupCheckboxes.length;
 
             parentCheckbox.checked = groupSelected.length > 0 && groupSelected.length === groupTotal;
             parentCheckbox.indeterminate = groupSelected.length > 0 && groupSelected.length < groupTotal;
-
-            if (! parentSelection) {
-                return;
-            }
-
-            if (groupSelected.length === 0) {
-                parentSelection.textContent = '0 selected';
-
-                return;
-            }
-
-            if (groupSelected.length === groupTotal) {
-                parentSelection.textContent = `${groupTotal} selected`;
-
-                return;
-            }
-
-            parentSelection.textContent = `${groupSelected.length} of ${groupTotal} selected`;
         });
 
         if (! summary || ! hint) {
             return;
         }
 
-        if (selected.length === 0) {
-            summary.textContent = 'No parcels selected';
-            hint.textContent = 'Select parcels from one courier to create a handover sheet or manifest.';
-            hint.classList.remove('text-amber-700', 'dark:text-amber-300');
-            hint.classList.add('text-gray-500', 'dark:text-gray-400');
+        summary.textContent = state.summaryText;
+        hint.textContent = state.hintText;
+        hint.classList.remove('text-amber-700', 'dark:text-amber-300', 'text-gray-500', 'dark:text-gray-400');
+
+        if (state.hintTone === 'warning') {
+            hint.classList.add('text-amber-700', 'dark:text-amber-300');
 
             return;
         }
 
-        if (carrierIds.length === 1) {
-            const carrierName = carrierNames[0] || 'Selected courier';
-            const groupKey = selected[0]?.dataset.readyGroup;
-            const groupTotal = groupKey
-                ? document.querySelectorAll(`[data-ready-checkbox][data-ready-group="${groupKey}"]`).length
-                : selected.length;
-            const selectionLabel = selected.length === groupTotal
-                ? `${selected.length} parcel${selected.length > 1 ? 's' : ''} selected`
-                : `${selected.length} of ${groupTotal} parcels selected`;
-
-            summary.textContent = `${carrierName} — ${selectionLabel} · COD ${window.formatReadyShipmentMoney(selectedCodTotal)}`;
-            hint.textContent = `Ready to create one handover sheet for ${carrierName}.`;
-            hint.classList.remove('text-amber-700', 'dark:text-amber-300');
-            hint.classList.add('text-gray-500', 'dark:text-gray-400');
-
-            return;
-        }
-
-        summary.textContent = `${selected.length} parcels selected across ${carrierIds.length} couriers`;
-        hint.textContent = 'Select parcels from one courier only to create a handover sheet.';
-        hint.classList.remove('text-gray-500', 'dark:text-gray-400');
-        hint.classList.add('text-amber-700', 'dark:text-amber-300');
-    };
-
-    window.toggleReadyShipmentSelection = function (checked) {
-        document.querySelectorAll('[data-ready-checkbox]').forEach((element) => {
-            element.checked = checked;
-        });
-
-        window.syncReadyShipmentSelectionUi();
+        hint.classList.add('text-gray-500', 'dark:text-gray-400');
     };
 
     window.toggleReadyShipmentGroupSelection = function (groupKey, checked) {
@@ -1549,46 +1593,91 @@
         toggleIcon.classList.add(nextExpanded ? 'icon-sort-up' : 'icon-sort-down');
     };
 
-    window.openHandoverBatchModal = function (action) {
+    window.clearHandoverBatchModalErrors = function () {
+        const errorBox = document.getElementById('handover-batch-modal-error');
+
+        if (errorBox) {
+            errorBox.textContent = '';
+            errorBox.classList.add('hidden');
+        }
+
+        document.querySelectorAll('[data-handover-error-for]').forEach((element) => {
+            element.textContent = '';
+            element.classList.add('hidden');
+        });
+    };
+
+    window.setHandoverBatchModalError = function (key, message) {
+        if (! key) {
+            const errorBox = document.getElementById('handover-batch-modal-error');
+
+            if (! errorBox) {
+                return;
+            }
+
+            errorBox.textContent = message;
+            errorBox.classList.remove('hidden');
+
+            return;
+        }
+
+        const fieldError = document.querySelector(`[data-handover-error-for="${key}"]`);
+
+        if (! fieldError) {
+            window.setHandoverBatchModalError('', message);
+
+            return;
+        }
+
+        fieldError.textContent = message;
+        fieldError.classList.remove('hidden');
+    };
+
+    window.openHandoverBatchModal = function () {
         const modal = document.getElementById('handover-batch-modal');
-        const form = document.getElementById('handover-batch-form');
-        const actionInput = document.getElementById('handover_action');
         const titleElement = document.getElementById('handover-batch-modal-title');
         const descriptionElement = document.getElementById('handover-batch-modal-description');
-        const summaryElement = document.getElementById('handover-batch-modal-summary');
+        const courierElement = document.getElementById('handover-batch-modal-courier');
+        const parcelElement = document.getElementById('handover-batch-modal-parcels');
+        const codElement = document.getElementById('handover-batch-modal-cod');
         const submitButton = document.getElementById('handover-batch-submit-button');
-        const selected = window.selectedReadyShipmentCheckboxes();
-        const carrierIds = window.selectedReadyCarrierIds();
-        const carrierNames = [...new Set(
-            selected
-                .map((element) => element.dataset.carrierName)
-                .filter(Boolean)
-        )];
-        const config = window.handoverBatchConfig[action] || window.handoverBatchConfig.draft;
+        const handoverAtField = document.getElementById('handover_at');
+        const handoverTypeField = document.getElementById('handover_type');
+        const receiverField = document.getElementById('receiver_name');
+        const notesField = document.getElementById('handover_notes');
+        const state = window.currentReadyShipmentSelectionState();
 
-        if (! selected.length) {
-            window.showShipmentWorkflowWarning('Select at least one parcel from Parcel Ready for Handover.');
+        if (! state.canPrepare) {
+            window.showShipmentWorkflowWarning(state.hintText);
 
             return;
         }
 
-        if (carrierIds.length !== 1) {
-            window.showShipmentWorkflowWarning('Select parcels for one courier at a time before preparing a handover.');
-
+        if (! modal || ! titleElement || ! descriptionElement || ! courierElement || ! parcelElement || ! codElement || ! submitButton || ! handoverAtField || ! handoverTypeField || ! receiverField || ! notesField) {
             return;
         }
 
-        if (! modal || ! form || ! actionInput || ! titleElement || ! descriptionElement || ! summaryElement || ! submitButton) {
-            return;
-        }
+        window.clearHandoverBatchModalErrors();
+        titleElement.textContent = 'Prepare Handover Sheet';
+        descriptionElement.textContent = 'Add the courier handover details, then generate the handover sheet preview.';
+        courierElement.textContent = state.carrierName || 'Selected courier';
+        parcelElement.textContent = `${state.selected.length} parcel${state.selected.length > 1 ? 's' : ''}`;
+        codElement.textContent = window.formatReadyShipmentMoney(state.selectedCodTotal);
+        submitButton.textContent = 'Generate Handover Sheet';
 
-        actionInput.value = action;
-        form.action = config.formAction;
-        form.target = config.formTarget;
-        titleElement.textContent = config.title;
-        descriptionElement.textContent = config.description;
-        submitButton.textContent = config.submitLabel;
-        summaryElement.textContent = `${carrierNames[0] || 'Selected courier'} — ${selected.length} parcel${selected.length > 1 ? 's' : ''} selected · COD ${window.formatReadyShipmentMoney(window.selectedReadyShipmentCodTotal())}.`;
+        if (state.preparedBatch) {
+            const firstSelected = state.selected[0];
+
+            handoverAtField.value = firstSelected?.dataset.readyBatchHandoverAt || handoverAtField.value;
+            handoverTypeField.value = firstSelected?.dataset.readyBatchHandoverType || handoverTypeField.value;
+            receiverField.value = firstSelected?.dataset.readyBatchReceiverName || '';
+            notesField.value = firstSelected?.dataset.readyBatchNotes || '';
+        } else {
+            handoverAtField.value = handoverAtField.value || @js(now()->format('Y-m-d\TH:i'));
+            handoverTypeField.value = handoverTypeField.value || @js(\Platform\CommerceCore\Models\ShipmentHandoverBatch::TYPE_COURIER_PICKUP);
+            receiverField.value = '';
+            notesField.value = '';
+        }
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -1596,9 +1685,19 @@
         document.body.classList.add('overflow-hidden');
     };
 
+    window.openPreparedHandoverSheetPreview = function (batchId) {
+        if (! batchId || ! window.handoverSheetPreviewUrlTemplate) {
+            return;
+        }
+
+        window.open(
+            window.handoverSheetPreviewUrlTemplate.replace('__BATCH__', encodeURIComponent(String(batchId))),
+            '_blank'
+        );
+    };
+
     window.closeHandoverBatchModal = function () {
         const modal = document.getElementById('handover-batch-modal');
-        const form = document.getElementById('handover-batch-form');
 
         if (! modal) {
             return;
@@ -1608,11 +1707,217 @@
         modal.classList.remove('flex');
         modal.setAttribute('aria-hidden', 'true');
 
-        if (form) {
-            form.target = '_self';
+        document.body.classList.remove('overflow-hidden');
+    };
+
+    window.applyPreparedBatchToSelection = function (selected, batch, previousBatchIds = []) {
+        const batchShipmentIds = new Set((batch.shipment_record_ids || []).map((id) => String(id)));
+
+        document.querySelectorAll('[data-ready-checkbox]').forEach((element) => {
+            if (previousBatchIds.includes(element.dataset.readyBatchId) && ! batchShipmentIds.has(element.value)) {
+                element.dataset.readyBatchId = '';
+                element.dataset.readyBatchReference = '';
+                element.dataset.readyBatchShipmentCount = '0';
+                element.dataset.readyBatchHandoverAt = '';
+                element.dataset.readyBatchHandoverType = '';
+                element.dataset.readyBatchReceiverName = '';
+                element.dataset.readyBatchNotes = '';
+            }
+
+            if (! batchShipmentIds.has(element.value)) {
+                return;
+            }
+
+            element.dataset.readyBatchId = String(batch.id);
+            element.dataset.readyBatchReference = batch.reference || '';
+            element.dataset.readyBatchShipmentCount = String(batch.shipment_count || batch.shipment_record_ids?.length || 0);
+            element.dataset.readyBatchHandoverAt = batch.handover_at || '';
+            element.dataset.readyBatchHandoverType = batch.handover_type || '';
+            element.dataset.readyBatchReceiverName = batch.receiver_name || '';
+            element.dataset.readyBatchNotes = batch.notes || '';
+            element.checked = true;
+        });
+    };
+
+    window.generateHandoverSheet = async function () {
+        const state = window.currentReadyShipmentSelectionState();
+        const previewWindow = window.open('', '_blank');
+
+        if (! state.canPrepare) {
+            previewWindow?.close?.();
+            window.showShipmentWorkflowWarning(state.hintText);
+
+            return;
         }
 
+        const handoverAtField = document.getElementById('handover_at');
+        const handoverTypeField = document.getElementById('handover_type');
+        const receiverField = document.getElementById('receiver_name');
+        const notesField = document.getElementById('handover_notes');
+        const submitButton = document.getElementById('handover-batch-submit-button');
+        const previousBatchIds = [...new Set(state.selected.map((element) => element.dataset.readyBatchId).filter(Boolean))];
+
+        if (! handoverAtField?.value) {
+            previewWindow?.close?.();
+            window.setHandoverBatchModalError('handover_at', 'Choose the handover date and time.');
+            handoverAtField?.focus?.();
+
+            return;
+        }
+
+        if (! handoverTypeField?.value) {
+            previewWindow?.close?.();
+            window.setHandoverBatchModalError('handover_type', 'Choose how these parcels are being handed over.');
+            handoverTypeField?.focus?.();
+
+            return;
+        }
+
+        window.clearHandoverBatchModalErrors();
+
+        const payload = new FormData();
+        state.selected.forEach((element) => {
+            payload.append('shipment_record_ids[]', element.value);
+        });
+        payload.append('_token', window.csrfToken);
+        payload.append('handover_at', handoverAtField.value);
+        payload.append('handover_type', handoverTypeField.value);
+        payload.append('receiver_name', receiverField?.value || '');
+        payload.append('notes', notesField?.value || '');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.dataset.originalLabel = submitButton.textContent.trim();
+            submitButton.textContent = 'Generating...';
+        }
+
+        try {
+            const response = await fetch(window.prepareHandoverSheetUrl, {
+                method: 'POST',
+                body: payload,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json')
+                ? await response.json()
+                : null;
+
+            if (! response.ok) {
+                previewWindow?.close?.();
+
+                if (response.status === 422 && data) {
+                    const errors = data.errors || {};
+
+                    Object.entries(errors).forEach(([key, messages]) => {
+                        const fieldKey = key.replace(/^shipment_record_ids(?:\.\d+)?$/, 'selected_shipments');
+                        window.setHandoverBatchModalError(fieldKey, Array.isArray(messages) ? messages[0] : messages);
+                    });
+
+                    if (data.message && ! Object.keys(errors).length) {
+                        window.setHandoverBatchModalError('', data.message);
+                    }
+
+                    return;
+                }
+
+                throw new Error(data?.message || 'Could not generate the handover sheet preview.');
+            }
+
+            window.applyPreparedBatchToSelection(state.selected, {
+                ...data.batch,
+                handover_at: handoverAtField.value,
+                handover_type: handoverTypeField.value,
+                receiver_name: receiverField?.value || '',
+                notes: notesField?.value || '',
+            }, previousBatchIds);
+
+            window.closeHandoverBatchModal();
+            window.syncReadyShipmentSelectionUi();
+
+            if (previewWindow) {
+                previewWindow.location = data.preview_url;
+            } else {
+                window.open(data.preview_url, '_blank');
+            }
+        } catch (error) {
+            previewWindow?.close?.();
+            window.setHandoverBatchModalError('', error?.message || 'Could not generate the handover sheet preview.');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = submitButton.dataset.originalLabel || 'Generate Handover Sheet';
+            }
+        }
+    };
+
+    window.openHandoverConfirmModal = function () {
+        const modal = document.getElementById('handover-confirm-modal');
+        const summaryElement = document.getElementById('handover-confirm-modal-summary');
+        const state = window.currentReadyShipmentSelectionState();
+
+        if (! state.canConfirm) {
+            window.showShipmentWorkflowWarning(state.hintText);
+
+            return;
+        }
+
+        if (! modal || ! summaryElement) {
+            return;
+        }
+
+        summaryElement.textContent = `${state.carrierName} — ${state.selected.length} parcel${state.selected.length > 1 ? 's' : ''} · Batch ${state.preparedBatch.reference}`;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+    };
+
+    window.closeHandoverConfirmModal = function () {
+        const modal = document.getElementById('handover-confirm-modal');
+
+        if (! modal) {
+            return;
+        }
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('overflow-hidden');
+    };
+
+    window.submitConfirmedHandover = function () {
+        const state = window.currentReadyShipmentSelectionState();
+
+        if (! state.canConfirm) {
+            window.showShipmentWorkflowWarning(state.hintText);
+
+            return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = window.confirmPreparedHandoverUrl;
+
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '_token';
+        tokenInput.value = window.csrfToken;
+        form.appendChild(tokenInput);
+
+        state.selected.forEach((element) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'shipment_record_ids[]';
+            input.value = element.value;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
     };
 
     window.openShipmentPrintPreview = async function (button, actionUrl, title) {
@@ -1731,21 +2036,59 @@
 
         if (handoverActionButton) {
             event.preventDefault();
-            window.openHandoverBatchModal(handoverActionButton.dataset.handoverBulkAction);
+            const action = handoverActionButton.dataset.handoverBulkAction;
+
+            if (action === 'prepare') {
+                const state = window.currentReadyShipmentSelectionState();
+
+                if (state.preparedBatch?.id) {
+                    window.openPreparedHandoverSheetPreview(state.preparedBatch.id);
+
+                    return;
+                }
+
+                window.openHandoverBatchModal();
+
+                return;
+            }
+
+            if (action === 'confirm') {
+                window.openHandoverConfirmModal();
+            }
+
+            return;
+        }
+
+        const handoverGenerateButton = event.target.closest('#handover-batch-submit-button');
+
+        if (handoverGenerateButton) {
+            event.preventDefault();
+            window.generateHandoverSheet();
+
+            return;
+        }
+
+        const handoverConfirmButton = event.target.closest('#handover-confirm-submit-button');
+
+        if (handoverConfirmButton) {
+            event.preventDefault();
+            window.submitConfirmedHandover();
         }
     });
 
     document.addEventListener('change', function (event) {
-        if (event.target.matches('[data-ready-checkbox]') || event.target.matches('[data-ready-select-all]')) {
+        if (event.target.matches('[data-ready-checkbox]')) {
             window.syncReadyShipmentSelectionUi();
         }
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    window.initializeReadyShipmentUi = function () {
         window.syncReadyShipmentSelectionUi();
+    };
 
-        @if ($restoreHandoverModal)
-            window.openHandoverBatchModal(@js($restoredHandoverAction));
-        @endif
-    });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.initializeReadyShipmentUi, { once: true });
+    } else {
+        window.initializeReadyShipmentUi();
+    }
 </script>

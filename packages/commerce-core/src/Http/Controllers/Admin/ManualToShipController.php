@@ -13,10 +13,13 @@ use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Services\ManualShipmentHandoverService;
 use Platform\CommerceCore\Services\ManualToShipService;
+use Webkul\Core\Traits\PDFHandler;
 use Webkul\Sales\Models\Order;
 
 class ManualToShipController extends Controller
 {
+    use PDFHandler;
+
     public function __construct(
         protected ManualToShipService $manualToShipService,
         protected ManualShipmentHandoverService $manualShipmentHandoverService,
@@ -85,7 +88,7 @@ class ManualToShipController extends Controller
         ]);
     }
 
-    public function createHandoverBatch(Request $request): RedirectResponse
+    public function createHandoverBatch(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $this->validateHandoverPayload($request);
 
@@ -95,31 +98,60 @@ class ManualToShipController extends Controller
             auth('admin')->id(),
         );
 
-        return redirect()
-            ->to(route('admin.sales.to-ship.index').'#parcel-ready-for-handover')
-            ->with('success', sprintf('Handover batch %s created.', $batch->reference));
+        $previewUrl = route('admin.sales.to-ship.handover-sheet.preview', $batch);
+        $downloadUrl = route('admin.sales.to-ship.handover-sheet.pdf', $batch);
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'message' => sprintf('Handover sheet %s is ready.', $batch->reference),
+                'preview_url' => $previewUrl,
+                'download_url' => $downloadUrl,
+                'batch' => [
+                    'id' => $batch->id,
+                    'reference' => $batch->reference,
+                    'shipment_record_ids' => $batch->shipments->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
+                    'shipment_count' => $batch->shipments->count(),
+                    'parcel_count' => (int) $batch->parcel_count,
+                    'total_cod_amount' => (float) $batch->total_cod_amount,
+                    'carrier_name' => $batch->carrier?->name ?: 'Manual Courier',
+                ],
+            ]);
+        }
+
+        return redirect()->to($previewUrl);
     }
 
-    public function printManifest(Request $request): View
+    public function printManifest(Request $request): RedirectResponse|JsonResponse
     {
-        $validated = $this->validateHandoverPayload($request);
+        return $this->createHandoverBatch($request);
+    }
 
-        return view('commerce-core::admin.manual-to-ship.print-manifest', [
+    public function showHandoverSheet(ShipmentHandoverBatch $handoverBatch): View
+    {
+        return view('commerce-core::admin.manual-to-ship.handover-sheet-preview', [
             'merchant' => $this->manualToShipService->merchantDetails(),
-            'manifest' => $this->manualShipmentHandoverService->manifestPreview(
-                $validated['shipment_record_ids'],
-                $validated,
-            ),
+            'handoverSheet' => $this->manualShipmentHandoverService->handoverSheetPreview($handoverBatch),
+            'downloadUrl' => route('admin.sales.to-ship.handover-sheet.pdf', $handoverBatch),
         ]);
+    }
+
+    public function downloadHandoverSheetPdf(ShipmentHandoverBatch $handoverBatch)
+    {
+        return $this->downloadPDF(
+            view('commerce-core::admin.manual-to-ship.handover-sheet-pdf', [
+                'merchant' => $this->manualToShipService->merchantDetails(),
+                'handoverSheet' => $this->manualShipmentHandoverService->handoverSheetPreview($handoverBatch),
+            ])->render(),
+            'handover-sheet-'.$handoverBatch->reference
+        );
     }
 
     public function confirmHandover(Request $request): RedirectResponse
     {
-        $validated = $this->validateHandoverPayload($request);
+        $validated = $this->validateConfirmPayload($request);
 
-        $batch = $this->manualShipmentHandoverService->confirmHandover(
+        $batch = $this->manualShipmentHandoverService->confirmPreparedBatch(
             $validated['shipment_record_ids'],
-            $validated,
             auth('admin')->id(),
         );
 
@@ -147,6 +179,18 @@ class ManualToShipController extends Controller
             'handover_at' => 'handover date and time',
             'receiver_name' => 'receiver or driver name',
             'notes' => 'handover notes',
+        ]);
+    }
+
+    protected function validateConfirmPayload(Request $request): array
+    {
+        return $request->validate([
+            'shipment_record_ids' => ['required', 'array', 'min:1'],
+            'shipment_record_ids.*' => ['required', 'integer'],
+        ], [
+            'shipment_record_ids.required' => 'Select at least one parcel from Parcel Ready for Handover.',
+        ], [
+            'shipment_record_ids' => 'selected parcels',
         ]);
     }
 
