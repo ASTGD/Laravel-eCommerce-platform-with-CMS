@@ -53,30 +53,55 @@ beforeEach(function () {
 
 it('shows the to ship page with needs booking and parcel ready for handover layers', function () {
     $needsBookingFixture = createManualToShipFixture();
-    $readyFixture = createManualToShipFixture();
+    $readyFixtureOne = createManualToShipFixture();
+    $readyFixtureTwo = createManualToShipFixture();
 
-    $carrier = ShipmentCarrier::query()->create([
+    $pathaoCarrier = ShipmentCarrier::query()->create([
         'code' => 'steadfast_manual_to_ship_test',
-        'name' => 'Steadfast Courier',
+        'name' => 'Pathao Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $paperflyCarrier = ShipmentCarrier::query()->create([
+        'code' => 'paperfly_manual_to_ship_test',
+        'name' => 'PaperFly Courier',
         'supports_cod' => true,
         'is_active' => true,
     ]);
 
     ShipmentRecord::query()->create([
-        'order_id' => $readyFixture['order']->id,
-        'shipment_carrier_id' => $carrier->id,
+        'order_id' => $readyFixtureOne['order']->id,
+        'shipment_carrier_id' => $pathaoCarrier->id,
         'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
-        'carrier_name_snapshot' => $carrier->name,
+        'carrier_name_snapshot' => $pathaoCarrier->name,
         'tracking_number' => 'READY-SAME-SCREEN-001',
-        'recipient_name' => $readyFixture['order']->customer_full_name,
-        'recipient_phone' => $readyFixture['order']->shipping_address->phone,
-        'recipient_address' => $readyFixture['order']->shipping_address->address,
-        'destination_country' => $readyFixture['order']->shipping_address->country,
-        'destination_region' => $readyFixture['order']->shipping_address->state,
-        'destination_city' => $readyFixture['order']->shipping_address->city,
+        'recipient_name' => $readyFixtureOne['order']->customer_full_name,
+        'recipient_phone' => $readyFixtureOne['order']->shipping_address->phone,
+        'recipient_address' => $readyFixtureOne['order']->shipping_address->address,
+        'destination_country' => $readyFixtureOne['order']->shipping_address->country,
+        'destination_region' => $readyFixtureOne['order']->shipping_address->state,
+        'destination_city' => $readyFixtureOne['order']->shipping_address->city,
         'packed_at' => now()->subHour(),
         'package_count' => 1,
         'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+    ]);
+
+    ShipmentRecord::query()->create([
+        'order_id' => $readyFixtureTwo['order']->id,
+        'shipment_carrier_id' => $paperflyCarrier->id,
+        'status' => ShipmentRecord::STATUS_READY_FOR_PICKUP,
+        'carrier_name_snapshot' => $paperflyCarrier->name,
+        'tracking_number' => 'READY-SAME-SCREEN-002',
+        'recipient_name' => $readyFixtureTwo['order']->customer_full_name,
+        'recipient_phone' => $readyFixtureTwo['order']->shipping_address->phone,
+        'recipient_address' => $readyFixtureTwo['order']->shipping_address->address,
+        'destination_country' => $readyFixtureTwo['order']->shipping_address->country,
+        'destination_region' => $readyFixtureTwo['order']->shipping_address->state,
+        'destination_city' => $readyFixtureTwo['order']->shipping_address->city,
+        'packed_at' => now()->subMinutes(30),
+        'package_count' => 2,
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_STAFF_DROPOFF,
     ]);
 
     $this->loginAsAdmin();
@@ -87,8 +112,12 @@ it('shows the to ship page with needs booking and parcel ready for handover laye
         ->assertSeeText('Needs Booking')
         ->assertSeeText('Parcel Ready for Handover')
         ->assertSeeText((string) $needsBookingFixture['order']->increment_id)
+        ->assertSeeText('Pathao Courier')
+        ->assertSeeText('PaperFly Courier')
         ->assertSeeText('READY-SAME-SCREEN-001')
-        ->assertSeeText('Create Handover Batch')
+        ->assertSeeText('READY-SAME-SCREEN-002')
+        ->assertSeeText('Create Handover Sheet')
+        ->assertSeeText('Print Manifest')
         ->assertSeeText('Book Shipment');
 });
 
