@@ -29,6 +29,7 @@ class ManualShippedOrderController extends Controller
             ->with(['order', 'carrier', 'codSettlement'])
             ->whereNotIn('status', [
                 ShipmentRecord::STATUS_DRAFT,
+                ShipmentRecord::STATUS_READY_FOR_PICKUP,
                 ShipmentRecord::STATUS_DELIVERED,
                 ShipmentRecord::STATUS_RETURNED,
                 ShipmentRecord::STATUS_CANCELED,
@@ -68,6 +69,7 @@ class ManualShippedOrderController extends Controller
             ->join('shipment_records', 'shipment_records.shipment_carrier_id', '=', 'shipment_carriers.id')
             ->whereNotIn('shipment_records.status', [
                 ShipmentRecord::STATUS_DRAFT,
+                ShipmentRecord::STATUS_READY_FOR_PICKUP,
                 ShipmentRecord::STATUS_DELIVERED,
                 ShipmentRecord::STATUS_RETURNED,
                 ShipmentRecord::STATUS_CANCELED,

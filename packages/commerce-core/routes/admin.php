@@ -53,6 +53,10 @@ Route::group([
         ->middleware('commerce.shipping-mode:manual_basic')
         ->group(function () {
             Route::get('', 'index')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.index');
+            Route::post('{order}/print/{document}', 'printDocuments')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.print-documents');
+            Route::post('handover-batches', 'createHandoverBatch')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.create-handover-batch');
+            Route::post('handover-batches/print', 'printManifest')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.print-manifest');
+            Route::post('handover-batches/confirm', 'confirmHandover')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.confirm-handover');
         });
 
     Route::prefix('sales/shipped-orders')

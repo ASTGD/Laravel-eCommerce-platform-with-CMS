@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentEvent;
+use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Models\ShipmentRecordItem;
 use Platform\CommerceCore\Repositories\ShipmentRecordRepository;
@@ -39,27 +40,61 @@ class ShipmentRecordService
             $carrier = $this->resolveCarrier($selectedCarrierId, $shipment->carrier_code, $shipment->carrier_title);
             $actorAdminId = Auth::guard('admin')->id();
             $publicTrackingUrl = trim((string) ($context['public_tracking_url'] ?? ''));
-            $bookingNote = trim((string) ($context['note'] ?? ''));
+            $internalNote = trim((string) ($context['internal_note'] ?? ($context['note'] ?? '')));
+            $courierNote = trim((string) ($context['courier_note'] ?? ''));
+            $specialHandling = trim((string) ($context['special_handling'] ?? ''));
+            $packageDimensions = trim((string) ($context['package_dimensions'] ?? ''));
+            $handoverMode = trim((string) ($context['handover_mode'] ?? ''));
+            $manualReadyForHandover = ($context['workflow_stage'] ?? null) === 'ready_for_handover';
 
             $record = ShipmentRecord::query()->firstOrNew([
                 'native_shipment_id' => $shipment->id,
             ]);
 
-            $status = $record->exists ? $record->status : ShipmentRecord::STATUS_HANDED_TO_CARRIER;
+            $status = $record->exists
+                ? $record->status
+                : ($manualReadyForHandover ? ShipmentRecord::STATUS_READY_FOR_PICKUP : ShipmentRecord::STATUS_HANDED_TO_CARRIER);
             $carrierFeeAmount = (float) ($record->carrier_fee_amount ?? $order->base_shipping_amount ?? 0);
             $codExpectedAmount = $this->resolveExpectedCodAmount($order);
             $codFeeAmount = (float) ($record->cod_fee_amount ?? $carrier?->default_cod_fee_amount ?? 0);
             $returnFeeAmount = (float) ($record->return_fee_amount ?? $carrier?->default_return_fee_amount ?? 0);
+            $stockChecked = array_key_exists('stock_checked', $context)
+                ? (bool) $context['stock_checked']
+                : (bool) $record->stock_checked;
+            $packedAt = $manualReadyForHandover
+                ? ($record->packed_at ?: now())
+                : $record->packed_at;
+            $packageCount = max(1, (int) ($context['package_count'] ?? $record->package_count ?? 1));
+            $packageWeight = blank($context['package_weight_kg'] ?? null)
+                ? $record->package_weight_kg
+                : round((float) $context['package_weight_kg'], 2);
+            $isFragile = array_key_exists('is_fragile', $context)
+                ? (bool) $context['is_fragile']
+                : (bool) $record->is_fragile;
 
             $record->fill([
                 'order_id' => $order->id,
                 'shipment_carrier_id' => $carrier?->id,
                 'inventory_source_id' => $shipment->inventory_source_id,
                 'updated_by_admin_id' => $actorAdminId,
+                'packed_by_admin_id' => $manualReadyForHandover ? ($record->packed_by_admin_id ?: $actorAdminId) : $record->packed_by_admin_id,
                 'status' => $status,
                 'carrier_name_snapshot' => $carrier?->name ?: $shipment->carrier_title,
                 'tracking_number' => $shipment->track_number,
+                'stock_checked' => $stockChecked,
+                'packed_at' => $packedAt,
+                'package_count' => $packageCount,
+                'package_weight_kg' => $packageWeight,
+                'package_dimensions' => $packageDimensions !== '' ? $packageDimensions : $record->package_dimensions,
+                'is_fragile' => $isFragile,
+                'handover_mode' => array_key_exists($handoverMode, ShipmentRecord::handoverModeLabels())
+                    ? $handoverMode
+                    : $record->handover_mode,
+                'special_handling' => $specialHandling !== '' ? $specialHandling : $record->special_handling,
+                'internal_note' => $internalNote !== '' ? $internalNote : $record->internal_note,
+                'courier_note' => $courierNote !== '' ? $courierNote : $record->courier_note,
                 'public_tracking_url' => $publicTrackingUrl !== '' ? $publicTrackingUrl : $record->public_tracking_url,
+                'carrier_booked_at' => $record->carrier_booked_at ?: now(),
                 'inventory_source_name' => $shipment->inventory_source?->name ?: $shipment->inventory_source_name,
                 'origin_label' => $shipment->inventory_source?->name ?: $shipment->inventory_source_name,
                 'destination_country' => $shippingAddress?->country,
@@ -73,8 +108,8 @@ class ShipmentRecordService
                 'cod_fee_amount' => $codFeeAmount,
                 'return_fee_amount' => $returnFeeAmount,
                 'net_remittable_amount' => max(0, $codExpectedAmount - $carrierFeeAmount - $codFeeAmount - $returnFeeAmount),
-                'handed_over_at' => $record->handed_over_at ?: now(),
-                'notes' => $bookingNote !== '' ? $bookingNote : $record->notes,
+                'handed_over_at' => $manualReadyForHandover ? $record->handed_over_at : ($record->handed_over_at ?: now()),
+                'notes' => $internalNote !== '' ? $internalNote : $record->notes,
             ]);
 
             if (! $record->exists) {
@@ -84,7 +119,7 @@ class ShipmentRecordService
             $record->save();
 
             $this->syncItems($record, $shipment);
-            $this->ensureInitialEvent($record, $actorAdminId, $bookingNote);
+            $this->ensureInitialEvent($record, $actorAdminId, $internalNote !== '' ? $internalNote : $courierNote);
             $this->codSettlementService->syncFromShipmentRecord($record, $actorAdminId);
 
             return $record->fresh(['carrier', 'items', 'events', 'communications', 'nativeShipment', 'order', 'codSettlement']);
@@ -403,9 +438,10 @@ class ShipmentRecordService
         ?int $actorAdminId = null,
         ?string $statusAfterEvent = null,
         array $meta = [],
+        mixed $eventAt = null,
     ): ShipmentRecord {
-        $result = DB::transaction(function () use ($shipmentRecord, $eventType, $note, $actorAdminId, $statusAfterEvent, $meta) {
-            $eventAt = now();
+        $result = DB::transaction(function () use ($shipmentRecord, $eventType, $note, $actorAdminId, $statusAfterEvent, $meta, $eventAt) {
+            $eventAt = $eventAt ?: now();
             $resolvedStatus = $statusAfterEvent ?: $shipmentRecord->status;
 
             if ($statusAfterEvent) {
@@ -443,6 +479,31 @@ class ShipmentRecordService
         $this->shipmentCommunicationService->dispatchForPersistedEvent($result['shipment_record']->id, $result['event_id']);
 
         return $result['shipment_record'];
+    }
+
+    public function confirmHandover(
+        ShipmentRecord $shipmentRecord,
+        ShipmentHandoverBatch $batch,
+        ?int $actorAdminId = null,
+        ?string $note = null,
+    ): ShipmentRecord {
+        $shipmentRecord->handover_batch_id = $batch->id;
+        $shipmentRecord->handover_mode = $batch->handover_type;
+
+        return $this->appendEvent(
+            $shipmentRecord,
+            ShipmentEvent::EVENT_HANDOVER_CONFIRMED,
+            $note ?: sprintf('Handover confirmed in batch %s.', $batch->reference),
+            $actorAdminId,
+            ShipmentRecord::STATUS_HANDED_TO_CARRIER,
+            [
+                'handover_batch_id' => $batch->id,
+                'handover_batch_reference' => $batch->reference,
+                'handover_type' => $batch->handover_type,
+                'receiver_name' => $batch->receiver_name,
+            ],
+            $batch->handover_at,
+        );
     }
 
     protected function resolveCarrier(?int $carrierId, ?string $carrierCode, ?string $carrierTitle): ?ShipmentCarrier

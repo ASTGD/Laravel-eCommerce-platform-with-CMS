@@ -31,16 +31,31 @@ class ShipmentRecord extends Model
     public const FAILURE_REASON_PARCEL_DAMAGED = 'parcel_damaged';
     public const FAILURE_REASON_OTHER = 'other';
 
+    public const HANDOVER_MODE_COURIER_PICKUP = 'courier_pickup';
+    public const HANDOVER_MODE_STAFF_DROPOFF = 'staff_dropoff';
+
     protected $fillable = [
         'order_id',
         'native_shipment_id',
         'shipment_carrier_id',
+        'handover_batch_id',
         'inventory_source_id',
         'created_by_admin_id',
         'updated_by_admin_id',
+        'packed_by_admin_id',
         'status',
         'carrier_name_snapshot',
         'tracking_number',
+        'stock_checked',
+        'packed_at',
+        'package_count',
+        'package_weight_kg',
+        'package_dimensions',
+        'is_fragile',
+        'handover_mode',
+        'special_handling',
+        'internal_note',
+        'courier_note',
         'public_tracking_url',
         'carrier_booking_reference',
         'carrier_consignment_id',
@@ -87,6 +102,11 @@ class ShipmentRecord extends Model
         'last_delivery_attempt_at' => 'datetime',
         'return_initiated_at' => 'datetime',
         'last_tracking_synced_at' => 'datetime',
+        'stock_checked' => 'boolean',
+        'package_count' => 'integer',
+        'package_weight_kg' => 'decimal:2',
+        'is_fragile' => 'boolean',
+        'packed_at' => 'datetime',
         'handed_over_at' => 'datetime',
         'delivered_at' => 'datetime',
         'returned_at' => 'datetime',
@@ -111,7 +131,7 @@ class ShipmentRecord extends Model
     {
         return [
             self::STATUS_DRAFT => 'Draft',
-            self::STATUS_READY_FOR_PICKUP => 'Ready for Pickup',
+            self::STATUS_READY_FOR_PICKUP => 'Parcel Ready for Handover',
             self::STATUS_HANDED_TO_CARRIER => 'Handed to Carrier',
             self::STATUS_IN_TRANSIT => 'In Transit',
             self::STATUS_OUT_FOR_DELIVERY => 'Out for Delivery',
@@ -119,6 +139,14 @@ class ShipmentRecord extends Model
             self::STATUS_DELIVERY_FAILED => 'Delivery Failed',
             self::STATUS_RETURNED => 'Returned',
             self::STATUS_CANCELED => 'Canceled',
+        ];
+    }
+
+    public static function handoverModeLabels(): array
+    {
+        return [
+            self::HANDOVER_MODE_COURIER_PICKUP => 'Courier Pickup',
+            self::HANDOVER_MODE_STAFF_DROPOFF => 'Staff Drop-off',
         ];
     }
 
@@ -163,6 +191,16 @@ class ShipmentRecord extends Model
             ?? str($this->delivery_failure_reason)->replace('_', ' ')->title()->value();
     }
 
+    public function getHandoverModeLabelAttribute(): ?string
+    {
+        if (! $this->handover_mode) {
+            return null;
+        }
+
+        return static::handoverModeLabels()[$this->handover_mode]
+            ?? str($this->handover_mode)->replace('_', ' ')->title()->value();
+    }
+
     public function trackingUrl(): ?string
     {
         return $this->public_tracking_url ?: $this->carrier?->trackingUrl($this->tracking_number);
@@ -190,6 +228,11 @@ class ShipmentRecord extends Model
     public function carrier(): BelongsTo
     {
         return $this->belongsTo(ShipmentCarrier::class, 'shipment_carrier_id');
+    }
+
+    public function handoverBatch(): BelongsTo
+    {
+        return $this->belongsTo(ShipmentHandoverBatch::class, 'handover_batch_id');
     }
 
     public function inventorySource(): BelongsTo
@@ -225,5 +268,10 @@ class ShipmentRecord extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'updated_by_admin_id');
+    }
+
+    public function packer(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'packed_by_admin_id');
     }
 }

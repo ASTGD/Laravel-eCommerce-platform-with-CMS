@@ -24,7 +24,7 @@ class RedirectBasicShipmentBrowseRoutes
             'admin.sales.shipments.view',
         ], true)) {
             return redirect()
-                ->route('admin.sales.shipped-orders.index')
+                ->route('admin.sales.to-ship.index')
                 ->with('warning', 'Manual Basic mode uses To Ship, In Delivery, and COD Receivables instead of the native shipment screens.');
         }
 

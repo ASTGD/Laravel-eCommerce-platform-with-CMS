@@ -78,12 +78,30 @@ In `Advanced Pro` mode, the same form keeps those business fields first and then
 
 `To Ship` is now the manual-mode booking entry point in the `Shipments` menu. It lists processing orders that still need courier booking and presents a business-facing `Book Shipment` modal with:
 
-- courier
-- tracking number
-- tracking URL
-- note
+- one same-screen 2-layer operational layout with:
+  - `Needs Booking`
+  - `Parcel Ready for Handover`
+- a larger booking modal with:
+  - order snapshot
+  - pick and pack details
+  - courier booking details
+  - print actions for parcel label, invoice, or both
+
+The booking step now captures manual parcel-preparation data such as stock-checked state, packer, packed time, parcel count, optional weight and dimensions, fragile handling, internal note, courier note, and planned handover mode.
 
 The booking form still creates a native Bagisto shipment underneath, so shipment creation and the custom `ShipmentRecord` sync remain on the existing shared path.
+
+Saving the booking no longer moves the parcel directly to `In Delivery`. The booking now moves the shipment into the shared `ShipmentRecord` status `Parcel Ready for Handover`, which remains inside `To Ship` until the parcel is actually handed to the courier.
+
+`Parcel Ready for Handover` is the second stacked section inside `To Ship`. It supports:
+
+- checkbox selection for prepared parcels
+- courier, date, handover-mode, and search filtering
+- draft handover batch creation
+- printable handover sheet / manifest generation
+- final handover confirmation
+
+The Basic-mode handover sheet is domestic-focused and includes merchant, courier, parcel count, COD total, shipment rows, and signature areas for signed proof of handover.
 
 `In Delivery` is the simple manual-mode shipment queue. It is intended for non-technical store owners and focuses only on:
 
@@ -92,11 +110,13 @@ The booking form still creates a native Bagisto shipment underneath, so shipment
 - courier name
 - tracking number
 - public tracking link
-- booked date
+- handed-over date
 - COD amount
 - current shipment status
 - courier filter
 - one-click manual delivery confirmation
+
+`In Delivery` now means the parcel has been physically handed over to the courier. Booked-but-not-yet-handed parcels stay in `To Ship` until the handover is confirmed.
 
 When a manual-mode admin marks a shipment as delivered from `In Delivery`, the action still runs through the shared shipment status pipeline so shipment timestamps, COD collection amount, and future settlement readiness remain consistent with the advanced domain model.
 

@@ -11,7 +11,7 @@
                 </p>
 
                 <p class="text-sm text-gray-600 dark:text-gray-300">
-                    Daily follow-up queue for shipments already booked with a courier. Mark delivery here without opening advanced shipment operations.
+                    Daily follow-up queue for parcels already physically handed over to the courier. Mark delivery here without opening advanced shipment operations.
                 </p>
             </div>
         </div>
@@ -89,7 +89,7 @@
                     @if ($selectedCarrierId)
                         No active shipments are in delivery for this courier right now.
                     @else
-                        No active shipments are in delivery yet. Book a shipment from To Ship first, and it will appear here.
+                        No active shipments are in delivery yet. Confirm a courier handover from To Ship first, and it will appear here.
                     @endif
                 </div>
             @else
@@ -102,7 +102,7 @@
                                 <x-admin::table.th>Courier</x-admin::table.th>
                                 <x-admin::table.th>Tracking No</x-admin::table.th>
                                 <x-admin::table.th>Tracking URL</x-admin::table.th>
-                                <x-admin::table.th>Booked Date</x-admin::table.th>
+                                <x-admin::table.th>Handed Over Date</x-admin::table.th>
                                 <x-admin::table.th>COD Amount</x-admin::table.th>
                                 <x-admin::table.th>Shipment Status</x-admin::table.th>
                                 <x-admin::table.th>Action</x-admin::table.th>

@@ -4,6 +4,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Platform\CommerceCore\Mail\Admin\Shipment\OperationalUpdateNotification as AdminOperationalUpdateNotification;
 use Platform\CommerceCore\Mail\Shop\Shipment\OperationalUpdateNotification as ShopOperationalUpdateNotification;
 use Platform\CommerceCore\Models\CodSettlement;
@@ -11,6 +12,7 @@ use Platform\CommerceCore\Models\SettlementBatch;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentCommunication;
 use Platform\CommerceCore\Models\ShipmentEvent;
+use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Jobs\SyncShipmentTrackingJob;
 use Platform\CommerceCore\Services\CustomerShipmentTrackingService;
@@ -37,6 +39,20 @@ use function Pest\Laravel\postJson;
 uses(AdminTestCase::class);
 
 beforeEach(function () {
+    Schema::disableForeignKeyConstraints();
+
+    try {
+        ShipmentCommunication::query()->delete();
+        ShipmentEvent::query()->delete();
+        CodSettlement::query()->delete();
+        SettlementBatch::query()->delete();
+        ShipmentRecord::query()->delete();
+        ShipmentHandoverBatch::query()->delete();
+        ShipmentCarrier::query()->delete();
+    } finally {
+        Schema::enableForeignKeyConstraints();
+    }
+
     setAdminShippingMode('advanced_pro');
 });
 
