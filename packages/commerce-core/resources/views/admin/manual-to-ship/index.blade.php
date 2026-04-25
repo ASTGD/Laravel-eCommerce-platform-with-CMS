@@ -140,6 +140,20 @@
                                     @php
                                         $order = $row['order'];
                                         $isRestoringModal = (string) old('booking_order_id') === (string) $order->id;
+                                        $bookingFormId = 'booking-form-'.$order->id;
+                                        $compactAddressLabel = \Illuminate\Support\Str::limit($row['address_label'], 42);
+                                        $paymentSummaryLabel = $row['payment_label'] === 'COD'
+                                            ? 'COD '.$row['cod_amount_formatted']
+                                            : 'Prepaid';
+                                        $itemSummaryLabel = sprintf(
+                                            '%d %s • Qty %s',
+                                            (int) $row['items_count'],
+                                            \Illuminate\Support\Str::plural('item', (int) $row['items_count']),
+                                            $row['total_qty']
+                                        );
+                                        $stockSummaryLabel = $row['stock_check_label'] === 'Ready'
+                                            ? 'Stock ready'
+                                            : $row['stock_check_label'];
                                     @endphp
 
                                     <tr class="border-t border-slate-200 align-top dark:border-gray-800">
@@ -192,7 +206,7 @@
                                             @if (bouncer()->hasPermission('sales.shipments.create') && $row['can_book'] && $shipmentCarriers->isNotEmpty())
                                                 <x-admin::modal
                                                     :is-active="$isRestoringModal"
-                                                    box-style="width: min(1120px, calc(100vw - 2rem)); max-width: min(1120px, calc(100vw - 2rem));"
+                                                    box-style="width: min(980px, calc(100vw - 2rem)); max-width: min(980px, calc(100vw - 2rem));"
                                                 >
                                                     <x-slot:toggle>
                                                         <button
@@ -210,13 +224,14 @@
                                                             </p>
 
                                                             <p class="text-sm font-normal text-gray-600 dark:text-gray-300">
-                                                                Order #{{ $order->increment_id }} will move to Parcel Ready for Handover after you save the booking.
+                                                                Save the parcel booking here, then complete courier handover later from Parcel Ready for Handover.
                                                             </p>
                                                         </div>
                                                     </x-slot>
 
                                                     <x-slot:content>
                                                         <x-admin::form
+                                                            id="{{ $bookingFormId }}"
                                                             method="POST"
                                                             :action="route('admin.sales.shipments.store', $order->id)"
                                                         >
@@ -236,394 +251,341 @@
                                                             @endforeach
 
                                                             <div class="grid gap-5">
-                                                                <section class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-gray-800 dark:bg-gray-800/60">
-                                                                    <div class="mb-3 grid gap-1">
-                                                                        <p class="text-base font-semibold text-gray-800 dark:text-white">
-                                                                            1. Order Snapshot
-                                                                        </p>
-
-                                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                                            Review the order before you pack and book the parcel.
-                                                                        </p>
-                                                                    </div>
-
-                                                                    <div class="grid gap-4 lg:grid-cols-2">
-                                                                        <div class="grid gap-3">
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Order No</p>
-                                                                                <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">#{{ $order->increment_id }}</p>
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Customer</p>
-                                                                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['customer_label'] }}</p>
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Phone</p>
-                                                                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['phone_label'] }}</p>
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Address</p>
-                                                                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['address_label'] }}</p>
-                                                                            </div>
+                                                                <section class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/60">
+                                                                    <div class="flex flex-wrap items-start justify-between gap-3">
+                                                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-700 dark:text-gray-200">
+                                                                            <span class="font-semibold text-gray-900 dark:text-white">
+                                                                                Order #{{ $order->increment_id }}
+                                                                            </span>
+                                                                            <span class="text-slate-300 dark:text-gray-600">•</span>
+                                                                            <span>{{ $row['customer_label'] }}</span>
+                                                                            <span class="text-slate-300 dark:text-gray-600">•</span>
+                                                                            <span>{{ $compactAddressLabel }}</span>
+                                                                            <span class="text-slate-300 dark:text-gray-600">•</span>
+                                                                            <span class="{{ $row['payment_label'] === 'COD' ? 'font-semibold text-orange-600 dark:text-orange-400' : '' }}">
+                                                                                {{ $paymentSummaryLabel }}
+                                                                            </span>
+                                                                            <span class="text-slate-300 dark:text-gray-600">•</span>
+                                                                            <span>{{ $itemSummaryLabel }}</span>
+                                                                            <span class="text-slate-300 dark:text-gray-600">•</span>
+                                                                            <span class="font-medium text-emerald-700 dark:text-emerald-400">
+                                                                                {{ $stockSummaryLabel }}
+                                                                            </span>
                                                                         </div>
 
-                                                                        <div class="grid gap-3">
-                                                                            <div class="grid grid-cols-2 gap-3">
-                                                                                <div>
-                                                                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Payment Type</p>
-                                                                                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['payment_label'] }}</p>
-                                                                                </div>
-
-                                                                                <div>
-                                                                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">COD Amount</p>
-                                                                                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['payment_label'] === 'COD' ? $row['cod_amount_formatted'] : 'Prepaid' }}</p>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Item Summary</p>
-                                                                                <div class="mt-1 grid gap-1 text-sm text-gray-700 dark:text-gray-300">
-                                                                                    @foreach ($row['items_summary'] as $summaryLine)
-                                                                                        <p>{{ $summaryLine }}</p>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total Qty</p>
-                                                                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['total_qty'] }}</p>
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Stock Source</p>
-                                                                                <p class="text-sm text-gray-700 dark:text-gray-300">{{ $row['inventory_source_name'] }}</p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </section>
-
-                                                                <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
-                                                                    <div class="mb-3 grid gap-1">
-                                                                        <p class="text-base font-semibold text-gray-800 dark:text-white">
-                                                                            2. Pick &amp; Pack
-                                                                        </p>
-
-                                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                                            Record how this parcel was prepared before handover.
-                                                                        </p>
-                                                                    </div>
-
-                                                                    <div class="grid gap-4 lg:grid-cols-2">
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <input type="hidden" name="shipment[stock_checked]" value="0">
-
-                                                                            <label class="inline-flex items-center gap-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    name="shipment[stock_checked]"
-                                                                                    value="1"
-                                                                                    class="h-4 w-4 rounded border-slate-300 text-blue-600"
-                                                                                    @checked($isRestoringModal ? (bool) old('shipment.stock_checked', true) : true)
-                                                                                >
-
-                                                                                Stock checked
-                                                                            </label>
-
-                                                                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                                                Confirm that items were checked before this parcel is packed.
-                                                                            </p>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.stock_checked" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <div class="grid gap-1 rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                                                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Packed By</p>
-                                                                            <p class="font-semibold">{{ $currentAdminName }}</p>
-                                                                            <p class="text-xs text-gray-500 dark:text-gray-400">Packed time is saved automatically when you save the booking.</p>
-                                                                        </div>
-
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label class="required">
-                                                                                Package Count
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="number"
-                                                                                name="shipment[package_count]"
-                                                                                :value="$isRestoringModal ? old('shipment.package_count', 1) : 1"
-                                                                                rules="required|min_value:1"
-                                                                                :label="'Package Count'"
-                                                                                :placeholder="'1'"
-                                                                            />
-
-                                                                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                                                Enter how many parcel pieces will be handed over.
-                                                                            </p>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.package_count" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label>
-                                                                                Optional Weight (kg)
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="number"
-                                                                                name="shipment[package_weight_kg]"
-                                                                                :value="$isRestoringModal ? old('shipment.package_weight_kg') : ''"
-                                                                                :label="'Optional Weight (kg)'"
-                                                                                :placeholder="'0.50'"
-                                                                                step="0.01"
-                                                                                min="0"
-                                                                            />
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.package_weight_kg" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label>
-                                                                                Optional Dimensions
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="text"
-                                                                                name="shipment[package_dimensions]"
-                                                                                :value="$isRestoringModal ? old('shipment.package_dimensions') : ''"
-                                                                                :label="'Optional Dimensions'"
-                                                                                :placeholder="'12 x 8 x 5 in'"
-                                                                            />
-
-                                                                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                                                Use any format your staff understands.
-                                                                            </p>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.package_dimensions" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label class="required">
-                                                                                Planned Handover Mode
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="select"
-                                                                                name="shipment[handover_mode]"
-                                                                                :label="'Planned Handover Mode'"
-                                                                            >
-                                                                                @foreach ($handoverModes as $handoverModeValue => $handoverModeLabel)
-                                                                                    <option
-                                                                                        value="{{ $handoverModeValue }}"
-                                                                                        @selected($isRestoringModal ? old('shipment.handover_mode', \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP) === $handoverModeValue : $handoverModeValue === \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
-                                                                                    >
-                                                                                        {{ $handoverModeLabel }}
-                                                                                    </option>
-                                                                                @endforeach
-                                                                            </x-admin::form.control-group.control>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.handover_mode" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0 lg:col-span-2">
-                                                                            <input type="hidden" name="shipment[is_fragile]" value="0">
-
-                                                                            <label class="inline-flex items-center gap-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    name="shipment[is_fragile]"
-                                                                                    value="1"
-                                                                                    class="h-4 w-4 rounded border-slate-300 text-blue-600"
-                                                                                    @checked($isRestoringModal ? (bool) old('shipment.is_fragile') : false)
-                                                                                >
-
-                                                                                Fragile parcel / special care needed
-                                                                            </label>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.is_fragile" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0 lg:col-span-2">
-                                                                            <x-admin::form.control-group.label>
-                                                                                Fragile / Special Handling
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="textarea"
-                                                                                name="shipment[special_handling]"
-                                                                                :value="$isRestoringModal ? old('shipment.special_handling') : ''"
-                                                                                :label="'Fragile / Special Handling'"
-                                                                                :placeholder="'Glass item, keep upright, call before pickup'"
-                                                                            />
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.special_handling" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0 lg:col-span-2">
-                                                                            <x-admin::form.control-group.label>
-                                                                                Internal Note
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="textarea"
-                                                                                name="shipment[internal_note]"
-                                                                                :value="$isRestoringModal ? old('shipment.internal_note') : ''"
-                                                                                :label="'Internal Note'"
-                                                                                :placeholder="'Packing note for your warehouse or handover team'"
-                                                                            />
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.internal_note" />
-                                                                        </x-admin::form.control-group>
-                                                                    </div>
-                                                                </section>
-
-                                                                <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
-                                                                    <div class="mb-3 grid gap-1">
-                                                                        <p class="text-base font-semibold text-gray-800 dark:text-white">
-                                                                            3. Courier Booking
-                                                                        </p>
-
-                                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                                            Save the courier details your team will use to follow the parcel.
-                                                                        </p>
-                                                                    </div>
-
-                                                                    <div class="grid gap-4 lg:grid-cols-2">
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label class="required">
-                                                                                Courier
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="select"
-                                                                                name="shipment[carrier_id]"
-                                                                                rules="required"
-                                                                                :label="'Courier'"
-                                                                            >
-                                                                                <option value="">Select courier</option>
-
-                                                                                @foreach ($shipmentCarriers as $shipmentCarrier)
-                                                                                    <option
-                                                                                        value="{{ $shipmentCarrier->id }}"
-                                                                                        @selected($isRestoringModal && (string) old('shipment.carrier_id') === (string) $shipmentCarrier->id)
-                                                                                    >
-                                                                                        {{ $shipmentCarrier->name }}
-                                                                                    </option>
-                                                                                @endforeach
-                                                                            </x-admin::form.control-group.control>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.carrier_id" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label class="required">
-                                                                                Tracking Number
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="text"
-                                                                                name="shipment[track_number]"
-                                                                                :value="$isRestoringModal ? old('shipment.track_number') : ''"
-                                                                                rules="required"
-                                                                                :label="'Tracking Number'"
-                                                                                :placeholder="'Enter tracking number'"
-                                                                            />
-
-                                                                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                                                                Use the number, consignment ID, or booking reference your team will use for follow-up.
-                                                                            </p>
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.track_number" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0">
-                                                                            <x-admin::form.control-group.label>
-                                                                                Tracking URL
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="text"
-                                                                                name="shipment[public_tracking_url]"
-                                                                                :value="$isRestoringModal ? old('shipment.public_tracking_url') : ''"
-                                                                                :label="'Tracking URL'"
-                                                                                :placeholder="'https://courier.example/track/ABC123'"
-                                                                            />
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.public_tracking_url" />
-                                                                        </x-admin::form.control-group>
-
-                                                                        <x-admin::form.control-group class="!mb-0 lg:col-span-2">
-                                                                            <x-admin::form.control-group.label>
-                                                                                Courier Note
-                                                                            </x-admin::form.control-group.label>
-
-                                                                            <x-admin::form.control-group.control
-                                                                                type="textarea"
-                                                                                name="shipment[courier_note]"
-                                                                                :value="$isRestoringModal ? old('shipment.courier_note') : ''"
-                                                                                :label="'Courier Note'"
-                                                                                :placeholder="'Pickup note or courier reference for the handover team'"
-                                                                            />
-
-                                                                            <x-admin::form.control-group.error control-name="shipment.courier_note" />
-                                                                        </x-admin::form.control-group>
-                                                                    </div>
-                                                                </section>
-
-                                                                <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
-                                                                    <div class="mb-4 grid gap-1">
-                                                                        <p class="text-base font-semibold text-gray-800 dark:text-white">
-                                                                            4. Print &amp; Save
-                                                                        </p>
-
-                                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                                            Print the parcel label or invoice if needed, then save the booking to move this parcel into Parcel Ready for Handover.
-                                                                        </p>
-                                                                    </div>
-
-                                                                    <div class="flex flex-wrap items-center justify-between gap-3">
-                                                                        <div class="flex flex-wrap gap-2">
-                                                                            <button
-                                                                                type="button"
-                                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'label']) }}"
-                                                                                data-print-title="Parcel Label Preview"
-                                                                                class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                                                                            >
-                                                                                Print Parcel Label
-                                                                            </button>
-
-                                                                            <button
-                                                                                type="button"
-                                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'invoice']) }}"
-                                                                                data-print-title="Invoice Preview"
-                                                                                class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                                                                            >
-                                                                                Print Invoice
-                                                                            </button>
-
-                                                                            <button
-                                                                                type="button"
-                                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'both']) }}"
-                                                                                data-print-title="Parcel Label and Invoice Preview"
-                                                                                class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                                                                            >
-                                                                                Print Both
-                                                                            </button>
-                                                                        </div>
-
-                                                                        <button
-                                                                            type="submit"
-                                                                            class="primary-button"
+                                                                        <a
+                                                                            href="{{ route('admin.sales.orders.view', $order->id) }}"
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            class="shrink-0 text-sm font-semibold text-blue-600 hover:underline"
                                                                         >
-                                                                            Save Booking
-                                                                        </button>
+                                                                            View full order details
+                                                                        </a>
                                                                     </div>
                                                                 </section>
+
+                                                                <div class="grid gap-5 lg:grid-cols-2">
+                                                                    <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
+                                                                        <div class="mb-4 grid gap-1">
+                                                                            <p class="text-base font-semibold text-gray-800 dark:text-white">
+                                                                                Parcel Preparation
+                                                                            </p>
+
+                                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                                Capture how the parcel was packed before courier handover.
+                                                                            </p>
+                                                                        </div>
+
+                                                                        <div class="grid gap-4">
+                                                                            <input
+                                                                                type="hidden"
+                                                                                name="shipment[stock_checked]"
+                                                                                value="{{ $isRestoringModal ? (old('shipment.stock_checked', 1) ? 1 : 0) : 1 }}"
+                                                                            >
+
+                                                                            <div class="grid gap-4 sm:grid-cols-2">
+                                                                                <div class="grid gap-1 rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                                                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Packed By</p>
+                                                                                    <p class="font-semibold">{{ $currentAdminName }}</p>
+                                                                                    <p class="text-xs text-gray-500 dark:text-gray-400">Packed time is saved automatically.</p>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="grid gap-4 sm:grid-cols-2">
+                                                                                <x-admin::form.control-group class="!mb-0">
+                                                                                    <x-admin::form.control-group.label class="required">
+                                                                                        Package Count
+                                                                                    </x-admin::form.control-group.label>
+
+                                                                                    <x-admin::form.control-group.control
+                                                                                        type="number"
+                                                                                        name="shipment[package_count]"
+                                                                                        :value="$isRestoringModal ? old('shipment.package_count', 1) : 1"
+                                                                                        rules="required|min_value:1"
+                                                                                        :label="'Package Count'"
+                                                                                        :placeholder="'1'"
+                                                                                    />
+
+                                                                                    <x-admin::form.control-group.error control-name="shipment.package_count" />
+                                                                                </x-admin::form.control-group>
+
+                                                                                <x-admin::form.control-group class="!mb-0">
+                                                                                    <x-admin::form.control-group.label class="required">
+                                                                                        Planned Handover Mode
+                                                                                    </x-admin::form.control-group.label>
+
+                                                                                    <x-admin::form.control-group.control
+                                                                                        type="select"
+                                                                                        name="shipment[handover_mode]"
+                                                                                        :label="'Planned Handover Mode'"
+                                                                                    >
+                                                                                        @foreach ($handoverModes as $handoverModeValue => $handoverModeLabel)
+                                                                                            <option
+                                                                                                value="{{ $handoverModeValue }}"
+                                                                                                @selected($isRestoringModal ? old('shipment.handover_mode', \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP) === $handoverModeValue : $handoverModeValue === \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+                                                                                            >
+                                                                                                {{ $handoverModeLabel }}
+                                                                                            </option>
+                                                                                        @endforeach
+                                                                                    </x-admin::form.control-group.control>
+
+                                                                                    <x-admin::form.control-group.error control-name="shipment.handover_mode" />
+                                                                                </x-admin::form.control-group>
+                                                                            </div>
+
+                                                                            <div class="grid gap-4 sm:grid-cols-2">
+                                                                                <x-admin::form.control-group class="!mb-0">
+                                                                                    <x-admin::form.control-group.label>
+                                                                                        Weight (optional)
+                                                                                    </x-admin::form.control-group.label>
+
+                                                                                    <x-admin::form.control-group.control
+                                                                                        type="number"
+                                                                                        name="shipment[package_weight_kg]"
+                                                                                        :value="$isRestoringModal ? old('shipment.package_weight_kg') : ''"
+                                                                                        :label="'Weight (optional)'"
+                                                                                        :placeholder="'0.50'"
+                                                                                        step="0.01"
+                                                                                        min="0"
+                                                                                    />
+
+                                                                                    <x-admin::form.control-group.error control-name="shipment.package_weight_kg" />
+                                                                                </x-admin::form.control-group>
+
+                                                                                <x-admin::form.control-group class="!mb-0">
+                                                                                    <x-admin::form.control-group.label>
+                                                                                        Dimensions (optional)
+                                                                                    </x-admin::form.control-group.label>
+
+                                                                                    <x-admin::form.control-group.control
+                                                                                        type="text"
+                                                                                        name="shipment[package_dimensions]"
+                                                                                        :value="$isRestoringModal ? old('shipment.package_dimensions') : ''"
+                                                                                        :label="'Dimensions (optional)'"
+                                                                                        :placeholder="'12 x 8 x 5 in'"
+                                                                                    />
+
+                                                                                    <x-admin::form.control-group.error control-name="shipment.package_dimensions" />
+                                                                                </x-admin::form.control-group>
+                                                                            </div>
+
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <input type="hidden" name="shipment[is_fragile]" value="0">
+
+                                                                                <label class="inline-flex items-center gap-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        name="shipment[is_fragile]"
+                                                                                        value="1"
+                                                                                        class="h-4 w-4 rounded border-slate-300 text-blue-600"
+                                                                                        @checked($isRestoringModal ? (bool) old('shipment.is_fragile') : false)
+                                                                                    >
+
+                                                                                    Fragile / special handling needed
+                                                                                </label>
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.is_fragile" />
+                                                                            </x-admin::form.control-group>
+
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <x-admin::form.control-group.label>
+                                                                                    Fragile / Special Handling
+                                                                                </x-admin::form.control-group.label>
+
+                                                                                <x-admin::form.control-group.control
+                                                                                    type="textarea"
+                                                                                    name="shipment[special_handling]"
+                                                                                    :value="$isRestoringModal ? old('shipment.special_handling') : ''"
+                                                                                    :label="'Fragile / Special Handling'"
+                                                                                    :placeholder="'Glass item, keep upright, call before pickup'"
+                                                                                />
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.special_handling" />
+                                                                            </x-admin::form.control-group>
+
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <x-admin::form.control-group.label>
+                                                                                    Internal Note
+                                                                                </x-admin::form.control-group.label>
+
+                                                                                <x-admin::form.control-group.control
+                                                                                    type="textarea"
+                                                                                    name="shipment[internal_note]"
+                                                                                    :value="$isRestoringModal ? old('shipment.internal_note') : ''"
+                                                                                    :label="'Internal Note'"
+                                                                                    :placeholder="'Packing note for your warehouse or handover team'"
+                                                                                />
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.internal_note" />
+                                                                            </x-admin::form.control-group>
+                                                                        </div>
+                                                                    </section>
+
+                                                                    <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
+                                                                        <div class="mb-4 grid gap-1">
+                                                                            <p class="text-base font-semibold text-gray-800 dark:text-white">
+                                                                                Courier Booking
+                                                                            </p>
+
+                                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                                Save the courier details your team will use to follow the parcel.
+                                                                            </p>
+                                                                        </div>
+
+                                                                        <div class="grid gap-4">
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <x-admin::form.control-group.label class="required">
+                                                                                    Courier
+                                                                                </x-admin::form.control-group.label>
+
+                                                                                <x-admin::form.control-group.control
+                                                                                    type="select"
+                                                                                    name="shipment[carrier_id]"
+                                                                                    rules="required"
+                                                                                    :label="'Courier'"
+                                                                                >
+                                                                                    <option value="">Select courier</option>
+
+                                                                                    @foreach ($shipmentCarriers as $shipmentCarrier)
+                                                                                        <option
+                                                                                            value="{{ $shipmentCarrier->id }}"
+                                                                                            @selected($isRestoringModal && (string) old('shipment.carrier_id') === (string) $shipmentCarrier->id)
+                                                                                        >
+                                                                                            {{ $shipmentCarrier->name }}
+                                                                                        </option>
+                                                                                    @endforeach
+                                                                                </x-admin::form.control-group.control>
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.carrier_id" />
+                                                                            </x-admin::form.control-group>
+
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <x-admin::form.control-group.label class="required">
+                                                                                    Tracking Number
+                                                                                </x-admin::form.control-group.label>
+
+                                                                                <x-admin::form.control-group.control
+                                                                                    type="text"
+                                                                                    name="shipment[track_number]"
+                                                                                    :value="$isRestoringModal ? old('shipment.track_number') : ''"
+                                                                                    rules="required"
+                                                                                    :label="'Tracking Number'"
+                                                                                    :placeholder="'Enter tracking number'"
+                                                                                />
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.track_number" />
+                                                                            </x-admin::form.control-group>
+
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <x-admin::form.control-group.label>
+                                                                                    Tracking URL
+                                                                                </x-admin::form.control-group.label>
+
+                                                                                <x-admin::form.control-group.control
+                                                                                    type="text"
+                                                                                    name="shipment[public_tracking_url]"
+                                                                                    :value="$isRestoringModal ? old('shipment.public_tracking_url') : ''"
+                                                                                    :label="'Tracking URL'"
+                                                                                    :placeholder="'https://courier.example/track/ABC123'"
+                                                                                />
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.public_tracking_url" />
+                                                                            </x-admin::form.control-group>
+
+                                                                            <x-admin::form.control-group class="!mb-0">
+                                                                                <x-admin::form.control-group.label>
+                                                                                    Courier Note
+                                                                                </x-admin::form.control-group.label>
+
+                                                                                <x-admin::form.control-group.control
+                                                                                    type="textarea"
+                                                                                    name="shipment[courier_note]"
+                                                                                    :value="$isRestoringModal ? old('shipment.courier_note') : ''"
+                                                                                    :label="'Courier Note'"
+                                                                                    :placeholder="'Pickup note or courier reference for the handover team'"
+                                                                                />
+
+                                                                                <x-admin::form.control-group.error control-name="shipment.courier_note" />
+                                                                            </x-admin::form.control-group>
+                                                                        </div>
+                                                                    </section>
+                                                                </div>
                                                             </div>
                                                         </x-admin::form>
                                                     </x-slot:content>
+
+                                                    <x-slot:footer>
+                                                        <div class="flex w-full flex-wrap items-center justify-end gap-2.5">
+                                                            <button
+                                                                type="button"
+                                                                class="secondary-button"
+                                                                style="background-color: #f65d35; border-color: #f65d35; color: #ffffff;"
+                                                                onclick="this.closest('.box-shadow')?.querySelector('.icon-cancel-1')?.click()"
+                                                            >
+                                                                Cancel
+                                                            </button>
+
+                                                            <button
+                                                                type="submit"
+                                                                form="{{ $bookingFormId }}"
+                                                                class="primary-button"
+                                                            >
+                                                                Save Booking
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'label']) }}"
+                                                                data-shipment-form-id="{{ $bookingFormId }}"
+                                                                data-print-title="Parcel Label Preview"
+                                                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                                                                style="background-color: #7fba00;"
+                                                            >
+                                                                Print Label
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'invoice']) }}"
+                                                                data-shipment-form-id="{{ $bookingFormId }}"
+                                                                data-print-title="Invoice Preview"
+                                                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-gray-900 transition hover:opacity-90"
+                                                                style="background-color: #ffba07;"
+                                                            >
+                                                                Print Invoice
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'both']) }}"
+                                                                data-shipment-form-id="{{ $bookingFormId }}"
+                                                                data-print-title="Parcel Label and Invoice Preview"
+                                                                class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                                            >
+                                                                Print Both
+                                                            </button>
+                                                        </div>
+                                                    </x-slot:footer>
                                                 </x-admin::modal>
                                             @else
                                                 <span class="text-sm text-gray-500 dark:text-gray-400">
@@ -1921,7 +1883,8 @@
     };
 
     window.openShipmentPrintPreview = async function (button, actionUrl, title) {
-        const form = button.closest('form');
+        const form = button.closest('form')
+            || (button.dataset.shipmentFormId ? document.getElementById(button.dataset.shipmentFormId) : null);
 
         if (! form) {
             return;
