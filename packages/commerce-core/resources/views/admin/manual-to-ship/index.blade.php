@@ -647,8 +647,11 @@
                                                                 </div>
                                                             </div>
 
-                                                            <div class="grid gap-3 lg:grid-cols-[auto_1fr_auto] lg:items-center">
-                                                                <div class="flex flex-wrap items-center gap-2.5">
+                                                            <div
+                                                                class="w-full"
+                                                                style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0.75rem;"
+                                                            >
+                                                                <div class="flex flex-wrap items-center gap-2.5" style="justify-content: flex-start;">
                                                                     <button
                                                                         type="button"
                                                                         class="secondary-button"
@@ -668,7 +671,7 @@
                                                                     </button>
                                                                 </div>
 
-                                                                <div class="flex flex-wrap items-center justify-start gap-2.5 lg:justify-center">
+                                                                <div class="flex flex-wrap items-center gap-2.5" style="justify-content: center;">
                                                                     <button
                                                                         type="button"
                                                                         data-shipment-print-preview="{{ route('admin.sales.to-ship.booking-draft.print', [$order, 'document' => 'label']) }}"
@@ -702,7 +705,7 @@
                                                                     </button>
                                                                 </div>
 
-                                                                <div class="flex justify-start lg:justify-end">
+                                                                <div class="flex" style="justify-content: flex-end;">
                                                                     <button
                                                                         type="button"
                                                                         data-booking-complete
@@ -1162,15 +1165,16 @@
 
     <div
         id="handover-batch-modal"
-        class="fixed inset-0 z-[10001] hidden items-center justify-center bg-black/60 p-4"
+        class="admin-modal-overlay fixed inset-0 hidden items-center justify-center p-4"
+        style="z-index: 10001; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(2px);"
         aria-hidden="true"
     >
         <div
             id="handover-batch-modal-box"
-            class="relative z-[10002] flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+            class="admin-modal-panel relative z-[999] flex w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10"
             style="max-width: 820px; max-height: calc(100vh - 3rem);"
         >
-            <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-gray-800">
+            <div class="admin-modal-header flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-1">
                     <p id="handover-batch-modal-title" class="text-lg font-semibold text-gray-800 dark:text-white">
                         Prepare Handover Sheet
@@ -1184,14 +1188,14 @@
                 <button
                     type="button"
                     onclick="window.closeHandoverBatchModal && window.closeHandoverBatchModal()"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-xl text-gray-600 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    class="admin-modal-close inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-xl text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                     aria-label="Close handover batch modal"
                 >
                     ×
                 </button>
             </div>
 
-            <div class="grid gap-5 overflow-y-auto px-6 py-5">
+            <div class="admin-modal-body grid min-h-0 gap-5 overflow-y-auto px-6 py-5 text-gray-700 dark:text-gray-200">
                 <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-gray-800 dark:bg-gray-800/60">
                     <div class="grid gap-4 md:grid-cols-3">
                         <div>
@@ -1283,7 +1287,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-gray-800">
+            <div class="admin-modal-footer flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-gray-800 dark:bg-gray-950/50">
                 <button
                     type="button"
                     onclick="window.closeHandoverBatchModal && window.closeHandoverBatchModal()"
@@ -1305,14 +1309,15 @@
 
     <div
         id="handover-confirm-modal"
-        class="fixed inset-0 z-[10001] hidden items-center justify-center bg-black/60 p-4"
+        class="admin-modal-overlay fixed inset-0 hidden items-center justify-center p-4"
+        style="z-index: 10001; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(2px);"
         aria-hidden="true"
     >
         <div
-            class="relative z-[10002] flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+            class="admin-modal-panel relative z-[999] flex w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10"
             style="width: min(760px, calc(100vw - 2rem)); max-width: min(760px, calc(100vw - 2rem));"
         >
-            <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-gray-800">
+            <div class="admin-modal-header flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-1">
                     <p class="text-lg font-semibold text-gray-800 dark:text-white">Confirm Handover</p>
                     <p class="text-sm text-gray-600 dark:text-gray-300">Use this only after the courier has physically received the selected parcels.</p>
@@ -1321,14 +1326,14 @@
                 <button
                     type="button"
                     onclick="window.closeHandoverConfirmModal && window.closeHandoverConfirmModal()"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-xl text-gray-600 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    class="admin-modal-close inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-xl text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                     aria-label="Close confirm handover modal"
                 >
                     ×
                 </button>
             </div>
 
-            <div class="grid gap-4 px-6 py-5">
+            <div class="admin-modal-body grid min-h-0 gap-4 overflow-y-auto px-6 py-5 text-gray-700 dark:text-gray-200">
                 <div id="handover-confirm-modal-summary" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-gray-800 dark:border-gray-800 dark:bg-gray-800/60 dark:text-gray-100">
                     No parcels selected
                 </div>
@@ -1338,7 +1343,7 @@
                 </p>
             </div>
 
-            <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-gray-800">
+            <div class="admin-modal-footer flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-gray-800 dark:bg-gray-950/50">
                 <button
                     type="button"
                     onclick="window.closeHandoverConfirmModal && window.closeHandoverConfirmModal()"
@@ -1360,15 +1365,16 @@
 
     <div
         id="shipment-print-preview-modal"
-        class="fixed inset-0 z-[10003] hidden items-center justify-center bg-black/60 p-4"
+        class="admin-modal-overlay fixed inset-0 hidden items-center justify-center p-4"
+        style="z-index: 10003; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(2px);"
         aria-hidden="true"
     >
         <div
             id="shipment-print-preview-box"
-            class="relative z-[10004] flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+            class="admin-modal-panel relative z-[999] flex w-full flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-2xl ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10"
             style="width: min(1120px, calc(100vw - 2rem)); max-width: min(1120px, calc(100vw - 2rem)); height: min(90vh, 920px);"
         >
-            <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-gray-800">
+            <div class="admin-modal-header flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-1">
                     <p id="shipment-print-preview-title" class="text-lg font-semibold text-gray-800 dark:text-white">
                         Print Preview
@@ -1382,7 +1388,7 @@
                 <button
                     type="button"
                     onclick="window.closeShipmentPrintPreview && window.closeShipmentPrintPreview()"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 text-xl text-gray-600 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    class="admin-modal-close inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-xl text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                     aria-label="Close print preview"
                 >
                     ×
@@ -1397,7 +1403,7 @@
                 ></iframe>
             </div>
 
-            <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-gray-800">
+            <div class="admin-modal-footer flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-gray-800 dark:bg-gray-950/50">
                 <button
                     type="button"
                     onclick="window.closeShipmentPrintPreview && window.closeShipmentPrintPreview()"

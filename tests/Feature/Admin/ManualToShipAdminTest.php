@@ -108,6 +108,9 @@ it('shows the to ship page with needs booking and parcel ready for handover laye
 
     get(route('admin.sales.to-ship.index'))
         ->assertOk()
+        ->assertSee('admin-modal-design-system-styles', false)
+        ->assertSee('class="admin-modal-overlay fixed inset-0 hidden items-center justify-center p-4"', false)
+        ->assertSee('class="admin-modal-panel relative z-[999] flex w-full flex-col overflow-hidden rounded-2xl', false)
         ->assertSeeText('To Ship')
         ->assertSeeText('Needs Booking')
         ->assertSeeText('Parcel Ready for Handover')

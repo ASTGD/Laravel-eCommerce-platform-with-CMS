@@ -26,3 +26,10 @@
 - prefer feature tests for workflows
 - add render tests for storefront slices
 - add schema validation tests for sections/components
+
+## Admin UI
+
+- use the shared admin modal pattern for all admin dialogs
+- prefer `<x-admin::modal>` for standard admin modals so the shared backdrop, surface, header, body, footer, and close button styles are inherited
+- use the `admin-modal-*` classes for custom JavaScript-driven admin dialogs that cannot use `<x-admin::modal>`
+- keep modal changes presentation-only unless a workflow explicitly requires behavior changes

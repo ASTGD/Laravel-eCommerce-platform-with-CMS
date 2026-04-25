@@ -67,6 +67,52 @@
         @apply border-[1px] dark:border-gray-800 shadow-[0px_0px_0px_0px_rgba(0,0,0,0.03),0px_1px_1px_0px_rgba(0,0,0,0.03),0px_3px_3px_0px_rgba(0,0,0,0.03),0px_6px_4px_0px_rgba(0,0,0,0.02),0px_11px_4px_0px_rgba(0,0,0,0.00),0px_17px_5px_0px_rgba(0,0,0,0.00)];
     }
 
+    .admin-modal-backdrop {
+        @apply fixed inset-0 bg-slate-950/70 backdrop-blur-[2px] transition-opacity;
+    }
+
+    .admin-modal-overlay {
+        @apply fixed inset-0 items-center justify-center bg-slate-950/70 p-4 backdrop-blur-[2px];
+    }
+
+    .admin-modal-viewport {
+        @apply fixed inset-0 transform overflow-y-auto transition;
+    }
+
+    .admin-modal-positioner {
+        @apply flex min-h-full items-center justify-center p-4 sm:p-6;
+    }
+
+    .admin-modal-panel {
+        @apply relative z-[999] flex w-full max-w-[568px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.65),0_12px_32px_-18px_rgba(15,23,42,0.35)] ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10;
+        max-height: calc(100vh - 2rem);
+    }
+
+    .admin-modal-panel--confirm {
+        max-width: 420px;
+    }
+
+    .admin-modal-header {
+        @apply flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900;
+    }
+
+    .admin-modal-body {
+        @apply min-h-0 overflow-y-auto px-6 py-5 text-gray-700 dark:text-gray-200;
+    }
+
+    .admin-modal-footer {
+        @apply flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-gray-800 dark:bg-gray-950/50;
+    }
+
+    .admin-modal-close {
+        @apply inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-xl text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white;
+    }
+
+    .admin-modal-close[class^="icon-"],
+    .admin-modal-close[class*=" icon-"] {
+        color: inherit;
+    }
+
     .detail-three-column-grid {
         @apply mt-3.5 grid gap-2.5;
         grid-template-columns: minmax(0, 1fr);
