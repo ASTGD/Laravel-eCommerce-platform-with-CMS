@@ -963,7 +963,7 @@
                                                         <div class="flex min-w-0 flex-col items-start gap-3">
                                                             <button
                                                                 type="button"
-                                                                class="truncate text-left text-xl font-bold leading-tight text-gray-800 transition hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400"
+                                                                class="truncate text-left text-lg font-semibold leading-tight text-gray-800 transition hover:text-blue-600 dark:text-gray-100 dark:hover:text-blue-400"
                                                                 onclick="window.toggleReadyShipmentGroupRows('{{ $group['dom_id'] }}')"
                                                             >
                                                                 {{ $group['carrier_name'] }}
