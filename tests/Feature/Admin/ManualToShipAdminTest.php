@@ -115,9 +115,13 @@ it('shows the to ship page with needs booking and parcel ready for handover laye
         ->assertSeeText('Parcel Preparation')
         ->assertSeeText('Courier Booking')
         ->assertSeeText('View full order details')
+        ->assertSeeText('Document readiness')
+        ->assertSeeText('Save Draft')
         ->assertSeeText('Print Label')
         ->assertSeeText('Print Invoice')
         ->assertSeeText('Print Both')
+        ->assertSeeText('Complete Booking')
+        ->assertDontSeeText('Save Booking')
         ->assertDontSeeText('Save & Print')
         ->assertDontSeeText('Stock checked')
         ->assertDontSeeText('Order Snapshot')
@@ -125,6 +129,8 @@ it('shows the to ship page with needs booking and parcel ready for handover laye
         ->assertSeeText((string) $needsBookingFixture['order']->increment_id)
         ->assertSeeText('Pathao Courier')
         ->assertSeeText('PaperFly Courier')
+        ->assertSee('data-ready-group-expanded="true"', false)
+        ->assertDontSee('data-ready-group-expanded="false"', false)
         ->assertSeeText('READY-SAME-SCREEN-001')
         ->assertSeeText('READY-SAME-SCREEN-002')
         ->assertSeeText('Create/Print Handover Sheet')
@@ -133,7 +139,7 @@ it('shows the to ship page with needs booking and parcel ready for handover laye
         ->assertSeeText('Book Shipment');
 });
 
-it('books a shipment into parcel ready for handover instead of in delivery', function () {
+it('keeps saved bookings as drafts until required documents are printed and booking is completed', function () {
     $fixture = createManualToShipFixture();
 
     $carrier = ShipmentCarrier::query()->create([
@@ -146,27 +152,86 @@ it('books a shipment into parcel ready for handover instead of in delivery', fun
 
     $this->loginAsAdmin();
 
-    post(route('admin.sales.shipments.store', $fixture['order']->id), [
-        'redirect_to' => 'to_ship',
-        'booking_order_id' => $fixture['order']->id,
-        'shipment' => [
-            'source' => $fixture['source'],
-            'items' => $fixture['items'],
-            'workflow_stage' => 'ready_for_handover',
-            'carrier_id' => $carrier->id,
-            'track_number' => 'TRACK-BASIC-001',
-            'public_tracking_url' => 'https://pathao.example/track/TRACK-BASIC-001',
-            'stock_checked' => 1,
-            'package_count' => 2,
-            'package_weight_kg' => '1.50',
-            'package_dimensions' => '12 x 8 x 5 in',
-            'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
-            'is_fragile' => 1,
-            'special_handling' => 'Glass items inside.',
-            'internal_note' => 'Packed by warehouse team.',
-            'courier_note' => 'Pickup from front desk.',
-        ],
-    ])->assertRedirect(route('admin.sales.to-ship.index').'#parcel-ready-for-handover');
+    $payload = manualBookingPayload($fixture, $carrier);
+    $nativeShipmentCountBeforeDraft = Shipment::query()->count();
+
+    post(route('admin.sales.to-ship.booking-draft.save', $fixture['order']->id), $payload)
+        ->assertRedirect(route('admin.sales.to-ship.index').'#needs-booking');
+
+    expect(Shipment::query()->count())->toBe($nativeShipmentCountBeforeDraft);
+
+    $draft = ShipmentRecord::query()
+        ->where('order_id', $fixture['order']->id)
+        ->where('status', ShipmentRecord::STATUS_DRAFT)
+        ->firstOrFail();
+
+    expect($draft->shipment_carrier_id)->toBe($carrier->id)
+        ->and($draft->tracking_number)->toBe('TRACK-BASIC-001')
+        ->and($draft->public_tracking_url)->toBe('https://pathao.example/track/TRACK-BASIC-001')
+        ->and($draft->stock_checked)->toBeTrue()
+        ->and($draft->package_count)->toBe(2)
+        ->and((string) $draft->package_weight_kg)->toBe('1.50')
+        ->and($draft->package_dimensions)->toBe('12 x 8 x 5 in')
+        ->and($draft->handover_mode)->toBe(ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+        ->and($draft->is_fragile)->toBeTrue()
+        ->and($draft->special_handling)->toBe('Glass items inside.')
+        ->and($draft->internal_note)->toBe('Packed by warehouse team.')
+        ->and($draft->courier_note)->toBe('Pickup from front desk.')
+        ->and($draft->label_generated_hash)->toBeNull()
+        ->and($draft->invoice_generated_hash)->toBeNull();
+
+    post(route('admin.sales.to-ship.booking-draft.complete', $fixture['order']->id))
+        ->assertSessionHasErrors('documents');
+
+    post(route('admin.sales.to-ship.booking-draft.print', [$fixture['order']->id, 'document' => 'label']), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonPath('draft.document_statuses.label.status', 'ready')
+        ->assertJsonPath('draft.document_statuses.label.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'label']))
+        ->assertJsonPath('draft.document_statuses.invoice.status', 'not_generated')
+        ->assertJsonPath('draft.can_complete', false);
+
+    get(route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'label']))
+        ->assertOk()
+        ->assertSeeText('Parcel Label')
+        ->assertSeeText('TRACK-BASIC-001');
+
+    post(route('admin.sales.to-ship.booking-draft.complete', $fixture['order']->id))
+        ->assertSessionHasErrors('documents');
+
+    post(route('admin.sales.to-ship.booking-draft.print', [$fixture['order']->id, 'document' => 'invoice']), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonPath('draft.shipment.carrier_id', $carrier->id)
+        ->assertJsonPath('draft.shipment.handover_mode', ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+        ->assertJsonPath('draft.shipment.track_number', 'TRACK-BASIC-001')
+        ->assertJsonPath('draft.shipment.public_tracking_url', 'https://pathao.example/track/TRACK-BASIC-001')
+        ->assertJsonPath('draft.shipment.package_count', 2)
+        ->assertJsonPath('draft.document_statuses.label.status', 'ready')
+        ->assertJsonPath('draft.document_statuses.label.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'label']))
+        ->assertJsonPath('draft.document_statuses.invoice.status', 'ready')
+        ->assertJsonPath('draft.document_statuses.invoice.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'invoice']))
+        ->assertJsonPath('draft.can_complete', true);
+
+    get(route('admin.sales.to-ship.booking-draft.show', $fixture['order']->id), [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonPath('draft.shipment.carrier_id', $carrier->id)
+        ->assertJsonPath('draft.shipment.handover_mode', ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+        ->assertJsonPath('draft.shipment.track_number', 'TRACK-BASIC-001')
+        ->assertJsonPath('draft.shipment.public_tracking_url', 'https://pathao.example/track/TRACK-BASIC-001')
+        ->assertJsonPath('draft.shipment.package_count', 2)
+        ->assertJsonPath('draft.document_statuses.label.status', 'ready')
+        ->assertJsonPath('draft.document_statuses.label.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'label']))
+        ->assertJsonPath('draft.document_statuses.invoice.status', 'ready')
+        ->assertJsonPath('draft.document_statuses.invoice.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'invoice']))
+        ->assertJsonPath('draft.can_complete', true);
+
+    post(route('admin.sales.to-ship.booking-draft.complete', $fixture['order']->id))
+        ->assertRedirect(route('admin.sales.to-ship.index').'#parcel-ready-for-handover');
 
     $nativeShipment = Shipment::query()->latest('id')->firstOrFail();
     $shipmentRecord = ShipmentRecord::query()->where('native_shipment_id', $nativeShipment->id)->firstOrFail();
@@ -185,6 +250,11 @@ it('books a shipment into parcel ready for handover instead of in delivery', fun
         ->and($shipmentRecord->internal_note)->toBe('Packed by warehouse team.')
         ->and($shipmentRecord->courier_note)->toBe('Pickup from front desk.')
         ->and($shipmentRecord->handed_over_at)->toBeNull();
+
+    expect(ShipmentRecord::query()
+        ->where('order_id', $fixture['order']->id)
+        ->where('status', ShipmentRecord::STATUS_DRAFT)
+        ->exists())->toBeFalse();
 
     $manualToShipService = app(ManualToShipService::class);
     $needsBookingOrderIds = collect($manualToShipService->paginateNeedsBookingOrders(100)->items())
@@ -207,6 +277,124 @@ it('books a shipment into parcel ready for handover instead of in delivery', fun
     get(route('admin.sales.shipped-orders.index'))
         ->assertOk()
         ->assertDontSeeText('TRACK-BASIC-001');
+});
+
+it('restores the full saved booking draft state in the booking modal', function () {
+    $fixture = createManualToShipFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'restore_manual_to_ship_test',
+        'name' => 'Restore Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.to-ship.booking-draft.save', $fixture['order']->id), manualBookingPayload($fixture, $carrier, [
+        'track_number' => 'TRACK-RESTORE-001',
+        'public_tracking_url' => 'https://restore.example/track/TRACK-RESTORE-001',
+        'package_count' => 3,
+        'package_weight_kg' => '2.25',
+        'package_dimensions' => '16 x 10 x 8 in',
+        'handover_mode' => ShipmentRecord::HANDOVER_MODE_STAFF_DROPOFF,
+        'is_fragile' => 0,
+        'special_handling' => 'Keep dry.',
+        'internal_note' => 'Restore draft note.',
+        'courier_note' => 'Drop at courier counter.',
+    ]), [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonPath('draft.shipment.carrier_id', $carrier->id)
+        ->assertJsonPath('draft.shipment.handover_mode', ShipmentRecord::HANDOVER_MODE_STAFF_DROPOFF)
+        ->assertJsonPath('draft.shipment.track_number', 'TRACK-RESTORE-001')
+        ->assertJsonPath('draft.shipment.public_tracking_url', 'https://restore.example/track/TRACK-RESTORE-001')
+        ->assertJsonPath('draft.shipment.package_count', 3)
+        ->assertJsonPath('draft.shipment.package_dimensions', '16 x 10 x 8 in')
+        ->assertJsonPath('draft.shipment.special_handling', 'Keep dry.')
+        ->assertJsonPath('draft.shipment.internal_note', 'Restore draft note.')
+        ->assertJsonPath('draft.shipment.courier_note', 'Drop at courier counter.')
+        ->assertJsonPath('draft.document_statuses.label.status', 'not_generated')
+        ->assertJsonPath('draft.document_statuses.invoice.status', 'not_generated');
+
+    $draft = ShipmentRecord::query()
+        ->where('order_id', $fixture['order']->id)
+        ->where('status', ShipmentRecord::STATUS_DRAFT)
+        ->firstOrFail();
+
+    expect($draft->shipment_carrier_id)->toBe($carrier->id)
+        ->and($draft->tracking_number)->toBe('TRACK-RESTORE-001')
+        ->and($draft->public_tracking_url)->toBe('https://restore.example/track/TRACK-RESTORE-001')
+        ->and($draft->package_count)->toBe(3)
+        ->and((string) $draft->package_weight_kg)->toBe('2.25')
+        ->and($draft->package_dimensions)->toBe('16 x 10 x 8 in')
+        ->and($draft->handover_mode)->toBe(ShipmentRecord::HANDOVER_MODE_STAFF_DROPOFF)
+        ->and($draft->is_fragile)->toBeFalse()
+        ->and($draft->special_handling)->toBe('Keep dry.')
+        ->and($draft->internal_note)->toBe('Restore draft note.')
+        ->and($draft->courier_note)->toBe('Drop at courier counter.');
+
+    get(route('admin.sales.to-ship.index'))
+        ->assertOk()
+        ->assertSee('TRACK-RESTORE-001')
+        ->assertSee('https://restore.example/track/TRACK-RESTORE-001')
+        ->assertSee('Restore draft note.')
+        ->assertSee('Drop at courier counter.')
+        ->assertSee('Keep dry.')
+        ->assertSee('value="'.$carrier->id.'"', false)
+        ->assertSee('value="'.ShipmentRecord::HANDOVER_MODE_STAFF_DROPOFF.'"', false)
+        ->assertSee('value="3"', false)
+        ->assertSee('value="2.25"', false)
+        ->assertSee('16 x 10 x 8 in');
+});
+
+it('requires document reprint when booking-critical draft data changes after printing', function () {
+    $fixture = createManualToShipFixture();
+
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'reprint_manual_to_ship_test',
+        'name' => 'Reprint Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $this->loginAsAdmin();
+
+    $payload = manualBookingPayload($fixture, $carrier, [
+        'track_number' => 'TRACK-READY-001',
+    ]);
+
+    post(route('admin.sales.to-ship.booking-draft.print', [$fixture['order']->id, 'document' => 'both']), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonPath('draft.can_complete', true)
+        ->assertJsonPath('draft.document_statuses.label.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'label']))
+        ->assertJsonPath('draft.document_statuses.invoice.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'invoice']));
+
+    $changedPayload = manualBookingPayload($fixture, $carrier, [
+        'track_number' => 'TRACK-CHANGED-002',
+    ]);
+
+    post(route('admin.sales.to-ship.booking-draft.save', $fixture['order']->id), $changedPayload, [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertOk()
+        ->assertJsonPath('draft.document_statuses.label.status', 'needs_reprint')
+        ->assertJsonMissingPath('draft.document_statuses.label.preview_url')
+        ->assertJsonPath('draft.document_statuses.invoice.status', 'needs_reprint')
+        ->assertJsonMissingPath('draft.document_statuses.invoice.preview_url')
+        ->assertJsonPath('draft.can_complete', false);
+
+    get(route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'label']), [
+        'X-Requested-With' => 'XMLHttpRequest',
+        'Accept' => 'application/json',
+    ])->assertStatus(422)
+        ->assertJsonPath('message', 'This document needs to be generated again before it can be opened.');
+
+    post(route('admin.sales.to-ship.booking-draft.complete', $fixture['order']->id))
+        ->assertSessionHasErrors('documents');
 });
 
 it('prints parcel documents from the booking flow', function () {
@@ -482,6 +670,31 @@ it('reuses the same draft handover sheet for the same ready selection', function
         ->and($existingBatch->receiver_name)->toBe('Driver Rafiq')
         ->and($existingBatch->notes)->toBe('Updated same selection');
 });
+
+function manualBookingPayload(array $fixture, ShipmentCarrier $carrier, array $overrides = []): array
+{
+    return [
+        'redirect_to' => 'to_ship',
+        'booking_order_id' => $fixture['order']->id,
+        'shipment' => array_merge([
+            'source' => $fixture['source'],
+            'items' => $fixture['items'],
+            'workflow_stage' => 'draft',
+            'carrier_id' => $carrier->id,
+            'track_number' => 'TRACK-BASIC-001',
+            'public_tracking_url' => 'https://pathao.example/track/TRACK-BASIC-001',
+            'stock_checked' => 1,
+            'package_count' => 2,
+            'package_weight_kg' => '1.50',
+            'package_dimensions' => '12 x 8 x 5 in',
+            'handover_mode' => ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+            'is_fragile' => 1,
+            'special_handling' => 'Glass items inside.',
+            'internal_note' => 'Packed by warehouse team.',
+            'courier_note' => 'Pickup from front desk.',
+        ], $overrides),
+    ];
+}
 
 function createManualToShipFixture(): array
 {

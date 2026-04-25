@@ -82,23 +82,24 @@ In `Advanced Pro` mode, the same form keeps those business fields first and then
   - `Needs Booking`
   - `Parcel Ready for Handover`
 - a larger booking modal with:
-  - order snapshot
-  - pick and pack details
+  - compact order summary
+  - parcel preparation details
   - courier booking details
-  - print actions for parcel label, invoice, or both
+  - document readiness for parcel label and invoice
+  - direct footer actions for draft save, print label, print invoice, print both, and complete booking
 
-The booking step now captures manual parcel-preparation data such as stock-checked state, packer, packed time, parcel count, optional weight and dimensions, fragile handling, internal note, courier note, and planned handover mode.
+The booking step now captures manual parcel-preparation data such as packer, packed time, parcel count, optional weight and dimensions, fragile handling, internal note, courier note, and planned handover mode. Stock check belongs to the earlier order confirmation stage, not this parcel booking modal.
 
-The booking form still creates a native Bagisto shipment underneath, so shipment creation and the custom `ShipmentRecord` sync remain on the existing shared path.
+The booking form now separates draft saving from final completion. `Save Draft` stores the packing and courier data in a draft shipment record and keeps the order in `Needs Booking`. Print actions auto-save the draft first, then generate the parcel label and/or invoice from the latest saved data.
 
-Saving the booking no longer moves the parcel directly to `In Delivery`. The booking now moves the shipment into the shared `ShipmentRecord` status `Parcel Ready for Handover`, which remains inside `To Ship` until the parcel is actually handed to the courier.
+Both the parcel label and invoice must be ready for the current saved draft before `Complete Booking` is enabled. If document-critical booking data changes after printing, the readiness state moves to `Needs reprint` and completion is blocked until both documents are regenerated. `Complete Booking` is the only Basic-mode booking action that creates the native Bagisto shipment underneath and moves the parcel into the shared `ShipmentRecord` status `Parcel Ready for Handover`.
 
 `Parcel Ready for Handover` is the second stacked section inside `To Ship`. It supports:
 
 - checkbox selection for prepared parcels
 - courier, date, handover-mode, and search filtering
 - draft handover batch creation
-- printable handover sheet / manifest generation
+- printable handover sheet generation
 - final handover confirmation
 
 The Basic-mode handover sheet is domestic-focused and includes merchant, courier, parcel count, COD total, shipment rows, and signature areas for signed proof of handover.

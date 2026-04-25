@@ -199,9 +199,11 @@ Current status:
   - `To Ship` is now a dedicated Basic-mode operational page with one same-screen 2-layer layout:
     - `Needs Booking`
     - `Parcel Ready for Handover`
-  - the `Book Shipment` interaction now captures order snapshot, pick-and-pack data, courier booking data, and domestic print actions while still creating the native shipment underneath
-  - saving a booking now leaves the parcel in `To Ship` under `Parcel Ready for Handover` instead of moving it directly to `In Delivery`
-  - `To Ship` now supports draft handover batches, printable courier manifest generation, and final handover confirmation for selected prepared parcels
+  - the `Book Shipment` interaction now uses a compact order summary, parcel-preparation fields, courier booking fields, and direct parcel document actions
+  - `Save Draft` now keeps the order in `Needs Booking`; parcel label and invoice generation are tracked against the current saved draft
+  - `Complete Booking` is disabled until both parcel label and invoice are ready for the current saved draft, and document-critical edits require reprinting before completion
+  - `Complete Booking` is now the Basic-mode action that creates the native shipment underneath and moves the parcel into `Parcel Ready for Handover`
+  - `To Ship` now supports draft handover batches, printable handover sheet generation, and final handover confirmation for selected prepared parcels
   - a future follow-up slice is still needed for a dedicated Basic-mode `Handover History` screen so saved handover batches can be searched, reviewed, and reprinted after they leave the live `To Ship` queue
   - `In Delivery` now becomes the business-facing label for parcels that have been physically handed over to the courier, not merely booked in the system
   - `In Delivery` now supports a courier filter and dedicated handed-over date column so manual follow-up stays courier-first without exposing advanced ops
