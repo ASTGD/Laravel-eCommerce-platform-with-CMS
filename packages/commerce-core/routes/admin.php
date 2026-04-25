@@ -1,22 +1,22 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\CommerceCore\Http\Controllers\Admin\CodSettlementController;
+use Platform\CommerceCore\Http\Controllers\Admin\ManualCodReceivableController;
+use Platform\CommerceCore\Http\Controllers\Admin\ManualShippedOrderController;
+use Platform\CommerceCore\Http\Controllers\Admin\ManualToShipController;
+use Platform\CommerceCore\Http\Controllers\Admin\OrderStatusController;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentAttemptController;
 use Platform\CommerceCore\Http\Controllers\Admin\PaymentRefundController;
 use Platform\CommerceCore\Http\Controllers\Admin\PickupPointController;
-use Platform\CommerceCore\Http\Controllers\Admin\ManualToShipController;
-use Platform\CommerceCore\Http\Controllers\Admin\ManualCodReceivableController;
-use Platform\CommerceCore\Http\Controllers\Admin\ManualShippedOrderController;
-use Platform\CommerceCore\Http\Controllers\Admin\OrderStatusController;
-use Platform\CommerceCore\Http\Controllers\Admin\CodSettlementController;
+use Platform\CommerceCore\Http\Controllers\Admin\SettlementBatchController;
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentCarrierController;
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentRecordController;
-use Platform\CommerceCore\Http\Controllers\Admin\SettlementBatchController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::group([
     'middleware' => ['admin', NoCacheMiddleware::class],
-    'prefix'     => config('app.admin_url'),
+    'prefix' => config('app.admin_url'),
 ], function () {
     Route::prefix('sales/pickup-points')
         ->controller(PickupPointController::class)
@@ -53,6 +53,11 @@ Route::group([
         ->middleware('commerce.shipping-mode:manual_basic')
         ->group(function () {
             Route::get('', 'index')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.index');
+            Route::get('{order}/booking-draft', 'showBookingDraft')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.booking-draft.show');
+            Route::post('{order}/booking-draft', 'saveBookingDraft')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.booking-draft.save');
+            Route::post('{order}/booking-draft/print/{document}', 'printDraftDocuments')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.booking-draft.print');
+            Route::get('{order}/booking-draft/document/{document}', 'showDraftDocument')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.booking-draft.document');
+            Route::post('{order}/booking-draft/complete', 'completeBooking')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.booking-draft.complete');
             Route::post('{order}/print/{document}', 'printDocuments')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.print-documents');
             Route::post('handover-batches', 'createHandoverBatch')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.create-handover-batch');
             Route::post('handover-batches/print', 'printManifest')->middleware('platform.acl:sales.to_ship')->name('admin.sales.to-ship.print-manifest');

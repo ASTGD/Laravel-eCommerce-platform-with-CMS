@@ -18,8 +18,7 @@ class ManualToShipService
         int $perPage = 10,
         ?string $search = null,
         string $pageName = 'page',
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         $orders = $this->needsBookingOrdersCollection();
 
         if ($search = $this->normalizeSearchTerm($search)) {
@@ -180,6 +179,247 @@ class ManualToShipService
         ];
     }
 
+    public function draftForOrder(Order $order): ?ShipmentRecord
+    {
+        return ShipmentRecord::query()
+            ->with(['carrier', 'order.payment', 'order.addresses', 'order.items', 'inventorySource', 'packer'])
+            ->where('order_id', $order->id)
+            ->where('status', ShipmentRecord::STATUS_DRAFT)
+            ->whereNull('native_shipment_id')
+            ->latest('id')
+            ->first();
+    }
+
+    public function saveBookingDraft(Order $order, array $shipmentData, ?int $actorAdminId = null): ShipmentRecord
+    {
+        $order->loadMissing(['payment', 'addresses', 'items', 'channel.inventory_sources']);
+
+        $booking = $this->resolveBookingBlueprint($order);
+        $carrier = ShipmentCarrier::query()->active()->find((int) ($shipmentData['carrier_id'] ?? 0));
+        $shippingAddress = $order->shipping_address;
+        $inventorySourceId = (int) ($shipmentData['source'] ?? $booking['inventory_source_id'] ?? 0);
+        $inventorySource = $order->channel?->inventory_sources?->firstWhere('id', $inventorySourceId);
+        $codAmount = $order->payment?->method === 'cashondelivery'
+            ? (float) ($order->base_grand_total ?? 0)
+            : 0.0;
+        $packageWeight = blank($shipmentData['package_weight_kg'] ?? null)
+            ? null
+            : round((float) $shipmentData['package_weight_kg'], 2);
+        $internalNote = trim((string) ($shipmentData['internal_note'] ?? ''));
+        $specialHandling = trim((string) ($shipmentData['special_handling'] ?? ''));
+        $courierNote = trim((string) ($shipmentData['courier_note'] ?? ''));
+
+        $draft = $this->draftForOrder($order) ?: new ShipmentRecord([
+            'order_id' => $order->id,
+            'status' => ShipmentRecord::STATUS_DRAFT,
+            'created_by_admin_id' => $actorAdminId,
+        ]);
+
+        $draft->fill([
+            'order_id' => $order->id,
+            'shipment_carrier_id' => $carrier?->id,
+            'inventory_source_id' => $inventorySourceId > 0 ? $inventorySourceId : null,
+            'updated_by_admin_id' => $actorAdminId,
+            'packed_by_admin_id' => $draft->packed_by_admin_id ?: $actorAdminId,
+            'status' => ShipmentRecord::STATUS_DRAFT,
+            'carrier_name_snapshot' => $carrier?->name,
+            'tracking_number' => trim((string) ($shipmentData['track_number'] ?? '')),
+            'stock_checked' => true,
+            'packed_at' => $draft->packed_at ?: now(),
+            'package_count' => max(1, (int) ($shipmentData['package_count'] ?? 1)),
+            'package_weight_kg' => $packageWeight,
+            'package_dimensions' => trim((string) ($shipmentData['package_dimensions'] ?? '')) ?: null,
+            'is_fragile' => (bool) ($shipmentData['is_fragile'] ?? false),
+            'handover_mode' => array_key_exists((string) ($shipmentData['handover_mode'] ?? ''), ShipmentRecord::handoverModeLabels())
+                ? (string) $shipmentData['handover_mode']
+                : ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+            'special_handling' => $specialHandling !== '' ? $specialHandling : null,
+            'internal_note' => $internalNote !== '' ? $internalNote : null,
+            'courier_note' => $courierNote !== '' ? $courierNote : null,
+            'public_tracking_url' => trim((string) ($shipmentData['public_tracking_url'] ?? '')) ?: null,
+            'inventory_source_name' => $inventorySource?->name ?: $booking['inventory_source_name'],
+            'origin_label' => $inventorySource?->name ?: $booking['inventory_source_name'],
+            'destination_country' => $shippingAddress?->country,
+            'destination_region' => $shippingAddress?->state,
+            'destination_city' => $shippingAddress?->city,
+            'recipient_name' => $shippingAddress?->name ?: $order->customer_full_name,
+            'recipient_phone' => $shippingAddress?->phone,
+            'recipient_address' => $shippingAddress?->address,
+            'cod_amount_expected' => $codAmount,
+            'carrier_fee_amount' => (float) ($order->base_shipping_amount ?? 0),
+            'cod_fee_amount' => (float) ($carrier?->default_cod_fee_amount ?? $draft->cod_fee_amount ?? 0),
+            'return_fee_amount' => (float) ($carrier?->default_return_fee_amount ?? $draft->return_fee_amount ?? 0),
+            'notes' => $internalNote !== '' ? $internalNote : null,
+        ]);
+
+        $draft->net_remittable_amount = max(
+            0,
+            (float) $draft->cod_amount_expected
+                - (float) $draft->carrier_fee_amount
+                - (float) $draft->cod_fee_amount
+                - (float) $draft->return_fee_amount
+        );
+
+        if (! $draft->exists) {
+            $draft->created_by_admin_id = $actorAdminId;
+        }
+
+        $draft->save();
+
+        return $draft->fresh(['carrier', 'order.payment', 'order.addresses', 'order.items', 'inventorySource', 'packer']);
+    }
+
+    public function markDraftDocumentsGenerated(ShipmentRecord $draft, string $document, ?int $actorAdminId = null): ShipmentRecord
+    {
+        $hash = $this->bookingDocumentHash($draft);
+        $now = now();
+
+        if (in_array($document, ['label', 'both'], true)) {
+            $draft->label_generated_hash = $hash;
+            $draft->label_generated_at = $now;
+        }
+
+        if (in_array($document, ['invoice', 'both'], true)) {
+            $draft->invoice_generated_hash = $hash;
+            $draft->invoice_generated_at = $now;
+        }
+
+        $draft->updated_by_admin_id = $actorAdminId;
+        $draft->save();
+
+        return $draft->fresh(['carrier', 'order.payment', 'order.addresses', 'order.items', 'inventorySource', 'packer']);
+    }
+
+    public function documentStatuses(ShipmentRecord $draft): array
+    {
+        $hash = $this->bookingDocumentHash($draft);
+        $labelStatus = $this->documentStatus($draft->label_generated_hash, $hash);
+        $invoiceStatus = $this->documentStatus($draft->invoice_generated_hash, $hash);
+
+        return [
+            'hash' => $hash,
+            'label' => [
+                'status' => $labelStatus,
+                'label' => $this->documentStatusLabel($labelStatus),
+                'generated_at' => $draft->label_generated_at?->toIso8601String(),
+            ],
+            'invoice' => [
+                'status' => $invoiceStatus,
+                'label' => $this->documentStatusLabel($invoiceStatus),
+                'generated_at' => $draft->invoice_generated_at?->toIso8601String(),
+            ],
+            'can_complete' => $labelStatus === 'ready' && $invoiceStatus === 'ready',
+        ];
+    }
+
+    public function documentIsReady(ShipmentRecord $draft, string $document): bool
+    {
+        $statuses = $this->documentStatuses($draft);
+
+        return match ($document) {
+            'label' => $statuses['label']['status'] === 'ready',
+            'invoice' => $statuses['invoice']['status'] === 'ready',
+            'both' => $statuses['label']['status'] === 'ready' && $statuses['invoice']['status'] === 'ready',
+            default => false,
+        };
+    }
+
+    public function bookingDraftResponse(ShipmentRecord $draft): array
+    {
+        $statuses = $this->documentStatuses($draft);
+
+        return [
+            'id' => $draft->id,
+            'status' => $draft->status,
+            'shipment' => $this->draftShipmentData($draft),
+            'packed_by_label' => $draft->packer?->name,
+            'packed_at_label' => $draft->packed_at?->format('d M Y, h:i A'),
+            'document_statuses' => $statuses,
+            'can_complete' => $statuses['can_complete'],
+        ];
+    }
+
+    public function draftShipmentData(ShipmentRecord $draft): array
+    {
+        $order = $draft->order ?: Order::query()->findOrFail($draft->order_id);
+        $booking = $this->resolveBookingBlueprint($order->loadMissing(['items.product.inventories', 'channel.inventory_sources']));
+
+        return [
+            'source' => $draft->inventory_source_id ?: $booking['inventory_source_id'],
+            'items' => $booking['items_payload'],
+            'workflow_stage' => 'ready_for_handover',
+            'carrier_id' => $draft->shipment_carrier_id,
+            'carrier_title' => $draft->carrier?->name ?: $draft->carrier_name_snapshot,
+            'track_number' => $draft->tracking_number,
+            'public_tracking_url' => $draft->public_tracking_url,
+            'stock_checked' => true,
+            'package_count' => max(1, (int) $draft->package_count),
+            'package_weight_kg' => $draft->package_weight_kg,
+            'package_dimensions' => $draft->package_dimensions,
+            'is_fragile' => (bool) $draft->is_fragile,
+            'special_handling' => $draft->special_handling,
+            'internal_note' => $draft->internal_note,
+            'note' => $draft->internal_note,
+            'courier_note' => $draft->courier_note,
+            'handover_mode' => $draft->handover_mode ?: ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP,
+        ];
+    }
+
+    public function bookingDocumentHash(ShipmentRecord $draft): string
+    {
+        $draft->loadMissing(['carrier', 'order.payment', 'order.addresses', 'order.items']);
+        $order = $draft->order;
+        $shippingAddress = $order?->shipping_address;
+
+        $payload = [
+            'order' => [
+                'id' => $order?->id,
+                'increment_id' => $order?->increment_id,
+                'customer_name' => $order?->customer_full_name,
+                'payment_method' => $order?->payment?->method,
+                'grand_total' => number_format((float) ($order?->base_grand_total ?? 0), 2, '.', ''),
+            ],
+            'shipping' => [
+                'name' => $shippingAddress?->name,
+                'phone' => $shippingAddress?->phone,
+                'address' => $this->formatAddress($shippingAddress?->address, [
+                    $shippingAddress?->city,
+                    $shippingAddress?->state,
+                    $shippingAddress?->country,
+                    $shippingAddress?->postcode,
+                ]),
+            ],
+            'items' => $order?->items
+                ? $order->items
+                    ->filter(fn (OrderItem $item) => (float) $item->qty_to_ship > 0)
+                    ->map(fn (OrderItem $item) => [
+                        'id' => $item->id,
+                        'sku' => $item->sku,
+                        'name' => $item->name,
+                        'qty_to_ship' => number_format((float) $item->qty_to_ship, 4, '.', ''),
+                        'base_price' => number_format((float) ($item->base_price ?? 0), 2, '.', ''),
+                    ])
+                    ->values()
+                    ->all()
+                : [],
+            'booking' => [
+                'carrier_id' => $draft->shipment_carrier_id,
+                'carrier_name' => $draft->carrier?->name ?: $draft->carrier_name_snapshot,
+                'tracking_number' => $draft->tracking_number,
+                'tracking_url' => $draft->public_tracking_url,
+                'package_count' => (int) $draft->package_count,
+                'package_weight_kg' => $draft->package_weight_kg === null ? null : number_format((float) $draft->package_weight_kg, 2, '.', ''),
+                'package_dimensions' => $draft->package_dimensions,
+                'is_fragile' => (bool) $draft->is_fragile,
+                'handover_mode' => $draft->handover_mode,
+                'special_handling' => $draft->special_handling,
+                'courier_note' => $draft->courier_note,
+            ],
+        ];
+
+        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
+    }
+
     public function printableBookingData(Order $order, array $shipmentData, string $document): array
     {
         $order->loadMissing(['payment', 'addresses', 'items']);
@@ -292,6 +532,7 @@ class ManualToShipService
     {
         $shippingAddress = $order->shipping_address;
         $booking = $this->resolveBookingBlueprint($order);
+        $draft = $this->draftForOrder($order);
         $shippableItems = $order->items
             ->filter(fn (OrderItem $item) => (float) $item->qty_to_ship > 0)
             ->values();
@@ -317,6 +558,8 @@ class ManualToShipService
             'inventory_source_id' => $booking['inventory_source_id'],
             'inventory_source_name' => $booking['inventory_source_name'],
             'items_payload' => $booking['items_payload'],
+            'draft' => $draft,
+            'draft_document_statuses' => $draft ? $this->documentStatuses($draft) : null,
             'items_summary' => $shippableItems
                 ->map(fn (OrderItem $item) => sprintf('%s x %s', $item->name, $this->formatQuantity((float) $item->qty_to_ship)))
                 ->values(),
@@ -456,14 +699,31 @@ class ManualToShipService
         return number_format($quantity, 2);
     }
 
+    protected function documentStatus(?string $savedHash, string $currentHash): string
+    {
+        if (! $savedHash) {
+            return 'not_generated';
+        }
+
+        return hash_equals($savedHash, $currentHash) ? 'ready' : 'needs_reprint';
+    }
+
+    protected function documentStatusLabel(string $status): string
+    {
+        return match ($status) {
+            'ready' => 'Ready',
+            'needs_reprint' => 'Needs reprint',
+            default => 'Not generated',
+        };
+    }
+
     protected function newPaginator(
         Collection $items,
         int $total,
         int $perPage,
         int $page,
         string $pageName = 'page',
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         return new LengthAwarePaginator(
             items: $items,
             total: $total,

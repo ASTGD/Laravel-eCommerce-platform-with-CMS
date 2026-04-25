@@ -14,24 +14,39 @@ use Webkul\User\Models\Admin;
 class ShipmentRecord extends Model
 {
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_READY_FOR_PICKUP = 'ready_for_pickup';
+
     public const STATUS_HANDED_TO_CARRIER = 'handed_to_carrier';
+
     public const STATUS_IN_TRANSIT = 'in_transit';
+
     public const STATUS_OUT_FOR_DELIVERY = 'out_for_delivery';
+
     public const STATUS_DELIVERED = 'delivered';
+
     public const STATUS_DELIVERY_FAILED = 'delivery_failed';
+
     public const STATUS_RETURNED = 'returned';
+
     public const STATUS_CANCELED = 'canceled';
 
     public const FAILURE_REASON_CUSTOMER_UNREACHABLE = 'customer_unreachable';
+
     public const FAILURE_REASON_CUSTOMER_REFUSED = 'customer_refused';
+
     public const FAILURE_REASON_WRONG_ADDRESS = 'wrong_address';
+
     public const FAILURE_REASON_AREA_UNREACHABLE = 'area_unreachable';
+
     public const FAILURE_REASON_RESCHEDULED_BY_CUSTOMER = 'rescheduled_by_customer';
+
     public const FAILURE_REASON_PARCEL_DAMAGED = 'parcel_damaged';
+
     public const FAILURE_REASON_OTHER = 'other';
 
     public const HANDOVER_MODE_COURIER_PICKUP = 'courier_pickup';
+
     public const HANDOVER_MODE_STAFF_DROPOFF = 'staff_dropoff';
 
     protected $fillable = [
@@ -57,6 +72,10 @@ class ShipmentRecord extends Model
         'internal_note',
         'courier_note',
         'public_tracking_url',
+        'label_generated_hash',
+        'label_generated_at',
+        'invoice_generated_hash',
+        'invoice_generated_at',
         'carrier_booking_reference',
         'carrier_consignment_id',
         'carrier_invoice_reference',
@@ -107,6 +126,8 @@ class ShipmentRecord extends Model
         'package_weight_kg' => 'decimal:2',
         'is_fragile' => 'boolean',
         'packed_at' => 'datetime',
+        'label_generated_at' => 'datetime',
+        'invoice_generated_at' => 'datetime',
         'handed_over_at' => 'datetime',
         'delivered_at' => 'datetime',
         'returned_at' => 'datetime',

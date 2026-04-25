@@ -141,6 +141,56 @@
                                         $order = $row['order'];
                                         $isRestoringModal = (string) old('booking_order_id') === (string) $order->id;
                                         $bookingFormId = 'booking-form-'.$order->id;
+                                        $bookingDraft = $row['draft'];
+                                        $draftDocumentStatuses = $row['draft_document_statuses'] ?? [
+                                            'label' => ['status' => 'not_generated', 'label' => 'Not generated'],
+                                            'invoice' => ['status' => 'not_generated', 'label' => 'Not generated'],
+                                            'can_complete' => false,
+                                        ];
+                                        $labelStatus = data_get($draftDocumentStatuses, 'label.status', 'not_generated');
+                                        $invoiceStatus = data_get($draftDocumentStatuses, 'invoice.status', 'not_generated');
+                                        $labelStatusLabel = data_get($draftDocumentStatuses, 'label.label', 'Not generated');
+                                        $invoiceStatusLabel = data_get($draftDocumentStatuses, 'invoice.label', 'Not generated');
+                                        $canCompleteBooking = (bool) data_get($draftDocumentStatuses, 'can_complete', false);
+                                        $selectedCarrierId = $isRestoringModal
+                                            ? old('shipment.carrier_id', $bookingDraft?->shipment_carrier_id)
+                                            : $bookingDraft?->shipment_carrier_id;
+                                        $trackingNumberValue = $isRestoringModal
+                                            ? old('shipment.track_number', $bookingDraft?->tracking_number)
+                                            : $bookingDraft?->tracking_number;
+                                        $trackingUrlValue = $isRestoringModal
+                                            ? old('shipment.public_tracking_url', $bookingDraft?->public_tracking_url)
+                                            : $bookingDraft?->public_tracking_url;
+                                        $packageCountValue = $isRestoringModal
+                                            ? old('shipment.package_count', $bookingDraft?->package_count ?: 1)
+                                            : ($bookingDraft?->package_count ?: 1);
+                                        $packageWeightValue = $isRestoringModal
+                                            ? old('shipment.package_weight_kg', $bookingDraft?->package_weight_kg)
+                                            : $bookingDraft?->package_weight_kg;
+                                        $packageDimensionsValue = $isRestoringModal
+                                            ? old('shipment.package_dimensions', $bookingDraft?->package_dimensions)
+                                            : $bookingDraft?->package_dimensions;
+                                        $selectedHandoverMode = $isRestoringModal
+                                            ? old('shipment.handover_mode', $bookingDraft?->handover_mode ?: \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+                                            : ($bookingDraft?->handover_mode ?: \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP);
+                                        $packedByLabel = $bookingDraft?->packer?->name ?: $currentAdminName;
+                                        $packedAtLabel = $bookingDraft?->packed_at
+                                            ? 'Packed at '.$bookingDraft->packed_at->format('d M Y, h:i A')
+                                            : 'Packed time is saved automatically.';
+                                        $isFragileValue = $isRestoringModal
+                                            ? (bool) old('shipment.is_fragile')
+                                            : (bool) $bookingDraft?->is_fragile;
+                                        $specialHandlingValue = $isRestoringModal
+                                            ? old('shipment.special_handling')
+                                            : $bookingDraft?->special_handling;
+                                        $internalNoteValue = $isRestoringModal
+                                            ? old('shipment.internal_note')
+                                            : $bookingDraft?->internal_note;
+                                        $courierNoteValue = $isRestoringModal
+                                            ? old('shipment.courier_note')
+                                            : $bookingDraft?->courier_note;
+                                        $labelDocumentUrl = route('admin.sales.to-ship.booking-draft.document', [$order, 'document' => 'label']);
+                                        $invoiceDocumentUrl = route('admin.sales.to-ship.booking-draft.document', [$order, 'document' => 'invoice']);
                                         $compactAddressLabel = \Illuminate\Support\Str::limit($row['address_label'], 42);
                                         $paymentSummaryLabel = $row['payment_label'] === 'COD'
                                             ? 'COD '.$row['cod_amount_formatted']
@@ -211,6 +261,9 @@
                                                     <x-slot:toggle>
                                                         <button
                                                             type="button"
+                                                            data-booking-modal-open
+                                                            data-shipment-form-id="{{ $bookingFormId }}"
+                                                            data-booking-draft-fetch-url="{{ route('admin.sales.to-ship.booking-draft.show', $order->id) }}"
                                                             class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                                                         >
                                                             Book Shipment
@@ -233,12 +286,17 @@
                                                         <x-admin::form
                                                             id="{{ $bookingFormId }}"
                                                             method="POST"
-                                                            :action="route('admin.sales.shipments.store', $order->id)"
+                                                            :action="route('admin.sales.to-ship.booking-draft.save', $order->id)"
+                                                            data-booking-draft-form="true"
+                                                            data-booking-form-key="{{ $bookingFormId }}"
+                                                            data-booking-draft-fetch-url="{{ route('admin.sales.to-ship.booking-draft.show', $order->id) }}"
+                                                            data-booking-draft-save-url="{{ route('admin.sales.to-ship.booking-draft.save', $order->id) }}"
+                                                            data-booking-complete-url="{{ route('admin.sales.to-ship.booking-draft.complete', $order->id) }}"
                                                         >
                                                             <input type="hidden" name="redirect_to" value="to_ship">
                                                             <input type="hidden" name="booking_order_id" value="{{ $order->id }}">
                                                             <input type="hidden" name="shipment[source]" value="{{ $row['inventory_source_id'] }}">
-                                                            <input type="hidden" name="shipment[workflow_stage]" value="ready_for_handover">
+                                                            <input type="hidden" name="shipment[workflow_stage]" value="draft">
 
                                                             @foreach ($row['items_payload'] as $itemId => $sourcePayload)
                                                                 @foreach ($sourcePayload as $sourceId => $qty)
@@ -306,8 +364,8 @@
                                                                             <div class="grid gap-4 sm:grid-cols-2">
                                                                                 <div class="grid gap-1 rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                                                                                     <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Packed By</p>
-                                                                                    <p class="font-semibold">{{ $currentAdminName }}</p>
-                                                                                    <p class="text-xs text-gray-500 dark:text-gray-400">Packed time is saved automatically.</p>
+                                                                                    <p class="font-semibold" data-booking-packed-by>{{ $packedByLabel }}</p>
+                                                                                    <p class="text-xs text-gray-500 dark:text-gray-400" data-booking-packed-at>{{ $packedAtLabel }}</p>
                                                                                 </div>
                                                                             </div>
 
@@ -320,7 +378,7 @@
                                                                                     <x-admin::form.control-group.control
                                                                                         type="number"
                                                                                         name="shipment[package_count]"
-                                                                                        :value="$isRestoringModal ? old('shipment.package_count', 1) : 1"
+                                                                                        :value="$packageCountValue"
                                                                                         rules="required|min_value:1"
                                                                                         :label="'Package Count'"
                                                                                         :placeholder="'1'"
@@ -337,12 +395,13 @@
                                                                                     <x-admin::form.control-group.control
                                                                                         type="select"
                                                                                         name="shipment[handover_mode]"
+                                                                                        :value="$selectedHandoverMode"
                                                                                         :label="'Planned Handover Mode'"
                                                                                     >
                                                                                         @foreach ($handoverModes as $handoverModeValue => $handoverModeLabel)
                                                                                             <option
                                                                                                 value="{{ $handoverModeValue }}"
-                                                                                                @selected($isRestoringModal ? old('shipment.handover_mode', \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP) === $handoverModeValue : $handoverModeValue === \Platform\CommerceCore\Models\ShipmentRecord::HANDOVER_MODE_COURIER_PICKUP)
+                                                                                                @selected($selectedHandoverMode === $handoverModeValue)
                                                                                             >
                                                                                                 {{ $handoverModeLabel }}
                                                                                             </option>
@@ -362,7 +421,7 @@
                                                                                     <x-admin::form.control-group.control
                                                                                         type="number"
                                                                                         name="shipment[package_weight_kg]"
-                                                                                        :value="$isRestoringModal ? old('shipment.package_weight_kg') : ''"
+                                                                                        :value="$packageWeightValue"
                                                                                         :label="'Weight (optional)'"
                                                                                         :placeholder="'0.50'"
                                                                                         step="0.01"
@@ -380,7 +439,7 @@
                                                                                     <x-admin::form.control-group.control
                                                                                         type="text"
                                                                                         name="shipment[package_dimensions]"
-                                                                                        :value="$isRestoringModal ? old('shipment.package_dimensions') : ''"
+                                                                                        :value="$packageDimensionsValue"
                                                                                         :label="'Dimensions (optional)'"
                                                                                         :placeholder="'12 x 8 x 5 in'"
                                                                                     />
@@ -398,7 +457,7 @@
                                                                                         name="shipment[is_fragile]"
                                                                                         value="1"
                                                                                         class="h-4 w-4 rounded border-slate-300 text-blue-600"
-                                                                                        @checked($isRestoringModal ? (bool) old('shipment.is_fragile') : false)
+                                                                                        @checked($isFragileValue)
                                                                                     >
 
                                                                                     Fragile / special handling needed
@@ -415,7 +474,7 @@
                                                                                 <x-admin::form.control-group.control
                                                                                     type="textarea"
                                                                                     name="shipment[special_handling]"
-                                                                                    :value="$isRestoringModal ? old('shipment.special_handling') : ''"
+                                                                                    :value="$specialHandlingValue"
                                                                                     :label="'Fragile / Special Handling'"
                                                                                     :placeholder="'Glass item, keep upright, call before pickup'"
                                                                                 />
@@ -431,7 +490,7 @@
                                                                                 <x-admin::form.control-group.control
                                                                                     type="textarea"
                                                                                     name="shipment[internal_note]"
-                                                                                    :value="$isRestoringModal ? old('shipment.internal_note') : ''"
+                                                                                    :value="$internalNoteValue"
                                                                                     :label="'Internal Note'"
                                                                                     :placeholder="'Packing note for your warehouse or handover team'"
                                                                                 />
@@ -459,17 +518,18 @@
                                                                                 </x-admin::form.control-group.label>
 
                                                                                 <x-admin::form.control-group.control
-                                                                                    type="select"
-                                                                                    name="shipment[carrier_id]"
-                                                                                    rules="required"
-                                                                                    :label="'Courier'"
+                                                                                        type="select"
+                                                                                        name="shipment[carrier_id]"
+                                                                                        :value="$selectedCarrierId"
+                                                                                        rules="required"
+                                                                                        :label="'Courier'"
                                                                                 >
                                                                                     <option value="">Select courier</option>
 
                                                                                     @foreach ($shipmentCarriers as $shipmentCarrier)
                                                                                         <option
                                                                                             value="{{ $shipmentCarrier->id }}"
-                                                                                            @selected($isRestoringModal && (string) old('shipment.carrier_id') === (string) $shipmentCarrier->id)
+                                                                                            @selected((string) $selectedCarrierId === (string) $shipmentCarrier->id)
                                                                                         >
                                                                                             {{ $shipmentCarrier->name }}
                                                                                         </option>
@@ -487,7 +547,7 @@
                                                                                 <x-admin::form.control-group.control
                                                                                     type="text"
                                                                                     name="shipment[track_number]"
-                                                                                    :value="$isRestoringModal ? old('shipment.track_number') : ''"
+                                                                                    :value="$trackingNumberValue"
                                                                                     rules="required"
                                                                                     :label="'Tracking Number'"
                                                                                     :placeholder="'Enter tracking number'"
@@ -504,7 +564,7 @@
                                                                                 <x-admin::form.control-group.control
                                                                                     type="text"
                                                                                     name="shipment[public_tracking_url]"
-                                                                                    :value="$isRestoringModal ? old('shipment.public_tracking_url') : ''"
+                                                                                    :value="$trackingUrlValue"
                                                                                     :label="'Tracking URL'"
                                                                                     :placeholder="'https://courier.example/track/ABC123'"
                                                                                 />
@@ -520,7 +580,7 @@
                                                                                 <x-admin::form.control-group.control
                                                                                     type="textarea"
                                                                                     name="shipment[courier_note]"
-                                                                                    :value="$isRestoringModal ? old('shipment.courier_note') : ''"
+                                                                                    :value="$courierNoteValue"
                                                                                     :label="'Courier Note'"
                                                                                     :placeholder="'Pickup note or courier reference for the handover team'"
                                                                                 />
@@ -535,55 +595,125 @@
                                                     </x-slot:content>
 
                                                     <x-slot:footer>
-                                                        <div class="flex w-full flex-wrap items-center justify-end gap-2.5">
-                                                            <button
-                                                                type="button"
-                                                                class="secondary-button"
-                                                                style="background-color: #f65d35; border-color: #f65d35; color: #ffffff;"
-                                                                onclick="this.closest('.box-shadow')?.querySelector('.icon-cancel-1')?.click()"
-                                                            >
-                                                                Cancel
-                                                            </button>
+                                                        <div
+                                                            class="grid w-full gap-4"
+                                                            data-booking-document-status="{{ $bookingFormId }}"
+                                                        >
+                                                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-800/60">
+                                                                <div class="flex flex-wrap items-center gap-2">
+                                                                    <span class="font-semibold text-gray-800 dark:text-white">Document readiness</span>
+                                                                    <span class="text-gray-400">•</span>
+                                                                    <span class="text-gray-600 dark:text-gray-300">Complete Booking requires both documents to be ready.</span>
+                                                                </div>
 
-                                                            <button
-                                                                type="submit"
-                                                                form="{{ $bookingFormId }}"
-                                                                class="primary-button"
-                                                            >
-                                                                Save Booking
-                                                            </button>
+                                                                <div class="flex flex-wrap items-center gap-2">
+                                                                    <span
+                                                                        class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                                                        data-booking-status-pill="label"
+                                                                        data-status="{{ $labelStatus }}"
+                                                                    >
+                                                                        Label: <span data-booking-status-text="label" class="ml-1">{{ $labelStatusLabel }}</span>
 
-                                                            <button
-                                                                type="button"
-                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'label']) }}"
-                                                                data-shipment-form-id="{{ $bookingFormId }}"
-                                                                data-print-title="Parcel Label Preview"
-                                                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                                                                style="background-color: #7fba00;"
-                                                            >
-                                                                Print Label
-                                                            </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            data-booking-document-view="label"
+                                                                            data-shipment-form-id="{{ $bookingFormId }}"
+                                                                            data-document-preview-url="{{ $labelDocumentUrl }}"
+                                                                            data-print-title="Parcel Label Preview"
+                                                                            class="{{ $labelStatus === 'ready' ? 'inline-flex' : 'hidden' }} font-semibold underline underline-offset-2"
+                                                                        >
+                                                                            View / Print
+                                                                        </button>
+                                                                    </span>
 
-                                                            <button
-                                                                type="button"
-                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'invoice']) }}"
-                                                                data-shipment-form-id="{{ $bookingFormId }}"
-                                                                data-print-title="Invoice Preview"
-                                                                class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-gray-900 transition hover:opacity-90"
-                                                                style="background-color: #ffba07;"
-                                                            >
-                                                                Print Invoice
-                                                            </button>
+                                                                    <span
+                                                                        class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                                                        data-booking-status-pill="invoice"
+                                                                        data-status="{{ $invoiceStatus }}"
+                                                                    >
+                                                                        Invoice: <span data-booking-status-text="invoice" class="ml-1">{{ $invoiceStatusLabel }}</span>
 
-                                                            <button
-                                                                type="button"
-                                                                data-shipment-print-preview="{{ route('admin.sales.to-ship.print-documents', [$order, 'document' => 'both']) }}"
-                                                                data-shipment-form-id="{{ $bookingFormId }}"
-                                                                data-print-title="Parcel Label and Invoice Preview"
-                                                                class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                                                            >
-                                                                Print Both
-                                                            </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            data-booking-document-view="invoice"
+                                                                            data-shipment-form-id="{{ $bookingFormId }}"
+                                                                            data-document-preview-url="{{ $invoiceDocumentUrl }}"
+                                                                            data-print-title="Invoice Preview"
+                                                                            class="{{ $invoiceStatus === 'ready' ? 'inline-flex' : 'hidden' }} font-semibold underline underline-offset-2"
+                                                                        >
+                                                                            View / Print
+                                                                        </button>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="grid gap-3 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+                                                                <div class="flex flex-wrap items-center gap-2.5">
+                                                                    <button
+                                                                        type="button"
+                                                                        class="secondary-button"
+                                                                        style="background-color: #f65d35; border-color: #f65d35; color: #ffffff;"
+                                                                        onclick="this.closest('.box-shadow')?.querySelector('.icon-cancel-1')?.click()"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        data-booking-draft-save
+                                                                        data-shipment-form-id="{{ $bookingFormId }}"
+                                                                        class="primary-button"
+                                                                    >
+                                                                        Save Draft
+                                                                    </button>
+                                                                </div>
+
+                                                                <div class="flex flex-wrap items-center justify-start gap-2.5 lg:justify-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        data-shipment-print-preview="{{ route('admin.sales.to-ship.booking-draft.print', [$order, 'document' => 'label']) }}"
+                                                                        data-shipment-form-id="{{ $bookingFormId }}"
+                                                                        data-print-title="Parcel Label Preview"
+                                                                        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                                                                        style="background-color: #7fba00;"
+                                                                    >
+                                                                        Print Label
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        data-shipment-print-preview="{{ route('admin.sales.to-ship.booking-draft.print', [$order, 'document' => 'invoice']) }}"
+                                                                        data-shipment-form-id="{{ $bookingFormId }}"
+                                                                        data-print-title="Invoice Preview"
+                                                                        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-gray-900 transition hover:opacity-90"
+                                                                        style="background-color: #ffba07;"
+                                                                    >
+                                                                        Print Invoice
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        data-shipment-print-preview="{{ route('admin.sales.to-ship.booking-draft.print', [$order, 'document' => 'both']) }}"
+                                                                        data-shipment-form-id="{{ $bookingFormId }}"
+                                                                        data-print-title="Parcel Label and Invoice Preview"
+                                                                        class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                                                    >
+                                                                        Print Both
+                                                                    </button>
+                                                                </div>
+
+                                                                <div class="flex justify-start lg:justify-end">
+                                                                    <button
+                                                                        type="button"
+                                                                        data-booking-complete
+                                                                        data-shipment-form-id="{{ $bookingFormId }}"
+                                                                        class="primary-button disabled:cursor-not-allowed disabled:opacity-50"
+                                                                        @disabled(! $canCompleteBooking)
+                                                                    >
+                                                                        Complete Booking
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </x-slot:footer>
                                                 </x-admin::modal>
@@ -860,8 +990,8 @@
                                                         <button
                                                             type="button"
                                                             data-ready-group-toggle="{{ $group['dom_id'] }}"
-                                                            data-ready-group-expanded="false"
-                                                            aria-expanded="false"
+                                                            data-ready-group-expanded="true"
+                                                            aria-expanded="true"
                                                             class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition hover:border-slate-400 hover:text-slate-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100"
                                                             onclick="window.toggleReadyShipmentGroupRows('{{ $group['dom_id'] }}')"
                                                         >
@@ -869,12 +999,12 @@
                                                                 class="sr-only"
                                                                 data-ready-group-toggle-label="{{ $group['dom_id'] }}"
                                                             >
-                                                                Expand
+                                                                Collapse
                                                             </span>
 
                                                             <span
                                                                 data-ready-group-toggle-icon="{{ $group['dom_id'] }}"
-                                                                class="icon-sort-down text-base"
+                                                                class="icon-sort-up text-base"
                                                                 aria-hidden="true"
                                                             ></span>
                                                         </button>
@@ -887,7 +1017,7 @@
                                         @php($activeReadyBatch = $shipmentRecord->handoverBatch && ! $shipmentRecord->handoverBatch->confirmed_at ? $shipmentRecord->handoverBatch : null)
                                         <tr
                                             data-ready-child-row="{{ $group['dom_id'] }}"
-                                            class="hidden border-t border-slate-200 align-top bg-white dark:border-gray-800 dark:bg-gray-900/40"
+                                            class="border-t border-slate-200 align-top bg-white dark:border-gray-800 dark:bg-gray-900/40"
                                         >
                                                 <x-admin::table.td>
                                                     <input
@@ -1302,24 +1432,220 @@
         window.alert(message);
     };
 
+    window.showShipmentWorkflowMessage = function (type, message) {
+        if (window.app?.config?.globalProperties?.$emitter) {
+            window.app.config.globalProperties.$emitter.emit('add-flash', {
+                type,
+                message,
+            });
+
+            return;
+        }
+
+        if (type === 'warning' || type === 'error') {
+            window.alert(message);
+        }
+    };
+
     window.prepareHandoverSheetUrl = @js(route('admin.sales.to-ship.create-handover-batch'));
     window.confirmPreparedHandoverUrl = @js(route('admin.sales.to-ship.confirm-handover'));
     window.handoverSheetPreviewUrlTemplate = @js(route('admin.sales.to-ship.handover-sheet.preview', ['handoverBatch' => '__BATCH__']));
     window.csrfToken = @js(csrf_token());
 
+    window.resolveShipmentBookingForm = function (formOrId) {
+        const element = typeof formOrId === 'string'
+            ? document.getElementById(formOrId)
+            : formOrId;
+
+        if (! element) {
+            return null;
+        }
+
+        if (element instanceof HTMLFormElement) {
+            return element;
+        }
+
+        const nestedForm = element.querySelector?.('form');
+
+        if (nestedForm instanceof HTMLFormElement) {
+            return nestedForm;
+        }
+
+        const closestForm = element.closest?.('form');
+
+        return closestForm instanceof HTMLFormElement ? closestForm : null;
+    };
+
+    window.bookingFormKey = function (form) {
+        return form?.dataset?.bookingFormKey || form?.id || '';
+    };
+
+    window.bookingDraftPayloads = {};
+
+    window.bookingDraftFieldMap = {
+        carrier_id: 'shipment[carrier_id]',
+        handover_mode: 'shipment[handover_mode]',
+        track_number: 'shipment[track_number]',
+        public_tracking_url: 'shipment[public_tracking_url]',
+        package_count: 'shipment[package_count]',
+        package_weight_kg: 'shipment[package_weight_kg]',
+        package_dimensions: 'shipment[package_dimensions]',
+        is_fragile: 'shipment[is_fragile]',
+        special_handling: 'shipment[special_handling]',
+        internal_note: 'shipment[internal_note]',
+        courier_note: 'shipment[courier_note]',
+    };
+
+    window.bookingFormNamedFields = function (form, fieldName) {
+        return Array
+            .from(form.querySelectorAll('input, select, textarea'))
+            .filter((field) => field.name === fieldName);
+    };
+
+    window.setBookingFormFieldValue = function (form, fieldName, value) {
+        const fields = window.bookingFormNamedFields(form, fieldName);
+        const hasCheckbox = fields.some((field) => field.type === 'checkbox');
+
+        fields.forEach((field) => {
+            if (field.type === 'hidden' && hasCheckbox) {
+                field.value = '0';
+                field.defaultValue = '0';
+            } else if (field.type === 'checkbox') {
+                const checked = value === true || value === 1 || value === '1' || value === 'true';
+
+                field.checked = checked;
+                field.defaultChecked = checked;
+            } else if (field.type === 'radio') {
+                const checked = String(field.value) === String(value ?? '');
+
+                field.checked = checked;
+                field.defaultChecked = checked;
+            } else {
+                field.value = value ?? '';
+                field.defaultValue = value ?? '';
+
+                if (field instanceof HTMLSelectElement) {
+                    Array.from(field.options).forEach((option) => {
+                        option.defaultSelected = option.value === field.value;
+                    });
+                }
+            }
+
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    };
+
+    window.hydrateBookingFormFromDraft = function (form, draft) {
+        if (! form || ! draft?.shipment) {
+            return;
+        }
+
+        form.dataset.bookingHydrating = 'true';
+
+        try {
+            Object.entries(window.bookingDraftFieldMap).forEach(([payloadKey, fieldName]) => {
+                window.setBookingFormFieldValue(form, fieldName, draft.shipment[payloadKey]);
+            });
+
+            const packedByElement = form.querySelector('[data-booking-packed-by]');
+            const packedAtElement = form.querySelector('[data-booking-packed-at]');
+
+            if (packedByElement && draft.packed_by_label) {
+                packedByElement.textContent = draft.packed_by_label;
+            }
+
+            if (packedAtElement && draft.packed_at_label) {
+                packedAtElement.textContent = `Packed at ${draft.packed_at_label}`;
+            }
+
+            window.updateBookingDocumentStatus(form, draft);
+        } finally {
+            window.setTimeout(() => {
+                delete form.dataset.bookingHydrating;
+            }, 0);
+        }
+    };
+
+    window.syncBookingDraftPayload = function (form, draft, options = {}) {
+        if (! form || ! draft) {
+            return;
+        }
+
+        const formKey = window.bookingFormKey(form);
+
+        if (formKey) {
+            window.bookingDraftPayloads[formKey] = draft;
+        }
+
+        if (options.hydrate !== false) {
+            window.hydrateBookingFormFromDraft(form, draft);
+
+            window.requestAnimationFrame(() => window.hydrateBookingFormFromDraft(form, draft));
+            window.setTimeout(() => window.hydrateBookingFormFromDraft(form, draft), 150);
+        } else {
+            window.updateBookingDocumentStatus(form, draft);
+        }
+    };
+
+    window.refreshBookingDraftForForm = async function (trigger) {
+        const form = window.resolveShipmentBookingForm(trigger?.dataset?.shipmentFormId || trigger);
+
+        if (! form) {
+            return;
+        }
+
+        const formKey = window.bookingFormKey(form);
+        const cachedDraft = window.bookingDraftPayloads[formKey];
+
+        if (cachedDraft) {
+            window.syncBookingDraftPayload(form, cachedDraft);
+        }
+
+        const actionUrl = trigger?.dataset?.bookingDraftFetchUrl || form.dataset.bookingDraftFetchUrl;
+
+        if (! actionUrl) {
+            return;
+        }
+
+        try {
+            const response = await fetch(actionUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (! response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+
+            if (payload.draft) {
+                window.syncBookingDraftPayload(form, payload.draft);
+            }
+        } catch (error) {
+            if (cachedDraft) {
+                window.syncBookingDraftPayload(form, cachedDraft);
+            }
+        }
+    };
+
     window.validateShipmentPrintPreviewForm = function (form) {
         const checks = [
             {
                 selector: '[name="shipment[carrier_id]"]',
-                message: 'Select the courier before opening print preview.',
+                message: 'Select the courier before saving or printing this booking.',
             },
             {
                 selector: '[name="shipment[track_number]"]',
-                message: 'Enter the tracking number before opening print preview.',
+                message: 'Enter the tracking number before saving or printing this booking.',
             },
             {
                 selector: '[name="shipment[handover_mode]"]',
-                message: 'Choose how this parcel will be handed over before opening print preview.',
+                message: 'Choose how this parcel will be handed over before saving or printing this booking.',
             },
         ];
 
@@ -1336,12 +1662,184 @@
         }
 
         if (typeof form.reportValidity === 'function' && ! form.reportValidity()) {
-            window.showShipmentWorkflowWarning('Complete the required booking fields before opening print preview.');
+            window.showShipmentWorkflowWarning('Complete the required booking fields before saving or printing this booking.');
 
             return false;
         }
 
         return true;
+    };
+
+    window.bookingDocumentStatusLabels = {
+        not_generated: 'Not generated',
+        ready: 'Ready',
+        needs_reprint: 'Needs reprint',
+    };
+
+    window.bookingDocumentStatusClasses = {
+        not_generated: ['bg-slate-100', 'text-slate-700', 'dark:bg-gray-700', 'dark:text-gray-200'],
+        ready: ['bg-emerald-100', 'text-emerald-800', 'dark:bg-emerald-950', 'dark:text-emerald-200'],
+        needs_reprint: ['bg-amber-100', 'text-amber-900', 'dark:bg-amber-950', 'dark:text-amber-200'],
+    };
+
+    window.styleBookingDocumentStatusPill = function (pill, status) {
+        if (! pill) {
+            return;
+        }
+
+        Object.values(window.bookingDocumentStatusClasses).flat().forEach((className) => pill.classList.remove(className));
+        (window.bookingDocumentStatusClasses[status] || window.bookingDocumentStatusClasses.not_generated).forEach((className) => pill.classList.add(className));
+        pill.dataset.status = status;
+    };
+
+    window.updateBookingDocumentStatus = function (form, draft) {
+        if (! form || ! draft?.document_statuses) {
+            return;
+        }
+
+        const statuses = draft.document_statuses;
+        const formKey = window.bookingFormKey(form);
+
+        ['label', 'invoice'].forEach((documentType) => {
+            const status = statuses[documentType]?.status || 'not_generated';
+            const label = statuses[documentType]?.label || window.bookingDocumentStatusLabels[status] || 'Not generated';
+            const textElement = document.querySelector(`[data-booking-document-status="${formKey}"] [data-booking-status-text="${documentType}"]`);
+            const pillElement = document.querySelector(`[data-booking-document-status="${formKey}"] [data-booking-status-pill="${documentType}"]`);
+            const linkElement = document.querySelector(`[data-booking-document-status="${formKey}"] [data-booking-document-view="${documentType}"]`);
+
+            if (textElement) {
+                textElement.textContent = label;
+            }
+
+            if (linkElement) {
+                if (status === 'ready') {
+                    if (statuses[documentType]?.preview_url) {
+                        linkElement.dataset.documentPreviewUrl = statuses[documentType].preview_url;
+                    }
+
+                    linkElement.classList.remove('hidden');
+                    linkElement.classList.add('inline-flex');
+                } else {
+                    linkElement.classList.add('hidden');
+                    linkElement.classList.remove('inline-flex');
+                }
+            }
+
+            window.styleBookingDocumentStatusPill(pillElement, status);
+        });
+
+        const completeButton = document.querySelector(`[data-booking-complete][data-shipment-form-id="${formKey}"]`);
+
+        if (completeButton) {
+            completeButton.disabled = ! statuses.can_complete;
+        }
+    };
+
+    window.markBookingDocumentsNeedReprint = function (form) {
+        if (! form) {
+            return;
+        }
+
+        let changedReadyDocument = false;
+        const formKey = window.bookingFormKey(form);
+
+        ['label', 'invoice'].forEach((documentType) => {
+            const pillElement = document.querySelector(`[data-booking-document-status="${formKey}"] [data-booking-status-pill="${documentType}"]`);
+            const textElement = document.querySelector(`[data-booking-document-status="${formKey}"] [data-booking-status-text="${documentType}"]`);
+            const linkElement = document.querySelector(`[data-booking-document-status="${formKey}"] [data-booking-document-view="${documentType}"]`);
+
+            if (pillElement?.dataset.status === 'ready') {
+                changedReadyDocument = true;
+                window.styleBookingDocumentStatusPill(pillElement, 'needs_reprint');
+
+                if (textElement) {
+                    textElement.textContent = window.bookingDocumentStatusLabels.needs_reprint;
+                }
+
+                if (linkElement) {
+                    linkElement.classList.add('hidden');
+                    linkElement.classList.remove('inline-flex');
+                }
+            }
+        });
+
+        if (changedReadyDocument) {
+            const completeButton = document.querySelector(`[data-booking-complete][data-shipment-form-id="${formKey}"]`);
+
+            if (completeButton) {
+                completeButton.disabled = true;
+            }
+        }
+    };
+
+    window.responseErrorMessage = async function (response, fallback) {
+        const contentType = response.headers.get('content-type') || '';
+
+        if (contentType.includes('application/json')) {
+            const payload = await response.json();
+
+            return payload.message
+                || Object.values(payload.errors || {}).flat()[0]
+                || fallback;
+        }
+
+        return fallback;
+    };
+
+    window.saveBookingDraft = async function (button, form) {
+        form = window.resolveShipmentBookingForm(form || button?.dataset.shipmentFormId);
+
+        if (! form || ! window.validateShipmentPrintPreviewForm(form)) {
+            return null;
+        }
+
+        const actionUrl = form.dataset.bookingDraftSaveUrl || form.getAttribute('action');
+        const originalLabel = button?.textContent?.trim();
+
+        if (! actionUrl) {
+            window.showShipmentWorkflowWarning('Could not find the draft save action. Refresh the page and try again.');
+
+            return null;
+        }
+
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Saving...';
+        }
+
+        try {
+            const formData = new FormData(form);
+
+            const response = await fetch(actionUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': window.csrfToken,
+                },
+            });
+
+            if (! response.ok) {
+                throw new Error(await window.responseErrorMessage(response, 'Could not save the booking draft. Review the booking fields and try again.'));
+            }
+
+            const payload = await response.json();
+
+            window.syncBookingDraftPayload(form, payload.draft);
+            window.showShipmentWorkflowMessage('success', payload.message || 'Booking draft saved.');
+
+            return payload;
+        } catch (error) {
+            window.showShipmentWorkflowWarning(error?.message || 'Could not save the booking draft. Review the booking fields and try again.');
+
+            return null;
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.textContent = originalLabel || 'Save Draft';
+            }
+        }
     };
 
     window.readyShipmentMoneyTemplate = @js(core()->formatBasePrice(0));
@@ -1882,9 +2380,25 @@
         form.submit();
     };
 
+    window.showShipmentPrintPreview = function (title, html) {
+        const modal = document.getElementById('shipment-print-preview-modal');
+        const titleElement = document.getElementById('shipment-print-preview-title');
+        const iframe = document.getElementById('shipment-print-preview-frame');
+
+        if (! modal || ! titleElement || ! iframe) {
+            return;
+        }
+
+        titleElement.textContent = title || 'Print Preview';
+        iframe.srcdoc = html;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('overflow-hidden');
+    };
+
     window.openShipmentPrintPreview = async function (button, actionUrl, title) {
-        const form = button.closest('form')
-            || (button.dataset.shipmentFormId ? document.getElementById(button.dataset.shipmentFormId) : null);
+        const form = window.resolveShipmentBookingForm(button.closest('form') || button.dataset.shipmentFormId);
 
         if (! form) {
             return;
@@ -1894,53 +2408,45 @@
             return;
         }
 
-        const modal = document.getElementById('shipment-print-preview-modal');
-        const titleElement = document.getElementById('shipment-print-preview-title');
-        const iframe = document.getElementById('shipment-print-preview-frame');
-
-        if (! modal || ! titleElement || ! iframe) {
-            return;
-        }
-
-        const formData = new FormData(form);
-
         button.disabled = true;
         button.dataset.originalLabel = button.textContent.trim();
-        button.textContent = 'Loading Preview...';
+        button.textContent = 'Saving...';
 
         try {
+            const formData = new FormData(form);
+
             const response = await fetch(actionUrl, {
                 method: 'POST',
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'text/html, application/json',
+                    'Accept': 'application/json, text/html',
+                    'X-CSRF-TOKEN': window.csrfToken,
                 },
             });
 
             if (! response.ok) {
-                let errorMessage = 'Could not open the print preview. Review the booking fields and try again.';
                 const contentType = response.headers.get('content-type') || '';
+                const fallback = 'Could not open the print preview. Review the booking fields and try again.';
 
-                if (contentType.includes('application/json')) {
-                    const payload = await response.json();
-
-                    errorMessage = payload.message
-                        || Object.values(payload.errors || {}).flat()[0]
-                        || errorMessage;
-                }
-
-                throw new Error(errorMessage);
+                throw new Error(contentType.includes('application/json')
+                    ? await window.responseErrorMessage(response, fallback)
+                    : fallback);
             }
 
-            const html = await response.text();
+            const contentType = response.headers.get('content-type') || '';
+            let html = '';
 
-            titleElement.textContent = title || 'Print Preview';
-            iframe.srcdoc = html;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modal.setAttribute('aria-hidden', 'false');
-            document.body.classList.add('overflow-hidden');
+            if (contentType.includes('application/json')) {
+                const payload = await response.json();
+
+                html = payload.html || '';
+                window.syncBookingDraftPayload(form, payload.draft);
+            } else {
+                html = await response.text();
+            }
+
+            window.showShipmentPrintPreview(title, html);
         } catch (error) {
             if (window.app?.config?.globalProperties?.$emitter) {
                 window.app.config.globalProperties.$emitter.emit('add-flash', {
@@ -1955,6 +2461,41 @@
         } finally {
             button.disabled = false;
             button.textContent = button.dataset.originalLabel || 'Print Preview';
+        }
+    };
+
+    window.openGeneratedShipmentDocumentPreview = async function (button) {
+        const actionUrl = button?.dataset.documentPreviewUrl;
+
+        if (! actionUrl) {
+            window.showShipmentWorkflowWarning('Generate this document again before opening it.');
+
+            return;
+        }
+
+        button.disabled = true;
+        button.dataset.originalLabel = button.textContent.trim();
+        button.textContent = 'Opening...';
+
+        try {
+            const response = await fetch(actionUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html, application/json',
+                },
+            });
+
+            if (! response.ok) {
+                throw new Error(await window.responseErrorMessage(response, 'Generate this document again before opening it.'));
+            }
+
+            window.showShipmentPrintPreview(button.dataset.printTitle || 'Print Preview', await response.text());
+        } catch (error) {
+            window.showShipmentWorkflowWarning(error?.message || 'Generate this document again before opening it.');
+        } finally {
+            button.disabled = false;
+            button.textContent = button.dataset.originalLabel || 'View / Print';
         }
     };
 
@@ -1980,7 +2521,80 @@
         iframe?.contentWindow?.print();
     };
 
+    window.completeBooking = function (button, form) {
+        form = window.resolveShipmentBookingForm(form || button?.dataset.shipmentFormId);
+
+        if (! form || button?.disabled) {
+            return;
+        }
+
+        const actionUrl = form.dataset.bookingCompleteUrl;
+
+        if (! actionUrl) {
+            window.showShipmentWorkflowWarning('Could not complete booking from this page. Refresh and try again.');
+
+            return;
+        }
+
+        const submitForm = document.createElement('form');
+        submitForm.method = 'POST';
+        submitForm.action = actionUrl;
+
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'hidden';
+        tokenInput.name = '_token';
+        tokenInput.value = window.csrfToken;
+        submitForm.appendChild(tokenInput);
+
+        document.body.appendChild(submitForm);
+        submitForm.submit();
+    };
+
+    window.initializeBookingDocumentStatusUi = function () {
+        document.querySelectorAll('[data-booking-status-pill]').forEach((pill) => {
+            window.styleBookingDocumentStatusPill(pill, pill.dataset.status || 'not_generated');
+        });
+    };
+
     document.addEventListener('click', function (event) {
+        const bookingModalOpenButton = event.target.closest('[data-booking-modal-open]');
+
+        if (bookingModalOpenButton) {
+            window.setTimeout(() => window.refreshBookingDraftForForm(bookingModalOpenButton), 50);
+
+            return;
+        }
+
+        const saveDraftButton = event.target.closest('[data-booking-draft-save]');
+
+        if (saveDraftButton) {
+            event.preventDefault();
+
+            window.saveBookingDraft(saveDraftButton);
+
+            return;
+        }
+
+        const completeBookingButton = event.target.closest('[data-booking-complete]');
+
+        if (completeBookingButton) {
+            event.preventDefault();
+
+            window.completeBooking(completeBookingButton);
+
+            return;
+        }
+
+        const generatedDocumentButton = event.target.closest('[data-booking-document-view]');
+
+        if (generatedDocumentButton) {
+            event.preventDefault();
+
+            window.openGeneratedShipmentDocumentPreview(generatedDocumentButton);
+
+            return;
+        }
+
         const previewButton = event.target.closest('[data-shipment-print-preview]');
 
         if (previewButton) {
@@ -2043,9 +2657,28 @@
         if (event.target.matches('[data-ready-checkbox]')) {
             window.syncReadyShipmentSelectionUi();
         }
+
+        const bookingForm = window.resolveShipmentBookingForm(
+            event.target.closest('[data-booking-draft-form]') || event.target.closest('form')
+        );
+
+        if (bookingForm && bookingForm.dataset.bookingHydrating !== 'true' && event.target.name?.startsWith('shipment[')) {
+            window.markBookingDocumentsNeedReprint(bookingForm);
+        }
+    });
+
+    document.addEventListener('input', function (event) {
+        const bookingForm = window.resolveShipmentBookingForm(
+            event.target.closest('[data-booking-draft-form]') || event.target.closest('form')
+        );
+
+        if (bookingForm && bookingForm.dataset.bookingHydrating !== 'true' && event.target.name?.startsWith('shipment[')) {
+            window.markBookingDocumentsNeedReprint(bookingForm);
+        }
     });
 
     window.initializeReadyShipmentUi = function () {
+        window.initializeBookingDocumentStatusUi();
         window.syncReadyShipmentSelectionUi();
     };
 

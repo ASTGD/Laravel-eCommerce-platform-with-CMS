@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
@@ -15,6 +18,7 @@ use Platform\CommerceCore\Services\ManualShipmentHandoverService;
 use Platform\CommerceCore\Services\ManualToShipService;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Sales\Models\Order;
+use Webkul\Sales\Repositories\ShipmentRepository;
 
 class ManualToShipController extends Controller
 {
@@ -23,6 +27,7 @@ class ManualToShipController extends Controller
     public function __construct(
         protected ManualToShipService $manualToShipService,
         protected ManualShipmentHandoverService $manualShipmentHandoverService,
+        protected ShipmentRepository $shipmentRepository,
     ) {}
 
     public function index(Request $request): View
@@ -86,6 +91,145 @@ class ManualToShipController extends Controller
                 $document,
             ),
         ]);
+    }
+
+    public function saveBookingDraft(Request $request, Order $order): RedirectResponse|JsonResponse
+    {
+        $validated = $this->validateBookingDraftPayload($request);
+
+        $draft = $this->manualToShipService->saveBookingDraft(
+            $order,
+            $validated['shipment'],
+            auth('admin')->id(),
+        );
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'message' => 'Booking draft saved.',
+                'draft' => $this->bookingDraftResponse($order, $draft),
+            ]);
+        }
+
+        return redirect()
+            ->to(route('admin.sales.to-ship.index').'#needs-booking')
+            ->with('success', 'Booking draft saved. Print the parcel label and invoice before completing booking.');
+    }
+
+    public function showBookingDraft(Order $order): JsonResponse
+    {
+        $draft = $this->manualToShipService->draftForOrder($order);
+
+        return response()->json([
+            'draft' => $draft ? $this->bookingDraftResponse($order, $draft) : null,
+        ]);
+    }
+
+    public function printDraftDocuments(Request $request, Order $order, string $document): View|JsonResponse|Response
+    {
+        abort_unless(in_array($document, ['label', 'invoice', 'both'], true), 404);
+
+        $validated = $this->validateBookingDraftPayload($request);
+
+        $draft = $this->manualToShipService->saveBookingDraft(
+            $order,
+            $validated['shipment'],
+            auth('admin')->id(),
+        );
+        $view = view('commerce-core::admin.manual-to-ship.print-documents', [
+            'printData' => $this->manualToShipService->printableBookingData(
+                $order,
+                $this->manualToShipService->draftShipmentData($draft),
+                $document,
+            ),
+        ]);
+        $html = $view->render();
+        $draft = $this->manualToShipService->markDraftDocumentsGenerated($draft, $document, auth('admin')->id());
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'message' => $document === 'both'
+                    ? 'Parcel label and invoice are ready.'
+                    : sprintf('%s is ready.', $document === 'label' ? 'Parcel label' : 'Invoice'),
+                'html' => $html,
+                'draft' => $this->bookingDraftResponse($order, $draft),
+            ]);
+        }
+
+        return response($html);
+    }
+
+    public function showDraftDocument(Request $request, Order $order, string $document): View|JsonResponse|RedirectResponse
+    {
+        abort_unless(in_array($document, ['label', 'invoice', 'both'], true), 404);
+
+        $draft = $this->manualToShipService->draftForOrder($order);
+
+        if (! $draft || ! $this->manualToShipService->documentIsReady($draft, $document)) {
+            $message = 'This document needs to be generated again before it can be opened.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'message' => $message,
+                ], 422);
+            }
+
+            return redirect()
+                ->to(route('admin.sales.to-ship.index').'#needs-booking')
+                ->with('warning', $message);
+        }
+
+        return view('commerce-core::admin.manual-to-ship.print-documents', [
+            'printData' => $this->manualToShipService->printableBookingData(
+                $order,
+                $this->manualToShipService->draftShipmentData($draft),
+                $document,
+            ),
+        ]);
+    }
+
+    public function completeBooking(Request $request, Order $order): RedirectResponse
+    {
+        $draft = $this->manualToShipService->draftForOrder($order);
+
+        if (! $draft) {
+            throw ValidationException::withMessages([
+                'shipment' => 'Save a booking draft before completing this parcel.',
+            ]);
+        }
+
+        $documentStatuses = $this->manualToShipService->documentStatuses($draft);
+
+        if (! $documentStatuses['can_complete']) {
+            throw ValidationException::withMessages([
+                'documents' => 'Print both the parcel label and invoice again before completing booking.',
+            ]);
+        }
+
+        if (! $order->canShip()) {
+            throw ValidationException::withMessages([
+                'shipment' => 'This order is no longer available in To Ship.',
+            ]);
+        }
+
+        $shipmentPayload = $this->manualToShipService->draftShipmentData($draft);
+
+        DB::transaction(function () use ($order, $draft, $shipmentPayload) {
+            request()->merge([
+                'redirect_to' => 'to_ship',
+                'shipment' => $shipmentPayload,
+            ]);
+
+            $this->shipmentRepository->create([
+                'shipment' => $shipmentPayload,
+                'order_id' => $order->id,
+            ]);
+
+            $draft->delete();
+        });
+
+        return redirect()
+            ->to(route('admin.sales.to-ship.index').'#parcel-ready-for-handover')
+            ->with('success', 'Booking completed. Parcel is now ready for courier handover.');
     }
 
     public function createHandoverBatch(Request $request): RedirectResponse|JsonResponse
@@ -180,6 +324,48 @@ class ManualToShipController extends Controller
             'receiver_name' => 'receiver or driver name',
             'notes' => 'handover notes',
         ]);
+    }
+
+    protected function validateBookingDraftPayload(Request $request): array
+    {
+        $validator = Validator::make(
+            $request->all(),
+            $this->manualToShipService->bookingValidationRules(),
+            $this->manualToShipService->bookingValidationMessages(),
+            $this->manualToShipService->bookingValidationAttributes(),
+        );
+
+        if ($validator->fails()) {
+            if ($request->ajax() || $request->expectsJson()) {
+                throw ValidationException::withMessages($validator->errors()->toArray());
+            }
+
+            $validator->validate();
+        }
+
+        $validated = $validator->validated();
+        $validated['shipment']['source'] = $request->input('shipment.source');
+        $validated['shipment']['items'] = $request->input('shipment.items', []);
+
+        return $validated;
+    }
+
+    protected function bookingDraftResponse(Order $order, ShipmentRecord $draft): array
+    {
+        $payload = $this->manualToShipService->bookingDraftResponse($draft);
+
+        foreach (['label', 'invoice'] as $document) {
+            if (($payload['document_statuses'][$document]['status'] ?? null) !== 'ready') {
+                continue;
+            }
+
+            $payload['document_statuses'][$document]['preview_url'] = route(
+                'admin.sales.to-ship.booking-draft.document',
+                [$order, 'document' => $document],
+            );
+        }
+
+        return $payload;
     }
 
     protected function validateConfirmPayload(Request $request): array
