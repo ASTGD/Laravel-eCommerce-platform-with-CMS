@@ -285,3 +285,20 @@ Current status:
 - the admin order view now shows shipment, COD settlement, and payout-batch summaries through custom order-side components
 - carrier management is intended to become the foundation for later:
   - SMS / WhatsApp shipment notifications
+
+## Unified Affiliate System Workstream Note
+
+The unified affiliate MVP is now in its Phase 8 hardening track.
+
+Current status:
+
+- one shared affiliate backend domain powers both admin and customer portal screens
+- logged-in customers can apply for the affiliate program from the customer account area
+- admin can review, approve, reject, suspend, and reactivate affiliate profiles
+- active affiliates can access the customer Affiliate dashboard with referral link, traffic, sales, commissions, and payout history
+- referral clicks are tracked for reporting and attribution context, but do not create payable per-click commissions
+- attributed orders create order-based commissions through the shared commission ledger
+- customer withdrawal requests and admin payout records use the same payout and allocation tables
+- admin affiliate reports summarize shared clicks, attributed sales, commissions, payouts, daily trends, and top affiliates
+- admin affiliate settings persist the v1 operational rules used by both admin and customer portal workflows
+- Phase 8 hardening coverage now verifies the cross-surface customer application, admin approval, customer dashboard visibility, referral attribution, commission creation, withdrawal, admin payout completion, report totals, and explicit absence of Email Affiliate and Banner/Text Ad MVP routes/navigation

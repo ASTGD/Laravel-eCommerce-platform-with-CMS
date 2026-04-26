@@ -73,6 +73,12 @@ Breadcrumbs::for('wishlist', function (BreadcrumbTrail $trail) {
     $trail->push(trans('shop::app.layouts.wishlist'), route('shop.customers.account.wishlist.index'));
 });
 
+// Home > My Account > Affiliate
+Breadcrumbs::for('affiliate', function (BreadcrumbTrail $trail) {
+    $trail->parent('account');
+    $trail->push('Affiliate', route('shop.customers.account.affiliate.index'));
+});
+
 // Home > Cart
 Breadcrumbs::for('cart', function (BreadcrumbTrail $trail) {
     $trail->parent('home');

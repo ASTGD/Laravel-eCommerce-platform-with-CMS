@@ -6,7 +6,9 @@ use Platform\CommerceCore\Http\Controllers\BkashController;
 use Platform\CommerceCore\Http\Controllers\CheckoutController;
 use Platform\CommerceCore\Http\Controllers\OnepageController as CustomOnepageController;
 use Platform\CommerceCore\Http\Controllers\PublicShipmentTrackingController;
+use Platform\CommerceCore\Http\Controllers\Shop\AffiliateController;
 use Platform\CommerceCore\Http\Controllers\SslCommerzController;
+use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::controller(CheckoutController::class)
     ->prefix('checkout')
@@ -55,4 +57,13 @@ Route::controller(PublicShipmentTrackingController::class)
     ->group(function () {
         Route::get('', 'index')->name('shop.shipment-tracking.index');
         Route::post('', 'lookup')->name('shop.shipment-tracking.lookup');
+    });
+
+Route::controller(AffiliateController::class)
+    ->prefix('customer/account/affiliate')
+    ->middleware(['customer', NoCacheMiddleware::class])
+    ->group(function () {
+        Route::get('', 'index')->name('shop.customers.account.affiliate.index');
+        Route::post('apply', 'apply')->name('shop.customers.account.affiliate.apply');
+        Route::post('withdrawals', 'requestWithdrawal')->name('shop.customers.account.affiliate.withdrawals.store');
     });

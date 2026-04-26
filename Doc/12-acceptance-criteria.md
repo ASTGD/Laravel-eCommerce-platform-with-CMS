@@ -59,3 +59,23 @@ Remaining items after this pass:
 - customer portal theme implementation
 - richer customer-facing surfaces and merchandising presentation
 - diff/compare tooling for version history
+
+## Unified Affiliate MVP Acceptance
+
+The affiliate MVP is acceptable when all of the following are true:
+
+1. One Bagisto customer maps to one affiliate profile.
+2. Customers can apply from the existing customer account portal.
+3. Pending, rejected, suspended, and active states are canonical and shared between admin and customer portal.
+4. Admin can approve, reject, suspend, and reactivate affiliate profiles from the admin `Affiliates` area.
+5. Active affiliates see the customer Affiliate dashboard; non-active affiliates see only their relevant state.
+6. Referral links create click records for reporting and attribution context only.
+7. Attributed orders create order-based commission records.
+8. Payout availability is derived from approved commissions and payout allocation rows.
+9. Customer withdrawal requests and admin payout records use the same payout lifecycle.
+10. Admin reports read totals from the shared affiliate tables.
+11. Affiliate settings are shared by admin and customer portal services.
+12. Email Affiliate, Banner/Text Ad management, per-click payouts, and separate affiliate login are absent from v1 routes and navigation.
+13. Feature tests cover the full customer/admin/referral/commission/payout/report workflow.
+
+Current status: Phase 8 hardening tests cover the listed MVP workflow and exclusion requirements.

@@ -204,6 +204,66 @@ Current `Shipment Ops` capability now includes:
   - per-notification queued / skipped / failed audit rows on shipment detail
   - shipment-notification toggles under sales configuration
 
+## Affiliates
+
+Affiliate work is planned as a dedicated top-level admin area, backed by the shared affiliate domain in `packages/commerce-core`.
+
+Current v1 navigation:
+
+- Affiliates
+  - My Affiliates
+  - Payouts
+  - Reports
+  - Affiliate Settings
+
+Current admin workflow:
+
+- review pending affiliate applications
+- approve, reject, suspend, or reactivate affiliate profiles
+- use the affiliate profile page as the main operational screen
+- inspect traffic, attributed sales, commissions, and payout history from the same profile
+- manage payout requests and payout records from the shared payout ledger
+- approve, reject, and mark payout requests as paid through one lifecycle shared with the customer portal
+- view customer-entered payout account details on payout records while keeping payout references system-generated
+- review affiliate reports for clicks, attributed orders, attributed sales, commissions, payouts, daily trends, and top affiliates
+- manage minimum v1 affiliate settings without changing code
+
+Current payout lifecycle:
+
+- `requested` reserves approved commission balance through allocation rows
+- `approved` keeps the balance reserved while admin prepares payment
+- `paid` settles allocated commissions and marks fully covered commission rows as paid
+- `rejected` releases reserved allocations back to the affiliate's available balance
+
+Current admin routes:
+
+- `admin.affiliates.profiles.index`
+- `admin.affiliates.profiles.show`
+- `admin.affiliates.profiles.approve`
+- `admin.affiliates.profiles.reject`
+- `admin.affiliates.profiles.suspend`
+- `admin.affiliates.profiles.reactivate`
+- `admin.affiliates.payouts.index`
+- `admin.affiliates.reports.index`
+- `admin.affiliates.settings.index`
+- `admin.affiliates.settings.update`
+
+Current affiliate settings:
+
+- approval requirement
+- default commission type and value
+- referral cookie window
+- minimum payout threshold
+- payout methods
+- affiliate terms text
+
+Explicit v1 exclusions:
+
+- Email Affiliate
+- Banner/Text Ad management
+- per-click payouts
+- separate affiliate login
+
 `COD Settlements` is the admin-only money-operations board for cash-on-delivery shipments. It currently tracks one settlement row per COD shipment record and supports:
 
 - expected COD amount
