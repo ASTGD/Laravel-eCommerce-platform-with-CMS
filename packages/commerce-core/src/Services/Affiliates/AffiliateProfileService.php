@@ -4,6 +4,7 @@ namespace Platform\CommerceCore\Services\Affiliates;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Platform\CommerceCore\Models\AffiliateProfile;
 use Webkul\Customer\Models\Customer;
 
@@ -81,6 +82,46 @@ class AffiliateProfileService
         return $profile->refresh();
     }
 
+    public function createFromAdmin(Customer $customer, array $data = [], ?int $adminId = null): AffiliateProfile
+    {
+        if (AffiliateProfile::query()->where('customer_id', $customer->id)->exists()) {
+            throw ValidationException::withMessages([
+                'customer_id' => 'This customer already has an affiliate profile.',
+            ]);
+        }
+
+        $status = in_array(Arr::get($data, 'status'), [AffiliateProfile::STATUS_PENDING, AffiliateProfile::STATUS_ACTIVE], true)
+            ? Arr::get($data, 'status')
+            : AffiliateProfile::STATUS_PENDING;
+
+        $referralCode = $this->normalizeReferralCode(Arr::get($data, 'referral_code'));
+
+        $profile = new AffiliateProfile([
+            ...$this->applicationPayload([
+                ...$data,
+                'application_source' => 'admin_created',
+                'meta' => [
+                    ...((array) Arr::get($data, 'meta', [])),
+                    'created_by_admin_id' => $adminId,
+                    'admin_created_at' => now()->toIso8601String(),
+                ],
+            ]),
+            'customer_id' => $customer->id,
+            'status' => $status,
+            'referral_code' => $referralCode ?: $this->generateReferralCode($customer),
+            'last_status_changed_at' => now(),
+        ]);
+
+        if ($status === AffiliateProfile::STATUS_ACTIVE) {
+            $profile->approved_at = now();
+            $profile->approved_by_admin_id = $adminId;
+        }
+
+        $profile->save();
+
+        return $profile->refresh();
+    }
+
     public function reject(AffiliateProfile $profile, ?int $adminId = null, ?string $reason = null): AffiliateProfile
     {
         $profile->fill([
@@ -110,6 +151,30 @@ class AffiliateProfileService
     public function reactivate(AffiliateProfile $profile, ?int $adminId = null): AffiliateProfile
     {
         return $this->approve($profile, $adminId);
+    }
+
+    public function regenerateReferralCode(AffiliateProfile $profile, ?int $adminId = null): AffiliateProfile
+    {
+        $oldCode = $profile->referral_code;
+        $meta = $profile->meta ?: [];
+        $previousCodes = collect(Arr::get($meta, 'previous_referral_codes', []))
+            ->push($oldCode)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $profile->fill([
+            'referral_code' => $this->generateReferralCode($profile->customer),
+            'meta' => [
+                ...$meta,
+                'previous_referral_codes' => $previousCodes,
+                'last_referral_code_regenerated_at' => now()->toIso8601String(),
+                'last_referral_code_regenerated_by_admin_id' => $adminId,
+            ],
+        ])->save();
+
+        return $profile->refresh();
     }
 
     public function profileForCustomer(?Customer $customer): ?AffiliateProfile
@@ -153,6 +218,19 @@ class AffiliateProfileService
         }
 
         return $candidate;
+    }
+
+    public function normalizeReferralCode(mixed $value): ?string
+    {
+        $value = is_string($value) ? trim($value) : $value;
+
+        if (blank($value)) {
+            return null;
+        }
+
+        $value = Str::upper(preg_replace('/[^A-Za-z0-9_-]/', '', (string) $value) ?? '');
+
+        return blank($value) ? null : $value;
     }
 
     protected function applicationPayload(array $data): array

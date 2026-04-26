@@ -30,7 +30,10 @@ it('captures an active affiliate referral click into session and cookie attribut
         ->assertSessionHas(AffiliateReferralTrackingService::SESSION_KEY.'.code', $profile->referral_code)
         ->assertCookie(config('commerce_affiliate.cookie_name'));
 
-    $click = AffiliateClick::query()->first();
+    $click = AffiliateClick::query()
+        ->where('affiliate_profile_id', $profile->id)
+        ->where('referral_code', $profile->referral_code)
+        ->first();
 
     expect($click)->not->toBeNull()
         ->and($click->affiliate_profile_id)->toBe($profile->id)
@@ -67,10 +70,15 @@ it('attributes checkout orders from the captured referral and creates a pending 
 
     $attribution = AffiliateOrderAttribution::query()->where('order_id', $order->id)->first();
     $commission = AffiliateCommission::query()->where('order_id', $order->id)->first();
+    $click = AffiliateClick::query()
+        ->where('affiliate_profile_id', $profile->id)
+        ->where('referral_code', $profile->referral_code)
+        ->latest('id')
+        ->first();
 
     expect($attribution)->not->toBeNull()
         ->and($attribution->affiliate_profile_id)->toBe($profile->id)
-        ->and($attribution->affiliate_click_id)->toBe(AffiliateClick::query()->value('id'))
+        ->and($attribution->affiliate_click_id)->toBe($click?->id)
         ->and($attribution->attribution_source)->toBe('session')
         ->and($commission)->not->toBeNull()
         ->and($commission->status)->toBe(AffiliateCommission::STATUS_PENDING)
@@ -132,7 +140,7 @@ it('does not capture or attribute self referrals', function () {
 
     app(AttributeAffiliateOrder::class)->handle($order);
 
-    expect(AffiliateClick::query()->count())->toBe(0)
+    expect(AffiliateClick::query()->where('affiliate_profile_id', $profile->id)->exists())->toBeFalse()
         ->and(AffiliateOrderAttribution::query()->where('order_id', $order->id)->exists())->toBeFalse()
         ->and(AffiliateCommission::query()->where('order_id', $order->id)->exists())->toBeFalse();
 });

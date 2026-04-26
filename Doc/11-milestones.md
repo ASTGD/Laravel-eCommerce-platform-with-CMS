@@ -293,9 +293,12 @@ The unified affiliate MVP is now in its Phase 8 hardening track.
 Current status:
 
 - one shared affiliate backend domain powers both admin and customer portal screens
+- admin can create an affiliate profile directly for an existing customer account
 - logged-in customers can apply for the affiliate program from the customer account area
+- public storefront visitors can discover the program at `/affiliate-program`
 - admin can review, approve, reject, suspend, and reactivate affiliate profiles
-- active affiliates can access the customer Affiliate dashboard with referral link, traffic, sales, commissions, and payout history
+- active affiliates can access the customer Affiliate dashboard with referral code/link copy tools, simple tracked-link generation, traffic, sales, commissions, and payout history
+- admin can regenerate an affiliate referral code to invalidate old links
 - referral clicks are tracked for reporting and attribution context, but do not create payable per-click commissions
 - attributed orders create order-based commissions through the shared commission ledger
 - customer withdrawal requests and admin payout records use the same payout and allocation tables

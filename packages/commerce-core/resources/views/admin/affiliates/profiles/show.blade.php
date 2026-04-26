@@ -69,6 +69,12 @@
         </div>
     </div>
 
+    @if (session('success'))
+        <div class="mt-5 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="mt-5 grid gap-4 lg:grid-cols-[2fr_1fr]">
         <div class="grid gap-4">
             <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
@@ -99,13 +105,55 @@
             </div>
 
             <div class="box-shadow rounded bg-white p-4 dark:bg-gray-900">
-                <p class="text-base font-semibold text-gray-800 dark:text-white">
-                    Referral
-                </p>
+                <div class="flex items-start justify-between gap-4 max-sm:flex-wrap">
+                    <div>
+                        <p class="text-base font-semibold text-gray-800 dark:text-white">
+                            Referral
+                        </p>
+
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                            The link stays valid while this affiliate is active. Regenerating the code invalidates old referral links.
+                        </p>
+                    </div>
+
+                    @if (bouncer()->hasPermission('affiliates.profiles.regenerate_referral_code'))
+                        <form
+                            method="POST"
+                            action="{{ route('admin.affiliates.profiles.regenerate-referral-code', $profile) }}"
+                            onsubmit="return confirm('Regenerate this referral code? Old referral links will stop creating new attribution.');"
+                        >
+                            @csrf
+
+                            <button
+                                type="submit"
+                                class="secondary-button"
+                            >
+                                Regenerate Referral Code
+                            </button>
+                        </form>
+                    @endif
+                </div>
 
                 <div class="mt-4 grid gap-3 text-sm text-gray-600 dark:text-gray-300 md:grid-cols-2">
-                    <p><span class="font-semibold text-gray-800 dark:text-white">Referral Code:</span> {{ $profile->referral_code }}</p>
-                    <p><span class="font-semibold text-gray-800 dark:text-white">Referral Link:</span> <span class="break-all">{{ $profile->referral_url }}</span></p>
+                    <div class="rounded border border-gray-200 p-3 dark:border-gray-800">
+                        <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-300">
+                            Referral Code
+                        </p>
+
+                        <p class="mt-1 font-semibold text-gray-800 dark:text-white">
+                            {{ $profile->referral_code }}
+                        </p>
+                    </div>
+
+                    <div class="rounded border border-gray-200 p-3 dark:border-gray-800">
+                        <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-300">
+                            Referral Link
+                        </p>
+
+                        <p class="mt-1 break-all font-medium text-gray-800 dark:text-white">
+                            {{ $profile->referral_url }}
+                        </p>
+                    </div>
                 </div>
             </div>
 

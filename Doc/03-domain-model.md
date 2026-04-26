@@ -117,7 +117,8 @@ Canonical affiliate statuses:
 Core relationship rules:
 
 - One Bagisto customer can have one affiliate profile.
-- Only an `active` affiliate profile can access the future customer Affiliate portal area.
+- Only an `active` affiliate profile can access the full customer Affiliate portal area.
+- Admin-created affiliates still use an existing customer account; no affiliate-only identity is created.
 - Admin and customer portal screens must read and write these same affiliate records.
 - Commission is order-based in v1.
 - Click tracking supports reporting and attribution context but never per-click payout.
@@ -129,6 +130,9 @@ Default affiliate settings are package config values under `commerce_affiliate`,
 Phase 4 referral tracking decisions:
 
 - Referral links use the `ref` query parameter, for example `/?ref=AFFILIATECODE`.
+- Referral link validity and attribution expiration are intentionally separate:
+  - the referral code/link remains valid while the affiliate profile is `active` and the code has not been regenerated
+  - visitor attribution expires by the configured cookie/session window
 - Storefront GET requests with a valid active referral code create an `affiliate_click` record and store attribution context in both session and an HTTP-only referral cookie.
 - Admin routes are excluded from referral capture.
 - The configured cookie window is currently 30 days through `commerce_affiliate.cookie_window_days`.
@@ -136,12 +140,14 @@ Phase 4 referral tracking decisions:
 - Order attribution runs from the Bagisto `checkout.order.save.after` event and creates one `affiliate_order_attribution` record per order.
 - Commission creation happens from the same order-save attribution flow and creates a pending order-based commission using the configured default commission rule.
 - Self-referrals are blocked during click capture and order attribution when `commerce_affiliate.self_referral_prevention` is enabled.
+- Regenerating an affiliate referral code updates the profile's active code and stores the previous code in profile metadata for audit context. Old links immediately stop creating new attribution because active profile lookup only uses the current code.
 - Order cancellation reverses the related commission and marks the order attribution as canceled from the Bagisto `sales.order.cancel.after` event.
 - Refund-specific commission adjustment is not part of v1 Phase 4 and should be handled in a later hardening slice if partial-refund behavior is needed.
 
 Phase 5 customer portal decisions:
 
 - Active affiliate dashboard metrics are query projections over `affiliate_clicks`, `affiliate_order_attributions`, `affiliate_commissions`, and `affiliate_payouts`.
+- Active affiliate referral tools expose one stable code, the main homepage referral link, and a simple internal-path link builder.
 - The customer portal does not maintain separate cached affiliate totals in v1.
 - Customer withdrawal requests create `affiliate_payouts` records with `requested` status.
 - Affiliate payout availability is derived from approved commissions minus active payout allocation rows.

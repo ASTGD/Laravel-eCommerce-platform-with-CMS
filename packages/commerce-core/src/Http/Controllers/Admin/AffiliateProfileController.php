@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Platform\CommerceCore\Http\Requests\Admin\AffiliatePayoutRecordRequest;
+use Platform\CommerceCore\Http\Requests\Admin\AffiliateProfileStoreRequest;
 use Platform\CommerceCore\Http\Requests\Admin\AffiliateStatusRequest;
 use Platform\CommerceCore\Models\AffiliateClick;
 use Platform\CommerceCore\Models\AffiliateCommission;
@@ -17,6 +18,7 @@ use Platform\CommerceCore\Models\AffiliateProfile;
 use Platform\CommerceCore\Services\Affiliates\AffiliatePayoutService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateProfileService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateSettingsService;
+use Webkul\Customer\Models\Customer;
 
 class AffiliateProfileController extends Controller
 {
@@ -60,6 +62,31 @@ class AffiliateProfileController extends Controller
             'statusOptions' => AffiliateProfile::statusLabels(),
             'statusCounts' => $this->statusCounts(),
         ]);
+    }
+
+    public function create(): View
+    {
+        return view('commerce-core::admin.affiliates.profiles.create', [
+            'customers' => $this->customersWithoutAffiliateProfile(),
+            'statusOptions' => [
+                AffiliateProfile::STATUS_ACTIVE => 'Active',
+                AffiliateProfile::STATUS_PENDING => 'Pending',
+            ],
+            'payoutMethods' => $this->affiliateSettingsService->payoutMethods(),
+        ]);
+    }
+
+    public function store(AffiliateProfileStoreRequest $request): RedirectResponse
+    {
+        $profile = $this->affiliateProfileService->createFromAdmin(
+            Customer::query()->findOrFail($request->integer('customer_id')),
+            $request->payload(),
+            auth()->guard('admin')->id(),
+        );
+
+        return redirect()
+            ->route('admin.affiliates.profiles.show', $profile)
+            ->with('success', 'Affiliate profile created.');
     }
 
     public function show(AffiliateProfile $affiliateProfile): View
@@ -118,6 +145,15 @@ class AffiliateProfileController extends Controller
         return redirect()
             ->route('admin.affiliates.profiles.show', $affiliateProfile)
             ->with('success', 'Affiliate reactivated.');
+    }
+
+    public function regenerateReferralCode(AffiliateProfile $affiliateProfile): RedirectResponse
+    {
+        $this->affiliateProfileService->regenerateReferralCode($affiliateProfile, auth()->guard('admin')->id());
+
+        return redirect()
+            ->route('admin.affiliates.profiles.show', $affiliateProfile)
+            ->with('success', 'Referral code regenerated. The previous referral link no longer creates new attribution.');
     }
 
     public function storePayout(AffiliatePayoutRecordRequest $request, AffiliateProfile $affiliateProfile): RedirectResponse
@@ -209,5 +245,15 @@ class AffiliateProfileController extends Controller
             ->where('affiliate_profile_id', $profile->id)
             ->where('status', $status)
             ->sum('amount');
+    }
+
+    protected function customersWithoutAffiliateProfile()
+    {
+        return Customer::query()
+            ->whereNotIn('id', AffiliateProfile::query()->select('customer_id'))
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->limit(200)
+            ->get(['id', 'first_name', 'last_name', 'email', 'phone']);
     }
 }
