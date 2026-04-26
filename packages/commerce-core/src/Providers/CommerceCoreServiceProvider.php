@@ -4,31 +4,34 @@ namespace Platform\CommerceCore\Providers;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Platform\CommerceCore\Console\Commands\ImportCodSettlementsCommand;
 use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
 use Platform\CommerceCore\Console\Commands\SyncShipmentTrackingCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
-use Illuminate\Support\Facades\View;
+use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentController as CommerceShipmentController;
+use Platform\CommerceCore\Http\Middleware\CaptureAffiliateReferral;
 use Platform\CommerceCore\Http\Middleware\EnsureShippingModeAllowsFeature;
 use Platform\CommerceCore\Http\Middleware\RedirectBasicShipmentBrowseRoutes;
-use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
-use Platform\CommerceCore\Listeners\SyncShipmentRecordFromNativeShipment;
+use Platform\CommerceCore\Listeners\AttributeAffiliateOrder;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
+use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForCanceledOrder;
+use Platform\CommerceCore\Listeners\SyncShipmentRecordFromNativeShipment;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Payment\PaymentManager;
 use Platform\CommerceCore\Repositories\OrderRepository as CommerceOrderRepository;
 use Platform\CommerceCore\Services\CheckoutGuestAccountService;
-use Platform\CommerceCore\Support\AdminMenu;
 use Platform\CommerceCore\Services\DataSourceResolver;
+use Platform\CommerceCore\Support\AdminMenu;
 use Platform\CommerceCore\Support\CheckoutMode;
 use Platform\CommerceCore\Support\ShippingMode;
-use Webkul\Admin\Http\Controllers\Sales\ShipmentController as BaseShipmentController;
-use Webkul\Core\Menu as BaseMenu;
 use Webkul\Admin\Http\Controllers\Sales\RefundController as BaseRefundController;
+use Webkul\Admin\Http\Controllers\Sales\ShipmentController as BaseShipmentController;
 use Webkul\Admin\Listeners\Refund as BaseRefundListener;
 use Webkul\Core\Http\Middleware\PreventRequestsDuringMaintenance;
+use Webkul\Core\Menu as BaseMenu;
 use Webkul\Payment\Payment as BasePaymentManager;
 use Webkul\Sales\Repositories\OrderRepository as BaseOrderRepository;
 use Webkul\Theme\ViewRenderEventManager;
@@ -51,14 +54,17 @@ class CommerceCoreServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../../config/carriers.php', 'carriers');
         $this->mergeConfigFrom(__DIR__.'/../../config/carrier-booking.php', 'carrier_booking');
         $this->mergeConfigFrom(__DIR__.'/../../config/carrier-tracking.php', 'carrier_tracking');
+        $this->mergeConfigFrom(__DIR__.'/../../config/affiliate.php', 'commerce_affiliate');
         $this->mergeConfigFrom(__DIR__.'/../../config/payment-methods.php', 'payment_methods');
         $this->mergeConfigFrom(__DIR__.'/../../config/menu.php', 'menu.admin');
+        $this->mergeConfigFrom(__DIR__.'/../../config/customer-menu.php', 'menu.customer');
         $this->mergeConfigFrom(__DIR__.'/../../config/acl.php', 'acl');
     }
 
     public function boot(): void
     {
         $this->app['router']->aliasMiddleware('commerce.shipping-mode', EnsureShippingModeAllowsFeature::class);
+        $this->app['router']->pushMiddlewareToGroup('web', CaptureAffiliateReferral::class);
         $this->app['router']->pushMiddlewareToGroup('admin', RedirectBasicShipmentBrowseRoutes::class);
 
         if ($this->app->runningInConsole()) {
@@ -132,6 +138,10 @@ class CommerceCoreServiceProvider extends ServiceProvider
         Event::listen('checkout.order.save.after', function ($order): void {
             app(CheckoutGuestAccountService::class)->attachExistingCustomerToOrder($order);
         });
+
+        Event::listen('checkout.order.save.after', [AttributeAffiliateOrder::class, 'handle']);
+
+        Event::listen('sales.order.cancel.after', [ReverseAffiliateCommissionForCanceledOrder::class, 'handle']);
 
         Event::listen('sales.shipment.save.after', [SyncShipmentRecordFromNativeShipment::class, 'handle']);
 

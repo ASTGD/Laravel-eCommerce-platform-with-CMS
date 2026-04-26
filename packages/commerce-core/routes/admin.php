@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\CommerceCore\Http\Controllers\Admin\AffiliatePayoutController;
+use Platform\CommerceCore\Http\Controllers\Admin\AffiliateProfileController;
+use Platform\CommerceCore\Http\Controllers\Admin\AffiliateReportController;
+use Platform\CommerceCore\Http\Controllers\Admin\AffiliateSettingsController;
 use Platform\CommerceCore\Http\Controllers\Admin\CodSettlementController;
 use Platform\CommerceCore\Http\Controllers\Admin\ManualCodReceivableController;
 use Platform\CommerceCore\Http\Controllers\Admin\ManualShippedOrderController;
@@ -18,6 +22,42 @@ Route::group([
     'middleware' => ['admin', NoCacheMiddleware::class],
     'prefix' => config('app.admin_url'),
 ], function () {
+    Route::prefix('affiliates')
+        ->group(function () {
+            Route::prefix('profiles')
+                ->controller(AffiliateProfileController::class)
+                ->group(function () {
+                    Route::get('', 'index')->middleware('platform.acl:affiliates.profiles')->name('admin.affiliates.profiles.index');
+                    Route::get('{affiliateProfile}', 'show')->middleware('platform.acl:affiliates.profiles.view')->name('admin.affiliates.profiles.show');
+                    Route::post('{affiliateProfile}/approve', 'approve')->middleware('platform.acl:affiliates.profiles.approve')->name('admin.affiliates.profiles.approve');
+                    Route::post('{affiliateProfile}/reject', 'reject')->middleware('platform.acl:affiliates.profiles.reject')->name('admin.affiliates.profiles.reject');
+                    Route::post('{affiliateProfile}/suspend', 'suspend')->middleware('platform.acl:affiliates.profiles.suspend')->name('admin.affiliates.profiles.suspend');
+                    Route::post('{affiliateProfile}/reactivate', 'reactivate')->middleware('platform.acl:affiliates.profiles.reactivate')->name('admin.affiliates.profiles.reactivate');
+                    Route::post('{affiliateProfile}/payouts', 'storePayout')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.profiles.payouts.store');
+                });
+
+            Route::prefix('payouts')
+                ->controller(AffiliatePayoutController::class)
+                ->group(function () {
+                    Route::get('', 'index')->middleware('platform.acl:affiliates.payouts')->name('admin.affiliates.payouts.index');
+                    Route::post('{affiliatePayout}/approve', 'approve')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.payouts.approve');
+                    Route::post('{affiliatePayout}/mark-paid', 'markPaid')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.payouts.mark-paid');
+                    Route::post('{affiliatePayout}/reject', 'reject')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.payouts.reject');
+                });
+
+            Route::get('reports', [AffiliateReportController::class, 'index'])
+                ->middleware('platform.acl:affiliates.reports')
+                ->name('admin.affiliates.reports.index');
+
+            Route::controller(AffiliateSettingsController::class)
+                ->prefix('settings')
+                ->middleware('platform.acl:affiliates.settings')
+                ->group(function () {
+                    Route::get('', 'index')->name('admin.affiliates.settings.index');
+                    Route::post('', 'update')->name('admin.affiliates.settings.update');
+                });
+        });
+
     Route::prefix('sales/pickup-points')
         ->controller(PickupPointController::class)
         ->group(function () {
