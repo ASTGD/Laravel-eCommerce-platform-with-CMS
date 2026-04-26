@@ -218,9 +218,12 @@ Current v1 navigation:
 
 Current admin workflow:
 
+- create an affiliate profile directly for an existing customer account
 - review pending affiliate applications
 - approve, reject, suspend, or reactivate affiliate profiles
 - use the affiliate profile page as the main operational screen
+- view the affiliate referral code and homepage referral link
+- regenerate the referral code when support needs to invalidate old links
 - inspect traffic, attributed sales, commissions, and payout history from the same profile
 - manage payout requests and payout records from the shared payout ledger
 - approve, reject, and mark payout requests as paid through one lifecycle shared with the customer portal
@@ -238,11 +241,14 @@ Current payout lifecycle:
 Current admin routes:
 
 - `admin.affiliates.profiles.index`
+- `admin.affiliates.profiles.create`
+- `admin.affiliates.profiles.store`
 - `admin.affiliates.profiles.show`
 - `admin.affiliates.profiles.approve`
 - `admin.affiliates.profiles.reject`
 - `admin.affiliates.profiles.suspend`
 - `admin.affiliates.profiles.reactivate`
+- `admin.affiliates.profiles.regenerate-referral-code`
 - `admin.affiliates.payouts.index`
 - `admin.affiliates.reports.index`
 - `admin.affiliates.settings.index`

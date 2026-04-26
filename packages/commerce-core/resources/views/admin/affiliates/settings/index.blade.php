@@ -70,7 +70,7 @@
                     >
 
                     <p class="text-xs text-gray-500 dark:text-gray-300">
-                        Orders can be attributed while the referral cookie is still inside this window.
+                        Referral links remain valid while the affiliate is active. This window controls how long a visitor click can still attribute an order.
                     </p>
 
                     @error('cookie_window_days') <p class="text-xs text-red-600">{{ $message }}</p> @enderror

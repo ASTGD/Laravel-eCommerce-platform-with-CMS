@@ -13,6 +13,7 @@ class AffiliatePortalService
     public function __construct(
         protected AffiliatePayoutService $affiliatePayoutService,
         protected AffiliateSettingsService $affiliateSettingsService,
+        protected AffiliateReferralLinkService $affiliateReferralLinkService,
     ) {}
 
     public function dashboardFor(AffiliateProfile $profile): array
@@ -20,7 +21,9 @@ class AffiliatePortalService
         return [
             'referral' => [
                 'code' => $profile->referral_code,
-                'url' => $profile->referral_url,
+                'url' => $this->affiliateReferralLinkService->build($profile),
+                'parameter' => $this->affiliateSettingsService->referralParameter(),
+                'cookie_window_days' => $this->affiliateSettingsService->cookieWindowDays(),
             ],
             'currency' => $this->currencyFor($profile),
             'traffic' => $this->trafficSummary($profile),

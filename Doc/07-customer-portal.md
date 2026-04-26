@@ -131,25 +131,38 @@ Current Phase 2 customer account route:
 - route: `shop.customers.account.affiliate.index`
 - path: `/customer/account/affiliate`
 
+Current public affiliate entry route:
+
+- route: `shop.affiliate-program.index`
+- path: `/affiliate-program`
+- guest CTA: login or register before applying
+- logged-in customer CTA: go to the account-based Affiliate application/dashboard
+
 Current Phase 2 behavior:
 
 - customers without an affiliate profile can submit an application
 - rejected customers can update details and resubmit
 - pending customers see only an under-review state
 - suspended customers see only a suspended-state notice
-- active customers see an approved-state placeholder and referral code, but not the full dashboard yet
+- active customers see the full affiliate dashboard
 
 Current Phase 4 referral behavior:
 
 - approved affiliates use their generated referral code in storefront links through the `ref` query parameter
+- active affiliates can copy their referral code and homepage referral link from the customer dashboard
+- active affiliates can generate simple tracked links for valid internal storefront paths
+- referral links remain valid while the affiliate is active and the referral code has not been regenerated
+- visitor attribution expires by the configured cookie window, not by link age
+- regenerating a referral code invalidates old links for new click capture and order attribution
 - referral clicks are tracked for reporting and attribution context only
-- attributed orders and commissions are written to the shared affiliate backend records that the future customer Affiliate portal will read
+- attributed orders and commissions are written to the shared affiliate backend records that the customer Affiliate portal reads
 - self-referrals are blocked, so an affiliate customer cannot earn commission from their own customer account orders
 
 Current Phase 5 approved-affiliate portal behavior:
 
 - dashboard
-- referral link and referral code
+- referral link and referral code copy tools
+- simple internal storefront link builder
 - traffic summary
 - sales summary
 - commission summary

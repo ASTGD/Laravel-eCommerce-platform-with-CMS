@@ -101,6 +101,7 @@
                     'profile' => $profile,
                     'dashboard' => $dashboard,
                     'payoutMethods' => $payoutMethods,
+                    'referralBuilder' => $referralBuilder,
                 ])
             @endif
         </div>

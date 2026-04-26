@@ -28,11 +28,14 @@ Route::group([
                 ->controller(AffiliateProfileController::class)
                 ->group(function () {
                     Route::get('', 'index')->middleware('platform.acl:affiliates.profiles')->name('admin.affiliates.profiles.index');
+                    Route::get('create', 'create')->middleware('platform.acl:affiliates.profiles.create')->name('admin.affiliates.profiles.create');
+                    Route::post('', 'store')->middleware('platform.acl:affiliates.profiles.create')->name('admin.affiliates.profiles.store');
                     Route::get('{affiliateProfile}', 'show')->middleware('platform.acl:affiliates.profiles.view')->name('admin.affiliates.profiles.show');
                     Route::post('{affiliateProfile}/approve', 'approve')->middleware('platform.acl:affiliates.profiles.approve')->name('admin.affiliates.profiles.approve');
                     Route::post('{affiliateProfile}/reject', 'reject')->middleware('platform.acl:affiliates.profiles.reject')->name('admin.affiliates.profiles.reject');
                     Route::post('{affiliateProfile}/suspend', 'suspend')->middleware('platform.acl:affiliates.profiles.suspend')->name('admin.affiliates.profiles.suspend');
                     Route::post('{affiliateProfile}/reactivate', 'reactivate')->middleware('platform.acl:affiliates.profiles.reactivate')->name('admin.affiliates.profiles.reactivate');
+                    Route::post('{affiliateProfile}/regenerate-referral-code', 'regenerateReferralCode')->middleware('platform.acl:affiliates.profiles.regenerate_referral_code')->name('admin.affiliates.profiles.regenerate-referral-code');
                     Route::post('{affiliateProfile}/payouts', 'storePayout')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.profiles.payouts.store');
                 });
 

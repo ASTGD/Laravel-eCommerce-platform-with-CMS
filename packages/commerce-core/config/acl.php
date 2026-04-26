@@ -192,25 +192,35 @@ return [
         'route' => 'admin.affiliates.profiles.show',
         'sort' => 1,
     ], [
+        'key' => 'affiliates.profiles.create',
+        'name' => 'Create',
+        'route' => 'admin.affiliates.profiles.create',
+        'sort' => 2,
+    ], [
         'key' => 'affiliates.profiles.approve',
         'name' => 'Approve',
         'route' => 'admin.affiliates.profiles.approve',
-        'sort' => 2,
+        'sort' => 3,
     ], [
         'key' => 'affiliates.profiles.reject',
         'name' => 'Reject',
         'route' => 'admin.affiliates.profiles.reject',
-        'sort' => 3,
+        'sort' => 4,
     ], [
         'key' => 'affiliates.profiles.suspend',
         'name' => 'Suspend',
         'route' => 'admin.affiliates.profiles.suspend',
-        'sort' => 4,
+        'sort' => 5,
     ], [
         'key' => 'affiliates.profiles.reactivate',
         'name' => 'Reactivate',
         'route' => 'admin.affiliates.profiles.reactivate',
-        'sort' => 5,
+        'sort' => 6,
+    ], [
+        'key' => 'affiliates.profiles.regenerate_referral_code',
+        'name' => 'Regenerate Referral Code',
+        'route' => 'admin.affiliates.profiles.regenerate-referral-code',
+        'sort' => 7,
     ], [
         'key' => 'affiliates.payouts',
         'name' => 'Payouts',

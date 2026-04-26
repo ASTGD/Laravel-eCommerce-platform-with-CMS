@@ -59,6 +59,9 @@ Route::controller(PublicShipmentTrackingController::class)
         Route::post('', 'lookup')->name('shop.shipment-tracking.lookup');
     });
 
+Route::get('affiliate-program', [AffiliateController::class, 'program'])->name('shop.affiliate-program.index');
+Route::redirect('become-an-affiliate', 'affiliate-program')->name('shop.affiliate-program.redirect');
+
 Route::controller(AffiliateController::class)
     ->prefix('customer/account/affiliate')
     ->middleware(['customer', NoCacheMiddleware::class])

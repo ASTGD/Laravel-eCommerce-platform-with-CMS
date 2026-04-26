@@ -16,6 +16,27 @@ use function Pest\Laravel\post;
 
 uses(TestCase::class);
 
+it('shows a public affiliate program page with guest login and register calls to action', function () {
+    get(route('shop.affiliate-program.index'))
+        ->assertOk()
+        ->assertSeeText('Affiliate Program')
+        ->assertSeeText('Login to Apply')
+        ->assertSeeText('Register')
+        ->assertSee(route('shop.customer.session.index', ['redirect_to' => 'account']))
+        ->assertSee(route('shop.customers.register.index'));
+});
+
+it('routes logged in customers from the public affiliate page into the account application flow', function () {
+    $customer = Customer::factory()->create();
+
+    actingAs($customer, 'customer');
+
+    get(route('shop.affiliate-program.index'))
+        ->assertOk()
+        ->assertSeeText('Go to Affiliate Application')
+        ->assertSee(route('shop.customers.account.affiliate.index'));
+});
+
 it('shows the affiliate application form to a logged in customer without a profile', function () {
     $customer = Customer::factory()->create();
 
@@ -140,6 +161,44 @@ it('shows the approved affiliate dashboard without using a separate affiliate ac
         ->assertSeeText('Attributed orders')
         ->assertSeeText('Request payout')
         ->assertDontSeeText('Submit Application');
+});
+
+it('shows copyable referral tools and builds tracked links for active affiliates', function () {
+    $customer = Customer::factory()->create();
+    $profile = activeAffiliateCustomerPortalProfileFor($customer);
+
+    actingAs($customer, 'customer');
+
+    get(route('shop.customers.account.affiliate.index', ['target_path' => '/products/example']))
+        ->assertOk()
+        ->assertSeeText('Copy Code')
+        ->assertSeeText('Copy Link')
+        ->assertSeeText('Simple link builder')
+        ->assertSee($profile->referral_code)
+        ->assertSee(url('/products/example').'?ref='.$profile->referral_code);
+});
+
+it('replaces stale referral parameters when building active affiliate links', function () {
+    $customer = Customer::factory()->create();
+    $profile = activeAffiliateCustomerPortalProfileFor($customer);
+
+    actingAs($customer, 'customer');
+
+    get(route('shop.customers.account.affiliate.index', ['target_path' => '/products/example?color=red&ref=OLD-CODE']))
+        ->assertOk()
+        ->assertSee(url('/products/example').'?color=red&amp;ref='.$profile->referral_code, false);
+});
+
+it('rejects external referral link builder targets and falls back to the homepage link', function () {
+    $customer = Customer::factory()->create();
+    $profile = activeAffiliateCustomerPortalProfileFor($customer);
+
+    actingAs($customer, 'customer');
+
+    get(route('shop.customers.account.affiliate.index', ['target_path' => 'https://external.example.test/page']))
+        ->assertOk()
+        ->assertSeeText('Referral links can only point to this storefront.')
+        ->assertSee(url('/').'?ref='.$profile->referral_code);
 });
 
 it('lets an active affiliate request a withdrawal from available approved commissions', function () {

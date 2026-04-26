@@ -4,6 +4,11 @@
     $availableBalance = (float) data_get($dashboard, 'balance.available_balance', 0);
     $minimumPayoutAmount = (float) data_get($dashboard, 'minimum_payout_amount', 0);
     $canRequestPayout = $availableBalance >= $minimumPayoutAmount;
+    $referralBuilder ??= [
+        'target_path' => '/',
+        'generated_url' => data_get($dashboard, 'referral.url'),
+        'error' => null,
+    ];
 @endphp
 
 <div class="grid gap-6">
@@ -24,30 +29,131 @@
                     Referral Code
                 </p>
 
-                <p class="mt-1 text-lg font-semibold text-emerald-950">
+                <p
+                    id="affiliate_referral_code"
+                    class="mt-1 text-lg font-semibold text-emerald-950"
+                >
                     {{ data_get($dashboard, 'referral.code') }}
                 </p>
             </div>
         </div>
 
-        <div class="mt-5 grid gap-2">
-            <label
-                for="affiliate_referral_url"
-                class="text-sm font-medium text-emerald-950"
-            >
-                Referral link
-            </label>
+        <div class="mt-5 grid gap-4 rounded-2xl border border-emerald-200 bg-white p-4">
+            <div class="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+                <div class="grid gap-2">
+                    <label
+                        for="affiliate_referral_url"
+                        class="text-sm font-medium text-emerald-950"
+                    >
+                        Main referral link
+                    </label>
 
-            <input
-                id="affiliate_referral_url"
-                type="text"
-                readonly
-                value="{{ data_get($dashboard, 'referral.url') }}"
-                class="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-emerald-950"
-            >
+                    <input
+                        id="affiliate_referral_url"
+                        type="text"
+                        readonly
+                        value="{{ data_get($dashboard, 'referral.url') }}"
+                        class="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-emerald-950"
+                    >
+
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            class="rounded-xl border border-emerald-300 px-4 py-2 text-sm font-medium text-emerald-900 transition hover:bg-emerald-50"
+                            data-affiliate-copy="#affiliate_referral_code"
+                        >
+                            Copy Code
+                        </button>
+
+                        <button
+                            type="button"
+                            class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-800"
+                            data-affiliate-copy="#affiliate_referral_url"
+                        >
+                            Copy Link
+                        </button>
+                    </div>
+                </div>
+
+                <form
+                    method="GET"
+                    action="{{ route('shop.customers.account.affiliate.index') }}"
+                    class="grid gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4"
+                >
+                    <div>
+                        <p class="text-sm font-medium text-emerald-950">
+                            Simple link builder
+                        </p>
+
+                        <p class="mt-1 text-xs text-emerald-700">
+                            Build a tracked link for the homepage or any internal storefront path.
+                        </p>
+                    </div>
+
+                    @if (data_get($referralBuilder, 'error'))
+                        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            {{ data_get($referralBuilder, 'error') }}
+                        </div>
+                    @endif
+
+                    <div class="grid gap-2 sm:grid-cols-[0.8fr_1.2fr_auto]">
+                        <select
+                            id="affiliate_link_preset"
+                            class="rounded-xl border border-emerald-200 bg-white px-3 py-3 text-sm text-emerald-950"
+                            data-affiliate-link-preset
+                        >
+                            <option value="/">Homepage</option>
+                            <option value="custom" @selected(data_get($referralBuilder, 'target_path') !== '/')>Custom path</option>
+                        </select>
+
+                        <input
+                            id="affiliate_target_path"
+                            name="target_path"
+                            type="text"
+                            value="{{ data_get($referralBuilder, 'target_path', '/') }}"
+                            class="rounded-xl border border-emerald-200 bg-white px-3 py-3 text-sm text-emerald-950"
+                            placeholder="/products/example"
+                        >
+
+                        <button
+                            type="submit"
+                            class="rounded-xl bg-navyBlue px-4 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                        >
+                            Generate
+                        </button>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <label
+                            for="affiliate_generated_referral_url"
+                            class="text-xs font-medium uppercase text-emerald-700"
+                        >
+                            Generated tracked link
+                        </label>
+
+                        <div class="flex gap-2 max-sm:flex-wrap">
+                            <input
+                                id="affiliate_generated_referral_url"
+                                type="text"
+                                readonly
+                                value="{{ data_get($referralBuilder, 'generated_url') }}"
+                                class="min-w-0 flex-1 rounded-xl border border-emerald-200 bg-white px-3 py-3 text-sm text-emerald-950"
+                            >
+
+                            <button
+                                type="button"
+                                class="rounded-xl border border-emerald-300 px-4 py-3 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100"
+                                data-affiliate-copy="#affiliate_generated_referral_url"
+                            >
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
             <p class="text-xs text-emerald-700">
-                Share this link with your audience. Commissions are created only for attributed orders, not for clicks.
+                Links stay valid while your affiliate account is active and this code remains current. Attribution expires after {{ data_get($dashboard, 'referral.cookie_window_days', 30) }} days.
             </p>
         </div>
     </div>
@@ -344,3 +450,51 @@
         </div>
     </div>
 </div>
+
+@pushOnce('scripts')
+    <script>
+        (() => {
+            const copyText = (selector, button) => {
+                const target = document.querySelector(selector);
+
+                if (! target) {
+                    return;
+                }
+
+                navigator.clipboard?.writeText(target.value || target.textContent.trim());
+
+                const originalText = button.textContent;
+
+                button.textContent = 'Copied';
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 1400);
+            };
+
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-affiliate-copy]');
+
+                if (! button) {
+                    return;
+                }
+
+                copyText(button.getAttribute('data-affiliate-copy'), button);
+            });
+
+            document.addEventListener('change', (event) => {
+                const select = event.target.closest('[data-affiliate-link-preset]');
+
+                if (! select || select.value !== '/') {
+                    return;
+                }
+
+                const input = document.getElementById('affiliate_target_path');
+
+                if (input) {
+                    input.value = '/';
+                }
+            });
+        })();
+    </script>
+@endPushOnce

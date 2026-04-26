@@ -13,6 +13,15 @@
                 Review customer applications and manage active affiliate profiles.
             </p>
         </div>
+
+        @if (bouncer()->hasPermission('affiliates.profiles.create'))
+            <a
+                href="{{ route('admin.affiliates.profiles.create') }}"
+                class="primary-button"
+            >
+                Add Affiliate
+            </a>
+        @endif
     </div>
 
     <div class="mt-5 rounded bg-white p-4 dark:bg-gray-900">

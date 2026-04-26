@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Platform\CommerceCore\Services\Affiliates\AffiliateReferralLinkService;
 use Webkul\Customer\Models\CustomerProxy;
 use Webkul\User\Models\AdminProxy;
 
@@ -141,9 +142,7 @@ class AffiliateProfile extends Model
 
     public function referralUrl(?string $path = null): string
     {
-        $target = $path ?: '/';
-
-        return url($target).(str_contains($target, '?') ? '&' : '?').'ref='.$this->referral_code;
+        return app(AffiliateReferralLinkService::class)->build($this, $path);
     }
 
     public function getReferralUrlAttribute(): string
