@@ -131,7 +131,8 @@ Phase 4 referral tracking decisions:
 
 - Referral links use the `ref` query parameter, for example `/?ref=AFFILIATECODE`.
 - Referral link validity and attribution expiration are intentionally separate:
-  - the referral code/link remains valid while the affiliate profile is `active` and the code has not been regenerated
+  - the referral code is stable for the life of the affiliate profile
+  - the referral code/link remains valid while the affiliate profile is `active`
   - visitor attribution expires by the configured cookie/session window
 - Storefront GET requests with a valid active referral code create an `affiliate_click` record and store attribution context in both session and an HTTP-only referral cookie.
 - Admin routes are excluded from referral capture.
@@ -140,7 +141,7 @@ Phase 4 referral tracking decisions:
 - Order attribution runs from the Bagisto `checkout.order.save.after` event and creates one `affiliate_order_attribution` record per order.
 - Commission creation happens from the same order-save attribution flow and creates a pending order-based commission using the configured default commission rule.
 - Self-referrals are blocked during click capture and order attribution when `commerce_affiliate.self_referral_prevention` is enabled.
-- Regenerating an affiliate referral code updates the profile's active code and stores the previous code in profile metadata for audit context. Old links immediately stop creating new attribution because active profile lookup only uses the current code.
+- Referral code rotation is not part of the v1 product flow. Abuse control is handled through affiliate status, self-referral prevention, valid order/commission rules, and cancel/reversal handling.
 - Order cancellation reverses the related commission and marks the order attribution as canceled from the Bagisto `sales.order.cancel.after` event.
 - Refund-specific commission adjustment is not part of v1 Phase 4 and should be handled in a later hardening slice if partial-refund behavior is needed.
 

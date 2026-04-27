@@ -3,19 +3,17 @@
 namespace Platform\CommerceCore\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Platform\CommerceCore\Http\Requests\Admin\AffiliatePayoutRecordRequest;
 use Platform\CommerceCore\Http\Requests\Admin\AffiliateProfileStoreRequest;
 use Platform\CommerceCore\Http\Requests\Admin\AffiliateStatusRequest;
-use Platform\CommerceCore\Models\AffiliateClick;
 use Platform\CommerceCore\Models\AffiliateCommission;
-use Platform\CommerceCore\Models\AffiliateOrderAttribution;
-use Platform\CommerceCore\Models\AffiliatePayout;
 use Platform\CommerceCore\Models\AffiliateProfile;
 use Platform\CommerceCore\Services\Affiliates\AffiliatePayoutService;
+use Platform\CommerceCore\Services\Affiliates\AffiliateProfileDashboardService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateProfileService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateSettingsService;
 use Webkul\Customer\Models\Customer;
@@ -26,6 +24,7 @@ class AffiliateProfileController extends Controller
         protected AffiliateProfileService $affiliateProfileService,
         protected AffiliatePayoutService $affiliatePayoutService,
         protected AffiliateSettingsService $affiliateSettingsService,
+        protected AffiliateProfileDashboardService $affiliateProfileDashboardService,
     ) {}
 
     public function index(Request $request): View
@@ -89,24 +88,31 @@ class AffiliateProfileController extends Controller
             ->with('success', 'Affiliate profile created.');
     }
 
-    public function show(AffiliateProfile $affiliateProfile): View
+    public function show(Request $request, AffiliateProfile $affiliateProfile): View
     {
         $affiliateProfile->load([
             'customer',
             'approvedBy',
             'rejectedBy',
             'suspendedBy',
-            'commissions' => fn ($query) => $query->with('order')->latest('id')->limit(20),
-            'payouts' => fn ($query) => $query->latest('id')->limit(20),
         ]);
+
+        $activeTab = $this->resolvedProfileTab($request->string('tab')->value());
+        $commissionFilters = [
+            'status' => $request->string('commission_status')->value(),
+            'order' => $request->string('commission_order')->value(),
+            'date_from' => $request->string('commission_date_from')->value(),
+            'date_to' => $request->string('commission_date_to')->value(),
+        ];
 
         return view('commerce-core::admin.affiliates.profiles.show', [
             'profile' => $affiliateProfile,
-            'trafficSummary' => $this->trafficSummary($affiliateProfile),
-            'salesSummary' => $this->salesSummary($affiliateProfile),
-            'commissionSummary' => $this->commissionSummary($affiliateProfile),
-            'payoutSummary' => $this->payoutSummary($affiliateProfile),
-            'balance' => $this->affiliatePayoutService->balanceFor($affiliateProfile),
+            'dashboard' => $this->affiliateProfileDashboardService->build($affiliateProfile, [
+                'commissions' => $commissionFilters,
+            ]),
+            'activeTab' => $activeTab,
+            'commissionFilters' => $commissionFilters,
+            'commissionStatusOptions' => AffiliateCommission::statusLabels(),
             'payoutMethods' => $this->affiliateSettingsService->payoutMethods(),
         ]);
     }
@@ -147,15 +153,6 @@ class AffiliateProfileController extends Controller
             ->with('success', 'Affiliate reactivated.');
     }
 
-    public function regenerateReferralCode(AffiliateProfile $affiliateProfile): RedirectResponse
-    {
-        $this->affiliateProfileService->regenerateReferralCode($affiliateProfile, auth()->guard('admin')->id());
-
-        return redirect()
-            ->route('admin.affiliates.profiles.show', $affiliateProfile)
-            ->with('success', 'Referral code regenerated. The previous referral link no longer creates new attribution.');
-    }
-
     public function storePayout(AffiliatePayoutRecordRequest $request, AffiliateProfile $affiliateProfile): RedirectResponse
     {
         $this->affiliatePayoutService->recordPaidPayout(
@@ -190,63 +187,6 @@ class AffiliateProfileController extends Controller
             ->all();
     }
 
-    protected function trafficSummary(AffiliateProfile $profile): array
-    {
-        return [
-            'clicks' => AffiliateClick::query()->where('affiliate_profile_id', $profile->id)->count(),
-            'recent_clicks' => AffiliateClick::query()
-                ->where('affiliate_profile_id', $profile->id)
-                ->where('clicked_at', '>=', now()->subDays(30))
-                ->count(),
-        ];
-    }
-
-    protected function salesSummary(AffiliateProfile $profile): array
-    {
-        return [
-            'attributed_orders' => AffiliateOrderAttribution::query()
-                ->where('affiliate_profile_id', $profile->id)
-                ->where('status', AffiliateOrderAttribution::STATUS_ATTRIBUTED)
-                ->count(),
-        ];
-    }
-
-    protected function commissionSummary(AffiliateProfile $profile): array
-    {
-        return [
-            'pending' => $this->sumCommissions($profile, AffiliateCommission::STATUS_PENDING),
-            'approved' => $this->sumCommissions($profile, AffiliateCommission::STATUS_APPROVED),
-            'paid' => $this->sumCommissions($profile, AffiliateCommission::STATUS_PAID),
-            'reversed' => $this->sumCommissions($profile, AffiliateCommission::STATUS_REVERSED),
-        ];
-    }
-
-    protected function payoutSummary(AffiliateProfile $profile): array
-    {
-        return [
-            'requested' => $this->sumPayouts($profile, AffiliatePayout::STATUS_REQUESTED),
-            'approved' => $this->sumPayouts($profile, AffiliatePayout::STATUS_APPROVED),
-            'paid' => $this->sumPayouts($profile, AffiliatePayout::STATUS_PAID),
-            'rejected' => $this->sumPayouts($profile, AffiliatePayout::STATUS_REJECTED),
-        ];
-    }
-
-    protected function sumCommissions(AffiliateProfile $profile, string $status): float
-    {
-        return (float) AffiliateCommission::query()
-            ->where('affiliate_profile_id', $profile->id)
-            ->where('status', $status)
-            ->sum('commission_amount');
-    }
-
-    protected function sumPayouts(AffiliateProfile $profile, string $status): float
-    {
-        return (float) AffiliatePayout::query()
-            ->where('affiliate_profile_id', $profile->id)
-            ->where('status', $status)
-            ->sum('amount');
-    }
-
     protected function customersWithoutAffiliateProfile()
     {
         return Customer::query()
@@ -255,5 +195,12 @@ class AffiliateProfileController extends Controller
             ->orderBy('last_name')
             ->limit(200)
             ->get(['id', 'first_name', 'last_name', 'email', 'phone']);
+    }
+
+    protected function resolvedProfileTab(?string $tab): string
+    {
+        return in_array($tab, ['overview', 'commissions', 'payouts', 'traffic', 'profile', 'activity'], true)
+            ? $tab
+            : 'overview';
     }
 }

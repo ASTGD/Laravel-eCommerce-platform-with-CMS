@@ -68,12 +68,12 @@ The affiliate MVP is acceptable when all of the following are true:
 2. Customers can apply from the existing customer account portal.
 3. Pending, rejected, suspended, and active states are canonical and shared between admin and customer portal.
 4. Admin can create an affiliate profile directly for an existing customer account.
-5. Admin can approve, reject, suspend, reactivate, and regenerate referral codes from the admin `Affiliates` area.
+5. Admin can approve, reject, suspend, and reactivate affiliates from the admin `Affiliates` area.
 6. The storefront has a public affiliate-program entry page that sends guests to login/register and logged-in customers to the account affiliate flow.
 7. Active affiliates see the customer Affiliate dashboard; non-active affiliates see only their relevant state.
 8. Active affiliates can copy their referral code/link and generate simple tracked links for internal storefront paths.
 9. Referral links create click records for reporting and attribution context only.
-10. Referral links remain valid while the affiliate is active and the code is current; attribution expires by the cookie window.
+10. Referral codes are stable for the life of the affiliate profile; referral links remain valid while the affiliate is active, and attribution expires by the cookie window.
 11. Attributed orders create order-based commission records.
 12. Payout availability is derived from approved commissions and payout allocation rows.
 13. Customer withdrawal requests and admin payout records use the same payout lifecycle.

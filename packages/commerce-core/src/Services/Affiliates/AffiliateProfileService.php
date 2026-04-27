@@ -153,30 +153,6 @@ class AffiliateProfileService
         return $this->approve($profile, $adminId);
     }
 
-    public function regenerateReferralCode(AffiliateProfile $profile, ?int $adminId = null): AffiliateProfile
-    {
-        $oldCode = $profile->referral_code;
-        $meta = $profile->meta ?: [];
-        $previousCodes = collect(Arr::get($meta, 'previous_referral_codes', []))
-            ->push($oldCode)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        $profile->fill([
-            'referral_code' => $this->generateReferralCode($profile->customer),
-            'meta' => [
-                ...$meta,
-                'previous_referral_codes' => $previousCodes,
-                'last_referral_code_regenerated_at' => now()->toIso8601String(),
-                'last_referral_code_regenerated_by_admin_id' => $adminId,
-            ],
-        ])->save();
-
-        return $profile->refresh();
-    }
-
     public function profileForCustomer(?Customer $customer): ?AffiliateProfile
     {
         if (! $customer) {

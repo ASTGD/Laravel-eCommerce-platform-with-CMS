@@ -1,11 +1,11 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Platform\CommerceCore\Models\AffiliateCommission;
 use Platform\CommerceCore\Models\AffiliatePayout;
 use Platform\CommerceCore\Models\AffiliateProfile;
 use Platform\CommerceCore\Services\Affiliates\AffiliatePayoutService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateProfileService;
-use Platform\CommerceCore\Services\Affiliates\ReferralAttributionService;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Customer\Models\Customer;
 use Webkul\Sales\Models\Order;
@@ -157,10 +157,49 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
 
     get(route('admin.affiliates.profiles.show', $profile))
         ->assertOk()
+        ->assertSeeText('Affiliate Profile')
         ->assertSeeText('Active Partner')
+        ->assertSeeText('Affiliate Identity')
+        ->assertSeeText('Referral Tools')
+        ->assertSeeText('Overview')
+        ->assertSeeText('Commissions')
+        ->assertSeeText('Payouts')
+        ->assertSeeText('Traffic & Referrals')
+        ->assertSeeText('Profile / Application')
+        ->assertSeeText('Activity Log')
+        ->assertSee('data-affiliate-profile-tabs', false)
+        ->assertSee('data-affiliate-tab-trigger="commissions"', false)
+        ->assertSee('data-affiliate-tab-panel="payouts"', false)
+        ->assertDontSee('href="'.route('admin.affiliates.profiles.show', [
+            'affiliateProfile' => $profile,
+            'tab' => 'commissions',
+        ]).'"', false)
         ->assertSeeText('Referral Code')
         ->assertSeeText('Available Balance')
-        ->assertSeeText('Add Payout Record');
+        ->assertSeeText('Create Payout');
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'commissions',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Commission Ledger')
+        ->assertSeeText('Payout Reference');
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'payouts',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Payout Operations')
+        ->assertSeeText('Create Paid Payout');
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'traffic',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Recent Referral Activity');
 
     post(route('admin.affiliates.profiles.payouts.store', $profile), [
         'amount' => 60,
@@ -178,7 +217,7 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
         ->and($payout->payout_reference)->toBe('BANK-PAID-1001');
 });
 
-it('lets admin regenerate a referral code and invalidates the old code for new attribution', function () {
+it('keeps referral codes stable and does not expose regeneration controls', function () {
     $this->loginAsAdmin();
 
     $customer = Customer::factory()->create();
@@ -192,18 +231,17 @@ it('lets admin regenerate a referral code and invalidates the old code for new a
 
     get(route('admin.affiliates.profiles.show', $profile))
         ->assertOk()
-        ->assertSeeText('Regenerate Referral Code')
+        ->assertSeeText('Referral Code')
+        ->assertSeeText('Copy Code')
+        ->assertSeeText('Copy Link')
+        ->assertDontSeeText('Regenerate')
+        ->assertDontSeeText('Regenerate Referral Code')
         ->assertSee($profile->referral_url);
-
-    post(route('admin.affiliates.profiles.regenerate-referral-code', $profile))
-        ->assertRedirect(route('admin.affiliates.profiles.show', $profile));
 
     $profile->refresh();
 
-    expect($profile->referral_code)->not->toBe($oldCode)
-        ->and(data_get($profile->meta, 'previous_referral_codes'))->toContain($oldCode)
-        ->and(app(ReferralAttributionService::class)->findActiveProfileByCode($oldCode))->toBeNull()
-        ->and(app(ReferralAttributionService::class)->findActiveProfileByCode($profile->referral_code)?->is($profile))->toBeTrue();
+    expect($profile->referral_code)->toBe($oldCode)
+        ->and(Route::has('admin.affiliates.profiles.regenerate-referral-code'))->toBeFalse();
 });
 
 it('shows payout status buckets and lets admin approve and complete withdrawal requests', function () {
