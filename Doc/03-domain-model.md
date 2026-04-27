@@ -125,7 +125,7 @@ Core relationship rules:
 - Payout balances are derived from approved commissions and payout allocation rows rather than relying on cached totals.
 - Self-referral prevention is enabled by default.
 
-Default affiliate settings are package config values under `commerce_affiliate`, with admin-managed overrides stored in `affiliate_settings`. Runtime services read through `AffiliateSettingsService`, so admin and customer portal workflows share the same approval, commission, cookie-window, payout-method, minimum-payout, and terms rules.
+Default affiliate settings are package config values under `commerce_affiliate`, with admin-managed overrides stored in `affiliate_settings`. Runtime services read through `AffiliateSettingsService`, so admin and customer portal workflows share the same affiliate approval, commission approval mode, commission, cookie-window, payout-method, minimum-payout, and terms rules.
 
 Phase 4 referral tracking decisions:
 
@@ -140,10 +140,11 @@ Phase 4 referral tracking decisions:
 - Session attribution takes priority over cookie attribution when both are present.
 - Order attribution runs from the Bagisto `checkout.order.save.after` event and creates one `affiliate_order_attribution` record per order.
 - Commission creation happens from the same order-save attribution flow and creates a pending order-based commission using the configured default commission rule.
+- `commission_approval_mode=manual` keeps pending commissions out of available payout balance until admin approves them from the affiliate profile commission ledger.
+- `commission_approval_mode=automatic` approves pending commissions only after the order reaches an eligible earned state, currently completed order status or delivered shipment status.
 - Self-referrals are blocked during click capture and order attribution when `commerce_affiliate.self_referral_prevention` is enabled.
 - Referral code rotation is not part of the v1 product flow. Abuse control is handled through affiliate status, self-referral prevention, valid order/commission rules, and cancel/reversal handling.
-- Order cancellation reverses the related commission and marks the order attribution as canceled from the Bagisto `sales.order.cancel.after` event.
-- Refund-specific commission adjustment is not part of v1 Phase 4 and should be handled in a later hardening slice if partial-refund behavior is needed.
+- Order cancellation and refund creation reverse the related commission and mark the order attribution as canceled.
 
 Phase 5 customer portal decisions:
 
@@ -151,7 +152,7 @@ Phase 5 customer portal decisions:
 - Active affiliate referral tools expose one stable code, the main homepage referral link, and a simple internal-path link builder.
 - The customer portal does not maintain separate cached affiliate totals in v1.
 - Customer withdrawal requests create `affiliate_payouts` records with `requested` status.
-- Affiliate payout availability is derived from approved commissions minus active payout allocation rows.
+- Affiliate payout availability is derived from net payable commission minus completed payouts and reserved payout allocations. Reversed paid commissions may create a negative carry-forward balance that future approved commissions offset.
 - `affiliate_payouts.payout_reference` remains the system payout record/reference. Customer-entered transfer account details are stored in `affiliate_payouts.meta.payout_account_details`.
 
 Phase 6 payout lifecycle decisions:

@@ -6,6 +6,7 @@ use Platform\CommerceCore\Models\AffiliatePayout;
 use Platform\CommerceCore\Models\AffiliateProfile;
 use Platform\CommerceCore\Services\Affiliates\AffiliatePayoutService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateProfileService;
+use Platform\CommerceCore\Services\Affiliates\AffiliateSettingsService;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Customer\Models\Customer;
 use Webkul\Sales\Models\Order;
@@ -217,6 +218,97 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
         ->and($payout->payout_reference)->toBe('BANK-PAID-1001');
 });
 
+it('lets admin approve and reverse individual affiliate commissions in manual mode', function () {
+    $this->loginAsAdmin();
+
+    app(AffiliateSettingsService::class)->update([
+        'approval_required' => true,
+        'default_commission_type' => 'percentage',
+        'default_commission_value' => 10,
+        'commission_approval_mode' => 'manual',
+        'cookie_window_days' => 30,
+        'minimum_payout_amount' => 1,
+        'payout_methods' => [
+            'bank_transfer' => 'Bank Transfer',
+        ],
+        'terms_text' => 'Affiliate terms.',
+    ]);
+
+    $profile = app(AffiliateProfileService::class)->approve(
+        app(AffiliateProfileService::class)->apply(Customer::factory()->create(), [
+            'application_note' => 'Manual commission affiliate.',
+            'terms_accepted' => true,
+        ]),
+    );
+    $pendingCommission = createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_PENDING, 110);
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'commissions',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Commission approval is set to Manual')
+        ->assertSeeText('Approve')
+        ->assertSeeText('Reverse');
+
+    expect(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(0.0);
+
+    post(route('admin.affiliates.commissions.approve', $pendingCommission))
+        ->assertRedirect(route('admin.affiliates.profiles.show', [
+            'affiliateProfile' => $profile->id,
+            'tab' => 'commissions',
+        ]));
+
+    expect($pendingCommission->refresh()->status)->toBe(AffiliateCommission::STATUS_APPROVED)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(110.0);
+
+    $secondCommission = createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_PENDING, 40);
+
+    post(route('admin.affiliates.commissions.reverse', $secondCommission), [
+        'reason' => 'Manual review failed.',
+    ])->assertRedirect(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile->id,
+        'tab' => 'commissions',
+    ]));
+
+    expect($secondCommission->refresh()->status)->toBe(AffiliateCommission::STATUS_REVERSED)
+        ->and($secondCommission->reversal_reason)->toBe('Manual review failed.')
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(110.0);
+});
+
+it('shows automatic commission mode without prominent manual approve actions', function () {
+    $this->loginAsAdmin();
+
+    app(AffiliateSettingsService::class)->update([
+        'approval_required' => true,
+        'default_commission_type' => 'percentage',
+        'default_commission_value' => 10,
+        'commission_approval_mode' => 'automatic',
+        'cookie_window_days' => 30,
+        'minimum_payout_amount' => 1,
+        'payout_methods' => [
+            'bank_transfer' => 'Bank Transfer',
+        ],
+        'terms_text' => 'Affiliate terms.',
+    ]);
+
+    $profile = app(AffiliateProfileService::class)->approve(
+        app(AffiliateProfileService::class)->apply(Customer::factory()->create(), [
+            'application_note' => 'Automatic commission affiliate.',
+            'terms_accepted' => true,
+        ]),
+    );
+    createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_PENDING, 110);
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'commissions',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Commission approval is set to Automatic')
+        ->assertDontSeeText('Pending commissions require admin approval');
+});
+
 it('keeps referral codes stable and does not expose regeneration controls', function () {
     $this->loginAsAdmin();
 
@@ -284,6 +376,11 @@ it('shows payout status buckets and lets admin approve and complete withdrawal r
 
 function createApprovedAffiliateCommission(AffiliateProfile $profile, float $amount): AffiliateCommission
 {
+    return createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_APPROVED, $amount);
+}
+
+function createAffiliateAdminCommission(AffiliateProfile $profile, string $status, float $amount): AffiliateCommission
+{
     $order = Order::factory()->create([
         'customer_id' => Customer::factory()->create()->id,
         'base_sub_total' => $amount * 10,
@@ -295,13 +392,14 @@ function createApprovedAffiliateCommission(AffiliateProfile $profile, float $amo
     return AffiliateCommission::query()->create([
         'affiliate_profile_id' => $profile->id,
         'order_id' => $order->id,
-        'status' => AffiliateCommission::STATUS_APPROVED,
+        'status' => $status,
         'commission_type' => 'fixed',
         'commission_rate' => $amount,
         'order_amount' => $amount * 10,
         'commission_amount' => $amount,
         'currency' => 'USD',
-        'eligible_at' => now(),
-        'approved_at' => now(),
+        'eligible_at' => $status === AffiliateCommission::STATUS_APPROVED ? now() : null,
+        'approved_at' => $status === AffiliateCommission::STATUS_APPROVED ? now() : null,
+        'reversed_at' => $status === AffiliateCommission::STATUS_REVERSED ? now() : null,
     ]);
 }

@@ -25,6 +25,8 @@ return [
         'value' => 10.0,
     ],
 
+    'commission_approval_mode' => 'manual',
+
     'minimum_payout_amount' => 50.0,
 
     'payout_methods' => [

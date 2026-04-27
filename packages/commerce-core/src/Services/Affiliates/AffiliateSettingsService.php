@@ -7,6 +7,10 @@ use Platform\CommerceCore\Models\AffiliateSetting;
 
 class AffiliateSettingsService
 {
+    public const COMMISSION_APPROVAL_MANUAL = 'manual';
+
+    public const COMMISSION_APPROVAL_AUTOMATIC = 'automatic';
+
     public function all(): array
     {
         $settings = $this->defaults();
@@ -21,6 +25,12 @@ class AffiliateSettingsService
         $settings['approval_required'] = (bool) $settings['approval_required'];
         $settings['cookie_window_days'] = max((int) $settings['cookie_window_days'], 1);
         $settings['minimum_payout_amount'] = max((float) $settings['minimum_payout_amount'], 0);
+        $settings['commission_approval_mode'] = in_array($settings['commission_approval_mode'] ?? null, [
+            self::COMMISSION_APPROVAL_MANUAL,
+            self::COMMISSION_APPROVAL_AUTOMATIC,
+        ], true)
+            ? $settings['commission_approval_mode']
+            : self::COMMISSION_APPROVAL_MANUAL;
         $settings['payout_methods'] = $this->normalizedPayoutMethods($settings['payout_methods'] ?? []);
         $settings['default_commission'] = [
             'type' => in_array(Arr::get($settings, 'default_commission.type'), ['percentage', 'fixed'], true)
@@ -40,6 +50,12 @@ class AffiliateSettingsService
                 'type' => $payload['default_commission_type'] ?? 'percentage',
                 'value' => (float) ($payload['default_commission_value'] ?? 10),
             ],
+            'commission_approval_mode' => in_array($payload['commission_approval_mode'] ?? null, [
+                self::COMMISSION_APPROVAL_MANUAL,
+                self::COMMISSION_APPROVAL_AUTOMATIC,
+            ], true)
+                ? $payload['commission_approval_mode']
+                : self::COMMISSION_APPROVAL_MANUAL,
             'cookie_window_days' => (int) ($payload['cookie_window_days'] ?? 30),
             'minimum_payout_amount' => (float) ($payload['minimum_payout_amount'] ?? 50),
             'payout_methods' => $this->normalizedPayoutMethods($payload['payout_methods'] ?? []),
@@ -72,6 +88,28 @@ class AffiliateSettingsService
             'type' => 'percentage',
             'value' => 10.0,
         ]);
+    }
+
+    public function commissionApprovalMode(): string
+    {
+        $mode = (string) $this->get('commission_approval_mode', self::COMMISSION_APPROVAL_MANUAL);
+
+        return in_array($mode, [
+            self::COMMISSION_APPROVAL_MANUAL,
+            self::COMMISSION_APPROVAL_AUTOMATIC,
+        ], true)
+            ? $mode
+            : self::COMMISSION_APPROVAL_MANUAL;
+    }
+
+    public function usesManualCommissionApproval(): bool
+    {
+        return $this->commissionApprovalMode() === self::COMMISSION_APPROVAL_MANUAL;
+    }
+
+    public function usesAutomaticCommissionApproval(): bool
+    {
+        return $this->commissionApprovalMode() === self::COMMISSION_APPROVAL_AUTOMATIC;
     }
 
     public function cookieWindowDays(): int
@@ -126,6 +164,7 @@ class AffiliateSettingsService
                 'type' => 'percentage',
                 'value' => 10.0,
             ]),
+            'commission_approval_mode' => (string) config('commerce_affiliate.commission_approval_mode', self::COMMISSION_APPROVAL_MANUAL),
             'cookie_window_days' => (int) config('commerce_affiliate.cookie_window_days', 30),
             'minimum_payout_amount' => (float) config('commerce_affiliate.minimum_payout_amount', 50.0),
             'payout_methods' => (array) config('commerce_affiliate.payout_methods', []),

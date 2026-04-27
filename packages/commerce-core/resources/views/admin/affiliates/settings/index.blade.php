@@ -99,6 +99,31 @@
 
                 <div class="grid gap-2">
                     <label class="text-sm font-medium text-gray-800 dark:text-white">
+                        Affiliate Commission Approval
+                    </label>
+
+                    <select
+                        name="commission_approval_mode"
+                        class="custom-select w-full rounded-md border bg-white px-3 py-2.5 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                    >
+                        <option value="manual" @selected(old('commission_approval_mode', $settings['commission_approval_mode']) === 'manual')>
+                            Manual
+                        </option>
+
+                        <option value="automatic" @selected(old('commission_approval_mode', $settings['commission_approval_mode']) === 'automatic')>
+                            Automatic
+                        </option>
+                    </select>
+
+                    <p class="text-xs text-gray-500 dark:text-gray-300">
+                        Manual keeps new commissions pending until admin approval. Automatic approves commissions when orders become eligible.
+                    </p>
+
+                    @error('commission_approval_mode') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="grid gap-2">
+                    <label class="text-sm font-medium text-gray-800 dark:text-white">
                         Default Commission Value
                     </label>
 

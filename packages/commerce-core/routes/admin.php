@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\CommerceCore\Http\Controllers\Admin\AffiliateCommissionController;
 use Platform\CommerceCore\Http\Controllers\Admin\AffiliatePayoutController;
 use Platform\CommerceCore\Http\Controllers\Admin\AffiliateProfileController;
 use Platform\CommerceCore\Http\Controllers\Admin\AffiliateReportController;
@@ -45,6 +46,14 @@ Route::group([
                     Route::post('{affiliatePayout}/approve', 'approve')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.payouts.approve');
                     Route::post('{affiliatePayout}/mark-paid', 'markPaid')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.payouts.mark-paid');
                     Route::post('{affiliatePayout}/reject', 'reject')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.payouts.reject');
+                });
+
+            Route::prefix('commissions')
+                ->controller(AffiliateCommissionController::class)
+                ->middleware('platform.acl:affiliates.commissions.manage')
+                ->group(function () {
+                    Route::post('{affiliateCommission}/approve', 'approve')->name('admin.affiliates.commissions.approve');
+                    Route::post('{affiliateCommission}/reverse', 'reverse')->name('admin.affiliates.commissions.reverse');
                 });
 
             Route::get('reports', [AffiliateReportController::class, 'index'])

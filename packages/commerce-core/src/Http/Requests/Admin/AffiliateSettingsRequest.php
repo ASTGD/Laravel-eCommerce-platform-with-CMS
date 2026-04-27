@@ -18,6 +18,7 @@ class AffiliateSettingsRequest extends FormRequest
             'approval_required' => ['required', 'boolean'],
             'default_commission_type' => ['required', 'in:percentage,fixed'],
             'default_commission_value' => ['required', 'numeric', 'min:0'],
+            'commission_approval_mode' => ['required', 'in:manual,automatic'],
             'cookie_window_days' => ['required', 'integer', 'min:1', 'max:365'],
             'minimum_payout_amount' => ['required', 'numeric', 'min:0'],
             'payout_methods_text' => ['required', 'string', 'max:3000'],
@@ -38,6 +39,7 @@ class AffiliateSettingsRequest extends FormRequest
     {
         return [
             'default_commission_type.in' => 'Choose Percentage or Fixed commission.',
+            'commission_approval_mode.in' => 'Choose Manual or Automatic commission approval.',
             'cookie_window_days.max' => 'Cookie window cannot be more than 365 days.',
             'payout_methods_text.required' => 'Add at least one payout method.',
         ];
@@ -51,6 +53,7 @@ class AffiliateSettingsRequest extends FormRequest
             'approval_required' => (bool) $validated['approval_required'],
             'default_commission_type' => $validated['default_commission_type'],
             'default_commission_value' => (float) $validated['default_commission_value'],
+            'commission_approval_mode' => $validated['commission_approval_mode'],
             'cookie_window_days' => (int) $validated['cookie_window_days'],
             'minimum_payout_amount' => (float) $validated['minimum_payout_amount'],
             'payout_methods' => $this->parsedPayoutMethods(),

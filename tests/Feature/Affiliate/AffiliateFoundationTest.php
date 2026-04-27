@@ -3,10 +3,13 @@
 use Platform\CommerceCore\Models\AffiliateCommission;
 use Platform\CommerceCore\Models\AffiliatePayout;
 use Platform\CommerceCore\Models\AffiliateProfile;
+use Platform\CommerceCore\Models\AffiliateSetting;
+use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Services\Affiliates\AffiliateCommissionService;
 use Platform\CommerceCore\Services\Affiliates\AffiliatePayoutService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateProfileService;
 use Platform\CommerceCore\Services\Affiliates\ReferralAttributionService;
+use Platform\CommerceCore\Services\ShipmentRecordService;
 use Tests\TestCase;
 use Webkul\Customer\Models\Customer;
 use Webkul\Sales\Models\Order;
@@ -118,3 +121,97 @@ it('prevents self referrals from creating clicks or order attribution', function
     expect($click)->toBeNull()
         ->and($attributionService->attributeOrder($order, $profile))->toBeNull();
 });
+
+it('keeps commissions pending in manual approval mode until admin approval', function () {
+    config()->set('commerce_affiliate.commission_approval_mode', 'manual');
+
+    $profile = activeAffiliateFoundationProfile();
+    $order = Order::factory()->create([
+        'customer_id' => Customer::factory()->create()->id,
+        'status' => Order::STATUS_COMPLETED,
+        'base_sub_total' => 1000,
+        'base_grand_total' => 1000,
+        'base_currency_code' => 'USD',
+        'order_currency_code' => 'USD',
+    ]);
+    $attribution = app(ReferralAttributionService::class)->attributeOrder($order, $profile);
+    $commission = app(AffiliateCommissionService::class)->createForOrder($order, $attribution);
+
+    expect($commission->status)->toBe(AffiliateCommission::STATUS_PENDING)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(0.0);
+});
+
+it('automatically approves commissions when an order reaches completed status in automatic mode', function () {
+    config()->set('commerce_affiliate.commission_approval_mode', 'automatic');
+
+    $profile = activeAffiliateFoundationProfile();
+    $order = Order::factory()->create([
+        'customer_id' => Customer::factory()->create()->id,
+        'status' => Order::STATUS_PROCESSING,
+        'base_sub_total' => 1000,
+        'base_grand_total' => 1000,
+        'base_currency_code' => 'USD',
+        'order_currency_code' => 'USD',
+    ]);
+    $attribution = app(ReferralAttributionService::class)->attributeOrder($order, $profile);
+    $commission = app(AffiliateCommissionService::class)->createForOrder($order, $attribution);
+
+    expect($commission->status)->toBe(AffiliateCommission::STATUS_PENDING)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(0.0);
+
+    $order->forceFill(['status' => Order::STATUS_COMPLETED])->save();
+    app(AffiliateCommissionService::class)->handleOrderEligibilityForCommission($order);
+
+    expect($commission->refresh()->status)->toBe(AffiliateCommission::STATUS_APPROVED)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(100.0);
+
+    app(AffiliateCommissionService::class)->reverseForOrder($order, 'Order refunded.');
+
+    expect($commission->refresh()->status)->toBe(AffiliateCommission::STATUS_REVERSED)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(0.0);
+});
+
+it('automatically approves commissions when a shipment is marked delivered in automatic mode', function () {
+    config()->set('commerce_affiliate.commission_approval_mode', 'automatic');
+
+    $profile = activeAffiliateFoundationProfile();
+    $order = Order::factory()->create([
+        'customer_id' => Customer::factory()->create()->id,
+        'status' => Order::STATUS_PROCESSING,
+        'base_sub_total' => 1000,
+        'base_grand_total' => 1000,
+        'base_currency_code' => 'USD',
+        'order_currency_code' => 'USD',
+    ]);
+    $attribution = app(ReferralAttributionService::class)->attributeOrder($order, $profile);
+    $commission = app(AffiliateCommissionService::class)->createForOrder($order, $attribution);
+    $shipmentRecord = ShipmentRecord::query()->create([
+        'order_id' => $order->id,
+        'status' => ShipmentRecord::STATUS_IN_TRANSIT,
+        'carrier_name_snapshot' => 'Manual Courier',
+        'tracking_number' => 'AFF-AUTO-DELIVERED',
+        'cod_amount_expected' => 0,
+        'carrier_fee_amount' => 0,
+        'cod_fee_amount' => 0,
+        'return_fee_amount' => 0,
+        'net_remittable_amount' => 0,
+        'handed_over_at' => now()->subDay(),
+    ]);
+
+    app(ShipmentRecordService::class)->updateStatus($shipmentRecord, ShipmentRecord::STATUS_DELIVERED);
+
+    expect($commission->refresh()->status)->toBe(AffiliateCommission::STATUS_APPROVED)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(100.0);
+});
+
+function activeAffiliateFoundationProfile(): AffiliateProfile
+{
+    AffiliateSetting::query()->delete();
+
+    return app(AffiliateProfileService::class)->approve(
+        app(AffiliateProfileService::class)->apply(Customer::factory()->create(), [
+            'application_note' => 'Commission approval workflow affiliate.',
+            'terms_accepted' => true,
+        ]),
+    );
+}

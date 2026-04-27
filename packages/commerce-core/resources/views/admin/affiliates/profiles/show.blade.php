@@ -6,6 +6,8 @@
     $identity = $dashboard['identity'];
     $referral = $dashboard['referral'];
     $settings = $dashboard['settings'];
+    $commissionApprovalMode = $settings['commission_approval_mode'] ?? 'manual';
+    $usesManualCommissionApproval = $commissionApprovalMode === 'manual';
     $kpis = $dashboard['kpis'];
     $currency = $dashboard['currency'];
     $formatMoney = static fn ($amount, $currencyCode = null) => core()->formatPrice((float) $amount, $currencyCode ?: $currency);
@@ -644,6 +646,14 @@
                             </p>
                         </div>
 
+                        <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+                            @if ($usesManualCommissionApproval)
+                                Commission approval is set to <span class="font-semibold">Manual</span>. Pending commissions require admin approval before they become available for payout.
+                            @else
+                                Commission approval is set to <span class="font-semibold">Automatic</span>. Commissions are approved automatically when eligible orders are completed or delivered.
+                            @endif
+                        </div>
+
                         <div class="affiliate-profile-summary-grid">
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Total Commissions</p>
@@ -694,9 +704,10 @@
                                             <th class="px-4 py-3">Order Amount</th>
                                             <th class="px-4 py-3">Commission Rule</th>
                                             <th class="px-4 py-3">Commission Amount</th>
+                                            <th class="px-4 py-3">Created / Eligible</th>
                                             <th class="px-4 py-3">Status</th>
                                             <th class="px-4 py-3">Payout Reference</th>
-                                            <th class="px-4 py-3 text-right">Action</th>
+                                            <th class="px-4 py-3 text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -707,21 +718,48 @@
                                                 <td class="px-4 py-3">{{ $formatMoney($commission->order_amount, $commission->currency ?: $currency) }}</td>
                                                 <td class="px-4 py-3">{{ str($commission->commission_type)->title() }} {{ rtrim(rtrim(number_format((float) $commission->commission_rate, 2), '0'), '.') }}</td>
                                                 <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">{{ $formatMoney($commission->commission_amount, $commission->currency ?: $currency) }}</td>
+                                                <td class="px-4 py-3">
+                                                    <p>{{ $commission->created_at ? core()->formatDate($commission->created_at, 'd M Y') : 'N/A' }}</p>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                        Eligible: {{ $commission->eligible_at ? core()->formatDate($commission->eligible_at, 'd M Y') : 'Not yet' }}
+                                                    </p>
+                                                </td>
                                                 <td class="px-4 py-3">{{ $commission->status_label }}</td>
                                                 <td class="px-4 py-3">
                                                     {{ $commission->payoutAllocations->pluck('payout.payout_reference')->filter()->unique()->implode(', ') ?: 'N/A' }}
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
-                                                    @if ($commission->order)
-                                                        <a href="{{ route('admin.sales.orders.view', $commission->order->id) }}" class="text-blue-600 hover:underline">View Order</a>
-                                                    @else
-                                                        <span class="text-gray-400">N/A</span>
-                                                    @endif
+                                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                                        @if ($commission->status === AffiliateCommission::STATUS_PENDING && $usesManualCommissionApproval && bouncer()->hasPermission('affiliates.commissions.manage'))
+                                                            <form method="POST" action="{{ route('admin.affiliates.commissions.approve', $commission) }}">
+                                                                @csrf
+                                                                <button type="submit" class="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                                                                    Approve
+                                                                </button>
+                                                            </form>
+                                                        @endif
+
+                                                        @if (in_array($commission->status, [AffiliateCommission::STATUS_PENDING, AffiliateCommission::STATUS_APPROVED], true) && bouncer()->hasPermission('affiliates.commissions.manage'))
+                                                            <form method="POST" action="{{ route('admin.affiliates.commissions.reverse', $commission) }}">
+                                                                @csrf
+                                                                <input type="hidden" name="reason" value="Reversed manually by admin.">
+                                                                <button type="submit" class="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+                                                                    Reverse
+                                                                </button>
+                                                            </form>
+                                                        @endif
+
+                                                        @if ($commission->order)
+                                                            <a href="{{ route('admin.sales.orders.view', $commission->order->id) }}" class="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900">View Order</a>
+                                                        @else
+                                                            <span class="text-gray-400">N/A</span>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="px-4 py-10 text-center text-gray-500">
+                                                <td colspan="9" class="px-4 py-10 text-center text-gray-500">
                                                     No commissions match the selected filters.
                                                 </td>
                                             </tr>

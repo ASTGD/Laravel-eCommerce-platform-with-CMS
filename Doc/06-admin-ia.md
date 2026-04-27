@@ -224,6 +224,7 @@ Current admin workflow:
 - use the affiliate profile page as the main operational screen
 - view the affiliate referral code and homepage referral link
 - inspect traffic, attributed sales, commissions, and payout history from the same profile
+- approve or reverse individual affiliate commissions from the profile commission ledger when commission approval mode is manual
 - manage payout requests and payout records from the shared payout ledger
 - approve, reject, and mark payout requests as paid through one lifecycle shared with the customer portal
 - view customer-entered payout account details on payout records while keeping payout references system-generated
@@ -256,6 +257,7 @@ Current affiliate settings:
 
 - approval requirement
 - default commission type and value
+- affiliate commission approval mode: manual or automatic
 - referral cookie window
 - minimum payout threshold
 - payout methods

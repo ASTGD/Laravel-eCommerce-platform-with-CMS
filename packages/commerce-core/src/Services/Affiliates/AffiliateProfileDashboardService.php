@@ -37,6 +37,7 @@ class AffiliateProfileDashboardService
             'referral' => $this->referral($profile),
             'settings' => [
                 'commission_rule' => $this->commissionRuleSummary(),
+                'commission_approval_mode' => $this->affiliateSettingsService->commissionApprovalMode(),
                 'cookie_window_days' => $this->affiliateSettingsService->cookieWindowDays(),
                 'minimum_payout_amount' => $this->affiliateSettingsService->minimumPayoutAmount(),
             ],

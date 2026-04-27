@@ -2,8 +2,8 @@
 
 namespace Platform\CommerceCore\Services;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Platform\CommerceCore\Models\ShipmentCarrier;
@@ -12,8 +12,8 @@ use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Models\ShipmentRecordItem;
 use Platform\CommerceCore\Repositories\ShipmentRecordRepository;
+use Platform\CommerceCore\Services\Affiliates\AffiliateCommissionService;
 use Webkul\Sales\Models\Order;
-use Webkul\Sales\Models\OrderAddress;
 use Webkul\Sales\Models\Shipment;
 
 class ShipmentRecordService
@@ -477,6 +477,7 @@ class ShipmentRecordService
         });
 
         $this->shipmentCommunicationService->dispatchForPersistedEvent($result['shipment_record']->id, $result['event_id']);
+        $this->approveAffiliateCommissionIfShipmentIsDelivered($result['shipment_record']);
 
         return $result['shipment_record'];
     }
@@ -620,6 +621,15 @@ class ShipmentRecordService
         ) {
             $shipmentRecord->returned_at = $eventAt;
         }
+    }
+
+    protected function approveAffiliateCommissionIfShipmentIsDelivered(ShipmentRecord $shipmentRecord): void
+    {
+        if ($shipmentRecord->status !== ShipmentRecord::STATUS_DELIVERED || ! $shipmentRecord->order) {
+            return;
+        }
+
+        app(AffiliateCommissionService::class)->handleOrderEligibilityForCommission($shipmentRecord->order);
     }
 
     protected function resolveFailureEventType(string $failureReason): string
