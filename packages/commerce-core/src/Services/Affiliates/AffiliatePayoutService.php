@@ -16,6 +16,15 @@ class AffiliatePayoutService
 
     public function balanceFor(AffiliateProfile $profile): array
     {
+        $grossEarned = (float) AffiliateCommission::query()
+            ->where('affiliate_profile_id', $profile->id)
+            ->sum('commission_amount');
+
+        $reversedCommissions = (float) AffiliateCommission::query()
+            ->where('affiliate_profile_id', $profile->id)
+            ->where('status', AffiliateCommission::STATUS_REVERSED)
+            ->sum('commission_amount');
+
         $approvedCommissions = (float) AffiliateCommission::query()
             ->where('affiliate_profile_id', $profile->id)
             ->where('status', AffiliateCommission::STATUS_APPROVED)
@@ -26,9 +35,14 @@ class AffiliatePayoutService
             ->where('status', AffiliateCommission::STATUS_PENDING)
             ->sum('commission_amount');
 
+        $paidCommissionPool = (float) AffiliateCommission::query()
+            ->where('affiliate_profile_id', $profile->id)
+            ->where('status', AffiliateCommission::STATUS_PAID)
+            ->sum('commission_amount');
+
+        $payableEarned = $approvedCommissions + $paidCommissionPool;
         $paidAllocations = $this->paidAllocationTotal($profile);
         $reservedAllocations = $this->reservedAllocationTotal($profile);
-        $activeAllocationsAgainstApprovedCommissions = $this->activeAllocationTotalAgainstApprovedCommissions($profile);
 
         $paidPayouts = (float) AffiliatePayout::query()
             ->where('affiliate_profile_id', $profile->id)
@@ -36,12 +50,16 @@ class AffiliatePayoutService
             ->sum('amount');
 
         return [
+            'gross_earned' => round($grossEarned, 4),
+            'reversed_commissions' => round($reversedCommissions, 4),
+            'net_earned' => round($grossEarned - $reversedCommissions, 4),
+            'payable_earned' => round($payableEarned, 4),
             'approved_commissions' => round($approvedCommissions, 4),
             'pending_commissions' => round($pendingCommissions, 4),
             'paid_payouts' => round($paidPayouts, 4),
             'paid_commissions' => round($paidAllocations, 4),
             'reserved_payouts' => round($reservedAllocations, 4),
-            'available_balance' => round(max($approvedCommissions - $activeAllocationsAgainstApprovedCommissions, 0), 4),
+            'available_balance' => round($payableEarned - $paidPayouts - $reservedAllocations, 4),
         ];
     }
 
@@ -104,6 +122,15 @@ class AffiliatePayoutService
 
             if ($payout->allocations()->where('status', AffiliatePayoutCommissionAllocation::STATUS_RESERVED)->doesntExist()) {
                 $this->allocateApprovedCommissions($payout);
+            }
+
+            $this->syncOpenPayoutAmountWithReservedAllocations($payout);
+            $payout = $payout->refresh();
+
+            if ($payout->status === AffiliatePayout::STATUS_REJECTED) {
+                throw ValidationException::withMessages([
+                    'payout' => 'This payout no longer has payable reserved commissions.',
+                ]);
             }
 
             $payout->fill([
@@ -170,6 +197,42 @@ class AffiliatePayoutService
         }
 
         return $this->markPaid($payout, $adminId, $data['payout_reference'] ?? null);
+    }
+
+    public function releaseReservedAllocationsForCommission(AffiliateCommission $commission, ?string $reason = null): void
+    {
+        DB::transaction(function () use ($commission, $reason): void {
+            $payoutIds = AffiliatePayoutCommissionAllocation::query()
+                ->where('affiliate_commission_id', $commission->id)
+                ->where('status', AffiliatePayoutCommissionAllocation::STATUS_RESERVED)
+                ->whereHas('payout', fn ($query) => $query->whereIn('status', [
+                    AffiliatePayout::STATUS_REQUESTED,
+                    AffiliatePayout::STATUS_APPROVED,
+                ]))
+                ->pluck('affiliate_payout_id')
+                ->unique()
+                ->values()
+                ->all();
+
+            if ($payoutIds === []) {
+                return;
+            }
+
+            AffiliatePayoutCommissionAllocation::query()
+                ->where('affiliate_commission_id', $commission->id)
+                ->where('status', AffiliatePayoutCommissionAllocation::STATUS_RESERVED)
+                ->whereIn('affiliate_payout_id', $payoutIds)
+                ->update([
+                    'status' => AffiliatePayoutCommissionAllocation::STATUS_RELEASED,
+                    'released_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            AffiliatePayout::query()
+                ->whereIn('id', $payoutIds)
+                ->get()
+                ->each(fn (AffiliatePayout $payout) => $this->syncOpenPayoutAmountWithReservedAllocations($payout, $reason));
+        });
     }
 
     protected function assertPayoutAmountIsAllowed(AffiliateProfile $profile, float $amount): void
@@ -245,6 +308,76 @@ class AffiliatePayoutService
         ]);
     }
 
+    protected function syncOpenPayoutAmountWithReservedAllocations(AffiliatePayout $payout, ?string $reason = null): void
+    {
+        $payout = $payout->refresh();
+
+        if (! in_array($payout->status, [AffiliatePayout::STATUS_REQUESTED, AffiliatePayout::STATUS_APPROVED], true)) {
+            return;
+        }
+
+        $this->releaseInvalidReservedAllocationsForPayout($payout);
+
+        $reservedAmount = round((float) $payout->allocations()
+            ->where('status', AffiliatePayoutCommissionAllocation::STATUS_RESERVED)
+            ->sum('amount'), 4);
+
+        $meta = $payout->meta ?: [];
+
+        if ($reservedAmount <= 0) {
+            $meta['adjustment_required'] = true;
+            $meta['adjusted_for_reversed_commissions_at'] = now()->toIso8601String();
+            $meta['adjustment_reason'] = $reason ?: 'Reserved affiliate commission was reversed before payout.';
+
+            $payout->fill([
+                'status' => AffiliatePayout::STATUS_REJECTED,
+                'amount' => 0,
+                'rejected_at' => now(),
+                'rejection_reason' => $reason ?: 'Reserved affiliate commission was reversed before payout.',
+                'meta' => $meta,
+            ])->save();
+
+            return;
+        }
+
+        if (abs((float) $payout->amount - $reservedAmount) < 0.0001) {
+            return;
+        }
+
+        $meta['adjustment_required'] = true;
+        $meta['adjusted_for_reversed_commissions_at'] = now()->toIso8601String();
+        $meta['adjustment_reason'] = $reason ?: 'One or more reserved affiliate commissions were reversed before payout.';
+        $meta['original_amount'] ??= (float) $payout->amount;
+
+        $payout->fill([
+            'amount' => $reservedAmount,
+            'meta' => $meta,
+        ])->save();
+    }
+
+    protected function releaseInvalidReservedAllocationsForPayout(AffiliatePayout $payout): void
+    {
+        $allocationIds = AffiliatePayoutCommissionAllocation::query()
+            ->join('affiliate_commissions', 'affiliate_commissions.id', '=', 'affiliate_payout_commission_allocations.affiliate_commission_id')
+            ->where('affiliate_payout_commission_allocations.affiliate_payout_id', $payout->id)
+            ->where('affiliate_payout_commission_allocations.status', AffiliatePayoutCommissionAllocation::STATUS_RESERVED)
+            ->where('affiliate_commissions.status', AffiliateCommission::STATUS_REVERSED)
+            ->pluck('affiliate_payout_commission_allocations.id')
+            ->all();
+
+        if ($allocationIds === []) {
+            return;
+        }
+
+        AffiliatePayoutCommissionAllocation::query()
+            ->whereIn('id', $allocationIds)
+            ->update([
+                'status' => AffiliatePayoutCommissionAllocation::STATUS_RELEASED,
+                'released_at' => now(),
+                'updated_at' => now(),
+            ]);
+    }
+
     protected function approvedCommissionsWithAvailableAmounts(AffiliateProfile $profile)
     {
         return AffiliateCommission::query()
@@ -299,13 +432,15 @@ class AffiliatePayoutService
     protected function reservedAllocationTotal(AffiliateProfile $profile): float
     {
         return (float) AffiliatePayoutCommissionAllocation::query()
+            ->join('affiliate_commissions', 'affiliate_commissions.id', '=', 'affiliate_payout_commission_allocations.affiliate_commission_id')
             ->where('affiliate_payout_commission_allocations.affiliate_profile_id', $profile->id)
             ->where('affiliate_payout_commission_allocations.status', AffiliatePayoutCommissionAllocation::STATUS_RESERVED)
+            ->where('affiliate_commissions.status', '!=', AffiliateCommission::STATUS_REVERSED)
             ->whereHas('payout', fn ($query) => $query->whereIn('status', [
                 AffiliatePayout::STATUS_REQUESTED,
                 AffiliatePayout::STATUS_APPROVED,
             ]))
-            ->sum('amount');
+            ->sum('affiliate_payout_commission_allocations.amount');
     }
 
     protected function paidAllocationTotal(AffiliateProfile $profile): float
@@ -314,18 +449,5 @@ class AffiliatePayoutService
             ->where('affiliate_profile_id', $profile->id)
             ->where('status', AffiliatePayoutCommissionAllocation::STATUS_PAID)
             ->sum('amount');
-    }
-
-    protected function activeAllocationTotalAgainstApprovedCommissions(AffiliateProfile $profile): float
-    {
-        return (float) AffiliatePayoutCommissionAllocation::query()
-            ->join('affiliate_commissions', 'affiliate_commissions.id', '=', 'affiliate_payout_commission_allocations.affiliate_commission_id')
-            ->where('affiliate_payout_commission_allocations.affiliate_profile_id', $profile->id)
-            ->where('affiliate_commissions.status', AffiliateCommission::STATUS_APPROVED)
-            ->whereIn('affiliate_payout_commission_allocations.status', [
-                AffiliatePayoutCommissionAllocation::STATUS_RESERVED,
-                AffiliatePayoutCommissionAllocation::STATUS_PAID,
-            ])
-            ->sum('affiliate_payout_commission_allocations.amount');
     }
 }

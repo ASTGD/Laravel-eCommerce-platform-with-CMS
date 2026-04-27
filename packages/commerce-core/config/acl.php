@@ -227,14 +227,19 @@ return [
         'route' => 'admin.affiliates.payouts.update',
         'sort' => 1,
     ], [
+        'key' => 'affiliates.commissions.manage',
+        'name' => 'Manage Commissions',
+        'route' => 'admin.affiliates.commissions.approve',
+        'sort' => 3,
+    ], [
         'key' => 'affiliates.reports',
         'name' => 'Reports',
         'route' => 'admin.affiliates.reports.index',
-        'sort' => 3,
+        'sort' => 4,
     ], [
         'key' => 'affiliates.settings',
         'name' => 'Settings',
         'route' => 'admin.affiliates.settings.index',
-        'sort' => 4,
+        'sort' => 5,
     ],
 ];

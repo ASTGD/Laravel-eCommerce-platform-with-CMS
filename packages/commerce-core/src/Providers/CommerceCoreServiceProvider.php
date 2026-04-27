@@ -15,9 +15,11 @@ use Platform\CommerceCore\Http\Controllers\Admin\ShipmentController as CommerceS
 use Platform\CommerceCore\Http\Middleware\CaptureAffiliateReferral;
 use Platform\CommerceCore\Http\Middleware\EnsureShippingModeAllowsFeature;
 use Platform\CommerceCore\Http\Middleware\RedirectBasicShipmentBrowseRoutes;
+use Platform\CommerceCore\Listeners\ApproveAffiliateCommissionForEligibleOrder;
 use Platform\CommerceCore\Listeners\AttributeAffiliateOrder;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
 use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForCanceledOrder;
+use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForRefundedOrder;
 use Platform\CommerceCore\Listeners\SyncShipmentRecordFromNativeShipment;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Payment\PaymentManager;
@@ -140,8 +142,10 @@ class CommerceCoreServiceProvider extends ServiceProvider
         });
 
         Event::listen('checkout.order.save.after', [AttributeAffiliateOrder::class, 'handle']);
+        Event::listen('sales.order.update-status.after', [ApproveAffiliateCommissionForEligibleOrder::class, 'handle']);
 
         Event::listen('sales.order.cancel.after', [ReverseAffiliateCommissionForCanceledOrder::class, 'handle']);
+        Event::listen('sales.refund.save.after', [ReverseAffiliateCommissionForRefundedOrder::class, 'handle']);
 
         Event::listen('sales.shipment.save.after', [SyncShipmentRecordFromNativeShipment::class, 'handle']);
 

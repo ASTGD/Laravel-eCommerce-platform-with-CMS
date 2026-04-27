@@ -94,6 +94,7 @@ it('lets admin save affiliate settings used by the shared affiliate domain', fun
         ->assertOk()
         ->assertSeeText('Affiliate Settings')
         ->assertSeeText('Approval Required')
+        ->assertSeeText('Affiliate Commission Approval')
         ->assertSeeText('Default Commission Type')
         ->assertSeeText('Payout Methods');
 
@@ -101,6 +102,7 @@ it('lets admin save affiliate settings used by the shared affiliate domain', fun
         'approval_required' => '0',
         'default_commission_type' => 'fixed',
         'default_commission_value' => '25',
+        'commission_approval_mode' => 'automatic',
         'cookie_window_days' => '45',
         'minimum_payout_amount' => '75',
         'payout_methods_text' => "bank_transfer=Bank Transfer\npaypal=PayPal",
@@ -117,6 +119,9 @@ it('lets admin save affiliate settings used by the shared affiliate domain', fun
             'type' => 'fixed',
             'value' => 25.0,
         ])
+        ->and($settingsService->commissionApprovalMode())->toBe('automatic')
+        ->and($settingsService->usesAutomaticCommissionApproval())->toBeTrue()
+        ->and($settingsService->usesManualCommissionApproval())->toBeFalse()
         ->and($settingsService->cookieWindowDays())->toBe(45)
         ->and($settingsService->minimumPayoutAmount())->toBe(75.0)
         ->and($settingsService->payoutMethods())->toMatchArray([
@@ -135,6 +140,7 @@ it('uses saved approval settings when customers apply as affiliates', function (
         'approval_required' => false,
         'default_commission_type' => 'percentage',
         'default_commission_value' => 10,
+        'commission_approval_mode' => 'manual',
         'cookie_window_days' => 30,
         'minimum_payout_amount' => 50,
         'payout_methods' => [

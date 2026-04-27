@@ -75,11 +75,12 @@ The affiliate MVP is acceptable when all of the following are true:
 9. Referral links create click records for reporting and attribution context only.
 10. Referral codes are stable for the life of the affiliate profile; referral links remain valid while the affiliate is active, and attribution expires by the cookie window.
 11. Attributed orders create order-based commission records.
-12. Payout availability is derived from approved commissions and payout allocation rows.
-13. Customer withdrawal requests and admin payout records use the same payout lifecycle.
-14. Admin reports read totals from the shared affiliate tables.
-15. Affiliate settings are shared by admin and customer portal services.
-16. Email Affiliate, Banner/Text Ad management, per-click payouts, and separate affiliate login are absent from v1 routes and navigation.
+12. Pending commissions are not payable; approved commissions become available manually by admin approval or automatically after eligible completed/delivered order state, depending on affiliate settings.
+13. Refunds and cancellations reverse invalid commissions, release affected reserved payout allocations, and allow negative carry-forward when already-paid commissions are reversed.
+14. Customer withdrawal requests and admin payout records use the same payout lifecycle.
+15. Admin reports read totals from the shared affiliate tables.
+16. Affiliate settings are shared by admin and customer portal services.
+17. Email Affiliate, Banner/Text Ad management, per-click payouts, and separate affiliate login are absent from v1 routes and navigation.
 17. Feature tests cover the full customer/admin/referral/commission/payout/report workflow.
 
 Current status: Phase 8 hardening tests cover the listed MVP workflow and exclusion requirements.

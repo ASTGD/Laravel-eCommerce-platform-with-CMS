@@ -5,7 +5,10 @@ use Platform\CommerceCore\Models\AffiliateCommission;
 use Platform\CommerceCore\Models\AffiliatePayout;
 use Platform\CommerceCore\Models\AffiliatePayoutCommissionAllocation;
 use Platform\CommerceCore\Models\AffiliateProfile;
+use Platform\CommerceCore\Services\Affiliates\AffiliateCommissionService;
 use Platform\CommerceCore\Services\Affiliates\AffiliatePayoutService;
+use Platform\CommerceCore\Services\Affiliates\AffiliatePortalService;
+use Platform\CommerceCore\Services\Affiliates\AffiliateProfileDashboardService;
 use Platform\CommerceCore\Services\Affiliates\AffiliateProfileService;
 use Tests\TestCase;
 use Webkul\Customer\Models\Customer;
@@ -91,6 +94,150 @@ it('does not allow multiple payout requests to over-reserve approved commissions
 
     expect($balance['reserved_payouts'])->toBe(60.0)
         ->and($balance['available_balance'])->toBe(40.0);
+});
+
+it('reduces available balance and net earned when an unpaid commission is reversed', function () {
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    createPayoutLifecycleCommission($profile, 80);
+    $reversedCommission = createPayoutLifecycleCommission($profile, 30);
+
+    app(AffiliateCommissionService::class)->reverseForOrder($reversedCommission->order, 'Order refunded.');
+
+    $balance = app(AffiliatePayoutService::class)->balanceFor($profile);
+
+    expect($balance['gross_earned'])->toBe(110.0)
+        ->and($balance['reversed_commissions'])->toBe(30.0)
+        ->and($balance['net_earned'])->toBe(80.0)
+        ->and($balance['available_balance'])->toBe(80.0)
+        ->and($reversedCommission->refresh()->status)->toBe(AffiliateCommission::STATUS_REVERSED);
+});
+
+it('adjusts open reserved payouts when a reserved commission is reversed', function () {
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    $reversedCommission = createPayoutLifecycleCommission($profile, 30);
+    createPayoutLifecycleCommission($profile, 80);
+    $payout = app(AffiliatePayoutService::class)->requestPayout($profile, 40);
+
+    app(AffiliateCommissionService::class)->reverseForOrder($reversedCommission->order, 'Order refunded.');
+
+    $payout = $payout->refresh();
+    $balance = app(AffiliatePayoutService::class)->balanceFor($profile);
+
+    expect($payout->status)->toBe(AffiliatePayout::STATUS_REQUESTED)
+        ->and((float) $payout->amount)->toBe(10.0)
+        ->and($payout->meta['adjustment_required'])->toBeTrue()
+        ->and($payout->allocations()->where('affiliate_commission_id', $reversedCommission->id)->where('status', AffiliatePayoutCommissionAllocation::STATUS_RELEASED)->sum('amount'))->toBe('30.0000')
+        ->and($balance['reserved_payouts'])->toBe(10.0)
+        ->and($balance['available_balance'])->toBe(70.0);
+
+    app(AffiliatePayoutService::class)->markPaid($payout);
+
+    expect($payout->refresh()->amount)->toBe('10.0000')
+        ->and($payout->status)->toBe(AffiliatePayout::STATUS_PAID)
+        ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['paid_payouts'])->toBe(10.0);
+});
+
+it('rejects an open payout when all reserved commissions are reversed', function () {
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    $commission = createPayoutLifecycleCommission($profile, 30);
+    $payout = app(AffiliatePayoutService::class)->requestPayout($profile, 30);
+
+    app(AffiliateCommissionService::class)->reverseForOrder($commission->order, 'Order refunded.');
+
+    $balance = app(AffiliatePayoutService::class)->balanceFor($profile);
+
+    expect($payout->refresh()->status)->toBe(AffiliatePayout::STATUS_REJECTED)
+        ->and((float) $payout->amount)->toBe(0.0)
+        ->and($balance['reserved_payouts'])->toBe(0.0)
+        ->and($balance['available_balance'])->toBe(0.0);
+});
+
+it('allows already paid reversals to create a negative carry-forward balance', function () {
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    $paidThenReversedCommission = createPayoutLifecycleCommission($profile, 70);
+    createPayoutLifecycleCommission($profile, 40);
+    $payout = app(AffiliatePayoutService::class)->requestPayout($profile, 60);
+
+    app(AffiliatePayoutService::class)->markPaid($payout);
+
+    $beforeReversal = app(AffiliatePayoutService::class)->balanceFor($profile);
+
+    app(AffiliateCommissionService::class)->reverseForOrder($paidThenReversedCommission->order, 'Order refunded.');
+
+    $afterReversal = app(AffiliatePayoutService::class)->balanceFor($profile);
+
+    expect($beforeReversal['gross_earned'])->toBe(110.0)
+        ->and($beforeReversal['net_earned'])->toBe(110.0)
+        ->and($beforeReversal['paid_payouts'])->toBe(60.0)
+        ->and($beforeReversal['available_balance'])->toBe(50.0)
+        ->and($afterReversal['gross_earned'])->toBe(110.0)
+        ->and($afterReversal['reversed_commissions'])->toBe(70.0)
+        ->and($afterReversal['net_earned'])->toBe(40.0)
+        ->and($afterReversal['paid_payouts'])->toBe(60.0)
+        ->and($afterReversal['available_balance'])->toBe(-20.0);
+});
+
+it('uses future earned commissions to naturally offset negative carry-forward balance', function () {
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    $paidThenReversedCommission = createPayoutLifecycleCommission($profile, 70);
+    createPayoutLifecycleCommission($profile, 40);
+    $payout = app(AffiliatePayoutService::class)->requestPayout($profile, 60);
+
+    app(AffiliatePayoutService::class)->markPaid($payout);
+    app(AffiliateCommissionService::class)->reverseForOrder($paidThenReversedCommission->order, 'Order refunded.');
+
+    expect(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(-20.0);
+
+    createPayoutLifecycleCommission($profile, 50);
+
+    $balance = app(AffiliatePayoutService::class)->balanceFor($profile);
+
+    expect($balance['net_earned'])->toBe(90.0)
+        ->and($balance['available_balance'])->toBe(30.0);
+});
+
+it('keeps admin and customer portal balances consistent after commission reversal', function () {
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    $commission = createPayoutLifecycleCommission($profile, 70);
+    createPayoutLifecycleCommission($profile, 40);
+    $payout = app(AffiliatePayoutService::class)->requestPayout($profile, 60);
+
+    app(AffiliatePayoutService::class)->markPaid($payout);
+    app(AffiliateCommissionService::class)->reverseForOrder($commission->order, 'Order refunded.');
+
+    $adminBalance = app(AffiliateProfileDashboardService::class)->build($profile)['balance'];
+    $customerBalance = app(AffiliatePortalService::class)->dashboardFor($profile)['balance'];
+
+    expect($adminBalance['available_balance'])->toBe(-20.0)
+        ->and($customerBalance['available_balance'])->toBe(-20.0)
+        ->and($adminBalance['net_earned'])->toBe($customerBalance['net_earned']);
+});
+
+it('blocks payout requests while reversal carry-forward balance is negative', function () {
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = activeAffiliatePayoutLifecycleProfile();
+    $commission = createPayoutLifecycleCommission($profile, 70);
+    createPayoutLifecycleCommission($profile, 40);
+    $payout = app(AffiliatePayoutService::class)->requestPayout($profile, 60);
+
+    app(AffiliatePayoutService::class)->markPaid($payout);
+    app(AffiliateCommissionService::class)->reverseForOrder($commission->order, 'Order refunded.');
+
+    expect(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(-20.0);
+
+    expect(fn () => app(AffiliatePayoutService::class)->requestPayout($profile, 1))
+        ->toThrow(ValidationException::class);
 });
 
 function activeAffiliatePayoutLifecycleProfile(): AffiliateProfile

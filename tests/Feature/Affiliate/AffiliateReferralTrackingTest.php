@@ -2,6 +2,7 @@
 
 use Platform\CommerceCore\Listeners\AttributeAffiliateOrder;
 use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForCanceledOrder;
+use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForRefundedOrder;
 use Platform\CommerceCore\Models\AffiliateClick;
 use Platform\CommerceCore\Models\AffiliateCommission;
 use Platform\CommerceCore\Models\AffiliateOrderAttribution;
@@ -171,6 +172,36 @@ it('reverses affiliate commission and cancels attribution when an attributed ord
     expect($attribution->status)->toBe(AffiliateOrderAttribution::STATUS_CANCELED)
         ->and($commission->status)->toBe(AffiliateCommission::STATUS_REVERSED)
         ->and($commission->reversal_reason)->toBe('Order canceled.');
+});
+
+it('reverses affiliate commission and cancels attribution when an attributed order is refunded', function () {
+    $affiliate = Customer::factory()->create();
+    $buyer = Customer::factory()->create();
+    $profile = activeAffiliateProfileFor($affiliate);
+
+    actingAs($buyer, 'customer');
+
+    get(route('shop.home.index', [
+        'ref' => $profile->referral_code,
+    ]))->assertOk();
+
+    $order = Order::factory()->create([
+        'customer_id' => $buyer->id,
+        'base_sub_total' => 1000,
+        'base_grand_total' => 1000,
+    ]);
+
+    app(AttributeAffiliateOrder::class)->handle($order);
+    app(ReverseAffiliateCommissionForRefundedOrder::class)->handle((object) [
+        'order' => $order,
+    ]);
+
+    $attribution = AffiliateOrderAttribution::query()->where('order_id', $order->id)->first();
+    $commission = AffiliateCommission::query()->where('order_id', $order->id)->first();
+
+    expect($attribution->status)->toBe(AffiliateOrderAttribution::STATUS_CANCELED)
+        ->and($commission->status)->toBe(AffiliateCommission::STATUS_REVERSED)
+        ->and($commission->reversal_reason)->toBe('Order refunded.');
 });
 
 function activeAffiliateProfileFor(Customer $customer): AffiliateProfile
