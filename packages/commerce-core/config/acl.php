@@ -217,11 +217,6 @@ return [
         'route' => 'admin.affiliates.profiles.reactivate',
         'sort' => 6,
     ], [
-        'key' => 'affiliates.profiles.regenerate_referral_code',
-        'name' => 'Regenerate Referral Code',
-        'route' => 'admin.affiliates.profiles.regenerate-referral-code',
-        'sort' => 7,
-    ], [
         'key' => 'affiliates.payouts',
         'name' => 'Payouts',
         'route' => 'admin.affiliates.payouts.index',

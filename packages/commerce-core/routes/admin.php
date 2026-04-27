@@ -35,7 +35,6 @@ Route::group([
                     Route::post('{affiliateProfile}/reject', 'reject')->middleware('platform.acl:affiliates.profiles.reject')->name('admin.affiliates.profiles.reject');
                     Route::post('{affiliateProfile}/suspend', 'suspend')->middleware('platform.acl:affiliates.profiles.suspend')->name('admin.affiliates.profiles.suspend');
                     Route::post('{affiliateProfile}/reactivate', 'reactivate')->middleware('platform.acl:affiliates.profiles.reactivate')->name('admin.affiliates.profiles.reactivate');
-                    Route::post('{affiliateProfile}/regenerate-referral-code', 'regenerateReferralCode')->middleware('platform.acl:affiliates.profiles.regenerate_referral_code')->name('admin.affiliates.profiles.regenerate-referral-code');
                     Route::post('{affiliateProfile}/payouts', 'storePayout')->middleware('platform.acl:affiliates.payouts.manage')->name('admin.affiliates.profiles.payouts.store');
                 });
 

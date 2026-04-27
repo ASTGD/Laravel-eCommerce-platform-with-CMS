@@ -298,7 +298,7 @@ Current status:
 - public storefront visitors can discover the program at `/affiliate-program`
 - admin can review, approve, reject, suspend, and reactivate affiliate profiles
 - active affiliates can access the customer Affiliate dashboard with referral code/link copy tools, simple tracked-link generation, traffic, sales, commissions, and payout history
-- admin can regenerate an affiliate referral code to invalidate old links
+- referral codes remain stable, and abuse control is handled through affiliate status, self-referral prevention, and order/commission validity
 - referral clicks are tracked for reporting and attribution context, but do not create payable per-click commissions
 - attributed orders create order-based commissions through the shared commission ledger
 - customer withdrawal requests and admin payout records use the same payout and allocation tables

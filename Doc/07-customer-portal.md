@@ -151,9 +151,9 @@ Current Phase 4 referral behavior:
 - approved affiliates use their generated referral code in storefront links through the `ref` query parameter
 - active affiliates can copy their referral code and homepage referral link from the customer dashboard
 - active affiliates can generate simple tracked links for valid internal storefront paths
-- referral links remain valid while the affiliate is active and the referral code has not been regenerated
+- referral codes are stable for the life of the affiliate profile
+- referral links remain valid while the affiliate is active
 - visitor attribution expires by the configured cookie window, not by link age
-- regenerating a referral code invalidates old links for new click capture and order attribution
 - referral clicks are tracked for reporting and attribution context only
 - attributed orders and commissions are written to the shared affiliate backend records that the customer Affiliate portal reads
 - self-referrals are blocked, so an affiliate customer cannot earn commission from their own customer account orders
