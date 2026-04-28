@@ -15,6 +15,7 @@ class AffiliatePayoutStatusRequest extends FormRequest
     {
         return [
             'payout_reference' => ['nullable', 'string', 'max:255'],
+            'transaction_reference' => ['nullable', 'string', 'max:255'],
             'reason' => ['nullable', 'string', 'max:1000'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
         ];

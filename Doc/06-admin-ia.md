@@ -228,6 +228,7 @@ Current admin workflow:
 - manage payout requests and payout records from the shared payout ledger
 - approve, reject, and mark payout requests as paid through one lifecycle shared with the customer portal
 - view customer-entered payout account details on payout records while keeping payout references system-generated
+- record the external transaction number/reference when an admin completes a payout for any payout method
 - review affiliate reports for clicks, attributed orders, attributed sales, commissions, payouts, daily trends, and top affiliates
 - manage minimum v1 affiliate settings without changing code
 

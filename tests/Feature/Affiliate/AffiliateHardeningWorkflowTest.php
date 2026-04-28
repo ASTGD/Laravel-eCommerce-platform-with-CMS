@@ -135,10 +135,12 @@ it('keeps the full affiliate workflow synchronized between customer portal admin
 
     post(route('admin.affiliates.payouts.mark-paid', $payout), [
         'payout_reference' => 'BANK-PAID-PHASE8',
+        'transaction_reference' => 'TXN-PHASE8',
     ])->assertRedirect(route('admin.affiliates.payouts.index', ['status' => AffiliatePayout::STATUS_PAID]));
 
     expect($payout->refresh()->status)->toBe(AffiliatePayout::STATUS_PAID)
         ->and($payout->payout_reference)->toBe('BANK-PAID-PHASE8')
+        ->and($payout->transaction_reference)->toBe('TXN-PHASE8')
         ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['paid_payouts'])->toBe(40.0)
         ->and(app(AffiliatePayoutService::class)->balanceFor($profile)['available_balance'])->toBe(40.0);
 
@@ -147,7 +149,8 @@ it('keeps the full affiliate workflow synchronized between customer portal admin
     get(route('shop.customers.account.affiliate.index'))
         ->assertOk()
         ->assertSeeText('Paid')
-        ->assertSeeText('BANK-PAID-PHASE8');
+        ->assertSeeText('BANK-PAID-PHASE8')
+        ->assertSeeText('TXN-PHASE8');
 });
 
 it('calculates report totals directly from the shared affiliate records', function () {

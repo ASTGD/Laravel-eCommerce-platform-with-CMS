@@ -367,13 +367,14 @@
             </p>
 
             <div class="mt-5 overflow-x-auto">
-                <table class="w-full min-w-[680px] text-left text-sm">
+                <table class="w-full min-w-[780px] text-left text-sm">
                     <thead class="border-b border-zinc-200 text-xs uppercase text-zinc-500">
                         <tr>
                             <th class="py-3 pr-4">Reference</th>
                             <th class="py-3 pr-4">Amount</th>
                             <th class="py-3 pr-4">Status</th>
                             <th class="py-3 pr-4">Method</th>
+                            <th class="py-3 pr-4">Transaction No</th>
                             <th class="py-3 pr-4">Requested</th>
                         </tr>
                     </thead>
@@ -393,12 +394,13 @@
                                         </p>
                                     @endif
                                 </td>
+                                <td class="py-3 pr-4 text-zinc-700">{{ $payout->transaction_reference ?: 'N/A' }}</td>
                                 <td class="py-3 pr-4 text-zinc-500">{{ $payout->requested_at ? core()->formatDate($payout->requested_at, 'd M Y') : '-' }}</td>
                             </tr>
                         @empty
                             <tr>
                                 <td
-                                    colspan="5"
+                                    colspan="6"
                                     class="py-6 text-center text-zinc-500"
                                 >
                                     No payout requests yet.

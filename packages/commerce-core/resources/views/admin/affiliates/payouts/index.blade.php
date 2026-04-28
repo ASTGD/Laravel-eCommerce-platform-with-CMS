@@ -45,7 +45,7 @@
                     name="search"
                     value="{{ $search }}"
                     class="w-full rounded-md border px-3 py-2.5 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                    placeholder="Search affiliate, email, code, reference"
+                    placeholder="Search affiliate, email, code, reference, transaction"
                 >
 
                 <button
@@ -58,7 +58,7 @@
         </div>
 
         <div class="mt-5 overflow-x-auto">
-            <table class="w-full min-w-[1120px] text-left">
+            <table class="w-full min-w-[1240px] text-left">
                 <thead>
                     <tr class="border-b border-gray-200 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
                         <th class="px-4 py-3">Affiliate</th>
@@ -66,6 +66,7 @@
                         <th class="px-4 py-3">Amount</th>
                         <th class="px-4 py-3">Method</th>
                         <th class="px-4 py-3">Reference</th>
+                        <th class="px-4 py-3">Transaction No</th>
                         <th class="px-4 py-3">Account Details</th>
                         <th class="px-4 py-3">Requested</th>
                         <th class="px-4 py-3 text-right">Actions</th>
@@ -104,6 +105,10 @@
                                 {{ $payout->payout_reference ?: 'N/A' }}
                             </td>
 
+                            <td class="px-4 py-4 font-medium text-gray-800 dark:text-white">
+                                {{ $payout->transaction_reference ?: 'N/A' }}
+                            </td>
+
                             <td class="px-4 py-4">
                                 {{ data_get($payout->meta, 'payout_account_details') ?: 'N/A' }}
                             </td>
@@ -135,8 +140,9 @@
                                     @endif
 
                                     @if (in_array($payout->status, [\Platform\CommerceCore\Models\AffiliatePayout::STATUS_REQUESTED, \Platform\CommerceCore\Models\AffiliatePayout::STATUS_APPROVED], true) && bouncer()->hasPermission('affiliates.payouts.manage'))
-                                        <form method="POST" action="{{ route('admin.affiliates.payouts.mark-paid', $payout) }}">
+                                        <form method="POST" action="{{ route('admin.affiliates.payouts.mark-paid', $payout) }}" class="flex items-center gap-2">
                                             @csrf
+                                            <input name="transaction_reference" type="text" class="w-40 rounded-md border px-2 py-1.5 text-xs dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" placeholder="Transaction no" required>
 
                                             <button type="submit" class="primary-button">
                                                 Mark Paid
@@ -149,7 +155,7 @@
                     @empty
                         <tr>
                             <td
-                                colspan="8"
+                                colspan="9"
                                 class="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-300"
                             >
                                 No payouts found for this status.

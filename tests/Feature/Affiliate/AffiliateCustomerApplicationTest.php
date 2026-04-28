@@ -234,7 +234,7 @@ it('lets an active affiliate request a withdrawal from available approved commis
 
 it('blocks withdrawal requests when the affiliate profile is not active', function () {
     $customer = Customer::factory()->create();
-    app(AffiliateProfileService::class)->apply($customer, [
+    $profile = app(AffiliateProfileService::class)->apply($customer, [
         'application_note' => 'Pending review.',
         'terms_accepted' => true,
     ]);
@@ -246,7 +246,7 @@ it('blocks withdrawal requests when the affiliate profile is not active', functi
     ])->assertRedirectToRoute('shop.customers.account.affiliate.index')
         ->assertSessionHas('warning');
 
-    expect(AffiliatePayout::query()->exists())->toBeFalse();
+    expect(AffiliatePayout::query()->where('affiliate_profile_id', $profile->id)->exists())->toBeFalse();
 });
 
 function activeAffiliateCustomerPortalProfileFor(Customer $customer): AffiliateProfile
