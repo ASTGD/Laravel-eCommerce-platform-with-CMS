@@ -185,9 +185,11 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
     ]))
         ->assertOk()
         ->assertSeeText('Commission Ledger')
-        ->assertSeeText('Paid Amount')
-        ->assertSeeText('Remaining Amount')
-        ->assertSeeText('Display Status');
+        ->assertSeeText('Commission Status')
+        ->assertSeeText('Approval Date')
+        ->assertDontSeeText('Paid Amount')
+        ->assertDontSeeText('Remaining Amount')
+        ->assertDontSeeText('Display Status');
 
     get(route('admin.affiliates.profiles.show', [
         'affiliateProfile' => $profile,
@@ -223,7 +225,7 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
         ->and($payout->transaction_reference)->toBe('MFS-TXN-1001');
 });
 
-it('shows business-friendly commission payout progress and related payout transactions', function () {
+it('keeps commission records focused on earnings and shows payout allocation details under payouts', function () {
     $this->loginAsAdmin();
 
     config()->set('commerce_affiliate.minimum_payout_amount', 1);
@@ -252,38 +254,44 @@ it('shows business-friendly commission payout progress and related payout transa
     createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_PENDING, 15);
     createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_REVERSED, 20);
 
-    expect($fullyPaidCommission->refresh()->business_status_label)->toBe('Paid')
-        ->and($partiallyPaidCommission->refresh()->business_status_label)->toBe('Partially Paid')
-        ->and($partiallyPaidCommission->paid_amount)->toBe(40.0)
-        ->and($partiallyPaidCommission->remaining_amount)->toBe(70.0);
+    expect($fullyPaidCommission->refresh()->status)->toBe(AffiliateCommission::STATUS_PAID)
+        ->and($partiallyPaidCommission->refresh()->status)->toBe(AffiliateCommission::STATUS_APPROVED);
 
     get(route('admin.affiliates.profiles.show', [
         'affiliateProfile' => $profile,
         'tab' => 'commissions',
     ]))
         ->assertOk()
+        ->assertSeeText('Commission Records')
         ->assertSeeText('Commission Amount')
-        ->assertSeeText('Paid Amount')
-        ->assertSeeText('Remaining Amount')
-        ->assertSeeText('Display Status')
-        ->assertSeeText('Partially Paid')
-        ->assertSeeText('Paid')
+        ->assertSeeText('Commission Status')
+        ->assertSeeText('Approval Date')
         ->assertSeeText('Pending Approval')
+        ->assertSeeText('Approved')
         ->assertSeeText('Reversed')
+        ->assertSeeText('Reverse')
         ->assertSeeText('$110.00')
-        ->assertSeeText('$40.00')
-        ->assertSeeText('$70.00')
-        ->assertSeeText('See Transactions')
+        ->assertDontSeeText('Paid Amount')
+        ->assertDontSeeText('Remaining Amount')
+        ->assertDontSeeText('Display Status')
+        ->assertDontSeeText('Partially Paid')
+        ->assertDontSeeText('See Transactions');
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'payouts',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Payout History')
+        ->assertSeeText('Covered Commissions')
+        ->assertSeeText('See Allocations')
         ->assertSeeText('BANK-PARTIAL-PAID')
-        ->assertSeeText('Payout Method')
         ->assertSeeText('Transaction No')
         ->assertSeeText('TXN-PARTIAL-PAID')
         ->assertSeeText('Bank Transfer')
-        ->assertSeeText('Reference')
-        ->assertSeeText('Amount')
-        ->assertSeeText('Status')
-        ->assertSeeText('Requested')
-        ->assertSeeText('Paid');
+        ->assertSeeText('Allocation Amount')
+        ->assertSeeText('Allocation Status')
+        ->assertSeeText('$40.00');
 });
 
 it('lets admin approve and reverse individual affiliate commissions in manual mode', function () {
