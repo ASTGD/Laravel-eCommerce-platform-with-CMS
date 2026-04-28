@@ -11,6 +11,7 @@
     $kpis = $dashboard['kpis'];
     $currency = $dashboard['currency'];
     $approvedCommissionTotal = ($dashboard['commission_summary'][AffiliateCommission::STATUS_APPROVED] ?? 0) + ($dashboard['commission_summary'][AffiliateCommission::STATUS_PAID] ?? 0);
+    $canCreatePayout = $profile->status === AffiliateProfile::STATUS_ACTIVE && bouncer()->hasPermission('affiliates.payouts.manage');
     $formatMoney = static fn ($amount, $currencyCode = null) => core()->formatPrice((float) $amount, $currencyCode ?: $currency);
     $customerName = $identity['name'];
     $applicationSource = str($identity['application_source'])->replace('_', ' ')->title()->value();
@@ -20,17 +21,17 @@
         'commissions' => 'Commissions',
         'payouts' => 'Payouts',
         'traffic' => 'Traffic & Referrals',
-        'profile' => 'Profile / Application',
+        'profile' => 'Affiliate Profile',
         'activity' => 'Activity Log',
     ];
     $statusClass = match ($profile->status) {
-        AffiliateProfile::STATUS_ACTIVE => 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
-        AffiliateProfile::STATUS_PENDING => 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200',
-        AffiliateProfile::STATUS_SUSPENDED => 'border-gray-300 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200',
-        AffiliateProfile::STATUS_REJECTED => 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200',
+        AffiliateProfile::STATUS_ACTIVE => 'border-[#7FBA00]/25 bg-[#7FBA00]/10 text-[#4d7100] dark:border-[#7FBA00]/40 dark:bg-[#7FBA00]/15 dark:text-[#b7e56a]',
+        AffiliateProfile::STATUS_PENDING => 'border-[#FFB900]/35 bg-[#FFB900]/10 text-[#8a6400] dark:border-[#FFB900]/45 dark:bg-[#FFB900]/15 dark:text-[#ffd766]',
+        AffiliateProfile::STATUS_SUSPENDED => 'border-[#737373]/25 bg-[#737373]/10 text-[#525252] dark:border-[#737373]/45 dark:bg-[#737373]/15 dark:text-[#d4d4d4]',
+        AffiliateProfile::STATUS_REJECTED => 'border-[#F25022]/25 bg-[#F25022]/10 text-[#a62e12] dark:border-[#F25022]/45 dark:bg-[#F25022]/15 dark:text-[#ffb19c]',
         default => 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200',
     };
-    $tabActiveClass = 'border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-950 dark:text-blue-100';
+    $tabActiveClass = 'border-[#00A4EF] bg-[#00A4EF]/10 text-[#006fa1] dark:border-[#00A4EF] dark:bg-[#00A4EF]/15 dark:text-[#8ddcff]';
     $tabInactiveClass = 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-900';
     $tabClass = static fn (string $tab) => $activeTab === $tab
         ? $tabActiveClass
@@ -41,9 +42,9 @@
         default => 'Approved',
     };
     $commissionStatusClass = static fn (string $status) => match ($status) {
-        'Pending Approval' => 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200',
-        'Approved' => 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200',
-        'Reversed' => 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200',
+        'Pending Approval' => 'border-[#FFB900]/35 bg-[#FFB900]/10 text-[#8a6400] dark:border-[#FFB900]/45 dark:bg-[#FFB900]/15 dark:text-[#ffd766]',
+        'Approved' => 'border-[#7FBA00]/25 bg-[#7FBA00]/10 text-[#4d7100] dark:border-[#7FBA00]/40 dark:bg-[#7FBA00]/15 dark:text-[#b7e56a]',
+        'Reversed' => 'border-[#F25022]/25 bg-[#F25022]/10 text-[#a62e12] dark:border-[#F25022]/45 dark:bg-[#F25022]/15 dark:text-[#ffb19c]',
         default => 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200',
     };
     $kpiCards = [
@@ -51,56 +52,64 @@
             'label' => 'Total Clicks',
             'value' => number_format($kpis['total_clicks']),
             'helper' => 'Tracked referral visits',
-            'bar' => 'bg-blue-500',
-            'badge' => 'bg-blue-50 text-blue-600 ring-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:ring-blue-900',
+            'color' => '#00A4EF',
+            'badge' => 'bg-[#00A4EF]/16 text-[#00A4EF] ring-[#00A4EF]/35 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
             'icon' => 'cursor',
+        ],
+        [
+            'label' => 'Unique Visitors',
+            'value' => number_format($dashboard['traffic_summary']['unique_visitors']),
+            'helper' => 'Distinct referral visitors',
+            'color' => '#737373',
+            'badge' => 'bg-[#737373]/14 text-[#737373] ring-[#737373]/30 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/45',
+            'icon' => 'visitors',
         ],
         [
             'label' => 'Referred Orders',
             'value' => number_format($kpis['referred_orders']),
             'helper' => 'Orders attributed to this affiliate',
-            'bar' => 'bg-violet-500',
-            'badge' => 'bg-violet-50 text-violet-600 ring-violet-100 dark:bg-violet-950 dark:text-violet-300 dark:ring-violet-900',
+            'color' => '#00A4EF',
+            'badge' => 'bg-[#00A4EF]/16 text-[#00A4EF] ring-[#00A4EF]/35 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
             'icon' => 'orders',
         ],
         [
             'label' => 'Conversion Rate',
             'value' => number_format($kpis['conversion_rate'], 2).'%',
             'helper' => 'Orders divided by tracked clicks',
-            'bar' => 'bg-teal-500',
-            'badge' => 'bg-teal-50 text-teal-600 ring-teal-100 dark:bg-teal-950 dark:text-teal-300 dark:ring-teal-900',
+            'color' => '#7FBA00',
+            'badge' => 'bg-[#7FBA00]/16 text-[#5f8c00] ring-[#7FBA00]/35 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'conversion',
         ],
         [
             'label' => 'Commission Earned',
             'value' => $formatMoney($kpis['total_commission_earned']),
             'helper' => 'Pending, approved, and paid commission',
-            'bar' => 'bg-green-500',
-            'badge' => 'bg-green-50 text-green-600 ring-green-100 dark:bg-green-950 dark:text-green-300 dark:ring-green-900',
+            'color' => '#7FBA00',
+            'badge' => 'bg-[#7FBA00]/16 text-[#5f8c00] ring-[#7FBA00]/35 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'commission',
         ],
         [
             'label' => 'Available Balance',
             'value' => $formatMoney($kpis['available_balance']),
             'helper' => 'Currently available for payout',
-            'bar' => 'bg-emerald-500',
-            'badge' => 'bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:ring-emerald-900',
+            'color' => '#7FBA00',
+            'badge' => 'bg-[#7FBA00]/16 text-[#5f8c00] ring-[#7FBA00]/35 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'balance',
         ],
         [
             'label' => 'Paid Out',
             'value' => $formatMoney($kpis['total_paid_out']),
             'helper' => 'Total completed payouts',
-            'bar' => 'bg-orange-500',
-            'badge' => 'bg-orange-50 text-orange-600 ring-orange-100 dark:bg-orange-950 dark:text-orange-300 dark:ring-orange-900',
+            'color' => '#F25022',
+            'badge' => 'bg-[#F25022]/14 text-[#F25022] ring-[#F25022]/35 dark:bg-[#F25022]/18 dark:text-[#ffb19c] dark:ring-[#F25022]/40',
             'icon' => 'paid',
         ],
         [
             'label' => 'Pending Requests',
             'value' => number_format($kpis['pending_withdrawals']),
             'helper' => 'Withdrawal requests waiting for admin action',
-            'bar' => 'bg-rose-500',
-            'badge' => 'bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-950 dark:text-rose-300 dark:ring-rose-900',
+            'color' => '#FFB900',
+            'badge' => 'bg-[#FFB900]/18 text-[#9a7000] ring-[#FFB900]/40 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
             'icon' => 'pending',
         ],
     ];
@@ -154,14 +163,16 @@
                 </div>
 
                 <div class="flex flex-wrap items-center justify-end gap-2">
-                    <button
-                        type="button"
-                        class="primary-button"
-                        data-affiliate-tab-trigger="payouts"
-                        data-affiliate-tab-scroll-target="#payout-create"
-                    >
-                        Create Payout
-                    </button>
+                    @if ($canCreatePayout)
+                        <button
+                            type="button"
+                            class="primary-button"
+                            data-affiliate-tab-trigger="payouts"
+                            data-affiliate-tab-scroll-target="#payout-create"
+                        >
+                            Create Payout
+                        </button>
+                    @endif
 
                     @if ($profile->status === AffiliateProfile::STATUS_PENDING && bouncer()->hasPermission('affiliates.profiles.approve'))
                         <form method="POST" action="{{ route('admin.affiliates.profiles.approve', $profile) }}">
@@ -361,8 +372,11 @@
 
         <div class="affiliate-profile-kpi-grid">
             @foreach ($kpiCards as $card)
-                <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-                    <div class="absolute inset-x-0 top-0 h-1 {{ $card['bar'] }}"></div>
+                <div
+                    class="affiliate-profile-kpi-card relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-gray-900"
+                    style="--affiliate-kpi-color: {{ $card['color'] }};"
+                >
+                    <div class="affiliate-profile-kpi-accent"></div>
 
                     <div class="flex h-full items-start justify-between gap-4">
                         <div class="min-w-0">
@@ -379,7 +393,7 @@
                             </p>
                         </div>
 
-                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 {{ $card['badge'] }}">
+                        <div class="affiliate-profile-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 {{ $card['badge'] }}">
                             <svg
                                 class="h-5 w-5"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -403,6 +417,13 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 18.5h16" />
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.5 15l3.5-4 3 2.5 4.5-6" />
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5h1.5V9" />
+                                        @break
+
+                                    @case('visitors')
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 11a3 3 0 100-6 3 3 0 000 6z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.5 19c.75-3 2.5-4.5 5-4.5s4.25 1.5 5 4.5" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 15c2.25.25 3.75 1.6 4.5 4" />
                                         @break
 
                                     @case('commission')
@@ -485,9 +506,9 @@
                                 </div>
 
                                 <div class="mt-4 flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500 dark:text-gray-400">
-                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>Clicks</span>
-                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Orders</span>
-                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>Commission</span>
+                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-[#00A4EF]"></span>Clicks</span>
+                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-[#7FBA00]"></span>Orders</span>
+                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-[#FFB900]"></span>Commission</span>
                                 </div>
 
                                 <div class="affiliate-profile-trend-chart mt-5">
@@ -497,9 +518,9 @@
                                             title="{{ core()->formatDate($row['date'], 'd M Y') }}: {{ $row['clicks'] }} clicks, {{ $row['orders'] }} orders, {{ $formatMoney($row['commissions']) }} commission"
                                         >
                                             <div class="affiliate-profile-trend-bars">
-                                                <span class="bg-blue-500" style="height: {{ max(8, min(100, ($row['clicks'] / $dashboard['trend']['max_clicks']) * 100)) }}%"></span>
-                                                <span class="bg-emerald-500" style="height: {{ max(8, min(100, ($row['orders'] / $dashboard['trend']['max_orders']) * 100)) }}%"></span>
-                                                <span class="bg-amber-500" style="height: {{ max(8, min(100, ($row['commissions'] / $dashboard['trend']['max_commissions']) * 100)) }}%"></span>
+                                                <span class="bg-[#00A4EF]" style="height: {{ max(8, min(100, ($row['clicks'] / $dashboard['trend']['max_clicks']) * 100)) }}%"></span>
+                                                <span class="bg-[#7FBA00]" style="height: {{ max(8, min(100, ($row['orders'] / $dashboard['trend']['max_orders']) * 100)) }}%"></span>
+                                                <span class="bg-[#FFB900]" style="height: {{ max(8, min(100, ($row['commissions'] / $dashboard['trend']['max_commissions']) * 100)) }}%"></span>
                                             </div>
                                             <p class="text-center text-[10px] font-medium text-gray-500 dark:text-gray-400">{{ core()->formatDate($row['date'], 'd M') }}</p>
                                         </div>
@@ -685,20 +706,45 @@
                             </div>
                         </div>
 
-                        <form method="GET" action="{{ route('admin.affiliates.profiles.show', $profile) }}" class="affiliate-profile-card">
+                        <form method="GET" action="{{ route('admin.affiliates.profiles.show', $profile) }}" class="affiliate-profile-filter-bar">
                             <input type="hidden" name="tab" value="commissions">
 
-                            <div class="grid gap-3 md:grid-cols-5">
-                                <input name="commission_order" value="{{ $commissionFilters['order'] }}" class="rounded-md border px-3 py-2.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" placeholder="Order no">
-                                <select name="commission_status" class="custom-select rounded-md border bg-white px-3 py-2.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                    <option value="">All statuses</option>
-                                    @foreach ($commissionStatusOptions as $statusCode => $statusLabel)
-                                        <option value="{{ $statusCode }}" @selected($commissionFilters['status'] === $statusCode)>{{ $statusLabel }}</option>
-                                    @endforeach
-                                </select>
-                                <input type="date" name="commission_date_from" value="{{ $commissionFilters['date_from'] }}" class="rounded-md border px-3 py-2.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                <input type="date" name="commission_date_to" value="{{ $commissionFilters['date_to'] }}" class="rounded-md border px-3 py-2.5 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                                <button type="submit" class="secondary-button justify-center">Filter</button>
+                            <div class="affiliate-profile-filter-grid">
+                                <label class="affiliate-profile-filter-field">
+                                    <span>Order No</span>
+                                    <input name="commission_order" value="{{ $commissionFilters['order'] }}" placeholder="Search order">
+                                </label>
+
+                                <label class="affiliate-profile-filter-field">
+                                    <span>Status</span>
+                                    <select name="commission_status" class="custom-select">
+                                        <option value="">All statuses</option>
+                                        @foreach ($commissionStatusOptions as $statusCode => $statusLabel)
+                                            <option value="{{ $statusCode }}" @selected($commissionFilters['status'] === $statusCode)>{{ $statusLabel }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+
+                                <label class="affiliate-profile-filter-field">
+                                    <span>From</span>
+                                    <input type="date" name="commission_date_from" value="{{ $commissionFilters['date_from'] }}">
+                                </label>
+
+                                <label class="affiliate-profile-filter-field">
+                                    <span>To</span>
+                                    <input type="date" name="commission_date_to" value="{{ $commissionFilters['date_to'] }}">
+                                </label>
+
+                                <div class="affiliate-profile-filter-actions">
+                                    <button type="submit" class="secondary-button justify-center">Apply</button>
+
+                                    <a
+                                        href="{{ route('admin.affiliates.profiles.show', ['affiliateProfile' => $profile, 'tab' => 'commissions']) }}"
+                                        class="affiliate-profile-filter-reset"
+                                    >
+                                        Reset
+                                    </a>
+                                </div>
                             </div>
                         </form>
 
@@ -978,7 +1024,7 @@
                                 </div>
                             </div>
 
-                            @if (bouncer()->hasPermission('affiliates.payouts.manage'))
+                            @if ($canCreatePayout)
                                 <div id="payout-create" class="affiliate-profile-card">
                                     <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                                         Create Payout
@@ -1297,11 +1343,11 @@
                 align-items: center;
                 justify-content: center;
                 border-radius: 9999px;
-                background: linear-gradient(135deg, rgb(37 99 235), rgb(20 184 166));
+                border: 1px solid rgb(186 230 253);
+                background: linear-gradient(135deg, rgb(0 164 239), rgb(127 186 0));
                 color: white;
                 font-size: 1.35rem;
                 font-weight: 800;
-                box-shadow: 0 10px 25px rgb(37 99 235 / 0.28);
             }
 
             .affiliate-profile-status-badge {
@@ -1437,8 +1483,15 @@
                 box-shadow: 0 6px 16px rgb(15 23 42 / 0.06);
             }
 
+            .affiliate-profile-utility-action.is-copied {
+                border-color: rgb(127 186 0 / 0.32);
+                background: rgb(127 186 0 / 0.1);
+                color: rgb(77 113 0);
+                box-shadow: none;
+            }
+
             .affiliate-profile-utility-action:focus-visible {
-                outline: 2px solid rgb(147 197 253);
+                outline: 2px solid rgb(0 164 239 / 0.35);
                 outline-offset: 2px;
             }
 
@@ -1452,6 +1505,12 @@
                 border-color: rgb(71 85 105);
                 background: rgb(30 41 59);
                 color: rgb(248 250 252);
+            }
+
+            .dark .affiliate-profile-utility-action.is-copied {
+                border-color: rgb(127 186 0 / 0.44);
+                background: rgb(127 186 0 / 0.16);
+                color: rgb(183 229 106);
             }
 
             @media (min-width: 640px) {
@@ -1485,6 +1544,37 @@
                 gap: 1rem;
             }
 
+            .affiliate-profile-kpi-card {
+                border-color: color-mix(in srgb, var(--affiliate-kpi-color) 30%, rgb(229 231 235));
+                box-shadow:
+                    inset 0 0 0 1px color-mix(in srgb, var(--affiliate-kpi-color) 10%, transparent),
+                    0 1px 2px rgb(15 23 42 / 0.04);
+            }
+
+            .dark .affiliate-profile-kpi-card {
+                border-color: color-mix(in srgb, var(--affiliate-kpi-color) 42%, rgb(31 41 55));
+            }
+
+            .affiliate-profile-kpi-accent {
+                position: absolute;
+                inset: 0 auto 0 0;
+                width: 0.38rem;
+                background: var(--affiliate-kpi-color);
+            }
+
+            .affiliate-profile-kpi-card::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background:
+                    radial-gradient(circle at top right, color-mix(in srgb, var(--affiliate-kpi-color) 18%, transparent), transparent 10rem);
+                pointer-events: none;
+            }
+
+            .affiliate-profile-kpi-icon {
+                color: var(--affiliate-kpi-color);
+            }
+
             @media (min-width: 768px) {
                 .affiliate-profile-kpi-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1493,8 +1583,100 @@
 
             @media (min-width: 1280px) {
                 .affiliate-profile-kpi-grid {
-                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
                 }
+            }
+
+            .affiliate-profile-filter-bar {
+                border: 1px solid rgb(229 231 235);
+                border-radius: 0.875rem;
+                background: rgb(255 255 255);
+                padding: 0.85rem;
+                box-shadow: 0 1px 2px rgb(15 23 42 / 0.035);
+            }
+
+            .dark .affiliate-profile-filter-bar {
+                border-color: rgb(31 41 55);
+                background: rgb(17 24 39);
+            }
+
+            .affiliate-profile-filter-grid {
+                display: grid;
+                gap: 0.75rem;
+            }
+
+            .affiliate-profile-filter-field {
+                display: grid;
+                gap: 0.35rem;
+                min-width: 0;
+            }
+
+            .affiliate-profile-filter-field span {
+                color: rgb(100 116 139);
+                font-size: 0.6875rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .dark .affiliate-profile-filter-field span {
+                color: rgb(148 163 184);
+            }
+
+            .affiliate-profile-filter-field input,
+            .affiliate-profile-filter-field select {
+                min-height: 2.5rem;
+                width: 100%;
+                border: 1px solid rgb(226 232 240);
+                border-radius: 0.65rem;
+                background: rgb(255 255 255);
+                padding: 0.55rem 0.75rem;
+                color: rgb(15 23 42);
+                font-size: 0.875rem;
+            }
+
+            .dark .affiliate-profile-filter-field input,
+            .dark .affiliate-profile-filter-field select {
+                border-color: rgb(31 41 55);
+                background: rgb(15 23 42);
+                color: rgb(226 232 240);
+            }
+
+            .affiliate-profile-filter-actions {
+                display: flex;
+                align-items: end;
+                gap: 0.625rem;
+            }
+
+            .affiliate-profile-filter-actions .secondary-button {
+                min-height: 2.5rem;
+                color: rgb(0 111 161);
+            }
+
+            .affiliate-profile-filter-reset {
+                display: inline-flex;
+                min-height: 2.5rem;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0.65rem;
+                padding: 0 0.75rem;
+                color: rgb(100 116 139);
+                font-size: 0.875rem;
+                font-weight: 650;
+            }
+
+            .affiliate-profile-filter-reset:hover {
+                background: rgb(248 250 252);
+                color: rgb(15 23 42);
+            }
+
+            .dark .affiliate-profile-filter-reset {
+                color: rgb(148 163 184);
+            }
+
+            .dark .affiliate-profile-filter-reset:hover {
+                background: rgb(31 41 55);
+                color: rgb(248 250 252);
             }
 
             .affiliate-profile-card {
@@ -1584,15 +1766,15 @@
             }
 
             .affiliate-profile-trend-bars span:nth-child(1) {
-                background: rgb(59 130 246);
+                background: rgb(0 164 239);
             }
 
             .affiliate-profile-trend-bars span:nth-child(2) {
-                background: rgb(16 185 129);
+                background: rgb(127 186 0);
             }
 
             .affiliate-profile-trend-bars span:nth-child(3) {
-                background: rgb(245 158 11);
+                background: rgb(255 185 0);
             }
 
             .affiliate-profile-traffic-bar {
@@ -1606,10 +1788,15 @@
                 width: 100%;
                 min-height: 0.5rem;
                 border-radius: 0.4rem 0.4rem 0 0;
-                background: rgb(59 130 246);
+                background: rgb(0 164 239);
             }
 
             @media (min-width: 768px) {
+                .affiliate-profile-filter-grid {
+                    grid-template-columns: minmax(12rem, 1.2fr) minmax(11rem, 1fr) minmax(9.5rem, 0.8fr) minmax(9.5rem, 0.8fr) auto;
+                    align-items: end;
+                }
+
                 .affiliate-profile-summary-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }
@@ -1733,15 +1920,46 @@
                         return;
                     }
 
-                    navigator.clipboard?.writeText(button.getAttribute('data-affiliate-copy-value') || '');
+                    const value = button.getAttribute('data-affiliate-copy-value') || '';
 
                     const original = button.textContent;
+                    const copyValue = async () => {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            await navigator.clipboard.writeText(value);
 
-                    button.textContent = 'Copied';
+                            return;
+                        }
 
-                    setTimeout(() => {
-                        button.textContent = original;
-                    }, 1400);
+                        const textarea = document.createElement('textarea');
+                        textarea.value = value;
+                        textarea.setAttribute('readonly', '');
+                        textarea.style.position = 'fixed';
+                        textarea.style.top = '-9999px';
+                        textarea.style.left = '-9999px';
+
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        textarea.remove();
+                    };
+
+                    copyValue()
+                        .then(() => {
+                            button.textContent = 'Copied';
+                            button.classList.add('is-copied');
+
+                            setTimeout(() => {
+                                button.textContent = original;
+                                button.classList.remove('is-copied');
+                            }, 1400);
+                        })
+                        .catch(() => {
+                            button.textContent = 'Copy failed';
+
+                            setTimeout(() => {
+                                button.textContent = original;
+                            }, 1400);
+                        });
                 });
             })();
         </script>
