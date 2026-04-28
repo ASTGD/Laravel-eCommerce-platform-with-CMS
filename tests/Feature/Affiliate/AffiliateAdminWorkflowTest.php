@@ -166,16 +166,14 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
         ->assertSeeText('Commissions')
         ->assertSeeText('Payouts')
         ->assertSeeText('Traffic & Referrals')
-        ->assertSeeText('Profile / Application')
+        ->assertSeeText('Affiliate Profile')
+        ->assertDontSeeText('Profile / Application')
         ->assertSeeText('Activity Log')
         ->assertSee('data-affiliate-profile-tabs', false)
         ->assertSee('data-affiliate-tab-trigger="commissions"', false)
         ->assertSee('data-affiliate-tab-panel="payouts"', false)
-        ->assertDontSee('href="'.route('admin.affiliates.profiles.show', [
-            'affiliateProfile' => $profile,
-            'tab' => 'commissions',
-        ]).'"', false)
         ->assertSeeText('Referral Code')
+        ->assertSeeText('Unique Visitors')
         ->assertSeeText('Available Balance')
         ->assertSeeText('Create Payout');
 
@@ -223,6 +221,21 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
         ->and($payout->payout_method)->toBe('mobile_banking')
         ->and($payout->payout_reference)->toBe('MOBILE-PAID-1001')
         ->and($payout->transaction_reference)->toBe('MFS-TXN-1001');
+});
+
+it('hides payout creation controls for non-active affiliate profiles', function () {
+    $this->loginAsAdmin();
+
+    $profile = app(AffiliateProfileService::class)->apply(Customer::factory()->create(), [
+        'application_note' => 'Waiting for review.',
+        'terms_accepted' => true,
+    ]);
+
+    get(route('admin.affiliates.profiles.show', $profile))
+        ->assertOk()
+        ->assertSeeText('Pending')
+        ->assertDontSeeText('Create Payout')
+        ->assertDontSeeText('Create Paid Payout');
 });
 
 it('keeps commission records focused on earnings and shows payout allocation details under payouts', function () {
@@ -402,6 +415,8 @@ it('keeps referral codes stable and does not expose regeneration controls', func
         ->assertSeeText('Referral Code')
         ->assertSeeText('Copy Code')
         ->assertSeeText('Copy Link')
+        ->assertSee('data-affiliate-copy-value="'.$profile->referral_code.'"', false)
+        ->assertSee('data-affiliate-copy-value="'.$profile->referral_url.'"', false)
         ->assertDontSeeText('Regenerate')
         ->assertDontSeeText('Regenerate Referral Code')
         ->assertSee($profile->referral_url);
