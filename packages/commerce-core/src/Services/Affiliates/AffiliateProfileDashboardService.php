@@ -233,9 +233,22 @@ class AffiliateProfileDashboardService
     protected function commissionRows(AffiliateProfile $profile, array $filters): Collection
     {
         return AffiliateCommission::query()
-            ->with(['order', 'payoutAllocations.payout'])
+            ->with('order')
             ->where('affiliate_profile_id', $profile->id)
-            ->when(filled(Arr::get($filters, 'status')), fn (Builder $query) => $query->where('status', Arr::get($filters, 'status')))
+            ->when(filled(Arr::get($filters, 'status')), function (Builder $query) use ($filters): void {
+                $status = Arr::get($filters, 'status');
+
+                if ($status === AffiliateCommission::STATUS_APPROVED) {
+                    $query->whereIn('status', [
+                        AffiliateCommission::STATUS_APPROVED,
+                        AffiliateCommission::STATUS_PAID,
+                    ]);
+
+                    return;
+                }
+
+                $query->where('status', $status);
+            })
             ->when(filled(Arr::get($filters, 'date_from')), fn (Builder $query) => $query->whereDate('created_at', '>=', Arr::get($filters, 'date_from')))
             ->when(filled(Arr::get($filters, 'date_to')), fn (Builder $query) => $query->whereDate('created_at', '<=', Arr::get($filters, 'date_to')))
             ->when(filled(Arr::get($filters, 'order')), function (Builder $query) use ($filters): void {
@@ -253,6 +266,7 @@ class AffiliateProfileDashboardService
     protected function payoutRows(AffiliateProfile $profile): Collection
     {
         return AffiliatePayout::query()
+            ->with(['allocations.commission.order'])
             ->where('affiliate_profile_id', $profile->id)
             ->latest('id')
             ->limit(50)

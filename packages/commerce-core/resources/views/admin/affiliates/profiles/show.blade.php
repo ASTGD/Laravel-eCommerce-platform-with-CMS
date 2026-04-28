@@ -10,6 +10,7 @@
     $usesManualCommissionApproval = $commissionApprovalMode === 'manual';
     $kpis = $dashboard['kpis'];
     $currency = $dashboard['currency'];
+    $approvedCommissionTotal = ($dashboard['commission_summary'][AffiliateCommission::STATUS_APPROVED] ?? 0) + ($dashboard['commission_summary'][AffiliateCommission::STATUS_PAID] ?? 0);
     $formatMoney = static fn ($amount, $currencyCode = null) => core()->formatPrice((float) $amount, $currencyCode ?: $currency);
     $customerName = $identity['name'];
     $applicationSource = str($identity['application_source'])->replace('_', ' ')->title()->value();
@@ -34,11 +35,14 @@
     $tabClass = static fn (string $tab) => $activeTab === $tab
         ? $tabActiveClass
         : $tabInactiveClass;
-    $commissionBusinessStatusClass = static fn (string $status) => match ($status) {
+    $commissionStatusLabel = static fn (AffiliateCommission $commission) => match ($commission->status) {
+        AffiliateCommission::STATUS_PENDING => 'Pending Approval',
+        AffiliateCommission::STATUS_REVERSED => 'Reversed',
+        default => 'Approved',
+    };
+    $commissionStatusClass = static fn (string $status) => match ($status) {
         'Pending Approval' => 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200',
         'Approved' => 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200',
-        'Partially Paid' => 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-200',
-        'Paid' => 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200',
         'Reversed' => 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-200',
         default => 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200',
     };
@@ -673,7 +677,7 @@
                             </div>
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Approved</p>
-                                <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['commission_summary'][AffiliateCommission::STATUS_APPROVED]) }}</p>
+                                <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($approvedCommissionTotal) }}</p>
                             </div>
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Reversed</p>
@@ -704,16 +708,15 @@
                             </h3>
 
                             <div class="mt-4 overflow-x-auto">
-                                <table class="w-full min-w-[1120px] text-left text-sm">
+                                <table class="w-full min-w-[860px] text-left text-sm">
                                     <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
                                         <tr>
                                             <th class="px-4 py-3">Order No</th>
                                             <th class="px-4 py-3">Order Date</th>
                                             <th class="px-4 py-3">Order Amount</th>
                                             <th class="px-4 py-3">Commission Amount</th>
-                                            <th class="px-4 py-3">Paid Amount</th>
-                                            <th class="px-4 py-3">Remaining Amount</th>
-                                            <th class="px-4 py-3">Display Status</th>
+                                            <th class="px-4 py-3">Approval Date</th>
+                                            <th class="px-4 py-3">Commission Status</th>
                                             <th class="px-4 py-3 text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -721,8 +724,7 @@
                                         @forelse ($dashboard['commission_rows'] as $commission)
                                             @php
                                                 $commissionCurrency = $commission->currency ?: $currency;
-                                                $businessStatus = $commission->business_status_label;
-                                                $allocations = $commission->payoutAllocations->sortBy('id')->values();
+                                                $workflowStatus = $commissionStatusLabel($commission);
                                             @endphp
 
                                             <tr class="bg-white dark:bg-gray-900">
@@ -731,25 +733,11 @@
                                                 <td class="px-4 py-3">{{ $formatMoney($commission->order_amount, $commissionCurrency) }}</td>
                                                 <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">{{ $formatMoney($commission->commission_amount, $commissionCurrency) }}</td>
                                                 <td class="px-4 py-3">
-                                                    <p class="font-semibold text-emerald-700 dark:text-emerald-300">{{ $formatMoney($commission->paid_amount, $commissionCurrency) }}</p>
-
-                                                    @if ($allocations->isNotEmpty())
-                                                        <button
-                                                            type="button"
-                                                            class="mt-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline dark:text-blue-300 dark:hover:text-blue-200"
-                                                            data-affiliate-commission-payout-toggle="{{ $commission->id }}"
-                                                            aria-expanded="false"
-                                                        >
-                                                            See Transactions
-                                                        </button>
-                                                    @endif
+                                                    {{ $commission->approved_at ? core()->formatDate($commission->approved_at, 'd M Y') : 'N/A' }}
                                                 </td>
                                                 <td class="px-4 py-3">
-                                                    <p class="font-semibold text-gray-900 dark:text-white">{{ $formatMoney($commission->remaining_amount, $commissionCurrency) }}</p>
-                                                </td>
-                                                <td class="px-4 py-3">
-                                                    <span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold {{ $commissionBusinessStatusClass($businessStatus) }}">
-                                                        {{ $businessStatus }}
+                                                    <span class="inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold {{ $commissionStatusClass($workflowStatus) }}">
+                                                        {{ $workflowStatus }}
                                                     </span>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
@@ -763,7 +751,7 @@
                                                             </form>
                                                         @endif
 
-                                                        @if (in_array($commission->status, [AffiliateCommission::STATUS_PENDING, AffiliateCommission::STATUS_APPROVED], true) && bouncer()->hasPermission('affiliates.commissions.manage'))
+                                                        @if (in_array($commission->status, [AffiliateCommission::STATUS_PENDING, AffiliateCommission::STATUS_APPROVED, AffiliateCommission::STATUS_PAID], true) && bouncer()->hasPermission('affiliates.commissions.manage'))
                                                             <form method="POST" action="{{ route('admin.affiliates.commissions.reverse', $commission) }}">
                                                                 @csrf
                                                                 <input type="hidden" name="reason" value="Reversed manually by admin.">
@@ -781,46 +769,9 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                            <tr
-                                                class="hidden bg-slate-50/40 dark:bg-gray-950/40"
-                                                data-affiliate-commission-payout-row="{{ $commission->id }}"
-                                            >
-                                                <td colspan="8" class="px-4 pb-3 pt-0">
-                                                    <div class="ml-4 border-l border-dashed border-gray-300 pl-4 dark:border-gray-700">
-                                                        <div class="overflow-x-auto rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
-                                                            <table class="w-full min-w-[760px] text-left text-xs">
-                                                                <thead class="border-b border-gray-100 bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:border-gray-800 dark:bg-gray-950">
-                                                                    <tr>
-                                                                        <th class="px-3 py-2">Reference</th>
-                                                                        <th class="px-3 py-2">Payout Method</th>
-                                                                        <th class="px-3 py-2">Transaction No</th>
-                                                                        <th class="px-3 py-2">Amount</th>
-                                                                        <th class="px-3 py-2">Status</th>
-                                                                        <th class="px-3 py-2">Requested</th>
-                                                                        <th class="px-3 py-2">Paid</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                                                                    @foreach ($allocations as $allocation)
-                                                                        <tr class="text-gray-600 dark:text-gray-300">
-                                                                            <td class="px-3 py-2 font-semibold text-gray-900 dark:text-white">{{ $allocation->payout?->payout_reference ?: 'Payout #'.$allocation->affiliate_payout_id }}</td>
-                                                                            <td class="px-3 py-2">{{ $allocation->payout?->payout_method ? str($allocation->payout->payout_method)->replace('_', ' ')->title() : 'N/A' }}</td>
-                                                                            <td class="px-3 py-2 font-semibold text-gray-900 dark:text-white">{{ $allocation->payout?->transaction_reference ?: 'N/A' }}</td>
-                                                                            <td class="px-3 py-2 font-semibold text-gray-900 dark:text-white">{{ $formatMoney($allocation->amount, $commissionCurrency) }}</td>
-                                                                            <td class="px-3 py-2">{{ $allocation->status_label }} · {{ $allocation->payout?->status_label ?: 'N/A' }}</td>
-                                                                            <td class="px-3 py-2">{{ $allocation->payout?->requested_at ? core()->formatDate($allocation->payout->requested_at, 'd M Y') : 'N/A' }}</td>
-                                                                            <td class="px-3 py-2">{{ $allocation->payout?->paid_at ? core()->formatDate($allocation->payout->paid_at, 'd M Y') : 'N/A' }}</td>
-                                                                        </tr>
-                                                                    @endforeach
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="8" class="px-4 py-10 text-center text-gray-500">
+                                                <td colspan="7" class="px-4 py-10 text-center text-gray-500">
                                                     No commissions match the selected filters.
                                                 </td>
                                             </tr>
@@ -876,7 +827,7 @@
                                 </h3>
 
                                 <div class="mt-4 overflow-x-auto">
-                                    <table class="w-full min-w-[1080px] text-left text-sm">
+                                    <table class="w-full min-w-[1220px] text-left text-sm">
                                         <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
                                             <tr>
                                                 <th class="px-4 py-3">Payout Reference</th>
@@ -887,20 +838,44 @@
                                                 <th class="px-4 py-3">Status</th>
                                                 <th class="px-4 py-3">Completed Date</th>
                                                 <th class="px-4 py-3">Notes</th>
+                                                <th class="px-4 py-3">Covered Commissions</th>
                                                 <th class="px-4 py-3 text-right">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                             @forelse ($dashboard['payout_rows'] as $payout)
+                                                @php
+                                                    $payoutCurrency = $payout->currency ?: $currency;
+                                                    $payoutAllocations = $payout->allocations->sortBy('id')->values();
+                                                @endphp
+
                                                 <tr>
                                                     <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $payout->payout_reference ?: 'N/A' }}</td>
                                                     <td class="px-4 py-3">{{ $payout->requested_at ? core()->formatDate($payout->requested_at, 'd M Y') : core()->formatDate($payout->created_at, 'd M Y') }}</td>
-                                                    <td class="px-4 py-3">{{ $formatMoney($payout->amount, $payout->currency ?: $currency) }}</td>
+                                                    <td class="px-4 py-3">{{ $formatMoney($payout->amount, $payoutCurrency) }}</td>
                                                     <td class="px-4 py-3">{{ $payout->payout_method ? str($payout->payout_method)->replace('_', ' ')->title() : 'N/A' }}</td>
                                                     <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{{ $payout->transaction_reference ?: 'N/A' }}</td>
                                                     <td class="px-4 py-3">{{ $payout->status_label }}</td>
                                                     <td class="px-4 py-3">{{ $payout->paid_at ? core()->formatDate($payout->paid_at, 'd M Y') : 'N/A' }}</td>
                                                     <td class="px-4 py-3">{{ $payout->admin_notes ?: $payout->notes ?: 'N/A' }}</td>
+                                                    <td class="px-4 py-3">
+                                                        @if ($payoutAllocations->isNotEmpty())
+                                                            <button
+                                                                type="button"
+                                                                class="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline dark:text-blue-300 dark:hover:text-blue-200"
+                                                                data-affiliate-payout-allocation-toggle="{{ $payout->id }}"
+                                                                aria-expanded="false"
+                                                            >
+                                                                See Allocations
+                                                            </button>
+
+                                                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                {{ $payoutAllocations->count() }} {{ str('commission')->plural($payoutAllocations->count()) }}
+                                                            </p>
+                                                        @else
+                                                            <span class="text-gray-400">N/A</span>
+                                                        @endif
+                                                    </td>
                                                     <td class="px-4 py-3 text-right">
                                                         @if (bouncer()->hasPermission('affiliates.payouts.manage') && $payout->status === AffiliatePayout::STATUS_REQUESTED)
                                                             <div class="flex justify-end gap-2">
@@ -925,9 +900,62 @@
                                                         @endif
                                                     </td>
                                                 </tr>
+                                                @if ($payoutAllocations->isNotEmpty())
+                                                    <tr
+                                                        class="hidden bg-slate-50/50 dark:bg-gray-950/40"
+                                                        data-affiliate-payout-allocation-row="{{ $payout->id }}"
+                                                    >
+                                                        <td colspan="10" class="px-4 pb-4 pt-0">
+                                                            <div class="ml-4 border-l border-dashed border-gray-300 pl-4 dark:border-gray-700">
+                                                                <div class="overflow-x-auto rounded-md border border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900">
+                                                                    <table class="w-full min-w-[760px] text-left text-xs">
+                                                                        <thead class="border-b border-gray-100 bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:border-gray-800 dark:bg-gray-950">
+                                                                            <tr>
+                                                                                <th class="px-3 py-2">Order No</th>
+                                                                                <th class="px-3 py-2">Order Date</th>
+                                                                                <th class="px-3 py-2">Commission Amount</th>
+                                                                                <th class="px-3 py-2">Allocation Amount</th>
+                                                                                <th class="px-3 py-2">Allocation Status</th>
+                                                                                <th class="px-3 py-2">Commission Status</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                                                            @foreach ($payoutAllocations as $allocation)
+                                                                                @php
+                                                                                    $allocatedCommission = $allocation->commission;
+                                                                                    $allocationCurrency = $allocatedCommission?->currency ?: $payoutCurrency;
+                                                                                    $allocatedCommissionStatus = $allocatedCommission ? $commissionStatusLabel($allocatedCommission) : 'N/A';
+                                                                                @endphp
+
+                                                                                <tr class="text-gray-600 dark:text-gray-300">
+                                                                                    <td class="px-3 py-2 font-semibold text-gray-900 dark:text-white">
+                                                                                        {{ $allocatedCommission?->order?->increment_id ? '#'.$allocatedCommission->order->increment_id : ($allocatedCommission?->order_id ? 'Order #'.$allocatedCommission->order_id : 'N/A') }}
+                                                                                    </td>
+                                                                                    <td class="px-3 py-2">{{ $allocatedCommission?->order?->created_at ? core()->formatDate($allocatedCommission->order->created_at, 'd M Y') : 'N/A' }}</td>
+                                                                                    <td class="px-3 py-2">{{ $allocatedCommission ? $formatMoney($allocatedCommission->commission_amount, $allocationCurrency) : 'N/A' }}</td>
+                                                                                    <td class="px-3 py-2 font-semibold text-gray-900 dark:text-white">{{ $formatMoney($allocation->amount, $allocationCurrency) }}</td>
+                                                                                    <td class="px-3 py-2">{{ $allocation->status_label }}</td>
+                                                                                    <td class="px-3 py-2">
+                                                                                        @if ($allocatedCommission)
+                                                                                            <span class="inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $commissionStatusClass($allocatedCommissionStatus) }}">
+                                                                                                {{ $allocatedCommissionStatus }}
+                                                                                            </span>
+                                                                                        @else
+                                                                                            N/A
+                                                                                        @endif
+                                                                                    </td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endif
                                             @empty
                                                 <tr>
-                                                    <td colspan="9" class="px-4 py-10 text-center text-gray-500">
+                                                    <td colspan="10" class="px-4 py-10 text-center text-gray-500">
                                                         No payouts recorded yet.
                                                     </td>
                                                 </tr>
@@ -1684,17 +1712,17 @@
                         return;
                     }
 
-                    const payoutToggle = event.target.closest('[data-affiliate-commission-payout-toggle]');
+                    const payoutToggle = event.target.closest('[data-affiliate-payout-allocation-toggle]');
 
                     if (payoutToggle) {
                         event.preventDefault();
 
-                        const row = document.querySelector(`[data-affiliate-commission-payout-row="${payoutToggle.dataset.affiliateCommissionPayoutToggle}"]`);
+                        const row = document.querySelector(`[data-affiliate-payout-allocation-row="${payoutToggle.dataset.affiliatePayoutAllocationToggle}"]`);
                         const isExpanded = payoutToggle.getAttribute('aria-expanded') === 'true';
 
                         row?.classList.toggle('hidden', isExpanded);
                         payoutToggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
-                        payoutToggle.textContent = isExpanded ? 'See Transactions' : 'Hide Transaction';
+                        payoutToggle.textContent = isExpanded ? 'See Allocations' : 'Hide Allocations';
 
                         return;
                     }

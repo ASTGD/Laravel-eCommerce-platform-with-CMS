@@ -112,7 +112,11 @@ class AffiliateProfileController extends Controller
             ]),
             'activeTab' => $activeTab,
             'commissionFilters' => $commissionFilters,
-            'commissionStatusOptions' => AffiliateCommission::statusLabels(),
+            'commissionStatusOptions' => [
+                AffiliateCommission::STATUS_PENDING => 'Pending Approval',
+                AffiliateCommission::STATUS_APPROVED => 'Approved',
+                AffiliateCommission::STATUS_REVERSED => 'Reversed',
+            ],
             'payoutMethods' => $this->affiliateSettingsService->payoutMethods(),
         ]);
     }
