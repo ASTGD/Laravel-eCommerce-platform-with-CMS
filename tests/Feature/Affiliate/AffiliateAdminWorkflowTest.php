@@ -185,7 +185,9 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
     ]))
         ->assertOk()
         ->assertSeeText('Commission Ledger')
-        ->assertSeeText('Payout Reference');
+        ->assertSeeText('Paid Amount')
+        ->assertSeeText('Remaining Amount')
+        ->assertSeeText('Display Status');
 
     get(route('admin.affiliates.profiles.show', [
         'affiliateProfile' => $profile,
@@ -205,9 +207,10 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
     post(route('admin.affiliates.profiles.payouts.store', $profile), [
         'amount' => 60,
         'currency' => 'USD',
-        'payout_method' => 'bank_transfer',
-        'payout_reference' => 'BANK-PAID-1001',
-        'admin_notes' => 'Manual bank payout.',
+        'payout_method' => 'mobile_banking',
+        'payout_reference' => 'MOBILE-PAID-1001',
+        'transaction_reference' => 'MFS-TXN-1001',
+        'admin_notes' => 'Manual mobile banking payout.',
     ])->assertRedirect(route('admin.affiliates.profiles.show', $profile));
 
     $payout = AffiliatePayout::query()->where('affiliate_profile_id', $profile->id)->first();
@@ -215,7 +218,72 @@ it('shows profile summaries and lets admin add a paid payout record from the pro
     expect($payout)->not->toBeNull()
         ->and($payout->status)->toBe(AffiliatePayout::STATUS_PAID)
         ->and((float) $payout->amount)->toBe(60.0)
-        ->and($payout->payout_reference)->toBe('BANK-PAID-1001');
+        ->and($payout->payout_method)->toBe('mobile_banking')
+        ->and($payout->payout_reference)->toBe('MOBILE-PAID-1001')
+        ->and($payout->transaction_reference)->toBe('MFS-TXN-1001');
+});
+
+it('shows business-friendly commission payout progress and related payout transactions', function () {
+    $this->loginAsAdmin();
+
+    config()->set('commerce_affiliate.minimum_payout_amount', 1);
+
+    $profile = app(AffiliateProfileService::class)->approve(
+        app(AffiliateProfileService::class)->apply(Customer::factory()->create(), [
+            'application_note' => 'Needs clear commission payout history.',
+            'terms_accepted' => true,
+        ]),
+    );
+
+    $fullyPaidCommission = createApprovedAffiliateCommission($profile, 25);
+    $fullyPaidPayout = app(AffiliatePayoutService::class)->requestPayout($profile, 25, [
+        'currency' => 'USD',
+        'payout_method' => 'bank_transfer',
+    ]);
+    app(AffiliatePayoutService::class)->markPaid($fullyPaidPayout, reference: 'BANK-FULL-PAID', transactionReference: 'TXN-FULL-PAID');
+
+    $partiallyPaidCommission = createApprovedAffiliateCommission($profile, 110);
+    $partialPayout = app(AffiliatePayoutService::class)->requestPayout($profile, 40, [
+        'currency' => 'USD',
+        'payout_method' => 'bank_transfer',
+    ]);
+    app(AffiliatePayoutService::class)->markPaid($partialPayout, reference: 'BANK-PARTIAL-PAID', transactionReference: 'TXN-PARTIAL-PAID');
+
+    createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_PENDING, 15);
+    createAffiliateAdminCommission($profile, AffiliateCommission::STATUS_REVERSED, 20);
+
+    expect($fullyPaidCommission->refresh()->business_status_label)->toBe('Paid')
+        ->and($partiallyPaidCommission->refresh()->business_status_label)->toBe('Partially Paid')
+        ->and($partiallyPaidCommission->paid_amount)->toBe(40.0)
+        ->and($partiallyPaidCommission->remaining_amount)->toBe(70.0);
+
+    get(route('admin.affiliates.profiles.show', [
+        'affiliateProfile' => $profile,
+        'tab' => 'commissions',
+    ]))
+        ->assertOk()
+        ->assertSeeText('Commission Amount')
+        ->assertSeeText('Paid Amount')
+        ->assertSeeText('Remaining Amount')
+        ->assertSeeText('Display Status')
+        ->assertSeeText('Partially Paid')
+        ->assertSeeText('Paid')
+        ->assertSeeText('Pending Approval')
+        ->assertSeeText('Reversed')
+        ->assertSeeText('$110.00')
+        ->assertSeeText('$40.00')
+        ->assertSeeText('$70.00')
+        ->assertSeeText('See Transactions')
+        ->assertSeeText('BANK-PARTIAL-PAID')
+        ->assertSeeText('Payout Method')
+        ->assertSeeText('Transaction No')
+        ->assertSeeText('TXN-PARTIAL-PAID')
+        ->assertSeeText('Bank Transfer')
+        ->assertSeeText('Reference')
+        ->assertSeeText('Amount')
+        ->assertSeeText('Status')
+        ->assertSeeText('Requested')
+        ->assertSeeText('Paid');
 });
 
 it('lets admin approve and reverse individual affiliate commissions in manual mode', function () {
@@ -368,10 +436,12 @@ it('shows payout status buckets and lets admin approve and complete withdrawal r
 
     post(route('admin.affiliates.payouts.mark-paid', $payout), [
         'payout_reference' => 'BANK-PAID-2002',
+        'transaction_reference' => 'TXN-2002',
     ])->assertRedirect(route('admin.affiliates.payouts.index', ['status' => AffiliatePayout::STATUS_PAID]));
 
     expect($payout->refresh()->status)->toBe(AffiliatePayout::STATUS_PAID)
-        ->and($payout->payout_reference)->toBe('BANK-PAID-2002');
+        ->and($payout->payout_reference)->toBe('BANK-PAID-2002')
+        ->and($payout->transaction_reference)->toBe('TXN-2002');
 });
 
 function createApprovedAffiliateCommission(AffiliateProfile $profile, float $amount): AffiliateCommission

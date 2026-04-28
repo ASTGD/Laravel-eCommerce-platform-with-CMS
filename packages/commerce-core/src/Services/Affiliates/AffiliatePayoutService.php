@@ -76,6 +76,7 @@ class AffiliatePayoutService
                 'currency' => $data['currency'] ?? $this->defaultCurrency($profile),
                 'payout_method' => $data['payout_method'] ?? $profile->payout_method,
                 'payout_reference' => $data['payout_reference'] ?? $this->generatePayoutReference(),
+                'transaction_reference' => $data['transaction_reference'] ?? null,
                 'requested_at' => now(),
                 'notes' => $data['notes'] ?? null,
                 'meta' => $data['meta'] ?? null,
@@ -109,9 +110,9 @@ class AffiliatePayoutService
         });
     }
 
-    public function markPaid(AffiliatePayout $payout, ?int $adminId = null, ?string $reference = null): AffiliatePayout
+    public function markPaid(AffiliatePayout $payout, ?int $adminId = null, ?string $reference = null, ?string $transactionReference = null): AffiliatePayout
     {
-        return DB::transaction(function () use ($payout, $adminId, $reference): AffiliatePayout {
+        return DB::transaction(function () use ($payout, $adminId, $reference, $transactionReference): AffiliatePayout {
             $payout = $payout->refresh();
 
             if (! in_array($payout->status, [AffiliatePayout::STATUS_REQUESTED, AffiliatePayout::STATUS_APPROVED], true)) {
@@ -137,6 +138,7 @@ class AffiliatePayoutService
                 'status' => AffiliatePayout::STATUS_PAID,
                 'processed_by_admin_id' => $adminId ?? $payout->processed_by_admin_id,
                 'payout_reference' => $reference ?? $payout->payout_reference ?? $this->generatePayoutReference(),
+                'transaction_reference' => $transactionReference ?? $payout->transaction_reference,
                 'approved_at' => $payout->approved_at ?? now(),
                 'paid_at' => now(),
             ])->save();
@@ -196,7 +198,12 @@ class AffiliatePayoutService
             $payout->fill(['admin_notes' => $data['admin_notes']])->save();
         }
 
-        return $this->markPaid($payout, $adminId, $data['payout_reference'] ?? null);
+        return $this->markPaid(
+            $payout,
+            $adminId,
+            $data['payout_reference'] ?? null,
+            $data['transaction_reference'] ?? null,
+        );
     }
 
     public function releaseReservedAllocationsForCommission(AffiliateCommission $commission, ?string $reason = null): void

@@ -154,6 +154,7 @@ Phase 5 customer portal decisions:
 - Customer withdrawal requests create `affiliate_payouts` records with `requested` status.
 - Affiliate payout availability is derived from net payable commission minus completed payouts and reserved payout allocations. Reversed paid commissions may create a negative carry-forward balance that future approved commissions offset.
 - `affiliate_payouts.payout_reference` remains the system payout record/reference. Customer-entered transfer account details are stored in `affiliate_payouts.meta.payout_account_details`.
+- `affiliate_payouts.transaction_reference` stores the external transaction number/reference admin records when a payout is actually paid, regardless of payout method.
 
 Phase 6 payout lifecycle decisions:
 
@@ -162,6 +163,7 @@ Phase 6 payout lifecycle decisions:
 - Requested and approved payouts keep allocations in `reserved` state.
 - Rejected payouts move their reserved allocations to `released`, which restores the affiliate's available balance.
 - Paid payouts move allocations to `paid`; a commission moves to `paid` only after paid allocations cover the full commission amount.
+- Marking a payout paid requires the admin to record the external payout transaction number/reference for bank, mobile banking, or any other configured payout method.
 - Admin-created paid payout records use the same allocation and paid-settlement flow as customer withdrawal requests.
 
 Phase 7 reporting and settings decisions:

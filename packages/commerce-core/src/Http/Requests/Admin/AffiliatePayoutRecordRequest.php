@@ -20,6 +20,7 @@ class AffiliatePayoutRecordRequest extends FormRequest
             'currency' => ['nullable', 'string', 'size:3'],
             'payout_method' => ['required', Rule::in(array_keys(app(AffiliateSettingsService::class)->payoutMethods()))],
             'payout_reference' => ['nullable', 'string', 'max:255'],
+            'transaction_reference' => ['required', 'string', 'max:255'],
             'admin_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -30,6 +31,7 @@ class AffiliatePayoutRecordRequest extends FormRequest
             'currency' => $this->string('currency')->trim()->upper()->value() ?: null,
             'payout_method' => $this->string('payout_method')->value(),
             'payout_reference' => $this->nullableString('payout_reference'),
+            'transaction_reference' => $this->nullableString('transaction_reference'),
             'admin_notes' => $this->nullableString('admin_notes'),
         ];
     }

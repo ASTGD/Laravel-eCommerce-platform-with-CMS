@@ -28,6 +28,7 @@ class AffiliatePayout extends Model
         'currency',
         'payout_method',
         'payout_reference',
+        'transaction_reference',
         'requested_at',
         'approved_at',
         'paid_at',

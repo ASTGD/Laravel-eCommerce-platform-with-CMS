@@ -52,4 +52,14 @@ class AffiliatePayoutCommissionAllocation extends Model
     {
         return $this->belongsTo(AffiliateProfile::class);
     }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_RESERVED => 'Reserved',
+            self::STATUS_PAID => 'Paid',
+            self::STATUS_RELEASED => 'Released',
+            default => str($this->status)->replace('_', ' ')->title()->value(),
+        };
+    }
 }

@@ -92,4 +92,48 @@ class AffiliateCommission extends Model
     {
         return static::statusLabels()[$this->status] ?? str($this->status)->replace('_', ' ')->title()->value();
     }
+
+    public function getPaidAmountAttribute(): float
+    {
+        return round($this->allocationAmountForStatus(AffiliatePayoutCommissionAllocation::STATUS_PAID), 4);
+    }
+
+    public function getRemainingAmountAttribute(): float
+    {
+        return round(max((float) $this->commission_amount - $this->paid_amount, 0), 4);
+    }
+
+    public function getBusinessStatusLabelAttribute(): string
+    {
+        if ($this->status === self::STATUS_REVERSED) {
+            return 'Reversed';
+        }
+
+        if ($this->status === self::STATUS_PENDING) {
+            return 'Pending Approval';
+        }
+
+        if ($this->paid_amount + 0.0001 >= (float) $this->commission_amount) {
+            return 'Paid';
+        }
+
+        if ($this->paid_amount > 0) {
+            return 'Partially Paid';
+        }
+
+        return 'Approved';
+    }
+
+    protected function allocationAmountForStatus(string $status): float
+    {
+        if ($this->relationLoaded('payoutAllocations')) {
+            return (float) $this->payoutAllocations
+                ->where('status', $status)
+                ->sum('amount');
+        }
+
+        return (float) $this->payoutAllocations()
+            ->where('status', $status)
+            ->sum('amount');
+    }
 }

@@ -27,6 +27,7 @@ class AffiliatePayoutController extends Controller
                 $query->where(function (Builder $query) use ($search): void {
                     $query
                         ->where('payout_reference', 'like', "%{$search}%")
+                        ->orWhere('transaction_reference', 'like', "%{$search}%")
                         ->orWhere('payout_method', 'like', "%{$search}%")
                         ->orWhereHas('affiliateProfile', function (Builder $profileQuery) use ($search): void {
                             $profileQuery
@@ -68,10 +69,17 @@ class AffiliatePayoutController extends Controller
 
     public function markPaid(AffiliatePayoutStatusRequest $request, AffiliatePayout $affiliatePayout): RedirectResponse
     {
+        if (! $request->nullableString('transaction_reference')) {
+            return back()
+                ->withErrors(['transaction_reference' => 'Enter the payout transaction number or reference before marking this payout as paid.'])
+                ->withInput();
+        }
+
         $this->affiliatePayoutService->markPaid(
             $affiliatePayout,
             auth()->guard('admin')->id(),
             $request->nullableString('payout_reference'),
+            $request->nullableString('transaction_reference'),
         );
 
         return redirect()
