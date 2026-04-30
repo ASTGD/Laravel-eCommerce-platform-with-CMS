@@ -47,13 +47,63 @@
         'Reversed' => 'border-[#F25022]/25 bg-[#F25022]/10 text-[#a62e12] dark:border-[#F25022]/45 dark:bg-[#F25022]/15 dark:text-[#ffb19c]',
         default => 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200',
     };
+    $trendRows = collect($dashboard['trend']['rows'] ?? []);
+    $trendChartLabels = $trendRows->map(fn (array $row): string => core()->formatDate($row['date'], 'd M'))->all();
+    $trendChartTooltipDates = $trendRows->map(fn (array $row): string => core()->formatDate($row['date'], 'd M Y'))->all();
+    $trendChartDatasets = [
+        [
+            'label' => 'Clicks',
+            'data' => $trendRows->map(fn (array $row): int => (int) ($row['clicks'] ?? 0))->all(),
+            'yAxisID' => 'count',
+            'borderColor' => '#00A4EF',
+            'backgroundColor' => 'rgba(0, 164, 239, 0.14)',
+            'borderWidth' => 2,
+            'pointRadius' => 2.5,
+            'pointHoverRadius' => 5,
+            'pointBackgroundColor' => '#00A4EF',
+            'pointBorderColor' => '#ffffff',
+            'pointBorderWidth' => 1.5,
+            'tension' => 0.32,
+            'fill' => true,
+        ],
+        [
+            'label' => 'Orders',
+            'data' => $trendRows->map(fn (array $row): int => (int) ($row['orders'] ?? 0))->all(),
+            'yAxisID' => 'count',
+            'borderColor' => '#7FBA00',
+            'backgroundColor' => 'rgba(127, 186, 0, 0.12)',
+            'borderWidth' => 2,
+            'pointRadius' => 2.5,
+            'pointHoverRadius' => 5,
+            'pointBackgroundColor' => '#7FBA00',
+            'pointBorderColor' => '#ffffff',
+            'pointBorderWidth' => 1.5,
+            'tension' => 0.32,
+            'fill' => true,
+        ],
+        [
+            'label' => 'Commission',
+            'data' => $trendRows->map(fn (array $row): float => round((float) ($row['commissions'] ?? 0), 4))->all(),
+            'yAxisID' => 'money',
+            'borderColor' => '#FFB900',
+            'backgroundColor' => 'rgba(255, 185, 0, 0.12)',
+            'borderWidth' => 2,
+            'pointRadius' => 2.5,
+            'pointHoverRadius' => 5,
+            'pointBackgroundColor' => '#FFB900',
+            'pointBorderColor' => '#ffffff',
+            'pointBorderWidth' => 1.5,
+            'tension' => 0.32,
+            'fill' => true,
+        ],
+    ];
     $kpiCards = [
         [
             'label' => 'Total Clicks',
             'value' => number_format($kpis['total_clicks']),
             'helper' => 'Tracked referral visits',
             'color' => '#00A4EF',
-            'badge' => 'bg-[#00A4EF]/16 text-[#00A4EF] ring-[#00A4EF]/35 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
+            'badge' => 'bg-[#00A4EF]/12 text-[#007db7] ring-[#00A4EF]/28 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
             'icon' => 'cursor',
         ],
         [
@@ -61,15 +111,15 @@
             'value' => number_format($dashboard['traffic_summary']['unique_visitors']),
             'helper' => 'Distinct referral visitors',
             'color' => '#737373',
-            'badge' => 'bg-[#737373]/14 text-[#737373] ring-[#737373]/30 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/45',
+            'badge' => 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
             'icon' => 'visitors',
         ],
         [
             'label' => 'Referred Orders',
             'value' => number_format($kpis['referred_orders']),
             'helper' => 'Orders attributed to this affiliate',
-            'color' => '#00A4EF',
-            'badge' => 'bg-[#00A4EF]/16 text-[#00A4EF] ring-[#00A4EF]/35 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
+            'color' => '#7FBA00',
+            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'orders',
         ],
         [
@@ -77,7 +127,7 @@
             'value' => number_format($kpis['conversion_rate'], 2).'%',
             'helper' => 'Orders divided by tracked clicks',
             'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/16 text-[#5f8c00] ring-[#7FBA00]/35 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
+            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'conversion',
         ],
         [
@@ -85,7 +135,7 @@
             'value' => $formatMoney($kpis['total_commission_earned']),
             'helper' => 'Pending, approved, and paid commission',
             'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/16 text-[#5f8c00] ring-[#7FBA00]/35 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
+            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'commission',
         ],
         [
@@ -93,15 +143,15 @@
             'value' => $formatMoney($kpis['available_balance']),
             'helper' => 'Currently available for payout',
             'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/16 text-[#5f8c00] ring-[#7FBA00]/35 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
+            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'balance',
         ],
         [
             'label' => 'Paid Out',
             'value' => $formatMoney($kpis['total_paid_out']),
             'helper' => 'Total completed payouts',
-            'color' => '#F25022',
-            'badge' => 'bg-[#F25022]/14 text-[#F25022] ring-[#F25022]/35 dark:bg-[#F25022]/18 dark:text-[#ffb19c] dark:ring-[#F25022]/40',
+            'color' => '#737373',
+            'badge' => 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
             'icon' => 'paid',
         ],
         [
@@ -109,7 +159,7 @@
             'value' => number_format($kpis['pending_withdrawals']),
             'helper' => 'Withdrawal requests waiting for admin action',
             'color' => '#FFB900',
-            'badge' => 'bg-[#FFB900]/18 text-[#9a7000] ring-[#FFB900]/40 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
+            'badge' => 'bg-[#FFB900]/14 text-[#8a6400] ring-[#FFB900]/32 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
             'icon' => 'pending',
         ],
     ];
@@ -358,13 +408,24 @@
                             <p class="affiliate-profile-link-value">{{ $referral['url'] }}</p>
                         </div>
 
-                        <button
-                            type="button"
-                            class="affiliate-profile-utility-action"
-                            data-affiliate-copy-value="{{ $referral['url'] }}"
-                        >
-                            Copy Link
-                        </button>
+                        <div class="flex shrink-0 flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                class="affiliate-profile-utility-action"
+                                data-affiliate-copy-value="{{ $referral['url'] }}"
+                            >
+                                Copy Link
+                            </button>
+
+                            <a
+                                href="{{ $referral['url'] }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="affiliate-profile-utility-action"
+                            >
+                                Open Link
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -384,7 +445,7 @@
                                 {{ $card['label'] }}
                             </p>
 
-                            <p class="mt-3 break-words text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+                            <p class="affiliate-profile-kpi-value mt-3 break-words text-gray-900 dark:text-white">
                                 {{ $card['value'] }}
                             </p>
 
@@ -505,26 +566,28 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-4 flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500 dark:text-gray-400">
-                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-[#00A4EF]"></span>Clicks</span>
-                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-[#7FBA00]"></span>Orders</span>
-                                    <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full bg-[#FFB900]"></span>Commission</span>
-                                </div>
+                                <ul class="affiliate-profile-chart-legend mt-4" aria-label="Performance trend chart legend">
+                                    <li class="affiliate-profile-chart-legend-item">
+                                        <span class="affiliate-profile-chart-swatch" style="--legend-color: #00A4EF;"></span>
+                                        <span>Clicks</span>
+                                    </li>
+                                    <li class="affiliate-profile-chart-legend-item">
+                                        <span class="affiliate-profile-chart-swatch" style="--legend-color: #7FBA00;"></span>
+                                        <span>Orders</span>
+                                    </li>
+                                    <li class="affiliate-profile-chart-legend-item">
+                                        <span class="affiliate-profile-chart-swatch" style="--legend-color: #FFB900;"></span>
+                                        <span>Commission</span>
+                                    </li>
+                                </ul>
 
                                 <div class="affiliate-profile-trend-chart mt-5">
-                                    @foreach ($dashboard['trend']['rows'] as $row)
-                                        <div
-                                            class="affiliate-profile-trend-column"
-                                            title="{{ core()->formatDate($row['date'], 'd M Y') }}: {{ $row['clicks'] }} clicks, {{ $row['orders'] }} orders, {{ $formatMoney($row['commissions']) }} commission"
-                                        >
-                                            <div class="affiliate-profile-trend-bars">
-                                                <span class="bg-[#00A4EF]" style="height: {{ max(8, min(100, ($row['clicks'] / $dashboard['trend']['max_clicks']) * 100)) }}%"></span>
-                                                <span class="bg-[#7FBA00]" style="height: {{ max(8, min(100, ($row['orders'] / $dashboard['trend']['max_orders']) * 100)) }}%"></span>
-                                                <span class="bg-[#FFB900]" style="height: {{ max(8, min(100, ($row['commissions'] / $dashboard['trend']['max_commissions']) * 100)) }}%"></span>
-                                            </div>
-                                            <p class="text-center text-[10px] font-medium text-gray-500 dark:text-gray-400">{{ core()->formatDate($row['date'], 'd M') }}</p>
-                                        </div>
-                                    @endforeach
+                                    <v-affiliate-profile-performance-trend
+                                        :labels='@json($trendChartLabels)'
+                                        :tooltip-dates='@json($trendChartTooltipDates)'
+                                        :datasets='@json($trendChartDatasets)'
+                                        currency-code="{{ $currency }}"
+                                    ></v-affiliate-profile-performance-trend>
                                 </div>
                             </div>
 
@@ -1269,6 +1332,19 @@
     </div>
 
     @pushOnce('scripts')
+        <script
+            type="module"
+            src="{{ bagisto_asset('js/chart.js') }}"
+        >
+        </script>
+
+        <script type="text/x-template" id="v-affiliate-profile-performance-trend-template">
+            <canvas
+                :id="$.uid + '_chart'"
+                class="affiliate-profile-performance-canvas"
+            ></canvas>
+        </script>
+
         <style>
             .affiliate-profile-hero-grid {
                 display: grid;
@@ -1281,19 +1357,15 @@
                 overflow: hidden;
                 border: 1px solid rgb(226 232 240);
                 border-radius: 1rem;
-                background:
-                    radial-gradient(circle at top right, rgb(239 246 255 / 0.8), transparent 18rem),
-                    rgb(255 255 255);
+                background: rgb(255 255 255);
                 padding: 1.25rem;
-                box-shadow: 0 14px 35px rgb(15 23 42 / 0.07);
+                box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
             }
 
             .dark .affiliate-profile-hero-card {
                 border-color: rgb(31 41 55);
-                background:
-                    radial-gradient(circle at top right, rgb(30 64 175 / 0.22), transparent 18rem),
-                    rgb(17 24 39);
-                box-shadow: 0 14px 35px rgb(0 0 0 / 0.24);
+                background: rgb(17 24 39);
+                box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
             }
 
             .affiliate-profile-card-header {
@@ -1327,27 +1399,33 @@
                 padding: 1rem;
                 border: 1px solid rgb(226 232 240);
                 border-radius: 0.875rem;
-                background: rgb(248 250 252 / 0.85);
+                background: transparent;
             }
 
             .dark .affiliate-profile-identity-row {
                 border-color: rgb(31 41 55);
-                background: rgb(15 23 42 / 0.72);
+                background: transparent;
             }
 
             .affiliate-profile-avatar {
                 display: flex;
-                width: 4.5rem;
-                height: 4.5rem;
+                width: 3.5rem;
+                height: 3.5rem;
                 flex-shrink: 0;
                 align-items: center;
                 justify-content: center;
                 border-radius: 9999px;
                 border: 1px solid rgb(186 230 253);
-                background: linear-gradient(135deg, rgb(0 164 239), rgb(127 186 0));
-                color: white;
-                font-size: 1.35rem;
+                background: rgb(239 246 255);
+                color: rgb(0 111 161);
+                font-size: 1.05rem;
                 font-weight: 800;
+            }
+
+            .dark .affiliate-profile-avatar {
+                border-color: rgb(0 164 239 / 0.4);
+                background: rgb(0 164 239 / 0.14);
+                color: rgb(141 220 255);
             }
 
             .affiliate-profile-status-badge {
@@ -1408,21 +1486,23 @@
                 min-width: 0;
                 border: 1px solid rgb(226 232 240);
                 border-radius: 0.875rem;
-                background: rgb(248 250 252 / 0.9);
+                background: transparent;
                 padding: 1rem;
             }
 
             .dark .affiliate-profile-referral-block {
                 border-color: rgb(31 41 55);
-                background: rgb(15 23 42 / 0.72);
+                background: transparent;
             }
 
             .affiliate-profile-code-block {
-                background: linear-gradient(135deg, rgb(239 246 255), rgb(240 253 250));
+                border-color: rgb(0 164 239 / 0.22);
+                background: transparent;
             }
 
             .dark .affiliate-profile-code-block {
-                background: linear-gradient(135deg, rgb(30 41 59), rgb(19 78 74 / 0.32));
+                border-color: rgb(0 164 239 / 0.32);
+                background: transparent;
             }
 
             .affiliate-profile-code-value {
@@ -1562,17 +1642,15 @@
                 background: var(--affiliate-kpi-color);
             }
 
-            .affiliate-profile-kpi-card::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                background:
-                    radial-gradient(circle at top right, color-mix(in srgb, var(--affiliate-kpi-color) 18%, transparent), transparent 10rem);
-                pointer-events: none;
+            .affiliate-profile-kpi-value {
+                font-size: 1.5rem;
+                font-weight: 600;
+                letter-spacing: -0.025em;
+                line-height: 1.15 !important;
             }
 
             .affiliate-profile-kpi-icon {
-                color: var(--affiliate-kpi-color);
+                color: var(--affiliate-kpi-color) !important;
             }
 
             @media (min-width: 768px) {
@@ -1581,7 +1659,7 @@
                 }
             }
 
-            @media (min-width: 1280px) {
+            @media (min-width: 1024px) {
                 .affiliate-profile-kpi-grid {
                     grid-template-columns: repeat(4, minmax(0, 1fr));
                 }
@@ -1721,29 +1799,44 @@
                 overflow: hidden;
             }
 
-            .affiliate-profile-trend-chart,
-            .affiliate-profile-traffic-chart {
-                display: flex;
+            .affiliate-profile-trend-chart {
                 min-height: 17rem;
                 max-height: 17rem;
+                overflow: hidden;
+                border-radius: 0.75rem;
+                border: 1px solid rgb(226 232 240);
+                background: rgb(248 250 252);
+                padding: 1rem;
+            }
+
+            .dark .affiliate-profile-trend-chart {
+                border-color: rgb(31 41 55);
+                background: rgb(3 7 18);
+            }
+
+            .affiliate-profile-performance-canvas {
+                height: 100% !important;
+                width: 100% !important;
+            }
+
+            .affiliate-profile-traffic-chart {
+                min-height: 17rem;
+                max-height: 17rem;
+                display: flex;
                 align-items: end;
                 gap: 0.75rem;
                 overflow-x: auto;
                 border-radius: 0.75rem;
-                background:
-                    linear-gradient(to top, rgb(241 245 249) 1px, transparent 1px) 0 0 / 100% 25%,
-                    rgb(248 250 252);
+                border: 1px solid rgb(226 232 240);
+                background: rgb(248 250 252);
                 padding: 1rem 1rem 0.75rem;
             }
 
-            .dark .affiliate-profile-trend-chart,
             .dark .affiliate-profile-traffic-chart {
-                background:
-                    linear-gradient(to top, rgb(31 41 55) 1px, transparent 1px) 0 0 / 100% 25%,
-                    rgb(3 7 18);
+                border-color: rgb(31 41 55);
+                background: rgb(3 7 18);
             }
 
-            .affiliate-profile-trend-column,
             .affiliate-profile-traffic-column {
                 display: grid;
                 min-width: 2.75rem;
@@ -1751,36 +1844,45 @@
                 gap: 0.5rem;
             }
 
-            .affiliate-profile-trend-bars {
-                display: grid;
-                height: 13rem;
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                align-items: end;
-                gap: 0.1875rem;
-            }
-
-            .affiliate-profile-trend-bars span {
-                display: block;
-                min-height: 0.5rem;
-                border-radius: 0.35rem 0.35rem 0 0;
-            }
-
-            .affiliate-profile-trend-bars span:nth-child(1) {
-                background: rgb(0 164 239);
-            }
-
-            .affiliate-profile-trend-bars span:nth-child(2) {
-                background: rgb(127 186 0);
-            }
-
-            .affiliate-profile-trend-bars span:nth-child(3) {
-                background: rgb(255 185 0);
-            }
-
             .affiliate-profile-traffic-bar {
                 display: flex;
                 height: 13rem;
                 align-items: end;
+            }
+
+            .affiliate-profile-chart-legend {
+                align-items: center;
+                color: rgb(107 114 128);
+                cursor: default;
+                display: flex;
+                flex-wrap: wrap;
+                font-size: 0.75rem;
+                font-weight: 600;
+                gap: 0.75rem;
+                line-height: 1rem;
+                list-style: none;
+                margin-left: 0;
+                padding-left: 0;
+                user-select: none;
+            }
+
+            .dark .affiliate-profile-chart-legend {
+                color: rgb(156 163 175);
+            }
+
+            .affiliate-profile-chart-legend-item {
+                align-items: center;
+                display: inline-flex;
+                gap: 0.4rem;
+                white-space: nowrap;
+            }
+
+            .affiliate-profile-chart-swatch {
+                background: var(--legend-color);
+                border-radius: 9999px;
+                display: inline-flex;
+                height: 0.38rem;
+                width: 1.15rem;
             }
 
             .affiliate-profile-traffic-bar span {
@@ -1821,6 +1923,218 @@
                 }
             }
         </style>
+
+        <script type="module">
+            app.component('v-affiliate-profile-performance-trend', {
+                template: '#v-affiliate-profile-performance-trend-template',
+
+                props: {
+                    labels: {
+                        type: Array,
+                        default: () => [],
+                    },
+
+                    tooltipDates: {
+                        type: Array,
+                        default: () => [],
+                    },
+
+                    datasets: {
+                        type: Array,
+                        default: () => [],
+                    },
+
+                    currencyCode: {
+                        type: String,
+                        default: 'USD',
+                    },
+                },
+
+                data() {
+                    return {
+                        chart: undefined,
+                    };
+                },
+
+                mounted() {
+                    this.prepare();
+                },
+
+                beforeUnmount() {
+                    this.chart?.destroy();
+                },
+
+                methods: {
+                    prepare() {
+                        this.chart?.destroy();
+
+                        this.chart = new Chart(document.getElementById(this.$.uid + '_chart'), {
+                            type: 'line',
+
+                            data: {
+                                labels: this.labels,
+                                datasets: this.datasets,
+                            },
+
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index',
+                                },
+                                hover: {
+                                    intersect: false,
+                                    mode: 'index',
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false,
+                                    },
+                                    tooltip: {
+                                        enabled: true,
+                                        intersect: false,
+                                        mode: 'index',
+                                        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                                        borderColor: 'rgba(148, 163, 184, 0.26)',
+                                        borderWidth: 1,
+                                        bodyColor: '#E2E8F0',
+                                        bodyFont: {
+                                            size: 12,
+                                            weight: '500',
+                                        },
+                                        bodySpacing: 6,
+                                        caretPadding: 8,
+                                        caretSize: 6,
+                                        cornerRadius: 10,
+                                        displayColors: true,
+                                        padding: 12,
+                                        titleColor: '#FFFFFF',
+                                        titleFont: {
+                                            size: 13,
+                                            weight: '700',
+                                        },
+                                        callbacks: {
+                                            title: (items) => {
+                                                const item = items?.[0];
+
+                                                if (! item) {
+                                                    return '';
+                                                }
+
+                                                return this.tooltipDates[item.dataIndex] || item.label;
+                                            },
+                                            label: (item) => {
+                                                const label = item.dataset.label || '';
+                                                const value = Number(item.parsed.y || 0);
+
+                                                if (label === 'Commission') {
+                                                    return `${label}: ${this.formatMoney(value)}`;
+                                                }
+
+                                                return `${label}: ${this.formatNumber(value)}`;
+                                            },
+                                        },
+                                    },
+                                },
+                                scales: {
+                                    x: {
+                                        border: {
+                                            display: false,
+                                        },
+                                        grid: {
+                                            color: 'rgba(148, 163, 184, 0.18)',
+                                            drawTicks: false,
+                                        },
+                                        ticks: {
+                                            color: '#64748B',
+                                            font: {
+                                                size: 11,
+                                                weight: '600',
+                                            },
+                                            maxRotation: 0,
+                                            padding: 8,
+                                        },
+                                    },
+                                    count: {
+                                        beginAtZero: true,
+                                        position: 'left',
+                                        border: {
+                                            display: false,
+                                        },
+                                        grid: {
+                                            color: 'rgba(148, 163, 184, 0.18)',
+                                            drawTicks: false,
+                                        },
+                                        ticks: {
+                                            color: '#64748B',
+                                            precision: 0,
+                                            padding: 8,
+                                        },
+                                    },
+                                    money: {
+                                        beginAtZero: true,
+                                        position: 'right',
+                                        border: {
+                                            display: false,
+                                        },
+                                        grid: {
+                                            drawOnChartArea: false,
+                                            drawTicks: false,
+                                        },
+                                        ticks: {
+                                            color: '#64748B',
+                                            padding: 8,
+                                            callback: (value) => this.formatCompactMoney(value),
+                                        },
+                                    },
+                                },
+                            },
+                        });
+                    },
+
+                    formatNumber(value) {
+                        return new Intl.NumberFormat(undefined, {
+                            maximumFractionDigits: 0,
+                        }).format(value);
+                    },
+
+                    formatMoney(value) {
+                        try {
+                            return new Intl.NumberFormat(undefined, {
+                                currency: this.currencyCode || 'USD',
+                                currencyDisplay: 'narrowSymbol',
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 2,
+                                style: 'currency',
+                            }).format(value);
+                        } catch (error) {
+                            return new Intl.NumberFormat(undefined, {
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 2,
+                            }).format(value);
+                        }
+                    },
+
+                    formatCompactMoney(value) {
+                        try {
+                            return new Intl.NumberFormat(undefined, {
+                                currency: this.currencyCode || 'USD',
+                                currencyDisplay: 'narrowSymbol',
+                                maximumFractionDigits: 1,
+                                notation: 'compact',
+                                style: 'currency',
+                            }).format(value);
+                        } catch (error) {
+                            return new Intl.NumberFormat(undefined, {
+                                maximumFractionDigits: 1,
+                                notation: 'compact',
+                            }).format(value);
+                        }
+                    },
+                },
+            });
+        </script>
 
         <script>
             (() => {
