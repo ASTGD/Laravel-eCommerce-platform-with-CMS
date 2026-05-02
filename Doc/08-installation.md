@@ -54,7 +54,7 @@ The recommended local path for this repository is Sail.
 8. Start the containers:
 
 ```bash
-composer run dev:sail-up
+./vendor/bin/sail up -d
 ```
 
 9. Run the commerce installer through Sail:
@@ -113,21 +113,22 @@ Do not mix host-installed `node_modules` with `./vendor/bin/sail npm run dev`, o
 
 ## Known Good Local Commands
 
-Use these exact commands for the verified containerized path:
+Use these exact commands for the verified containerized local-development path:
 
 ```bash
-composer run dev:sail-up
-composer run dev:sail-install
-composer run dev:sail-vite
-composer run dev:sail-worker
-composer run dev:sail-schedule
-composer run dev:sail-down
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan bagisto:install
+./vendor/bin/sail artisan db:seed --force
+./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174
+./vendor/bin/sail artisan queue:work --queue=default,broadcastable
+./vendor/bin/sail artisan schedule:work
+./vendor/bin/sail down
 ```
 
 Important:
 
-- prefer host `npm run dev -- --host 127.0.0.1 --port 5174` for the root storefront shell on macOS workstations when `node_modules` were installed on the host
-- use `composer run dev:sail-vite` only when the root `node_modules` were installed inside Sail and you are keeping the Vite runtime Linux-aligned
+- use `./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174` when the root `node_modules` were installed inside Sail and you are keeping the Vite runtime Linux-aligned
+- use host `npm run dev -- --host 127.0.0.1 --port 5174` only when the root `node_modules` were installed on the host
 - `/checkout/custom` depends on the root storefront Vite entries from `resources/css/app.css` and `resources/js/app.js`, so that page will appear broken if the root Vite server is not reachable from the browser
 
 Host switching for localhost or LAN:

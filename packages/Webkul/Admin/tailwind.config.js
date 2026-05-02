@@ -1,6 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ["./src/Resources/**/*.blade.php", "./src/Resources/**/*.js"],
+    content: [
+        "./src/Resources/**/*.blade.php",
+        "./src/Resources/**/*.js",
+        "../../commerce-core/resources/views/**/*.blade.php",
+        "../../experience-cms/resources/views/**/*.blade.php",
+        "../../theme-core/resources/views/**/*.blade.php",
+        "../../media-tools/resources/views/**/*.blade.php",
+        "../../seo-tools/resources/views/**/*.blade.php",
+        "../../platform-support/resources/views/**/*.blade.php",
+    ],
 
     theme: {
         container: {

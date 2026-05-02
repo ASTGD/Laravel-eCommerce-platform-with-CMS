@@ -7,13 +7,30 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Platform\ThemeCore\Http\Requests\Admin\ThemePresetRequest;
 use Platform\ThemeCore\Models\ThemePreset;
+use Platform\ThemeCore\Models\ThemeTokenSet;
 
 class ThemePresetController extends Controller
 {
     public function index(): View
     {
+        $presets = ThemePreset::query()
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+
+        $defaultPreset = $presets->firstWhere('is_default', true) ?? $presets->first();
+
         return view('theme-core::admin.theme-presets.index', [
-            'presets' => ThemePreset::query()->orderByDesc('is_default')->orderBy('name')->get(),
+            'presets'          => $presets,
+            'defaultPreset'     => $defaultPreset,
+            'activePresetCount' => $presets->where('is_active', true)->count(),
+            'tokenSetCount'     => ThemeTokenSet::query()->count(),
+            'variantCount'      => $presets
+                ->pluck('settings_json')
+                ->map(fn ($settings) => data_get($settings, 'product_card_variant'))
+                ->filter()
+                ->unique()
+                ->count(),
         ]);
     }
 

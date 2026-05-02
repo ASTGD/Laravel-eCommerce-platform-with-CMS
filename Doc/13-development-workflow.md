@@ -178,7 +178,7 @@ composer install
 5. Start the containers:
 
 ```bash
-composer run dev:sail-up
+./vendor/bin/sail up -d
 ```
 
 6. Run the commerce installer:
@@ -275,27 +275,28 @@ With the example above:
 ### Recommended: Sail / Docker
 
 ```bash
-composer run dev:sail-up
+./vendor/bin/sail up -d
 ```
 
 Then run app setup through Sail:
 
 ```bash
-composer run dev:sail-install
+./vendor/bin/sail artisan bagisto:install
+./vendor/bin/sail artisan db:seed --force
 ```
 
-For the root storefront shell, prefer host Vite on a macOS workstation:
+For the verified Sail-based frontend runtime, use:
+
+```bash
+./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174
+```
+
+This is the canonical command for this workspace when the root `node_modules` were installed inside Sail.
+
+If you intentionally installed the root `node_modules` on the host and want host Vite instead, use:
 
 ```bash
 npm run dev -- --host 127.0.0.1 --port 5174
-```
-
-Use this only when the root `node_modules` were installed on the host.
-
-If you intentionally installed root `node_modules` inside Sail and want Vite inside the container too, use:
-
-```bash
-composer run dev:sail-vite
 ```
 
 Default exposed ports from `docker-compose.yml`:
@@ -337,42 +338,45 @@ Terminal 1:
 
 ```bash
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
-composer run dev:sail-up
+./vendor/bin/sail up -d
 ```
 
 Terminal 2:
 
 ```bash
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
-npm run dev -- --host 127.0.0.1 --port 5174
+./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174
 ```
 
 Optional terminal for queued work:
 
 ```bash
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
-composer run dev:sail-worker
+./vendor/bin/sail artisan queue:work --queue=default,broadcastable
 ```
 
 Optional terminal for scheduled work:
 
 ```bash
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
-composer run dev:sail-schedule
+./vendor/bin/sail artisan schedule:work
 ```
 
 Daily stop:
 
 ```bash
 cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
-composer run dev:sail-down
+./vendor/bin/sail down
 ```
 
-If root `node_modules` were installed inside Sail instead of on the host, replace Terminal 2 with:
+Composer aliases exist for these commands, but the direct Sail commands above are the canonical local-development commands for this workspace:
 
 ```bash
-cd /Users/shafin/Documents/Laravel-eCommerce-platform-with-CMS
+composer run dev:sail-up
 composer run dev:sail-vite
+composer run dev:sail-worker
+composer run dev:sail-schedule
+composer run dev:sail-down
 ```
 
 ## Custom Checkout Note
@@ -620,16 +624,16 @@ For LAN:
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-For the root storefront shell on the verified localhost setup:
+For the root storefront shell on the verified Sail setup:
+
+```bash
+./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174
+```
+
+If you intentionally want host Vite instead, reinstall the root dependencies on the host and then use:
 
 ```bash
 npm run dev -- --host 127.0.0.1 --port 5174
-```
-
-If you intentionally want Vite inside Sail, reinstall the root dependencies inside Sail and then use:
-
-```bash
-composer run dev:sail-vite
 ```
 
 ### `./vendor/bin/sail npm run dev` fails with missing `@rollup/rollup-linux-*`
@@ -641,13 +645,18 @@ Cause:
 
 Fix:
 
-- use host Vite with host-installed dependencies:
+- reinstall root dependencies inside Sail and keep both install and runtime inside Sail:
+
+```bash
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run dev -- --host 0.0.0.0 --port 5174
+```
+
+- or use host Vite with host-installed dependencies:
 
 ```bash
 npm run dev -- --host 127.0.0.1 --port 5174
 ```
-
-- or reinstall root dependencies inside Sail and keep both install and runtime inside Sail
 
 ### `/checkout/custom` returns HTML but the UI looks broken
 
