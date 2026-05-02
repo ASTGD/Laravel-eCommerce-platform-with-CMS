@@ -7,6 +7,7 @@ use Platform\CommerceCore\Models\ShipmentEvent;
 use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Services\ManualToShipService;
+use Platform\CommerceCore\Services\OrderInvoiceLifecycleService;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -17,11 +18,15 @@ use Webkul\Core\Models\CoreConfig;
 use Webkul\Customer\Models\Customer;
 use Webkul\Customer\Models\CustomerAddress;
 use Webkul\Faker\Helpers\Product as ProductFaker;
+use Webkul\Payment\Listeners\GenerateInvoice;
+use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Models\OrderAddress;
 use Webkul\Sales\Models\OrderItem;
 use Webkul\Sales\Models\OrderPayment;
+use Webkul\Sales\Models\OrderTransaction;
 use Webkul\Sales\Models\Shipment;
+use Webkul\Sales\Repositories\OrderRepository;
 
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
@@ -218,6 +223,18 @@ it('keeps saved bookings as drafts until required documents are printed and book
         ->assertJsonPath('draft.document_statuses.invoice.preview_url', route('admin.sales.to-ship.booking-draft.document', [$fixture['order'], 'document' => 'invoice']))
         ->assertJsonPath('draft.can_complete', true);
 
+    $invoice = $fixture['order']->fresh('invoices')->invoices->first();
+
+    expect($invoice)->not->toBeNull()
+        ->and($invoice->state)->toBe(Invoice::STATUS_PENDING_PAYMENT)
+        ->and(OrderTransaction::query()->where('invoice_id', $invoice->id)->exists())->toBeFalse();
+
+    get(route('admin.sales.invoices.index'), [
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])
+        ->assertOk()
+        ->assertSee((string) ($invoice->increment_id ?? $invoice->id));
+
     get(route('admin.sales.to-ship.booking-draft.show', $fixture['order']->id), [
         'X-Requested-With' => 'XMLHttpRequest',
         'Accept' => 'application/json',
@@ -280,6 +297,60 @@ it('keeps saved bookings as drafts until required documents are printed and book
     get(route('admin.sales.shipped-orders.index'))
         ->assertOk()
         ->assertDontSeeText('TRACK-BASIC-001');
+});
+
+it('creates the cod invoice on order placement, reuses it during shipment printing, and refunds it on cancellation', function () {
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.payment_methods.cashondelivery.generate_invoice',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => '1',
+        ],
+    );
+
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.payment_methods.cashondelivery.invoice_status',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => Invoice::STATUS_PENDING_PAYMENT,
+        ],
+    );
+
+    CoreConfig::query()->updateOrCreate(
+        [
+            'code' => 'sales.payment_methods.cashondelivery.order_status',
+            'channel_code' => 'default',
+        ],
+        [
+            'value' => Order::STATUS_PENDING_PAYMENT,
+        ],
+    );
+
+    $fixture = createManualToShipFixture();
+
+    app(GenerateInvoice::class)->handle($fixture['order']->fresh(['payment', 'items']));
+
+    $fixture['order']->refresh(['invoices', 'payment']);
+
+    expect($fixture['order']->invoices)->toHaveCount(1);
+
+    $invoice = $fixture['order']->invoices->first();
+
+    expect($invoice->state)->toBe(Invoice::STATUS_PENDING_PAYMENT);
+
+    $sameInvoice = app(OrderInvoiceLifecycleService::class)
+        ->ensureCodInvoiceForOrder($fixture['order']);
+
+    expect($sameInvoice->id)->toBe($invoice->id);
+
+    app(OrderRepository::class)->cancel($fixture['order']->id);
+
+    expect($invoice->fresh()->state)->toBe(Invoice::STATUS_REFUNDED)
+        ->and($fixture['order']->fresh()->status)->toBe(Order::STATUS_CANCELED);
 });
 
 it('restores the full saved booking draft state in the booking modal', function () {

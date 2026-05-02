@@ -12,11 +12,13 @@ use Platform\CommerceCore\Console\Commands\SyncShipmentTrackingCommand;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRefundController;
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentController as CommerceShipmentController;
+use Platform\CommerceCore\Http\Controllers\Admin\TransactionController as CommerceTransactionController;
 use Platform\CommerceCore\Http\Middleware\CaptureAffiliateReferral;
 use Platform\CommerceCore\Http\Middleware\EnsureShippingModeAllowsFeature;
 use Platform\CommerceCore\Http\Middleware\RedirectBasicShipmentBrowseRoutes;
 use Platform\CommerceCore\Listeners\ApproveAffiliateCommissionForEligibleOrder;
 use Platform\CommerceCore\Listeners\AttributeAffiliateOrder;
+use Platform\CommerceCore\Listeners\CancelCodInvoiceForCanceledOrder;
 use Platform\CommerceCore\Listeners\Refund as CommerceRefundListener;
 use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForCanceledOrder;
 use Platform\CommerceCore\Listeners\ReverseAffiliateCommissionForRefundedOrder;
@@ -31,6 +33,7 @@ use Platform\CommerceCore\Support\CheckoutMode;
 use Platform\CommerceCore\Support\ShippingMode;
 use Webkul\Admin\Http\Controllers\Sales\RefundController as BaseRefundController;
 use Webkul\Admin\Http\Controllers\Sales\ShipmentController as BaseShipmentController;
+use Webkul\Admin\Http\Controllers\Sales\TransactionController as BaseTransactionController;
 use Webkul\Admin\Listeners\Refund as BaseRefundListener;
 use Webkul\Core\Http\Middleware\PreventRequestsDuringMaintenance;
 use Webkul\Core\Menu as BaseMenu;
@@ -49,6 +52,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
         $this->app->bind(BasePaymentManager::class, PaymentManager::class);
         $this->app->bind(BaseShipmentController::class, CommerceShipmentController::class);
         $this->app->bind(BaseRefundController::class, CommerceRefundController::class);
+        $this->app->bind(BaseTransactionController::class, CommerceTransactionController::class);
         $this->app->bind(BaseRefundListener::class, CommerceRefundListener::class);
         $this->app->bind(BaseOrderRepository::class, CommerceOrderRepository::class);
 
@@ -145,6 +149,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
         Event::listen('sales.order.update-status.after', [ApproveAffiliateCommissionForEligibleOrder::class, 'handle']);
 
         Event::listen('sales.order.cancel.after', [ReverseAffiliateCommissionForCanceledOrder::class, 'handle']);
+        Event::listen('sales.order.cancel.after', [CancelCodInvoiceForCanceledOrder::class, 'handle']);
         Event::listen('sales.refund.save.after', [ReverseAffiliateCommissionForRefundedOrder::class, 'handle']);
 
         Event::listen('sales.shipment.save.after', [SyncShipmentRecordFromNativeShipment::class, 'handle']);

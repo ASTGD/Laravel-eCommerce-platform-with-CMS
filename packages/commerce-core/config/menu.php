@@ -2,12 +2,6 @@
 
 return [
     [
-        'key' => 'sales.payments',
-        'name' => 'Payments',
-        'route' => 'admin.sales.payments.index',
-        'sort' => 8,
-        'icon' => '',
-    ], [
         'key' => 'affiliates',
         'name' => 'Affiliates',
         'route' => 'admin.affiliates.profiles.index',

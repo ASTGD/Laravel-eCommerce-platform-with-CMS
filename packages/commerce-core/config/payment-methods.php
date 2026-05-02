@@ -1,9 +1,9 @@
 <?php
 
-use Webkul\Payment\Payment\CashOnDelivery;
-use Webkul\Payment\Payment\MoneyTransfer;
 use Platform\CommerceCore\Payment\Bkash;
 use Platform\CommerceCore\Payment\SslCommerz;
+use Webkul\Payment\Payment\CashOnDelivery;
+use Webkul\Payment\Payment\MoneyTransfer;
 
 return [
     'cashondelivery' => [
@@ -12,7 +12,9 @@ return [
         'title' => 'Cash On Delivery',
         'description' => 'Cash On Delivery',
         'active' => true,
-        'generate_invoice' => false,
+        'generate_invoice' => true,
+        'invoice_status' => 'pending_payment',
+        'order_status' => 'pending_payment',
         'sort' => 6,
     ],
 

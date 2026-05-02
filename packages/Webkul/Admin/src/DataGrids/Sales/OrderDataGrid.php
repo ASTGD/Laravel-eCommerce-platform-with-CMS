@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\Sales;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Platform\CommerceCore\Services\OrderFinanceSummaryService;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Models\OrderAddress;
@@ -147,14 +148,24 @@ class OrderDataGrid extends DataGrid
 
         $this->addColumn([
             'index' => 'method',
-            'label' => trans('admin::app.sales.orders.index.datagrid.pay-via'),
+            'label' => 'Payment',
             'type' => 'string',
             'closure' => function ($row) {
-                return collect(explode('|', $row->method))
+                $paymentMethod = collect(explode('|', $row->method))
                     ->map(fn ($method) => core()->getConfigData('sales.payment_methods.'.$method.'.title'))
                     ->filter()
                     ->unique()
                     ->join(', ');
+
+                $order = app(OrderRepository::class)->find($row->id);
+
+                if (! $order) {
+                    return $paymentMethod;
+                }
+
+                $summary = app(OrderFinanceSummaryService::class)->summarize($order);
+
+                return trim($paymentMethod.' · '.$summary['payment_state'], ' ·');
             },
         ]);
 
