@@ -9,203 +9,146 @@
         type="text/x-template"
         id="v-dashboard-todays-details-template"
     >
-        <!-- Shimmer -->
         <template v-if="isLoading">
-            <x-admin::shimmer.dashboard.todays-details />
+            <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <x-admin::shimmer.dashboard.todays-details />
+            </div>
         </template>
 
-        <!-- Total Sales Section -->
         <template v-else>
-            <div class="box-shadow rounded">
-                <div class="flex flex-wrap gap-4 border-b bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    <!-- Today's Sales -->
-                    <div class="flex min-w-[200px] flex-1 gap-2.5">
-                        <div class="h-[60px] max-h-[60px] w-full max-w-[60px] dark:mix-blend-exclusion dark:invert">
-                            <img
-                                src="{{ bagisto_asset('images/total-sales.svg')}}"
-                                title="@lang('admin::app.dashboard.index.today-sales')"
-                            >
-                        </div>
+            <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-end sm:justify-between dark:border-slate-800">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            @lang('admin::app.dashboard.index.today-details')
+                        </p>
 
-                        <!-- Sales Stats -->
-                        <div class="grid place-content-start gap-1">
-                            <p class="text-base font-semibold leading-none text-gray-800 dark:text-white">
-                                @{{ report.statistics.total_sales.formatted_total }}
-                            </p>
-
-                            <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                @lang('admin::app.dashboard.index.today-sales')
-                            </p>
-
-                            <!-- Percentage Of Sales -->
-                            <div class="flex items-center gap-0.5">
-                                <span
-                                    class="text-base text-emerald-500"
-                                    :class="[report.statistics.total_sales.progress < 0 ? 'icon-down-stat text-red-500 dark:!text-red-500' : 'icon-up-stat text-emerald-500 dark:!text-emerald-500']"
-                                ></span>
-
-                                <p
-                                    class="text-xs font-semibold text-emerald-500"
-                                    :class="[report.statistics.total_sales.progress < 0 ?  'text-red-500' : 'text-emerald-500']"
-                                >
-                                    @{{ Math.abs(report.statistics.total_sales.progress.toFixed(2)) }}%
-                                </p>
-                            </div>
-                        </div>
+                        <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                            Daily activity
+                        </h3>
                     </div>
 
-                    <!-- Today's Orders -->
-                    <div class="flex min-w-[200px] flex-1 gap-2.5">
-                        <div class="h-[60px] max-h-[60px] w-full max-w-[60px] dark:mix-blend-exclusion dark:invert">
-                            <img
-                                src="{{ bagisto_asset('images/total-orders.svg')}}"
-                                title="@lang('admin::app.dashboard.index.today-orders')"
-                            >
-                        </div>
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        @{{ report.date_range }}
+                    </span>
+                </div>
 
-                        <!-- Orders Stats -->
-                        <div class="grid place-content-start gap-1">
-                            <p class="text-base font-semibold leading-none text-gray-800 dark:text-white">
-                                @{{ report.statistics.total_orders.current }}
-                            </p>
+                <div class="grid gap-3 border-b border-slate-200 px-6 py-6 sm:grid-cols-3 dark:border-slate-800">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            @lang('admin::app.dashboard.index.today-sales')
+                        </p>
 
-                            <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                @lang('admin::app.dashboard.index.today-orders')
-                            </p>
-
-                            <!-- Orders Percentage -->
-                            <div class="flex items-center gap-0.5">
-                                <span
-                                    class="text-base text-emerald-500"
-                                    :class="[report.statistics.total_orders.progress < 0 ? 'icon-down-stat text-red-500 dark:!text-red-500' : 'icon-up-stat text-emerald-500 dark:!text-emerald-500']"
-                                ></span>
-
-                                <p
-                                    class="text-xs font-semibold text-emerald-500"
-                                    :class="[report.statistics.total_orders.progress < 0 ?  'text-red-500' : 'text-emerald-500']"
-                                >
-                                    @{{ Math.abs(report.statistics.total_orders.progress.toFixed(2)) }}%
-                                </p>
-                            </div>
-                        </div>
+                        <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                            @{{ report.statistics.total_sales.formatted_total }}
+                        </p>
                     </div>
 
-                    <!-- Today's Customers -->
-                    <div class="flex min-w-[200px] flex-1 gap-2.5">
-                        <div class="h-[60px] max-h-[60px] w-full max-w-[60px] dark:mix-blend-exclusion dark:invert">
-                            <img
-                                src="{{ bagisto_asset('images/customers.svg')}}"
-                                title="@lang('admin::app.dashboard.index.today-customers')"
-                            >
-                        </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            @lang('admin::app.dashboard.index.today-orders')
+                        </p>
 
-                        <!-- Customers Stats -->
-                        <div class="grid place-content-start gap-1">
-                            <p class="text-base font-semibold leading-none text-gray-800 dark:text-white">
-                                @{{ report.statistics.total_customers.current }}
-                            </p>
+                        <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                            @{{ report.statistics.total_orders.current }}
+                        </p>
+                    </div>
 
-                            <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                @lang('admin::app.dashboard.index.today-customers')
-                            </p>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            @lang('admin::app.dashboard.index.today-customers')
+                        </p>
 
-                            <!-- Customers Percentage -->
-                            <div class="flex items-center gap-0.5">
-                                <span
-                                    class="text-base text-emerald-500"
-                                    :class="[report.statistics.total_customers.progress < 0 ? 'icon-down-stat text-red-500 dark:!text-red-500' : 'icon-up-stat text-emerald-500 dark:!text-emerald-500']"
-                                ></span>
-
-                                <p
-                                    class="text-xs font-semibold text-emerald-500"
-                                    :class="[report.statistics.total_customers.progress < 0 ?  'text-red-500' : 'text-emerald-500']"
-                                >
-                                    @{{ Math.abs(report.statistics.total_customers.progress.toFixed(2)) }}%
-                                </p>
-                            </div>
-                        </div>
+                        <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+                            @{{ report.statistics.total_customers.current }}
+                        </p>
                     </div>
                 </div>
 
-                <!-- Today Orders Details -->
-                <div 
-                    v-for="order in report.statistics.orders"
-                    class="border-b bg-white p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-950"
+                <div
+                    v-if="report.statistics.orders.length"
+                    class="divide-y divide-slate-200 dark:divide-slate-800"
                 >
-                    <div class="flex flex-wrap gap-4">
-                        <!-- Total Sales -->
-                        <div class="flex min-w-[180px] flex-1 gap-2.5">
-                            <div class="flex flex-col gap-1.5">
-                                <!-- Order Id -->
-                                <p class="text-base font-semibold leading-none text-gray-800 dark:text-white">
+                    <div
+                        v-for="order in report.statistics.orders"
+                        class="flex flex-col gap-4 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 xl:flex-row xl:items-center xl:justify-between"
+                    >
+                        <div class="min-w-0 space-y-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="text-base font-semibold text-slate-950 dark:text-white">
                                     @{{ "@lang('admin::app.dashboard.index.order-id', ['id' => ':replace'])".replace(':replace', order.increment_id) }}
                                 </p>
-    
-                                <p class="text-gray-600 dark:text-gray-300">
-                                    @{{ order.created_at}}
-                                </p>
-    
-                                <!-- Order Status -->
-                                <p :class="'label-' + order.status">
+
+                                <span
+                                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
+                                    :class="'label-' + order.status"
+                                >
                                     @{{ order.status_label }}
-                                </p>
+                                </span>
                             </div>
+
+                            <p class="text-sm text-slate-500 dark:text-slate-400">
+                                @{{ order.created_at }}
+                            </p>
                         </div>
 
-                        <div class="flex min-w-[180px] flex-1 gap-2.5">
-                            <div class="flex flex-col gap-1.5">
-                                <p class="text-base font-semibold leading-none text-gray-800 dark:text-white">
+                        <div class="grid gap-3 sm:grid-cols-3 xl:min-w-[420px] xl:gap-4">
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                                    Amount
+                                </p>
+                                <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
                                     @{{ order.formatted_base_grand_total }}
                                 </p>
-        
-                                <!-- Payment Mode -->
-                                <p class="text-gray-600 dark:text-gray-300">
+                            </div>
+
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                                    Payment
+                                </p>
+                                <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
                                     @{{ order.payment_method }}
                                 </p>
-        
-                                <!-- Channel Name -->
-                                <p class="text-gray-600 dark:text-gray-300">
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     @{{ order.channel_name }}
                                 </p>
                             </div>
-                        </div>
 
-                        <div class="flex min-w-[200px] flex-1 gap-2.5">
-                            <div class="flex flex-col gap-1.5">
-                            <!-- Customer Details -->
-                                <p class="text-base text-gray-800 dark:text-white">
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                                    Customer
+                                </p>
+                                <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
                                     @{{ order.customer_name }}
                                 </p>
-        
-                                <p class="max-w-[180px] break-words text-gray-600 dark:text-gray-300">
+                                <p class="mt-1 max-w-[180px] truncate text-xs text-slate-500 dark:text-slate-400">
                                     @{{ order.customer_email }}
                                 </p>
-        
-                                <!-- Order Address -->
-                                <p class="text-gray-600 dark:text-gray-300">
-                                    @{{ order.billing_address }}
-                                </p>
                             </div>
-                        </div>
- 
-                        <div class="flex min-w-[180px] flex-1 items-center justify-between gap-2.5">
-                            <div class="flex flex-col gap-1.5">
-                                <!-- Ordered Product Images -->
-                                <div
-                                    class="flex flex-wrap gap-1.5"
-                                    v-html="order.items"
-                                >
-                                </div>
-                            </div>
-
-                             <!-- View More Icon -->
-                             <a :href="'{{ route('admin.sales.orders.view', ':replace') }}'.replace(':replace', order.id)">
-                                <span class="icon-sort-right rtl:icon-sort-left cursor-pointer p-1.5 text-2xl hover:rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"></span>
-                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <div
+                    v-else
+                    class="grid justify-center justify-items-center gap-3 px-6 py-16 text-center"
+                >
+                    <img
+                        src="{{ bagisto_asset('images/empty-placeholders/customers.svg') }}"
+                        class="h-20 w-20 dark:mix-blend-exclusion dark:invert"
+                    />
+
+                    <div class="flex flex-col items-center">
+                        <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
+                            No orders yet
+                        </p>
+
+                        <p class="text-sm text-slate-400 dark:text-slate-400">
+                            Orders placed in the selected date range will appear here.
+                        </p>
+                    </div>
+                </div>
+            </article>
         </template>
     </script>
 
