@@ -65,15 +65,6 @@
                             </div>
 
                             <div class="flex flex-nowrap items-center gap-2 sm:justify-end sm:whitespace-nowrap">
-                                <div class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center dark:border-slate-800 dark:bg-slate-950">
-                                    <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                                        Price
-                                    </p>
-                                    <p class="mt-1 text-sm font-semibold leading-none text-slate-950 dark:text-white">
-                                        @{{ product.formatted_price }}
-                                    </p>
-                                </div>
-
                                 <div
                                     class="shrink-0 rounded-full border px-3 py-2 text-center"
                                     :class="[product.total_qty > {{ core()->getConfigData('catalog.inventory.stock_options.out_of_stock_threshold') }} ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300']"
