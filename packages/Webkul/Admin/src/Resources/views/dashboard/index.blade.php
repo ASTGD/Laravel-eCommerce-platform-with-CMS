@@ -44,10 +44,10 @@
             <div class="space-y-6">
                 @include('admin::dashboard.total-sales')
                 @include('admin::dashboard.todays-details')
+                @include('admin::dashboard.stock-threshold-products')
             </div>
 
             <div class="space-y-6">
-                @include('admin::dashboard.stock-threshold-products')
                 @include('admin::dashboard.top-selling-products')
                 @include('admin::dashboard.top-customers')
             </div>
