@@ -9,7 +9,7 @@
 
     <div class="space-y-6 pb-8">
         <section class="rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm shadow-slate-200/60 lg:px-8 lg:py-7 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-            <div class="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)] xl:items-start">
+            <div class="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] xl:items-center">
                 <div class="space-y-4">
                     <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         Admin dashboard
@@ -42,29 +42,17 @@
                     </div>
                 </div>
 
-                <div class="grid gap-3">
-                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
-                            Reporting window
-                        </p>
-                        <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                            {{ $startDate->format('d M Y') }} - {{ $endDate->format('d M Y') }}
-                        </p>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Use the filters below to refresh the reporting scope.
-                        </p>
-                    </article>
-
-                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+                    <div class="flex items-center justify-between gap-3">
                         <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
                             Dashboard filters
                         </p>
+                    </div>
 
-                        <div class="mt-3">
-                            <v-dashboard-filters></v-dashboard-filters>
-                        </div>
-                    </article>
-                </div>
+                    <div class="mt-3">
+                        <v-dashboard-filters></v-dashboard-filters>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -113,13 +101,16 @@
             type="text/x-template"
             id="v-dashboard-filters-template"
         >
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div
+                class="grid gap-2 sm:grid-cols-2"
+                :class="channels.length > 2 ? 'xl:grid-cols-3' : 'xl:grid-cols-2'"
+            >
                 <template v-if="channels.length > 2">
                     <x-admin::dropdown position="bottom-right">
                         <x-slot:toggle>
                             <button
                                 type="button"
-                                class="inline-flex w-full cursor-pointer appearance-none items-center justify-between gap-x-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:hover:border-slate-600 dark:hover:bg-slate-900 dark:focus:border-slate-500"
+                                class="inline-flex w-full cursor-pointer appearance-none items-center justify-between gap-x-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:hover:border-slate-600 dark:hover:bg-slate-900 dark:focus:border-slate-500"
                             >
                                 @{{ channels.find(channel => channel.code == filters.channel).name }}
 
@@ -141,7 +132,7 @@
 
                 <x-admin::flat-picker.date class="!w-full">
                     <input
-                        class="flex min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
+                        class="flex min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
                         v-model="filters.start"
                         placeholder="@lang('admin::app.dashboard.index.start-date')"
                     />
@@ -149,7 +140,7 @@
 
                 <x-admin::flat-picker.date class="!w-full">
                     <input
-                        class="flex min-h-[48px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
+                        class="flex min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
                         v-model="filters.end"
                         placeholder="@lang('admin::app.dashboard.index.end-date')"
                     />
