@@ -2,7 +2,7 @@
 
 return [
     [
-        'key'  => 'sales.payment_methods.bkash_gateway',
+        'key' => 'sales.payment_methods.bkash_gateway',
         'name' => 'bKash Gateway',
         'info' => 'Direct bKash checkout credentials and endpoint configuration.',
         'sort' => 8,
@@ -74,7 +74,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.payment_methods.sslcommerz_gateway',
+        'key' => 'sales.payment_methods.sslcommerz_gateway',
         'name' => 'SSLCommerz Gateway',
         'info' => 'Shared credentials for SSLCommerz-based Bangladesh payment methods.',
         'sort' => 9,
@@ -122,7 +122,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.payment_methods.sslcommerz',
+        'key' => 'sales.payment_methods.sslcommerz',
         'name' => 'SSLCommerz',
         'info' => 'Unified SSLCommerz checkout option for cards, mobile banking, and internet banking.',
         'sort' => 10,
@@ -175,7 +175,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.payment_methods.bkash',
+        'key' => 'sales.payment_methods.bkash',
         'name' => 'bKash',
         'info' => 'Direct official bKash checkout option.',
         'sort' => 11,
@@ -228,7 +228,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.carriers.courier',
+        'key' => 'sales.carriers.courier',
         'name' => 'Courier',
         'info' => 'District-based delivery charges for checkout.',
         'sort' => 3,
@@ -313,7 +313,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipment_notifications',
+        'key' => 'sales.shipment_notifications',
         'name' => 'Shipment Notifications',
         'info' => 'Email notifications for custom shipment operations after native shipment creation.',
         'sort' => 4,
@@ -391,7 +391,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipping.courier_services',
+        'key' => 'sales.shipping.courier_services',
         'name' => 'Courier Services',
         'info' => 'Manage the couriers your business works with, including service names, business defaults, and advanced carrier connections when needed.',
         'sort' => 1,
@@ -406,7 +406,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipping.pickup_points',
+        'key' => 'sales.shipping.pickup_points',
         'name' => 'Pickup Points',
         'info' => 'Manage the pickup locations and handoff points your couriers use during fulfillment.',
         'sort' => 2,
@@ -421,7 +421,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipping.checkout_methods',
+        'key' => 'sales.shipping.checkout_methods',
         'name' => 'Checkout Shipping Methods',
         'info' => 'Manage the shipping choices shown to customers during checkout, including free shipping, flat rate, and district-based courier delivery.',
         'sort' => 3,
@@ -436,7 +436,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipping.courier_operations',
+        'key' => 'sales.shipping.courier_operations',
         'name' => 'Courier Operations',
         'info' => 'Choose whether the store runs on the simple manual courier workflow or the full advanced shipment operations stack.',
         'sort' => 4,
@@ -451,7 +451,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipping.notifications',
+        'key' => 'sales.shipping.notifications',
         'name' => 'Shipment Notifications',
         'info' => 'Choose which shipment update emails should be sent to customers and to your team.',
         'sort' => 5,
@@ -466,7 +466,7 @@ return [
             ],
         ],
     ], [
-        'key'  => 'sales.shipping_workflow',
+        'key' => 'sales.shipping_workflow',
         'name' => 'Shipping Workflow',
         'info' => 'Choose whether the store uses the simple manual shipping workflow or the full advanced logistics workflow.',
         'sort' => 6,
@@ -483,6 +483,60 @@ return [
                 'channel_based' => true,
                 'locale_based' => false,
                 'default' => 'manual_basic',
+            ],
+        ],
+    ], [
+        'key' => 'general.admin_modules',
+        'name' => 'Admin Modules',
+        'info' => 'Enable or disable optional admin modules without removing their code.',
+        'icon' => 'settings/settings.svg',
+        'sort' => 9,
+    ], [
+        'key' => 'general.admin_modules.visibility',
+        'name' => 'Module Visibility',
+        'info' => 'Choose which optional admin modules are visible and accessible for this installation.',
+        'sort' => 1,
+        'fields' => [
+            [
+                'name' => 'booking_enabled',
+                'title' => 'Enable Booking',
+                'info' => 'Show Booking in the Sales menu and allow direct access to booking admin routes.',
+                'type' => 'boolean',
+                'channel_based' => false,
+                'locale_based' => false,
+                'default' => false,
+            ], [
+                'name' => 'product_return_enabled',
+                'title' => 'Enable Product Return',
+                'info' => 'Show Product Return in the Sales menu and allow direct access to existing RMA routes.',
+                'type' => 'boolean',
+                'channel_based' => false,
+                'locale_based' => false,
+                'default' => false,
+            ], [
+                'name' => 'marketing_enabled',
+                'title' => 'Enable Marketing',
+                'info' => 'Show the top-level Marketing menu and allow direct access to marketing admin routes.',
+                'type' => 'boolean',
+                'channel_based' => false,
+                'locale_based' => false,
+                'default' => false,
+            ], [
+                'name' => 'customer_reviews_enabled',
+                'title' => 'Enable Customer Reviews',
+                'info' => 'Show Reviews in the Customers menu and customer account menu, and allow direct access to review routes.',
+                'type' => 'boolean',
+                'channel_based' => false,
+                'locale_based' => false,
+                'default' => false,
+            ], [
+                'name' => 'gdpr_data_requests_enabled',
+                'title' => 'Enable GDPR Data Requests',
+                'info' => 'Show GDPR Data Requests in the Customers menu and customer account menu, and allow direct access to GDPR request routes.',
+                'type' => 'boolean',
+                'channel_based' => false,
+                'locale_based' => false,
+                'default' => false,
             ],
         ],
     ],

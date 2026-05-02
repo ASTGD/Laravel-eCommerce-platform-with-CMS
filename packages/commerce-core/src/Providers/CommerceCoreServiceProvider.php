@@ -14,6 +14,7 @@ use Platform\CommerceCore\Http\Controllers\Admin\RefundController as CommerceRef
 use Platform\CommerceCore\Http\Controllers\Admin\ShipmentController as CommerceShipmentController;
 use Platform\CommerceCore\Http\Controllers\Admin\TransactionController as CommerceTransactionController;
 use Platform\CommerceCore\Http\Middleware\CaptureAffiliateReferral;
+use Platform\CommerceCore\Http\Middleware\EnsureOptionalFeatureEnabled;
 use Platform\CommerceCore\Http\Middleware\EnsureShippingModeAllowsFeature;
 use Platform\CommerceCore\Http\Middleware\RedirectBasicShipmentBrowseRoutes;
 use Platform\CommerceCore\Listeners\ApproveAffiliateCommissionForEligibleOrder;
@@ -71,6 +72,8 @@ class CommerceCoreServiceProvider extends ServiceProvider
     {
         $this->app['router']->aliasMiddleware('commerce.shipping-mode', EnsureShippingModeAllowsFeature::class);
         $this->app['router']->pushMiddlewareToGroup('web', CaptureAffiliateReferral::class);
+        $this->app['router']->pushMiddlewareToGroup('web', EnsureOptionalFeatureEnabled::class);
+        $this->app['router']->pushMiddlewareToGroup('admin', EnsureOptionalFeatureEnabled::class);
         $this->app['router']->pushMiddlewareToGroup('admin', RedirectBasicShipmentBrowseRoutes::class);
 
         if ($this->app->runningInConsole()) {
