@@ -5,6 +5,8 @@ namespace Webkul\Shop\Http\Controllers\API;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
+use Platform\CommerceCore\Services\Reviews\OrderItemReviewEligibilityService;
 use Webkul\MagicAI\Facades\MagicAI;
 use Webkul\Product\Repositories\ProductRepository;
 use Webkul\Product\Repositories\ProductReviewAttachmentRepository;
@@ -21,7 +23,8 @@ class ReviewController extends APIController
     public function __construct(
         protected ProductRepository $productRepository,
         protected ProductReviewRepository $productReviewRepository,
-        protected ProductReviewAttachmentRepository $productReviewAttachmentRepository
+        protected ProductReviewAttachmentRepository $productReviewAttachmentRepository,
+        protected OrderItemReviewEligibilityService $reviewEligibilityService,
     ) {}
 
     /**
@@ -61,6 +64,14 @@ class ReviewController extends APIController
      */
     public function store(int $id): JsonResource
     {
+        $customer = auth()->guard('customer')->user();
+
+        if (! $this->reviewEligibilityService->customerCanReviewProduct($customer, $id)) {
+            throw ValidationException::withMessages([
+                'review' => trans('shop::app.products.view.reviews.not-eligible'),
+            ]);
+        }
+
         $this->validate(request(), [
             'title' => 'required',
             'comment' => 'required',

@@ -126,6 +126,12 @@
                                         <th scope="col">
                                             @lang('shop::app.customers.account.orders.view.information.subtotal')
                                         </th>
+
+                                        @if ($showReviewColumn)
+                                            <th scope="col">
+                                                @lang('shop::app.customers.account.orders.view.review.review')
+                                            </th>
+                                        @endif
                                     </tr>
                                 </thead>
 
@@ -226,6 +232,34 @@
                                                     {{ core()->formatPrice($item->total, $order->order_currency_code) }}
                                                 @endif
                                             </td>
+
+                                            @if ($showReviewColumn)
+                                                @php($reviewState = $reviewStates[$item->id] ?? ['can_write' => false, 'label' => null, 'status' => null])
+
+                                                <td data-value="@lang('shop::app.customers.account.orders.view.review.review')">
+                                                    @if ($reviewState['can_write'])
+                                                        <a
+                                                            href="{{ route('shop.customers.account.reviews.order-item.create', [$order->id, $item->id]) }}"
+                                                            class="inline-flex whitespace-nowrap rounded-lg bg-navyBlue px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-navyBlue/90"
+                                                        >
+                                                            {{ $reviewState['label'] }}
+                                                        </a>
+                                                    @elseif ($reviewState['label'])
+                                                        <span @class([
+                                                            'inline-flex rounded-full px-3 py-1 text-xs font-medium',
+                                                            'bg-amber-50 text-amber-700' => $reviewState['status'] === 'pending',
+                                                            'bg-green-50 text-green-700' => $reviewState['status'] === 'approved',
+                                                            'bg-zinc-100 text-zinc-700' => ! in_array($reviewState['status'], ['pending', 'approved'], true),
+                                                        ])>
+                                                            {{ $reviewState['label'] }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-sm font-normal text-zinc-500">
+                                                            @lang('shop::app.customers.account.orders.view.review.available-after-delivery')
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -396,14 +430,10 @@
                                         <div class="flex w-full justify-between gap-x-5">
                                             @lang('shop::app.customers.account.orders.view.information.total-due')
 
-                                            @php
-                                                $totalDue = $order->total_due;
-                                            @endphp
+                                            @php($totalDue = $order->total_due)
 
                                             @foreach ($order->items as $item)
-                                                @php
-                                                    $totalDue = $totalDue - ($item->base_price * $item->qty_canceled);
-                                                @endphp
+                                                @php($totalDue = $totalDue - ($item->base_price * $item->qty_canceled))
                                             @endforeach
 
                                             <p>
@@ -526,6 +556,8 @@
 
                             <x-slot:content class="grid gap-2.5 !bg-gray-100 !p-0">
                                 @foreach ($order->items as $item)
+                                    @php($reviewState = $reviewStates[$item->id] ?? ['can_write' => false, 'label' => null, 'status' => null])
+
                                     <div class="rounded-md rounded-t-none border border-t-0 bg-white px-4 py-2">
                                         <p class="pb-2 text-sm font-medium">
                                             {{ $item->name }}
@@ -644,6 +676,36 @@
                                                     @endif
                                                 </span>
                                             </div>
+
+                                            @if ($showReviewColumn)
+                                                <div class="flex justify-between">
+                                                    <span class="text-zinc-500">
+                                                        @lang('shop::app.customers.account.orders.view.review.review')
+                                                    </span>
+
+                                                    @if ($reviewState['can_write'])
+                                                        <a
+                                                            href="{{ route('shop.customers.account.reviews.order-item.create', [$order->id, $item->id]) }}"
+                                                            class="inline-flex whitespace-nowrap rounded-lg bg-navyBlue px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-navyBlue/90"
+                                                        >
+                                                            {{ $reviewState['label'] }}
+                                                        </a>
+                                                    @elseif ($reviewState['label'])
+                                                        <span @class([
+                                                            'rounded-full px-3 py-1 text-xs font-medium',
+                                                            'bg-amber-50 text-amber-700' => $reviewState['status'] === 'pending',
+                                                            'bg-green-50 text-green-700' => $reviewState['status'] === 'approved',
+                                                            'bg-zinc-100 text-zinc-700' => ! in_array($reviewState['status'], ['pending', 'approved'], true),
+                                                        ])>
+                                                            {{ $reviewState['label'] }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-right text-xs font-normal text-zinc-500">
+                                                            @lang('shop::app.customers.account.orders.view.review.available-after-delivery')
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endif
 
                                             <!-- Tax Percent -->
                                             <div class="flex justify-between">
@@ -874,14 +936,10 @@
                                         @lang('shop::app.customers.account.orders.view.information.total-due')
                                     </p>
 
-                                    @php
-                                        $baseTotalDue = $order->base_total_due;
-                                    @endphp
+                                    @php($baseTotalDue = $order->base_total_due)
 
                                     @foreach ($order->items as $item)
-                                        @php
-                                            $baseTotalDue = $baseTotalDue - ($item->base_price * $item->qty_canceled);
-                                        @endphp
+                                        @php($baseTotalDue = $baseTotalDue - ($item->base_price * $item->qty_canceled))
                                     @endforeach
 
                                     <p>
