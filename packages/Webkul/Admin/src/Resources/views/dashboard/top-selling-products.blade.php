@@ -9,98 +9,82 @@
         type="text/x-template"
         id="v-dashboard-top-selling-products-template"
     >
-        <!-- Shimmer -->
         <template v-if="isLoading">
-            <x-admin::shimmer.dashboard.top-selling-products />
+            <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <x-admin::shimmer.dashboard.top-selling-products />
+            </div>
         </template>
 
-        <!-- Total Sales Section -->
         <template v-else>
-            <div class="border-b dark:border-gray-800">
-                <div class="flex items-center justify-between p-4">
-                    <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                        @lang('admin::app.dashboard.index.top-selling-products')
-                    </p>
+            <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-end sm:justify-between dark:border-slate-800">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            @lang('admin::app.dashboard.index.top-selling-products')
+                        </p>
 
-                    <p class="text-xs font-semibold text-gray-400">
+                        <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                            Top products
+                        </h3>
+                    </div>
+
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         @{{ report.date_range }}
-                    </p>
+                    </span>
                 </div>
 
-                <!-- Top Selling Products Details -->
-                <div
-                    class="flex flex-col"
-                    v-if="report.statistics.length"
-                >
+                <div v-if="report.statistics.length" class="divide-y divide-slate-200 dark:divide-slate-800">
                     <a
                         :href="'{{ route('admin.catalog.products.edit', ':id') }}'.replace(':id', item.id)"
-                        class="flex gap-2.5 border-b p-4 transition-all last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
+                        class="flex gap-3 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
                         v-for="item in report.statistics"
                     >
-                        <!-- Product Item -->
-                        <img
-                            v-if="item.images?.length"
-                            class="relative h-[65px] max-h-[65px] w-full max-w-[65px] overflow-hidden rounded"
-                            :src="item.images[0]?.url"
-                        />
+                        <template v-if="item.images?.length">
+                            <img
+                                class="h-[64px] w-[64px] rounded-2xl object-cover shadow-sm"
+                                :src="item.images[0]?.url"
+                            />
+                        </template>
 
-                        <div
-                            v-else
-                            class="relative h-[65px] max-h-[65px] w-full max-w-[65px] overflow-hidden rounded border border-dashed border-gray-300 dark:border-gray-800 dark:mix-blend-exclusion dark:invert"
-                        >
-                            <img src="{{ bagisto_asset('images/product-placeholders/front.svg')}}">
-                            
-                            <p class="absolute bottom-1.5 w-full text-center text-[6px] font-semibold text-gray-400">
-                                @lang('admin::app.dashboard.index.product-image')
-                            </p>
+                        <template v-else>
+                            <div class="relative flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                                <img src="{{ bagisto_asset('images/product-placeholders/front.svg')}}" class="h-10 w-10">
+                            </div>
+                        </template>
+
+                        <div class="min-w-0 flex-1">
+                            <p class="text-base font-semibold text-slate-950 dark:text-white" v-text="item.name"></p>
+
+                            <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                                <span>@{{ item.formatted_price }}</span>
+                                <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+                                <span>@{{ item.formatted_revenue }}</span>
+                            </div>
                         </div>
 
-                        <!-- Product Details -->
-                        <div class="flex w-full flex-col gap-1.5">
-                            <p
-                                class="text-gray-600 dark:text-gray-300"
-                                v-text="item.name"
-                            >
-                            </p>
-
-                            <div class="flex justify-between">
-                                <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                    @{{ item.formatted_price }}
-                                </p>
-
-                                <p class="text-base font-semibold text-gray-800 dark:text-white">
-                                    @{{ item.formatted_revenue }}
-                                </p>
-                            </div>
+                        <div class="flex items-center text-slate-400">
+                            <span class="icon-sort-right rtl:icon-sort-left text-2xl"></span>
                         </div>
                     </a>
                 </div>
 
-                <!-- Empty Product Design -->
-                <div
-                    class="flex flex-col gap-8 p-4"
-                    v-else
-                >
-                    <div class="grid justify-center justify-items-center gap-3.5 py-2.5">
-                        <!-- Placeholder Image -->
+                <div v-else class="grid justify-center justify-items-center gap-3 px-6 py-16 text-center">
                         <img
                             src="{{ bagisto_asset('images/icon-add-product.svg') }}"
                             class="h-20 w-20 dark:mix-blend-exclusion dark:invert"
-                        >
+                    >
 
-                        <!-- Add Variants Information -->
-                        <div class="flex flex-col items-center">
-                            <p class="text-base font-semibold text-gray-400">
-                                @lang('admin::app.dashboard.index.add-product')
-                            </p>
+                    <div class="flex flex-col items-center">
+                        <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
+                            No top-selling products yet
+                        </p>
 
-                            <p class="text-gray-400">
-                                @lang('admin::app.dashboard.index.product-info')
-                            </p>
-                        </div>
+                        <p class="text-sm text-slate-400 dark:text-slate-400">
+                            Product revenue will appear here once orders are placed.
+                        </p>
                     </div>
                 </div>
-            </div>
+            </article>
         </template>
     </script>
 

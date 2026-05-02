@@ -9,78 +9,75 @@
         type="text/x-template"
         id="v-dashboard-top-customers-template"
     >
-        <!-- Shimmer -->
         <template v-if="isLoading">
-            <x-admin::shimmer.dashboard.top-customers />
+            <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <x-admin::shimmer.dashboard.top-customers />
+            </div>
         </template>
 
-        <!-- Total Sales Section -->
         <template v-else>
-            <div class="border-b dark:border-gray-800">
-                <div class="flex items-center justify-between p-4">
-                    <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                        @lang('admin::app.dashboard.index.customer-with-most-sales')
-                    </p>
+            <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-end sm:justify-between dark:border-slate-800">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            @lang('admin::app.dashboard.index.customer-with-most-sales')
+                        </p>
 
-                    <p class="text-xs font-semibold text-gray-400">
+                        <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                            Top customers
+                        </h3>
+                    </div>
+
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         @{{ report.date_range }}
-                    </p>
+                    </span>
                 </div>
 
-                <div
-                    class="flex flex-col gap-8 border-b p-4 transition-all last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
-                    v-if="report.statistics.length"
-                    v-for="customer in report.statistics"
-                >
-                    <a :href="customer.id ? '{{ route('admin.customers.customers.view', ':id') }}'.replace(':id', customer.id) : '#'">
-                        <div class="flex justify-between gap-1.5">
-                            <div class="flex flex-col">
-                                <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                    @{{ customer.full_name }}
-                                </p>
+                <div v-if="report.statistics.length" class="divide-y divide-slate-200 dark:divide-slate-800">
+                    <a
+                        :href="customer.id ? '{{ route('admin.customers.customers.view', ':id') }}'.replace(':id', customer.id) : '#'"
+                        class="flex items-start justify-between gap-4 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
+                        v-for="customer in report.statistics"
+                    >
+                        <div class="min-w-0">
+                            <p class="font-semibold text-slate-950 dark:text-white">
+                                @{{ customer.full_name }}
+                            </p>
 
-                                <p class="text-gray-600 dark:text-gray-300">
-                                    @{{ customer.email }}
-                                </p>
-                            </div>
+                            <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
+                                @{{ customer.email }}
+                            </p>
+                        </div>
 
-                            <div class="flex flex-col">
-                                <p class="font-semibold text-gray-800 dark:text-white">
-                                    @{{ customer.formatted_total }}
-                                </p>
+                        <div class="text-right">
+                            <p class="font-semibold text-slate-950 dark:text-white">
+                                @{{ customer.formatted_total }}
+                            </p>
 
-                                <p class="text-gray-600 dark:text-gray-300" v-if="customer.orders">
-                                    @{{ "@lang('admin::app.dashboard.index.order-count')".replace(':count', customer.orders) }}
-                                </p>
-                            </div>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400" v-if="customer.orders">
+                                @{{ "@lang('admin::app.dashboard.index.order-count', ['count' => ':count'])".replace(':count', customer.orders) }}
+                            </p>
                         </div>
                     </a>
                 </div>
 
-                <div
-                    class="flex flex-col gap-8 p-4"
-                    v-else
-                >
-                    <div class="grid justify-center justify-items-center gap-3.5 py-2.5">
-                        <!-- Placeholder Image -->
-                        <img
-                            src="{{ bagisto_asset('images/empty-placeholders/customers.svg') }}"
-                            class="h-20 w-20 dark:mix-blend-exclusion dark:invert"
-                        />
+                <div v-else class="grid justify-center justify-items-center gap-3 px-6 py-16 text-center">
+                    <img
+                        src="{{ bagisto_asset('images/empty-placeholders/customers.svg') }}"
+                        class="h-20 w-20 dark:mix-blend-exclusion dark:invert"
+                    />
 
-                        <!-- Add Variants Information -->
-                        <div class="flex flex-col items-center">
-                            <p class="text-base font-semibold text-gray-400">
-                                @lang('admin::app.dashboard.index.add-customer')
-                            </p>
+                    <div class="flex flex-col items-center">
+                        <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
+                            No top customers yet
+                        </p>
 
-                            <p class="text-gray-400">
-                                @lang('admin::app.dashboard.index.customer-info')
-                            </p>
-                        </div>
+                        <p class="text-sm text-slate-400 dark:text-slate-400">
+                            Customer revenue will appear here after sales are recorded.
+                        </p>
                     </div>
                 </div>
-            </div>
+            </article>
         </template>
     </script>
 

@@ -36,10 +36,7 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('admin::dashboard.index')->with([
-            'startDate' => $this->dashboardHelper->getStartDate(),
-            'endDate' => $this->dashboardHelper->getEndDate(),
-        ]);
+        return view('admin::dashboard.index');
     }
 
     /**

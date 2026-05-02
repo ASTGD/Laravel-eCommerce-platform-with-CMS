@@ -21,6 +21,8 @@ Relevant admin areas now exposed:
 - Users & Roles
 - Audit Logs
 
+The Platform CMS area now opens on a dedicated dashboard overview screen at `admin.cms.dashboard.index`. It summarizes pages, templates, theme presets, section and component registries, and the broader structured content inventory before the admin drills into the detailed management screens.
+
 ## Optional Module Visibility
 
 Some native admin modules remain installed but are hidden for the current client by default. Their code, routes, controllers, and views stay in place so they can be enabled later without reintroducing the module.

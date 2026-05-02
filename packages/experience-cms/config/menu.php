@@ -4,7 +4,7 @@ return [
     [
         'key'   => 'cms.platform',
         'name'  => 'Platform CMS',
-        'route' => 'admin.cms.pages.index',
+        'route' => 'admin.cms.dashboard.index',
         'sort'  => 5,
         'icon'  => 'icon-cms',
     ], [
