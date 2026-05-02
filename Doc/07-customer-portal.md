@@ -14,6 +14,8 @@ The customer portal is part of the storefront theme system, not a second admin.
 - address book
 - order history
 - order detail
+- review submission from delivered/completed order items
+- review history/status
 - payment and refund status visibility on order detail for gateway-backed orders
 - affiliate application and affiliate portal states after the shared affiliate domain is enabled
 
@@ -83,6 +85,33 @@ Current public-entry surfaces:
 
 - checkout success page
 - storefront footer / support surface
+
+## Customer Reviews Flow
+
+Customer product reviews are centered on the order-detail flow, not on anonymous storefront submission.
+
+Current review eligibility rule:
+
+- customer must be logged in
+- customer must have purchased the product
+- the related order item must be delivered through the shipment-operations domain or the order must be completed
+- the order item must still have a reviewable quantity after cancellations/refunds
+- only one review is allowed per customer per product
+
+This uses the existing Bagisto `product_reviews` table and moderation lifecycle. Submitted reviews are stored as `pending`, then admin moderation controls when they become public on the product page.
+
+Current customer-facing review surfaces:
+
+- `Customer Account > Orders > View` shows item-level review states:
+  - `Write Review` for eligible delivered/completed items
+  - `Pending Approval` after submission
+  - `Approved` after moderation approval
+  - `Available after delivery` for items not yet eligible
+- `Customer Account > Reviews` acts as review history and shows submitted review statuses
+- product pages still display approved public reviews
+- product-page review submission is also gated by the same purchased-and-delivered eligibility rule
+
+Review validation is enforced server-side through the shared order-item review eligibility service, so hidden frontend buttons are not the only protection.
 
 ## Registration Flow
 

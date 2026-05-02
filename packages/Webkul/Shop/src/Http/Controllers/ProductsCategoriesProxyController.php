@@ -4,6 +4,7 @@ namespace Webkul\Shop\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Platform\CommerceCore\Services\Reviews\OrderItemReviewEligibilityService;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Marketing\Repositories\URLRewriteRepository;
 use Webkul\Product\Repositories\ProductRepository;
@@ -27,7 +28,8 @@ class ProductsCategoriesProxyController extends Controller
         protected CategoryRepository $categoryRepository,
         protected ProductRepository $productRepository,
         protected ThemeCustomizationRepository $themeCustomizationRepository,
-        protected URLRewriteRepository $urlRewriteRepository
+        protected URLRewriteRepository $urlRewriteRepository,
+        protected OrderItemReviewEligibilityService $reviewEligibilityService,
     ) {}
 
     /**
@@ -81,7 +83,12 @@ class ProductsCategoriesProxyController extends Controller
                 abort(404);
             }
 
-            return view('shop::products.view', compact('product'));
+            $customerCanReviewProduct = $this->reviewEligibilityService->customerCanReviewProduct(
+                auth()->guard('customer')->user(),
+                (int) $product->id,
+            );
+
+            return view('shop::products.view', compact('product', 'customerCanReviewProduct'));
         }
 
         /**

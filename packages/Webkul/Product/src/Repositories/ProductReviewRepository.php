@@ -25,6 +25,7 @@ class ProductReviewRepository extends Repository
         $reviews = $this->model
             ->where(['customer_id' => auth()->guard('customer')->user()->id])
             ->with('product')
+            ->latest('id')
             ->paginate(5);
 
         return $reviews;

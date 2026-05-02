@@ -2,10 +2,16 @@
 
 namespace Webkul\Shop\Http\Controllers\Customer\Account;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Platform\CommerceCore\Services\Reviews\OrderItemReviewEligibilityService;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Core\Traits\PDFHandler;
+use Webkul\Product\Repositories\ProductReviewAttachmentRepository;
+use Webkul\Product\Repositories\ProductReviewRepository;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Shop\DataGrids\OrderDataGrid;
@@ -22,7 +28,10 @@ class OrderController extends Controller
      */
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected InvoiceRepository $invoiceRepository
+        protected InvoiceRepository $invoiceRepository,
+        protected ProductReviewRepository $productReviewRepository,
+        protected ProductReviewAttachmentRepository $productReviewAttachmentRepository,
+        protected OrderItemReviewEligibilityService $reviewEligibilityService,
     ) {}
 
     /**
@@ -54,7 +63,77 @@ class OrderController extends Controller
 
         abort_if(! $order, 404);
 
-        return view('shop::customers.account.orders.view', compact('order'));
+        $customer = auth()->guard('customer')->user();
+
+        $order->loadMissing(['items.product', 'items.order']);
+
+        $reviewStates = $order->items
+            ->mapWithKeys(fn ($item) => [
+                $item->id => $this->reviewEligibilityService->stateForOrderItem($item, $customer),
+            ])
+            ->all();
+
+        $showReviewColumn = $this->reviewEligibilityService->reviewsEnabled();
+
+        return view('shop::customers.account.orders.view', compact('order', 'reviewStates', 'showReviewColumn'));
+    }
+
+    public function createReview(int $orderId, int $itemId): View|RedirectResponse
+    {
+        $order = $this->findCustomerOrder($orderId);
+        $item = $order->items()->with('product', 'order')->findOrFail($itemId);
+        $customer = auth()->guard('customer')->user();
+
+        if (! $this->reviewEligibilityService->canReviewOrderItem($item, $customer)) {
+            session()->flash('warning', trans('shop::app.customers.account.orders.view.review.not-eligible'));
+
+            return redirect()->route('shop.customers.account.orders.view', $order->id);
+        }
+
+        return view('shop::customers.account.orders.review', compact('order', 'item'));
+    }
+
+    public function storeReview(int $orderId, int $itemId): RedirectResponse
+    {
+        $order = $this->findCustomerOrder($orderId);
+        $item = $order->items()->with('product', 'order')->findOrFail($itemId);
+        $customer = auth()->guard('customer')->user();
+
+        if (! $this->reviewEligibilityService->canReviewOrderItem($item, $customer)) {
+            throw ValidationException::withMessages([
+                'review' => trans('shop::app.customers.account.orders.view.review.not-eligible'),
+            ]);
+        }
+
+        $validated = request()->validate([
+            'title' => 'required|string|max:255',
+            'comment' => 'required|string',
+            'rating' => 'required|numeric|min:1|max:5',
+            'attachments' => 'array',
+            'attachments.*' => 'file|mimetypes:image/*,video/*',
+        ]);
+
+        $productId = $this->reviewEligibilityService->reviewableProductId($item);
+
+        Event::dispatch('customer.review.create.before', $productId);
+
+        $review = $this->productReviewRepository->create([
+            'title' => $validated['title'],
+            'comment' => $validated['comment'],
+            'rating' => $validated['rating'],
+            'status' => 'pending',
+            'product_id' => $productId,
+            'customer_id' => $customer->id,
+            'name' => $customer->name,
+        ]);
+
+        $this->productReviewAttachmentRepository->upload(request()->file('attachments') ?? [], $review);
+
+        Event::dispatch('customer.review.create.after', $review);
+
+        session()->flash('success', trans('shop::app.customers.account.orders.view.review.success'));
+
+        return redirect()->route('shop.customers.account.orders.view', $order->id);
     }
 
     /**
@@ -130,5 +209,17 @@ class OrderController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    protected function findCustomerOrder(int $orderId)
+    {
+        $order = $this->orderRepository->findOneWhere([
+            'customer_id' => auth()->guard('customer')->id(),
+            'id' => $orderId,
+        ]);
+
+        abort_if(! $order, 404);
+
+        return $order;
     }
 }

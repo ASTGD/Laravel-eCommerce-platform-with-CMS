@@ -56,6 +56,21 @@
                         <!-- Review Information -->
                         <div class="mt-14 grid gap-5 max-1060:grid-cols-[1fr] max-md:mt-5">
                             @foreach($reviews as $review)
+                                @php
+                                    $statusLabel = match ($review->status) {
+                                        'pending' => trans('shop::app.customers.account.reviews.status.pending'),
+                                        'approved' => trans('shop::app.customers.account.reviews.status.approved'),
+                                        'disapproved' => trans('shop::app.customers.account.reviews.status.disapproved'),
+                                        default => trans('shop::app.customers.account.reviews.status.submitted'),
+                                    };
+
+                                    $statusClass = match ($review->status) {
+                                        'pending' => 'bg-amber-50 text-amber-700',
+                                        'approved' => 'bg-green-50 text-green-700',
+                                        default => 'bg-zinc-100 text-zinc-700',
+                                    };
+                                @endphp
+
                                 <a
                                     href="{{ route('shop.product_or_category.index', $review->product->url_key) }}"
                                     id="{{ $review->product_id }}"
@@ -77,12 +92,18 @@
                                             <div class="flex justify-between">
                                                 {!! view_render_event('bagisto.shop.customers.account.reviews.title.before', ['reviews' => $reviews]) !!}
 
-                                                <p
-                                                    class="text-xl font-medium"
-                                                    v-pre
-                                                >
-                                                    {{ $review->title }}
-                                                </p>
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <p
+                                                        class="text-xl font-medium"
+                                                        v-pre
+                                                    >
+                                                        {{ $review->title }}
+                                                    </p>
+
+                                                    <span class="rounded-full px-3 py-1 text-xs font-medium {{ $statusClass }}">
+                                                        {{ $statusLabel }}
+                                                    </span>
+                                                </div>
 
                                                 {!! view_render_event('bagisto.shop.customers.account.reviews.title.after', ['reviews' => $reviews]) !!}
         
@@ -138,12 +159,18 @@
                                             <div class="justify-between">
                                                 {!! view_render_event('bagisto.shop.customers.account.reviews.title.before', ['reviews' => $reviews]) !!}
 
-                                                <p
-                                                    class="text-xl font-medium max-md:text-base"
-                                                    v-pre
-                                                >
-                                                    {{ $review->title}}
-                                                </p>
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    <p
+                                                        class="text-xl font-medium max-md:text-base"
+                                                        v-pre
+                                                    >
+                                                        {{ $review->title}}
+                                                    </p>
+
+                                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-medium {{ $statusClass }}">
+                                                        {{ $statusLabel }}
+                                                    </span>
+                                                </div>
 
                                                 {!! view_render_event('bagisto.shop.customers.account.reviews.title.after', ['reviews' => $reviews]) !!}
 

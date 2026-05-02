@@ -153,6 +153,10 @@ Route::prefix('customer')->group(function () {
 
                 Route::get('view/{id}', 'view')->name('shop.customers.account.orders.view');
 
+                Route::get('view/{orderId}/items/{itemId}/review', 'createReview')->name('shop.customers.account.reviews.order-item.create');
+
+                Route::post('view/{orderId}/items/{itemId}/review', 'storeReview')->name('shop.customers.account.reviews.order-item.store');
+
                 Route::get('reorder/{id}', 'reorder')->name('shop.customers.account.orders.reorder');
 
                 Route::post('cancel/{id}', 'cancel')->name('shop.customers.account.orders.cancel');

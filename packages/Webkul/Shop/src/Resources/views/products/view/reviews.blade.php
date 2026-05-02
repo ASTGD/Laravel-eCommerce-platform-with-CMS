@@ -203,20 +203,15 @@
                                 </div>
 
                                 <!-- Create Button -->
-                                @if(core()->getConfigData('catalog.products.review.customer_review'))
-                                    @if (
-                                            core()->getConfigData('catalog.products.review.guest_review')
-                                            || auth()->guard('customer')->user()
-                                        )
-                                            <div
-                                                class="flex cursor-pointer items-center justify-center gap-x-4 rounded-xl border border-navyBlue px-4 py-3 max-sm:rounded-lg max-sm:py-1.5"
-                                                @click="canReview = true"
-                                            >
-                                                <span class="icon-pen text-2xl"></span>
+                                @if(core()->getConfigData('catalog.products.review.customer_review') && ($customerCanReviewProduct ?? false))
+                                    <div
+                                        class="flex cursor-pointer items-center justify-center gap-x-4 rounded-xl border border-navyBlue px-4 py-3 max-sm:rounded-lg max-sm:py-1.5"
+                                        @click="canReview = true"
+                                    >
+                                        <span class="icon-pen text-2xl"></span>
 
-                                                @lang('shop::app.products.view.reviews.write-a-review')
-                                            </div>
-                                    @endif
+                                        @lang('shop::app.products.view.reviews.write-a-review')
+                                    </div>
                                 @endif
                             </div>
 
@@ -253,20 +248,15 @@
                                 @lang('shop::app.products.view.reviews.empty-review')
                             </p>
 
-                            @if(core()->getConfigData('catalog.products.review.customer_review'))
-                                @if (
-                                        core()->getConfigData('catalog.products.review.guest_review')
-                                        || auth()->guard('customer')->user()
-                                    )
-                                        <div
-                                            class="mt-8 flex cursor-pointer items-center gap-x-4 rounded-xl border border-navyBlue px-4 py-2.5 max-sm:mt-5 max-sm:gap-x-1.5 max-sm:rounded-lg max-sm:py-1.5 max-sm:text-sm"
-                                            @click="canReview = true"
-                                        >
-                                            <span class="icon-pen text-2xl max-sm:text-lg"></span>
+                            @if(core()->getConfigData('catalog.products.review.customer_review') && ($customerCanReviewProduct ?? false))
+                                <div
+                                    class="mt-8 flex cursor-pointer items-center gap-x-4 rounded-xl border border-navyBlue px-4 py-2.5 max-sm:mt-5 max-sm:gap-x-1.5 max-sm:rounded-lg max-sm:py-1.5 max-sm:text-sm"
+                                    @click="canReview = true"
+                                >
+                                    <span class="icon-pen text-2xl max-sm:text-lg"></span>
 
-                                            @lang('shop::app.products.view.reviews.write-a-review')
-                                        </div>
-                                @endif
+                                    @lang('shop::app.products.view.reviews.write-a-review')
+                                </div>
                             @endif
                         </div>
                     </template>

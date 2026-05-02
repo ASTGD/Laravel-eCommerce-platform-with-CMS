@@ -232,6 +232,26 @@ return [
                     'title' => 'View',
                     'total' => 'Total',
 
+                    'review' => [
+                        'available-after-delivery' => 'Available after delivery',
+                        'attachments' => 'Attachments',
+                        'cancel' => 'Cancel',
+                        'comment' => 'Review comment',
+                        'not-eligible' => 'This product can be reviewed after it has been delivered or completed.',
+                        'order-context' => 'Order #:order_id',
+                        'page-title' => 'Write Review',
+                        'rating' => 'Rating',
+                        'review' => 'Review',
+                        'reviewing' => 'Reviewing',
+                        'select-rating' => 'Select rating',
+                        'stars' => 'stars',
+                        'submit' => 'Submit Review',
+                        'success' => 'Your review has been submitted and is waiting for approval.',
+                        'selected-rating' => 'Selected rating:',
+                        'title' => 'Review title',
+                        'write-review' => 'Write Review',
+                    ],
+
                     'information' => [
                         'discount' => 'Discount',
                         'excl-tax' => 'Excl Tax:',
@@ -353,6 +373,12 @@ return [
 
             'reviews' => [
                 'empty-review' => 'You have not reviewed any product yet',
+                'status' => [
+                    'approved' => 'Approved',
+                    'disapproved' => 'Review Submitted',
+                    'pending' => 'Pending Approval',
+                    'submitted' => 'Review Submitted',
+                ],
                 'title' => 'Reviews',
             ],
 
@@ -857,6 +883,7 @@ return [
                 'failed-to-upload' => 'The image failed to upload',
                 'load-more' => 'Load More',
                 'name' => 'Name',
+                'not-eligible' => 'You can review this product after it has been delivered or completed from your order details.',
                 'rating' => 'Rating',
                 'ratings' => 'Ratings',
                 'submit-review' => 'Submit Review',
