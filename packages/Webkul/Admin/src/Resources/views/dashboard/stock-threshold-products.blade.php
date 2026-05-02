@@ -39,7 +39,7 @@
                             v-for="product in report.statistics"
                             class="flex flex-col gap-4 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between"
                         >
-                            <div class="flex items-start gap-3">
+                            <div class="flex min-w-0 flex-1 items-start gap-3">
                                 <template v-if="product.image">
                                     <img
                                         class="h-[64px] w-[64px] rounded-2xl object-cover shadow-sm"
@@ -64,31 +64,31 @@
                                 </div>
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-3 sm:justify-end">
-                                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-right dark:border-slate-800 dark:bg-slate-950">
-                                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                            <div class="flex flex-nowrap items-center gap-2 sm:justify-end sm:whitespace-nowrap">
+                                <div class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-center dark:border-slate-800 dark:bg-slate-950">
+                                    <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                                         Price
                                     </p>
-                                    <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
+                                    <p class="mt-1 text-sm font-semibold leading-none text-slate-950 dark:text-white">
                                         @{{ product.formatted_price }}
                                     </p>
                                 </div>
 
                                 <div
-                                    class="rounded-2xl border px-4 py-3 text-right"
+                                    class="shrink-0 rounded-full border px-3 py-2 text-center"
                                     :class="[product.total_qty > {{ core()->getConfigData('catalog.inventory.stock_options.out_of_stock_threshold') }} ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300']"
                                 >
-                                    <p class="text-xs font-semibold uppercase tracking-[0.24em]">
+                                    <p class="text-[10px] font-semibold uppercase tracking-[0.24em]">
                                         Stock
                                     </p>
-                                    <p class="mt-2 text-sm font-semibold">
+                                    <p class="mt-1 text-sm font-semibold leading-none">
                                         @{{ "@lang('admin::app.dashboard.index.total-stock', ['total_stock' => ':replace'])".replace(':replace', product.total_qty) }}
                                     </p>
                                 </div>
 
                                 <a
                                     :href="'{{ route('admin.catalog.products.edit', ':replace') }}'.replace(':replace', product.id)"
-                                    class="inline-flex items-center rounded-full border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    class="shrink-0 inline-flex min-h-[56px] items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     Open
                                 </a>
