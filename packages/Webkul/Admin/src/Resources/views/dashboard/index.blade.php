@@ -5,7 +5,7 @@
 
     <div class="space-y-6 pb-8">
         <section class="border-b border-slate-200 pb-6 dark:border-slate-800">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start">
                 <div class="space-y-1">
                     <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                         Dashboard
@@ -20,7 +20,7 @@
                     </p>
                 </div>
 
-                <div class="w-full lg:max-w-[760px]">
+                <div class="w-full lg:ml-auto lg:max-w-[620px]">
                     <v-dashboard-filters></v-dashboard-filters>
                 </div>
             </div>
