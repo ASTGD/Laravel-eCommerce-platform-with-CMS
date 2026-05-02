@@ -16,6 +16,7 @@ use Platform\CommerceCore\Models\ShipmentHandoverBatch;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Services\ManualShipmentHandoverService;
 use Platform\CommerceCore\Services\ManualToShipService;
+use Platform\CommerceCore\Services\OrderInvoiceLifecycleService;
 use Webkul\Core\Traits\PDFHandler;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Repositories\ShipmentRepository;
@@ -28,6 +29,7 @@ class ManualToShipController extends Controller
         protected ManualToShipService $manualToShipService,
         protected ManualShipmentHandoverService $manualShipmentHandoverService,
         protected ShipmentRepository $shipmentRepository,
+        protected OrderInvoiceLifecycleService $orderInvoiceLifecycleService,
     ) {}
 
     public function index(Request $request): View
@@ -135,6 +137,11 @@ class ManualToShipController extends Controller
             $validated['shipment'],
             auth('admin')->id(),
         );
+
+        if (in_array($document, ['invoice', 'both'], true)) {
+            $this->orderInvoiceLifecycleService->ensureCodInvoiceForOrder($order);
+        }
+
         $view = view('commerce-core::admin.manual-to-ship.print-documents', [
             'printData' => $this->manualToShipService->printableBookingData(
                 $order,
@@ -212,6 +219,8 @@ class ManualToShipController extends Controller
         }
 
         $shipmentPayload = $this->manualToShipService->draftShipmentData($draft);
+
+        $this->orderInvoiceLifecycleService->ensureCodInvoiceForOrder($order);
 
         DB::transaction(function () use ($order, $draft, $shipmentPayload) {
             request()->merge([

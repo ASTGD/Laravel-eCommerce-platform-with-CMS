@@ -11,6 +11,8 @@ use Webkul\Sales\Models\Order;
 
 class CodSettlementService
 {
+    public function __construct(protected OrderInvoiceLifecycleService $orderInvoiceLifecycleService) {}
+
     public function detailSummary(CodSettlement $codSettlement): array
     {
         return [
@@ -196,6 +198,10 @@ class CodSettlementService
             }
 
             $codSettlement->save();
+
+            if ($codSettlement->status === CodSettlement::STATUS_SETTLED && $codSettlement->order) {
+                $this->orderInvoiceLifecycleService->markCodOrderInvoicesPaid($codSettlement->order);
+            }
 
             return $codSettlement->fresh(['shipmentRecord', 'order', 'carrier']);
         });

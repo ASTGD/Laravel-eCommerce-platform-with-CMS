@@ -17,7 +17,41 @@
         'sslcommerz' => 'SSLCommerz Details',
         default => null,
     };
+    $financeSummary = app(\Platform\CommerceCore\Services\OrderFinanceSummaryService::class)->summarize($order);
 @endphp
+
+<div class="mt-4 rounded-lg border border-slate-200 p-3 dark:border-gray-800">
+    <p class="font-semibold text-gray-800 dark:text-white">
+        Finance Summary
+    </p>
+
+    <div class="mt-3 grid gap-3 text-sm text-gray-600 dark:text-gray-300 sm:grid-cols-2">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Method</p>
+            <p class="mt-1 font-semibold text-gray-800 dark:text-white">{{ $financeSummary['payment_method'] }}</p>
+        </div>
+
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment State</p>
+            <p class="mt-1 font-semibold text-gray-800 dark:text-white">{{ $financeSummary['payment_state'] }}</p>
+        </div>
+
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoice State</p>
+            <p class="mt-1">{{ $financeSummary['invoice_state'] }}</p>
+        </div>
+
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Shipment State</p>
+            <p class="mt-1">{{ $financeSummary['shipment_state'] }}</p>
+        </div>
+
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">COD State</p>
+            <p class="mt-1">{{ $financeSummary['cod_state'] }}</p>
+        </div>
+    </div>
+</div>
 
 @if ($paymentHeading)
     <p class="pt-4 font-semibold text-gray-800 dark:text-white">

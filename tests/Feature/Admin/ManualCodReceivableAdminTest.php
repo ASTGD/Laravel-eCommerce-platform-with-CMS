@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
+use Platform\CommerceCore\Models\CodRemittance;
 use Platform\CommerceCore\Models\CodSettlement;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Models\ShipmentRecord;
-use Illuminate\Support\Facades\Schema;
+use Platform\CommerceCore\Services\OrderInvoiceLifecycleService;
 use Webkul\Admin\Tests\AdminTestCase;
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartAddress;
@@ -15,6 +17,7 @@ use Webkul\Core\Models\CoreConfig;
 use Webkul\Customer\Models\Customer;
 use Webkul\Customer\Models\CustomerAddress;
 use Webkul\Faker\Helpers\Product as ProductFaker;
+use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Models\OrderAddress;
 use Webkul\Sales\Models\OrderItem;
@@ -29,6 +32,7 @@ beforeEach(function () {
     Schema::disableForeignKeyConstraints();
 
     try {
+        CodRemittance::query()->delete();
         CodSettlement::query()->delete();
         ShipmentRecord::query()->delete();
         ShipmentCarrier::query()->delete();
@@ -153,12 +157,80 @@ it('records courier cod receipt and allocates it oldest first across shipment se
         ->and($newer['codSettlement']->remitted_at)->not->toBeNull()
         ->and($newer['codSettlement']->notes)->toContain('Bank transfer batch 1');
 
+    $remittance = CodRemittance::query()
+        ->with('allocations')
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($remittance->reference)->toStartWith('CODR-')
+        ->and((float) $remittance->amount_received)->toBe(1200.0)
+        ->and((float) $remittance->allocated_amount)->toBe(1200.0)
+        ->and((float) $remittance->unallocated_amount)->toBe(0.0)
+        ->and($remittance->allocations)->toHaveCount(2)
+        ->and((float) $remittance->allocations->sum('allocated_amount'))->toBe(1200.0);
+
     get(route('admin.sales.cod-receivables.index'))
         ->assertOk()
         ->assertSeeText('Local Courier')
         ->assertSeeText(core()->formatBasePrice(1800))
         ->assertSeeText(core()->formatBasePrice(1200))
         ->assertSeeText(core()->formatBasePrice(600));
+
+    get(route('admin.sales.transactions.view', 'cod-remittance:'.$remittance->id))
+        ->assertOk()
+        ->assertJsonPath('data.type_label', 'COD Remittance')
+        ->assertJsonPath('data.transaction_ref', $remittance->reference)
+        ->assertJsonPath('data.counterparty', 'Local Courier')
+        ->assertJsonCount(2, 'data.allocations');
+
+    get(route('admin.sales.transactions.index'), [
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])
+        ->assertOk()
+        ->assertSee($remittance->reference)
+        ->assertSee('COD Remittance');
+});
+
+it('marks cod invoices paid only when the related courier receipt fully settles the cod settlement', function () {
+    $carrier = ShipmentCarrier::query()->create([
+        'code' => 'invoice-state-courier',
+        'name' => 'Invoice State Courier',
+        'supports_cod' => true,
+        'is_active' => true,
+    ]);
+
+    $oldest = createManualCodReceivableSettlement($carrier, [
+        'expected_amount' => 1000,
+        'net_amount' => 1000,
+        'remitted_amount' => 0,
+        'status' => CodSettlement::STATUS_COLLECTED_BY_CARRIER,
+        'collected_at' => now()->subDays(4),
+    ]);
+
+    $newer = createManualCodReceivableSettlement($carrier, [
+        'expected_amount' => 800,
+        'net_amount' => 800,
+        'remitted_amount' => 0,
+        'status' => CodSettlement::STATUS_COLLECTED_BY_CARRIER,
+        'collected_at' => now()->subDays(2),
+    ]);
+
+    $oldestInvoice = app(OrderInvoiceLifecycleService::class)->ensureCodInvoiceForOrder($oldest['order']);
+    $newerInvoice = app(OrderInvoiceLifecycleService::class)->ensureCodInvoiceForOrder($newer['order']);
+
+    expect($oldestInvoice->state)->toBe(Invoice::STATUS_PENDING_PAYMENT)
+        ->and($newerInvoice->state)->toBe(Invoice::STATUS_PENDING_PAYMENT);
+
+    $this->loginAsAdmin();
+
+    post(route('admin.sales.cod-receivables.record-received'), [
+        'shipment_carrier_id' => $carrier->id,
+        'amount' => 1200,
+        'note' => 'Bank transfer batch 1',
+    ])->assertRedirect(route('admin.sales.cod-receivables.index'));
+
+    expect($oldestInvoice->fresh()->state)->toBe(Invoice::STATUS_PAID)
+        ->and($newerInvoice->fresh()->state)->toBe(Invoice::STATUS_PENDING_PAYMENT);
 });
 
 it('moves a delivered cod shipment into courier receivables through the shared manual pipeline', function () {

@@ -61,7 +61,7 @@
   - refund request returns a `refundTrxID`
   - the order detail shows the bKash refund reference
   - refund-status refresh keeps the local refund row aligned with the gateway response
-- when payment state looks stale, admin can reconcile a single order from `Sales > Orders` or review the full payment attempt timeline in `Sales > Payments`
+- when payment state looks stale, admin can reconcile a single order from `Sales > Orders` and review the payment attempt timeline from that order's payment detail link
 - the platform now exposes a reconciliation command for pending external payment attempts:
   - `php artisan platform:payments:reconcile-pending`
   - `php artisan platform:payments:reconcile-pending --provider=sslcommerz`

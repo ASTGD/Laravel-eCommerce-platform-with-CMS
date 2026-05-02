@@ -71,12 +71,11 @@ beforeEach(function () {
     configurePaymentOperationsSslCommerz();
 });
 
-it('shows the admin payments index', function () {
+it('redirects the legacy admin payments index to the unified transactions ledger', function () {
     $this->loginAsAdmin();
 
     get(route('admin.sales.payments.index'))
-        ->assertOk()
-        ->assertSeeText('Payments');
+        ->assertRedirect(route('admin.sales.transactions.index'));
 });
 
 it('shows the payment attempt detail page with gateway events', function () {

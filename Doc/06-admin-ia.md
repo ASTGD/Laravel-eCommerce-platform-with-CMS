@@ -23,11 +23,14 @@ Relevant admin areas now exposed:
 
 ## Sales Extensions
 
-The `Sales` area stays focused on commercial records and supporting commerce workflows.
+The `Sales` area stays focused on commercial records and supporting commerce workflows. Payment is no longer exposed as a standalone merchant-facing Sales menu segment; payment method, payment state, invoice state, shipment state, and COD state are surfaced inside order context instead.
 
-Current custom sales screens:
+`Sales > Transactions` is the unified finance ledger. It now shows two read-model row types without merging their creation workflows:
 
-- Payments
+- `Invoice Payment` rows from native Bagisto invoice/order transactions
+- `COD Remittance` rows from courier COD receipt/remittance records created by the COD workflow
+
+Invoice payment creation remains in the native invoice transaction flow. COD remittance recording remains in `Shipments > COD Receivables`.
 
 Shipment-related daily work now lives under a dedicated top-level `Shipments` area:
 
@@ -141,6 +144,7 @@ Prepaid deliveries continue to bypass `COD Receivables` entirely.
 - courier-level pending totals
 - a simple `Record COD Received` action
 - oldest-first automatic allocation of the received amount across that courier's pending shipment-level COD settlements
+- COD remittance receipt records that are shown back in the unified `Sales > Transactions` ledger
 
 This keeps the Basic workflow simple for non-technical merchants without replacing the underlying COD settlement model or exposing advanced settlement-batch tooling.
 
@@ -592,16 +596,18 @@ Checkout flow behavior:
 
 ## Payment Operations
 
-The sales area now also exposes payment operations for external Bangladesh gateway traffic:
+Payment operations are order-context tools, not a standalone Sales menu segment.
 
-- `Sales > Payments`
-- payment attempt detail
-- manual payment reconciliation from the payment attempt detail screen
+The admin order view now remains the primary entry point for supported external gateway traffic:
+
+- payment attempt detail links from the order payment area
 - manual payment reconciliation from the admin order view when the order is backed by a supported external payment attempt
 - refund history on the admin order view for supported external payment providers
 - refund status refresh on the admin order view for pending or invalid supported gateway refunds
 
-The payment operations view is intended for support and fulfillment use, not storefront authoring. It exists so repeated callbacks, delayed gateway confirmations, and pending validations can be reviewed without inspecting logs directly.
+The underlying payment attempt detail route remains available for support workflows that start from an order, but merchants should not use a separate `Payments` navigation item as a daily operational screen. The legacy payments index redirects to `Sales > Transactions`.
+
+`Sales > Transactions` is the unified money-in list for merchant finance review. It shows native invoice payment transactions and COD remittance records side by side, while preserving separate creation flows.
 
 Current reconciliation coverage:
 

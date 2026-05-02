@@ -2,6 +2,8 @@
 
 namespace Webkul\Payment\Listeners;
 
+use Webkul\Sales\Models\Invoice;
+use Webkul\Sales\Models\Order;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 
@@ -30,12 +32,11 @@ class GenerateInvoice
     {
         if (
             $order->payment->method == 'cashondelivery'
-            && core()->getConfigData('sales.payment_methods.cashondelivery.generate_invoice')
         ) {
             $this->invoiceRepository->create(
                 $this->prepareInvoiceData($order),
-                core()->getConfigData('sales.payment_methods.cashondelivery.invoice_status'),
-                core()->getConfigData('sales.payment_methods.cashondelivery.order_status')
+                core()->getConfigData('sales.payment_methods.cashondelivery.invoice_status') ?? Invoice::STATUS_PENDING_PAYMENT,
+                core()->getConfigData('sales.payment_methods.cashondelivery.order_status') ?? Order::STATUS_PENDING_PAYMENT
             );
         }
 

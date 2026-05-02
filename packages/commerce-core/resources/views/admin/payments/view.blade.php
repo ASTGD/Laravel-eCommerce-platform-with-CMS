@@ -16,7 +16,7 @@
 
         <div class="flex gap-2">
             <a
-                href="{{ route('admin.sales.payments.index') }}"
+                href="{{ route('admin.sales.transactions.index') }}"
                 class="transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800"
             >
                 Back

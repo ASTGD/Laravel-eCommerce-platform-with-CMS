@@ -5,9 +5,11 @@ namespace Platform\CommerceCore\Services;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use Platform\CommerceCore\Models\CodSettlement;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Platform\CommerceCore\Models\CodRemittance;
+use Platform\CommerceCore\Models\CodRemittanceAllocation;
+use Platform\CommerceCore\Models\CodSettlement;
 
 class ManualCodReceivableService
 {
@@ -31,16 +33,16 @@ class ManualCodReceivableService
                 $pendingTotal = round((float) $settlements->sum(fn (CodSettlement $settlement) => $settlement->outstanding_amount), 2);
 
                 return [
-                    'carrier_id'                    => (int) $carrierId,
-                    'courier_name'                  => $firstSettlement?->carrier?->name ?: 'Unknown Courier',
-                    'settlement_count'              => $settlements->count(),
-                    'receivable_total'              => $receivableTotal,
-                    'receivable_total_formatted'    => core()->formatBasePrice($receivableTotal),
-                    'received_total'                => $receivedTotal,
-                    'received_total_formatted'      => core()->formatBasePrice($receivedTotal),
-                    'pending_total'                 => $pendingTotal,
-                    'pending_total_formatted'       => core()->formatBasePrice($pendingTotal),
-                    'can_record_receipt'            => $pendingTotal > 0,
+                    'carrier_id' => (int) $carrierId,
+                    'courier_name' => $firstSettlement?->carrier?->name ?: 'Unknown Courier',
+                    'settlement_count' => $settlements->count(),
+                    'receivable_total' => $receivableTotal,
+                    'receivable_total_formatted' => core()->formatBasePrice($receivableTotal),
+                    'received_total' => $receivedTotal,
+                    'received_total_formatted' => core()->formatBasePrice($receivedTotal),
+                    'pending_total' => $pendingTotal,
+                    'pending_total_formatted' => core()->formatBasePrice($pendingTotal),
+                    'can_record_receipt' => $pendingTotal > 0,
                 ];
             })
             ->sortBy('courier_name')
@@ -92,6 +94,19 @@ class ManualCodReceivableService
 
             $remainingAmount = round($amount, 2);
             $allocationCount = 0;
+            $allocatedTotal = 0.0;
+
+            $remittance = CodRemittance::query()->create([
+                'shipment_carrier_id' => $carrierId,
+                'created_by_admin_id' => $actorAdminId,
+                'reference' => $this->makeReceiptReference(),
+                'status' => CodRemittance::STATUS_ALLOCATED,
+                'amount_received' => round($amount, 2),
+                'allocated_amount' => 0,
+                'unallocated_amount' => round($amount, 2),
+                'received_at' => now(),
+                'note' => $note,
+            ]);
 
             foreach ($pendingSettlements as $settlement) {
                 if ($remainingAmount <= 0) {
@@ -111,20 +126,42 @@ class ManualCodReceivableService
                 $this->codSettlementService->updateSettlement(
                     $settlement,
                     [
-                        'status'          => $isSettled ? CodSettlement::STATUS_SETTLED : CodSettlement::STATUS_REMITTED,
+                        'status' => $isSettled ? CodSettlement::STATUS_SETTLED : CodSettlement::STATUS_REMITTED,
                         'remitted_amount' => $newRemittedAmount,
-                        'notes'           => $this->appendReceiptNote($settlement->notes, $allocatedAmount, $note),
+                        'notes' => $this->appendReceiptNote($settlement->notes, $allocatedAmount, $note),
                     ],
                     $actorAdminId,
                 );
 
                 $remainingAmount = round($remainingAmount - $allocatedAmount, 2);
+                $allocatedTotal = round($allocatedTotal + $allocatedAmount, 2);
                 $allocationCount++;
+
+                CodRemittanceAllocation::query()->create([
+                    'cod_remittance_id' => $remittance->id,
+                    'cod_settlement_id' => $settlement->id,
+                    'order_id' => $settlement->order_id,
+                    'shipment_record_id' => $settlement->shipment_record_id,
+                    'allocated_amount' => $allocatedAmount,
+                    'status' => $isSettled
+                        ? CodRemittanceAllocation::STATUS_SETTLED
+                        : CodRemittanceAllocation::STATUS_ALLOCATED,
+                ]);
             }
+
+            $remittance->update([
+                'status' => $remainingAmount > 0
+                    ? CodRemittance::STATUS_PARTIALLY_ALLOCATED
+                    : CodRemittance::STATUS_COMPLETED,
+                'allocated_amount' => $allocatedTotal,
+                'unallocated_amount' => round($remainingAmount, 2),
+            ]);
 
             return [
                 'allocated_amount' => round($amount - $remainingAmount, 2),
                 'allocation_count' => $allocationCount,
+                'remittance_id' => $remittance->id,
+                'reference' => $remittance->reference,
             ];
         });
     }
@@ -181,5 +218,14 @@ class ManualCodReceivableService
         ]);
 
         return implode("\n\n", $segments);
+    }
+
+    protected function makeReceiptReference(): string
+    {
+        do {
+            $reference = 'CODR-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+        } while (CodRemittance::query()->where('reference', $reference)->exists());
+
+        return $reference;
     }
 }
