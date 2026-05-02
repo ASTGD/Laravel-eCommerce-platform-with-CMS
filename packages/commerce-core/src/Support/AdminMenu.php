@@ -21,6 +21,7 @@ class AdminMenu extends BaseMenu
 
     public function __construct(
         protected ShippingMode $shippingMode,
+        protected AdminFeatureToggle $adminFeatureToggle,
     ) {}
 
     public function getItems(?string $area = null): Collection
@@ -35,8 +36,8 @@ class AdminMenu extends BaseMenu
             case self::ADMIN:
                 $this->configMenu = $this->pruneEmptyAdminContainers(
                     $this->prepareAdminConfigMenu($configMenu)
-                    ->filter(fn ($item) => $this->isAuthorizedAdminMenuItem($item))
-                    ->values()
+                        ->filter(fn ($item) => $this->isAuthorizedAdminMenuItem($item))
+                        ->values()
                 )->toArray();
                 break;
 
@@ -46,6 +47,7 @@ class AdminMenu extends BaseMenu
 
                 $this->configMenu = $configMenu
                     ->reject(fn ($item) => ($item['key'] == 'account.wishlist' && $canShowWishlist) || ($item['key'] == 'account.gdpr_data_request' && $canShowGdpr))
+                    ->filter(fn ($item) => $this->adminFeatureToggle->allowsMenuKey($item['key']))
                     ->toArray();
                 break;
 
@@ -94,6 +96,7 @@ class AdminMenu extends BaseMenu
     {
         return $configMenu
             ->reject(fn (array $item) => in_array($item['key'], self::HIDDEN_ADMIN_MENU_KEYS, true))
+            ->filter(fn (array $item) => $this->adminFeatureToggle->allowsMenuKey($item['key']))
             ->values();
     }
 

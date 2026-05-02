@@ -21,6 +21,20 @@ Relevant admin areas now exposed:
 - Users & Roles
 - Audit Logs
 
+## Optional Module Visibility
+
+Some native admin modules remain installed but are hidden for the current client by default. Their code, routes, controllers, and views stay in place so they can be enabled later without reintroducing the module.
+
+Current optional module toggles:
+
+- `general.admin_modules.visibility.booking_enabled` controls `Sales > Booking`
+- `general.admin_modules.visibility.product_return_enabled` controls `Sales > Product Return`, which is the admin-facing label for the existing RMA implementation
+- `general.admin_modules.visibility.marketing_enabled` controls the top-level `Marketing` navigation group
+- `general.admin_modules.visibility.customer_reviews_enabled` controls `Customers > Reviews` and the customer account review-history menu
+- `general.admin_modules.visibility.gdpr_data_requests_enabled` controls `Customers > GDPR Data Requests` and the customer account GDPR request menu
+
+All optional module toggles default to disabled and are managed from `Configure > General > Admin Modules`. When disabled, the matching menu items are removed and direct route access is blocked with the standard not-found response. GDPR Data Requests also respect Bagisto's existing global GDPR setting, so both controls must allow it before the customer account GDPR menu is visible.
+
 ## Sales Extensions
 
 The `Sales` area stays focused on commercial records and supporting commerce workflows. Payment is no longer exposed as a standalone merchant-facing Sales menu segment; payment method, payment state, invoice state, shipment state, and COD state are surfaced inside order context instead.
