@@ -5,7 +5,7 @@
 
     <div class="space-y-6 pb-8">
         <section class="border-b border-slate-200 pb-6 dark:border-slate-800">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div class="space-y-1">
                     <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                         Dashboard
@@ -20,7 +20,7 @@
                     </p>
                 </div>
 
-                <div class="w-full lg:ml-auto lg:max-w-[620px]">
+                <div class="w-full lg:ml-auto lg:max-w-[560px]">
                     <v-dashboard-filters></v-dashboard-filters>
                 </div>
             </div>
@@ -71,50 +71,34 @@
             type="text/x-template"
             id="v-dashboard-filters-template"
         >
-            <div
-                class="grid gap-2 sm:grid-cols-2"
-                :class="channels.length > 2 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'"
-            >
-                <template v-if="channels.length > 2">
-                    <x-admin::dropdown position="bottom-right">
-                        <x-slot:toggle>
-                            <button
-                                type="button"
-                                class="inline-flex w-full cursor-pointer appearance-none items-center justify-between gap-x-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-6 text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:hover:border-slate-600 dark:hover:bg-slate-900 dark:focus:border-slate-500"
-                            >
-                                @{{ channels.find(channel => channel.code == filters.channel).name }}
+            <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:shadow-none sm:grid-cols-2">
+                <div class="space-y-2">
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        Start Date
+                    </p>
 
-                                <span class="text-2xl text-slate-500 dark:text-slate-400 icon-sort-down"></span>
-                            </button>
-                        </x-slot>
+                    <x-admin::flat-picker.date class="!w-full">
+                        <input
+                            class="flex min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
+                            v-model="filters.start"
+                            placeholder="@lang('admin::app.dashboard.index.start-date')"
+                        />
+                    </x-admin::flat-picker.date>
+                </div>
 
-                        <x-slot:menu class="!p-0 shadow-[0_5px_20px_rgba(0,0,0,0.15)] dark:border-gray-800">
-                            <x-admin::dropdown.menu.item
-                                v-for="channel in channels"
-                                ::class="{'bg-gray-100 dark:bg-gray-950': channel.code == filters.channel}"
-                                @click="filters.channel = channel.code"
-                            >
-                                @{{ channel.name }}
-                            </x-admin::dropdown.menu.item>
-                        </x-slot>
-                    </x-admin::dropdown>
-                </template>
+                <div class="space-y-2">
+                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                        End Date
+                    </p>
 
-                <x-admin::flat-picker.date class="!w-full">
-                    <input
-                        class="flex min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
-                        v-model="filters.start"
-                        placeholder="@lang('admin::app.dashboard.index.start-date')"
-                    />
-                </x-admin::flat-picker.date>
-
-                <x-admin::flat-picker.date class="!w-full">
-                    <input
-                        class="flex min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
-                        v-model="filters.end"
-                        placeholder="@lang('admin::app.dashboard.index.end-date')"
-                    />
-                </x-admin::flat-picker.date>
+                    <x-admin::flat-picker.date class="!w-full">
+                        <input
+                            class="flex min-h-[42px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-slate-500"
+                            v-model="filters.end"
+                            placeholder="@lang('admin::app.dashboard.index.end-date')"
+                        />
+                    </x-admin::flat-picker.date>
+                </div>
             </div>
         </script>
 
@@ -124,17 +108,7 @@
 
                 data() {
                     return {
-                        channels: [
-                            {
-                                name: "@lang('admin::app.dashboard.index.all-channels')",
-                                code: ''
-                            },
-                            ...@json(core()->getAllChannels()),
-                        ],
-
                         filters: {
-                            channel: '',
-
                             start: "{{ $startDate->format('Y-m-d') }}",
 
                             end: "{{ $endDate->format('Y-m-d') }}",
