@@ -5,8 +5,8 @@
 
     <div class="space-y-6 pb-8">
         <section class="border-b border-slate-200 pb-6 dark:border-slate-800">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div class="space-y-1">
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div class="space-y-1 md:flex-1 md:pt-1">
                     <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                         Dashboard
                     </p>
@@ -20,8 +20,10 @@
                     </p>
                 </div>
 
-                <div class="w-full lg:ml-auto lg:max-w-[560px]">
-                    <v-dashboard-filters></v-dashboard-filters>
+                <div class="w-full md:w-96 md:shrink-0">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:shadow-none">
+                        <v-dashboard-filters></v-dashboard-filters>
+                    </div>
                 </div>
             </div>
         </section>
@@ -71,7 +73,7 @@
             type="text/x-template"
             id="v-dashboard-filters-template"
         >
-            <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:shadow-none sm:grid-cols-2">
+            <div class="grid gap-3 sm:grid-cols-2">
                 <div class="space-y-2">
                     <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
                         Start Date
