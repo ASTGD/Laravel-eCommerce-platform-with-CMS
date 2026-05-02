@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\ExperienceCms\Http\Controllers\Admin\DashboardController;
 use Platform\ExperienceCms\Http\Controllers\Admin\ContentEntryController;
 use Platform\ExperienceCms\Http\Controllers\Admin\ComponentTypeController;
 use Platform\ExperienceCms\Http\Controllers\Admin\FooterConfigController;
@@ -18,6 +19,12 @@ Route::group([
     'middleware' => ['admin', NoCacheMiddleware::class],
     'prefix'     => config('app.admin_url'),
 ], function () {
+    Route::controller(DashboardController::class)
+        ->prefix('cms/dashboard')
+        ->group(function () {
+            Route::get('', 'index')->middleware('platform.acl:cms.platform')->name('admin.cms.dashboard.index');
+        });
+
     Route::prefix('cms/pages')
         ->controller(PageController::class)
         ->group(function () {
