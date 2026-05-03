@@ -1,6 +1,5 @@
-<!-- Todays Details Vue Component -->
+<!-- Today's Orders Vue Component -->
 <v-dashboard-todays-details>
-    <!-- Shimmer -->
     <x-admin::shimmer.dashboard.todays-details />
 </v-dashboard-todays-details>
 
@@ -10,141 +9,96 @@
         id="v-dashboard-todays-details-template"
     >
         <template v-if="isLoading">
-            <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
                 <x-admin::shimmer.dashboard.todays-details />
             </div>
         </template>
 
         <template v-else>
-            <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-end sm:justify-between dark:border-slate-800">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            @lang('admin::app.dashboard.index.today-details')
-                        </p>
+            <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
+                <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                        @lang('admin::app.dashboard.index.today-details')
+                    </p>
 
-                        <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            Daily activity
-                        </h3>
-                    </div>
-
-                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                        @{{ report.date_range }}
-                    </span>
+                    <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                        Today's Orders
+                    </h3>
                 </div>
 
-                <div class="grid gap-3 border-b border-slate-200 px-6 py-6 sm:grid-cols-3 dark:border-slate-800">
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            @lang('admin::app.dashboard.index.today-sales')
+                <div class="grid gap-3 border-b border-slate-200 px-6 py-5 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3 dark:border-slate-800">
+                    <div
+                        v-for="item in summaryCards"
+                        :key="item.label"
+                        class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950"
+                    >
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                            @{{ item.label }}
                         </p>
 
                         <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                            @{{ report.statistics.total_sales.formatted_total }}
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            @lang('admin::app.dashboard.index.today-orders')
-                        </p>
-
-                        <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                            @{{ report.statistics.total_orders.current }}
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            @lang('admin::app.dashboard.index.today-customers')
-                        </p>
-
-                        <p class="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
-                            @{{ report.statistics.total_customers.current }}
+                            @{{ item.value }}
                         </p>
                     </div>
                 </div>
 
                 <div
-                    v-if="report.statistics.orders.length"
+                    v-if="orders.length"
                     class="divide-y divide-slate-200 dark:divide-slate-800"
                 >
-                    <div
-                        v-for="order in report.statistics.orders"
-                        class="flex flex-col gap-4 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 xl:flex-row xl:items-center xl:justify-between"
+                    <a
+                        v-for="order in orders"
+                        :key="order.id"
+                        :href="'{{ route('admin.sales.orders.view', ':id') }}'.replace(':id', order.id)"
+                        class="flex items-center justify-between gap-4 px-6 py-4 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
                     >
-                        <div class="min-w-0 space-y-2">
+                        <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
-                                <p class="text-base font-semibold text-slate-950 dark:text-white">
+                                <p class="font-semibold text-slate-950 dark:text-white">
                                     @{{ "@lang('admin::app.dashboard.index.order-id', ['id' => ':replace'])".replace(':replace', order.increment_id) }}
                                 </p>
 
                                 <span
-                                    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]"
+                                    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em]"
                                     :class="'label-' + order.status"
                                 >
                                     @{{ order.status_label }}
                                 </span>
                             </div>
 
-                            <p class="text-sm text-slate-500 dark:text-slate-400">
-                                @{{ order.created_at }}
+                            <p class="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
+                                @{{ order.customer_name }} · @{{ order.payment_method }}
                             </p>
                         </div>
 
-                        <div class="grid gap-3 sm:grid-cols-3 xl:min-w-[420px] xl:gap-4">
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                                    Amount
-                                </p>
-                                <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
-                                    @{{ order.formatted_base_grand_total }}
-                                </p>
-                            </div>
+                        <div class="shrink-0 text-right">
+                            <p class="font-semibold text-slate-950 dark:text-white">
+                                @{{ order.formatted_base_grand_total }}
+                            </p>
 
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                                    Payment
-                                </p>
-                                <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
-                                    @{{ order.payment_method }}
-                                </p>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    @{{ order.channel_name }}
-                                </p>
-                            </div>
-
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
-                                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                                    Customer
-                                </p>
-                                <p class="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
-                                    @{{ order.customer_name }}
-                                </p>
-                                <p class="mt-1 max-w-[180px] truncate text-xs text-slate-500 dark:text-slate-400">
-                                    @{{ order.customer_email }}
-                                </p>
-                            </div>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                @{{ order.created_at }}
+                            </p>
                         </div>
-                    </div>
+                    </a>
                 </div>
 
                 <div
                     v-else
-                    class="grid justify-center justify-items-center gap-3 px-6 py-16 text-center"
+                    class="grid justify-center justify-items-center gap-3 px-6 py-12 text-center"
                 >
                     <img
                         src="{{ bagisto_asset('images/empty-placeholders/customers.svg') }}"
-                        class="h-20 w-20 dark:mix-blend-exclusion dark:invert"
+                        class="h-16 w-16 dark:mix-blend-exclusion dark:invert"
                     />
 
                     <div class="flex flex-col items-center">
                         <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
-                            No orders yet
+                            No orders today
                         </p>
 
                         <p class="text-sm text-slate-400 dark:text-slate-400">
-                            Orders placed in the selected date range will appear here.
+                            Today's orders will appear here when customers place them.
                         </p>
                     </div>
                 </div>
@@ -158,10 +112,42 @@
 
             data() {
                 return {
-                    report: [],
+                    report: {
+                        statistics: {
+                            total_sales: {},
+                            total_orders: {},
+                            total_customers: {},
+                            orders: [],
+                        },
+                    },
 
                     isLoading: true,
                 }
+            },
+
+            computed: {
+                orders() {
+                    return (this.report.statistics?.orders ?? []).slice(0, 4);
+                },
+
+                summaryCards() {
+                    const stats = this.report.statistics ?? {};
+
+                    return [
+                        {
+                            label: "@lang('admin::app.dashboard.index.today-sales')",
+                            value: stats.total_sales?.formatted_total ?? '$0.00',
+                        },
+                        {
+                            label: "@lang('admin::app.dashboard.index.today-orders')",
+                            value: stats.total_orders?.current ?? 0,
+                        },
+                        {
+                            label: "@lang('admin::app.dashboard.index.today-customers')",
+                            value: stats.total_customers?.current ?? 0,
+                        },
+                    ];
+                },
             },
 
             mounted() {
