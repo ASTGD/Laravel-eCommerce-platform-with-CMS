@@ -3,20 +3,20 @@
         @lang('admin::app.settings.themes.index.title')
     </x-slot>
    
-    <div class="flex items-center justify-between">
-        <p class="text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.settings.themes.index.title')
-        </p>
-        
-        <div class="flex items-center gap-x-2.5">
-            <div class="flex items-center gap-x-2.5">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.settings.themes.index.title')
+            </h1>
+
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
                 {!! view_render_event('bagisto.admin.settings.themes.create.before') !!}
 
                 <!-- Create Button -->
                 <v-create-theme-form>
                     <button
                         type="button"
-                        class="primary-button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                     >
                         @lang('admin::app.settings.themes.index.create-btn')
                     </button>  
@@ -24,14 +24,19 @@
 
                 {!! view_render_event('bagisto.admin.settings.themes.create.after') !!}
             </div>
-        </div>
-    </div>
+        </section>
     
-    {!! view_render_event('bagisto.admin.settings.themes.list.before') !!}
+        {!! view_render_event('bagisto.admin.settings.themes.list.before') !!}
 
-    <x-admin::datagrid :src="route('admin.settings.themes.index')" />
+        <x-admin::datagrid
+            class="settings-modern-datagrid"
+            :src="route('admin.settings.themes.index')"
+        />
 
-    {!! view_render_event('bagisto.admin.settings.themes.list.after') !!}
+        {!! view_render_event('bagisto.admin.settings.themes.list.after') !!}
+    </div>
+
+    @include('admin::settings.partials.modern-index-styles')
 
     @pushOnce('scripts')
         <script
@@ -43,7 +48,7 @@
                 @if (bouncer()->hasPermission('settings.themes.create'))
                     <button
                         type="button"
-                        class="primary-button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                         @click="$refs.themeCreateModal.toggle()"
                     >
                         @lang('admin::app.settings.themes.index.create-btn')

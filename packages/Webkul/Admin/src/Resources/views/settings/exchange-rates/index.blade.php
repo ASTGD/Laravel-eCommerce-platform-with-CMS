@@ -6,71 +6,80 @@
     {!! view_render_event('bagisto.admin.settings.exchange_rates.create.before') !!}
 
     <v-exchange-rates>
-        <div class="flex items-center justify-between">
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
-                @lang('admin::app.settings.exchange-rates.index.title')
-            </p>
+        <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+            <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                    @lang('admin::app.settings.exchange-rates.index.title')
+                </h1>
 
-            <div class="flex items-center gap-x-2.5">
-                <!-- Update Exchange Rate Button -->
-                <a
-                    href="{{ route('admin.settings.exchange_rates.update_rates') }}"
-                    class="primary-button"
-                >
-                    @lang('admin::app.settings.exchange-rates.index.update-rates')
-                </a>
-
-                 <!-- Create Button -->
-                @if (bouncer()->hasPermission('settings.exchange_rates.create'))
-                    <button
-                        type="button"
-                        class="primary-button"
+                <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                    <!-- Update Exchange Rate Button -->
+                    <a
+                        href="{{ route('admin.settings.exchange_rates.update_rates') }}"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                     >
-                        @lang('admin::app.settings.exchange-rates.index.create-btn')
-                    </button>
-                @endif
-            </div>
-        </div>
+                        @lang('admin::app.settings.exchange-rates.index.update-rates')
+                    </a>
 
-        <!-- DataGrid Shimmer -->
-        <x-admin::shimmer.datagrid />
+                    <!-- Create Button -->
+                    @if (bouncer()->hasPermission('settings.exchange_rates.create'))
+                        <button
+                            type="button"
+                            class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        >
+                            @lang('admin::app.settings.exchange-rates.index.create-btn')
+                        </button>
+                    @endif
+                </div>
+            </section>
+
+            <!-- DataGrid Shimmer -->
+            <x-admin::shimmer.datagrid />
+        </div>
     </v-exchange-rates>
 
     {!! view_render_event('bagisto.admin.settings.exchange_rates.create.after') !!}
+
+    @include('admin::settings.partials.modern-index-styles')
 
     @pushOnce('scripts')
         <script
             type="text/x-template"
             id="v-exchange-rates-template"
         >
-            <div class="flex items-center justify-between">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
-                    @lang('admin::app.settings.exchange-rates.index.title')
-                </p>
+            <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+                <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                        @lang('admin::app.settings.exchange-rates.index.title')
+                    </h1>
 
-                <div class="flex items-center gap-x-2.5">
-                    <!-- Update Exchange Rate Button -->
-                    <a href="{{ route('admin.settings.exchange_rates.update_rates') }}" class="primary-button">
-                        @lang('admin::app.settings.exchange-rates.index.update-rates')
-                    </a>
-
-                     <!-- Create Button -->
-                    @if (bouncer()->hasPermission('settings.exchange_rates.create'))
-                        <button
-                            type="button"
-                            class="primary-button"
-                            @click="selectedExchangeRates=0;resetForm();$refs.exchangeRateUpdateOrCreateModal.toggle()"
+                    <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                        <!-- Update Exchange Rate Button -->
+                        <a
+                            href="{{ route('admin.settings.exchange_rates.update_rates') }}"
+                            class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                         >
-                            @lang('admin::app.settings.exchange-rates.index.create-btn')
-                        </button>
-                    @endif
-                </div>
-            </div>
+                            @lang('admin::app.settings.exchange-rates.index.update-rates')
+                        </a>
 
-            <x-admin::datagrid
-                :src="route('admin.settings.exchange_rates.index')"
-                ref="datagrid"
-            >
+                        <!-- Create Button -->
+                        @if (bouncer()->hasPermission('settings.exchange_rates.create'))
+                            <button
+                                type="button"
+                                class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                                @click="selectedExchangeRates=0;resetForm();$refs.exchangeRateUpdateOrCreateModal.toggle()"
+                            >
+                                @lang('admin::app.settings.exchange-rates.index.create-btn')
+                            </button>
+                        @endif
+                    </div>
+                </section>
+
+                <x-admin::datagrid
+                    class="settings-modern-datagrid"
+                    :src="route('admin.settings.exchange_rates.index')"
+                    ref="datagrid"
+                >
                 <template #body="{
                     isLoading,
                     available,
@@ -86,7 +95,7 @@
                     <template v-else>
                         <div
                             v-for="record in available.records"
-                            class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                            class="row grid items-center gap-2.5 border-b border-slate-100 px-4 py-4 text-gray-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-gray-300 dark:hover:bg-slate-800/60"
                             :style="`grid-template-columns: repeat(${gridsCount}, minmax(0, 1fr))`"
                         >
                             <!-- ID -->
@@ -104,7 +113,7 @@
                                     <a @click="selectedExchangeRates=1; editModal(record.actions.find(action => action.index === 'edit')?.url)">
                                         <span
                                             :class="record.actions.find(action => action.index === 'edit')?.icon"
-                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                         >
                                         </span>
                                     </a>
@@ -114,7 +123,7 @@
                                     <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                         <span
                                             :class="record.actions.find(action => action.index === 'delete')?.icon"
-                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                         >
                                         </span>
                                     </a>
@@ -123,10 +132,10 @@
                         </div>
                     </template>
                 </template>
-            </x-admin::datagrid>
+                </x-admin::datagrid>
 
-            <!-- Exchange Rate Create Form -->
-            <x-admin::form
+                <!-- Exchange Rate Create Form -->
+                <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
                 ref="modalForm"
@@ -238,7 +247,8 @@
                         </x-slot>
                     </x-admin::modal>
                 </form>
-            </x-admin::form>
+                </x-admin::form>
+            </div>
         </script>
 
         <script type="module">

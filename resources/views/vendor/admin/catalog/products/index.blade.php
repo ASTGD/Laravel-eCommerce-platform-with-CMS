@@ -3,39 +3,41 @@
         @lang('admin::app.catalog.products.index.title')
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-        <p class="text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.catalog.products.index.title')
-        </p>
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.catalog.products.index.title')
+            </h1>
 
-        <div class="flex items-center gap-x-2.5">
-            <!-- Export Modal -->
-            <x-admin::datagrid.export :src="route('admin.catalog.products.index')" />
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                <!-- Export Modal -->
+                <x-admin::datagrid.export :src="route('admin.catalog.products.index')" />
 
-            {!! view_render_event('bagisto.admin.catalog.products.create.before') !!}
+                {!! view_render_event('bagisto.admin.catalog.products.create.before') !!}
 
-            @if (bouncer()->hasPermission('catalog.products.create'))
-                <v-create-product-form>
-                    <button
-                        type="button"
-                        class="primary-button"
-                    >
-                        @lang('admin::app.catalog.products.index.create-btn')
-                    </button>
-                </v-create-product-form>
-            @endif
+                @if (bouncer()->hasPermission('catalog.products.create'))
+                    <v-create-product-form>
+                        <button
+                            type="button"
+                            class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        >
+                            @lang('admin::app.catalog.products.index.create-btn')
+                        </button>
+                    </v-create-product-form>
+                @endif
 
-            {!! view_render_event('bagisto.admin.catalog.products.create.after') !!}
-        </div>
-    </div>
+                {!! view_render_event('bagisto.admin.catalog.products.create.after') !!}
+            </div>
+        </section>
 
-    {!! view_render_event('bagisto.admin.catalog.products.list.before') !!}
+        {!! view_render_event('bagisto.admin.catalog.products.list.before') !!}
 
-    <!-- Datagrid -->
-    <x-admin::datagrid
-        :src="route('admin.catalog.products.index')"
-        :isMultiRow="true"
-    >
+        <!-- Datagrid -->
+        <x-admin::datagrid
+            class="catalog-products-modern-datagrid"
+            :src="route('admin.catalog.products.index')"
+            :isMultiRow="true"
+        >
         <!-- Datagrid Header -->
         @php
             $hasPermission = bouncer()->hasPermission('catalog.products.edit') || bouncer()->hasPermission('catalog.products.delete');
@@ -54,7 +56,7 @@
             </template>
 
             <template v-else>
-                <div class="row grid gap-2 md:grid-cols-[2fr_1fr_1fr] grid-rows-1 items-center border-b px-4 py-2.5 dark:border-gray-800">
+                <div class="row grid grid-rows-1 items-center gap-2 border-b border-slate-100 bg-slate-50/80 px-5 py-4 md:grid-cols-[2fr_1fr_1fr] dark:border-slate-800 dark:bg-slate-950/40">
                     <div
                         class="flex select-none items-center gap-2.5"
                         v-for="(columnGroup, index) in [['name', 'sku', 'attribute_family'], ['base_image', 'price', 'quantity', 'product_id'], ['status', 'category_name', 'type']]"
@@ -86,14 +88,14 @@
                             </label>
                         @endif
 
-                        <p class="text-gray-600 dark:text-gray-300">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             <span class="[&>*]:after:content-['_/_']">
                                 <template v-for="column in columnGroup">
                                     <span
                                         class="after:content-['/'] last:after:content-['']"
                                         :class="{
-                                            'font-medium text-gray-800 dark:text-white': applied.sort.column == column,
-                                            'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
+                                            'font-semibold text-slate-950 dark:text-white': applied.sort.column == column,
+                                            'cursor-pointer hover:text-slate-950 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
                                         }"
                                         @click="
                                             available.columns.find(columnTemp => columnTemp.index === column)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === column)): {}
@@ -105,7 +107,7 @@
                             </span>
 
                             <i
-                                class="align-text-bottom text-base text-gray-800 dark:text-white ltr:ml-1.5 rtl:mr-1.5"
+                                class="align-text-bottom text-base text-slate-600 dark:text-slate-300 ltr:ml-1.5 rtl:mr-1.5"
                                 :class="[applied.sort.order === 'asc' ? 'icon-down-stat': 'icon-up-stat']"
                                 v-if="columnGroup.includes(applied.sort.column)"
                             ></i>
@@ -129,7 +131,7 @@
 
             <template v-else>
                 <div
-                    class="row border-b px-2 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 sm:px-4 md:grid md:grid-cols-[2fr_1fr_1fr] md:grid-rows-1 md:gap-1.5"
+                    class="row border-b border-slate-100 px-2 py-3 transition hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-800/60 sm:px-5 md:grid md:grid-cols-[2fr_1fr_1fr] md:grid-rows-1 md:gap-1.5"
                     v-for="record in available.records"
                 >
                     <!-- Mobile Layout -->
@@ -264,7 +266,7 @@
 
                             <div class="flex items-center gap-1">
                                 <span
-                                    class="cursor-pointer rounded-md p-1.5 text-xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
+                                    class="cursor-pointer rounded-lg p-1.5 text-xl transition hover:bg-slate-100 dark:hover:bg-slate-800"
                                     :class="action.icon"
                                     v-text="! action.icon ? action.title : ''"
                                     v-for="action in record.actions"
@@ -417,7 +419,7 @@
                                 v-if="available.actions.length"
                             >
                                 <span
-                                    class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                    class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                     :class="action.icon"
                                     v-text="! action.icon ? action.title : ''"
                                     v-for="action in record.actions"
@@ -501,9 +503,34 @@
                 </div>
             </template>
         </template>
-    </x-admin::datagrid>
+        </x-admin::datagrid>
 
-    {!! view_render_event('bagisto.admin.catalog.products.list.after') !!}
+        {!! view_render_event('bagisto.admin.catalog.products.list.after') !!}
+    </div>
+
+    @pushOnce('styles')
+        <style>
+            .catalog-products-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
+
+            .catalog-products-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
+
+            .catalog-products-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .catalog-products-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+        </style>
+    @endPushOnce
 
     @pushOnce('scripts')
         <script
@@ -515,7 +542,7 @@
                 @if (bouncer()->hasPermission('catalog.products.create'))
                     <button
                         type="button"
-                        class="primary-button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                         @click="$refs.productCreateModal.toggle()"
                     >
                         @lang('admin::app.catalog.products.index.create-btn')

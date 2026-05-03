@@ -3,17 +3,43 @@
         @lang('admin::app.customers.reviews.index.title')
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-        <p class="py-3 text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.customers.reviews.index.title')
-        </p>
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.customers.reviews.index.title')
+            </h1>
+        </section>
+
+        {!! view_render_event('bagisto.admin.customers.reviews.edit.before') !!}
+
+        <v-review-edit-drawer></v-review-edit-drawer>
+
+        {!! view_render_event('bagisto.admin.customers.groups.edit.after') !!}
     </div>
 
-    {!! view_render_event('bagisto.admin.customers.reviews.edit.before') !!}
+    @pushOnce('styles')
+        <style>
+            .customer-reviews-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
 
-    <v-review-edit-drawer></v-review-edit-drawer>
+            .customer-reviews-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
 
-    {!! view_render_event('bagisto.admin.customers.groups.edit.after') !!}
+            .customer-reviews-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .customer-reviews-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+        </style>
+    @endPushOnce
 
     @pushOnce('scripts')
         <script
@@ -24,6 +50,7 @@
             {!! view_render_event('bagisto.admin.customers.reviews.list.before') !!}
 
             <x-admin::datagrid
+                class="customer-reviews-modern-datagrid"
                 :src="route('admin.customers.customers.review.index')"
                 :isMultiRow="true"
                 ref="review_data"
@@ -45,7 +72,7 @@
                     </template>
 
                     <template v-else>
-                        <div class="row grid grid-cols-1 md:grid-cols-[2fr_1fr_minmax(150px,_4fr)_0.5fr] grid-rows-1 gap-1 items-center border-b px-4 py-2.5 dark:border-gray-800 min-w-full">
+                        <div class="row grid min-w-full grid-cols-1 grid-rows-1 items-center gap-1 border-b border-slate-100 bg-slate-50/80 px-5 py-4 md:grid-cols-[2fr_1fr_minmax(150px,_4fr)_0.5fr] dark:border-slate-800 dark:bg-slate-950/40">
                             <div
                                 class="flex items-center gap-2.5"
                                 v-for="(columnGroup, index) in [['customer_full_name', 'product_name', 'product_review_status'], ['rating', 'created_at', 'product_review_id'], ['title', 'comment']]"
@@ -78,14 +105,14 @@
                                 @endif
 
                                 <!-- Product Name, Review Status -->
-                                <p class="text-gray-600 dark:text-gray-300">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     <span class="[&>*]:after:content-['_/_']">
                                         <template v-for="column in columnGroup">
                                             <span
                                                 class="after:content-['/'] last:after:content-['']"
                                                 :class="{
-                                                    'font-medium text-gray-800 dark:text-white': applied.sort.column == column,
-                                                    'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
+                                                    'font-semibold text-slate-950 dark:text-white': applied.sort.column == column,
+                                                    'cursor-pointer hover:text-slate-950 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
                                                 }"
                                                 @click="
                                                     available.columns.find(columnTemp => columnTemp.index === column)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === column)): {}
@@ -97,7 +124,7 @@
                                     </span>
 
                                     <i
-                                        class="align-text-bottom text-base text-gray-800 dark:text-white ltr:ml-1.5 rtl:mr-1.5"
+                                        class="align-text-bottom text-base text-slate-600 dark:text-slate-300 ltr:ml-1.5 rtl:mr-1.5"
                                         :class="[applied.sort.order === 'asc' ? 'icon-down-stat': 'icon-up-stat']"
                                         v-if="columnGroup.includes(applied.sort.column)"
                                     ></i>
@@ -121,7 +148,7 @@
 
                     <template v-else>
                         <div
-                            class="row grid grid-cols-1 gap-2 md:grid-cols-[2fr_1fr_minmax(150px,_4fr)_0.5fr] md:gap-0 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 min-w-full"
+                            class="row grid min-w-full grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition hover:bg-slate-50/80 md:grid-cols-[2fr_1fr_minmax(150px,_4fr)_0.5fr] md:gap-0 dark:border-slate-800 dark:hover:bg-slate-800/60"
                             v-for="record in available.records"
                         >
                             <!-- Name, Product, Description -->
@@ -192,7 +219,7 @@
                                 <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                     <span
                                         :class="record.actions.find(action => action.index === 'delete')?.icon"
-                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"
+                                        class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"
                                     >
                                     </span>
                                 </a>
@@ -202,7 +229,7 @@
                                     v-if="record.actions.find(action => action.index === 'edit')"
                                     @click="edit(record.actions.find(action => action.index === 'edit')?.url)"
                                 >
-                                    <span class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"></span>
+                                    <span class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"></span>
                                 </a>
                             </div>
                         </div>
