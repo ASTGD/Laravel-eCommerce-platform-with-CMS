@@ -3,19 +3,47 @@
         @lang('admin::app.customers.gdpr.index.title')
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-        <p class="py-3 text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.customers.gdpr.index.title')
-        </p>
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.customers.gdpr.index.title')
+            </h1>
 
-        <x-admin::datagrid.export src="{{ route('admin.customers.gdpr.index') }}" />
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                <x-admin::datagrid.export src="{{ route('admin.customers.gdpr.index') }}" />
+            </div>
+        </section>
+
+        {!! view_render_event('bagisto.admin.customers.gdpr.list.before') !!}
+
+        <v-create-gdpr></v-create-gdpr>
+
+        {!! view_render_event('bagisto.admin.customers.gdpr.list.after') !!}
     </div>
 
-    {!! view_render_event('bagisto.admin.customers.gdpr.list.before') !!}
+    @pushOnce('styles')
+        <style>
+            .customer-gdpr-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
 
-    <v-create-gdpr></v-create-gdpr>
+            .customer-gdpr-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
 
-    {!! view_render_event('bagisto.admin.customers.gdpr.list.after') !!}
+            .customer-gdpr-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .customer-gdpr-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+        </style>
+    @endPushOnce
 
     @pushOnce('scripts')
         <script
@@ -24,6 +52,7 @@
         >
             <div>
                 <x-admin::datagrid
+                    class="customer-gdpr-modern-datagrid"
                     src="{{ route('admin.customers.gdpr.index') }}"
                     ref="datagrid"
                 >
@@ -42,7 +71,7 @@
                         <template v-else>
                             <div
                                 v-for="record in available.records"
-                                class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                                class="row grid items-center gap-2.5 border-b border-slate-100 px-4 py-4 text-gray-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-gray-300 dark:hover:bg-slate-800/60"
                                 :style="`grid-template-columns: repeat(${gridsCount}, minmax(0, 1fr))`"
                             >
                                 <!-- ID -->
@@ -69,7 +98,7 @@
                                         <a @click="editModal(record.actions.find(action => action.index === 'edit')?.url, record.id)">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'edit')?.icon"
-                                                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                                class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                                 :title="record.actions.find(action => action.title === '@lang('admin::app.customers.gdpr.index.datagrid.edit')')?.title"
                                             >
                                             </span>
@@ -80,7 +109,7 @@
                                         <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'delete')?.icon"
-                                                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                                class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                                 :title="record.actions.find(action => action.title === '@lang('admin::app.customers.gdpr.index.datagrid.delete')')?.title"
                                             >
                                             </span>

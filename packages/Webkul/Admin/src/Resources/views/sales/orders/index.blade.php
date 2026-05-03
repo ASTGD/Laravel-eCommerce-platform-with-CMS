@@ -4,32 +4,37 @@
         @lang('admin::app.sales.orders.index.title')
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-        <p class="py-3 text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.sales.orders.index.title')
-        </p>
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.sales.orders.index.title')
+            </h1>
 
-        <div class="flex items-center gap-x-2.5">
-            <x-admin::datagrid.export src="{{ route('admin.sales.orders.index') }}" />
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                <x-admin::datagrid.export src="{{ route('admin.sales.orders.index') }}" />
 
-            {!! view_render_event('bagisto.admin.sales.orders.create.before') !!}
+                {!! view_render_event('bagisto.admin.sales.orders.create.before') !!}
 
-            @if (bouncer()->hasPermission('sales.orders.create'))
-                <button
-                    class="primary-button"
-                    @click="$refs.selectCustomerComponent.openDrawer()"
-                >
-                    @lang('admin::app.sales.orders.index.create-btn')
-                </button>
-            @endif
+                @if (bouncer()->hasPermission('sales.orders.create'))
+                    <button
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        @click="$refs.selectCustomerComponent.openDrawer()"
+                    >
+                        @lang('admin::app.sales.orders.index.create-btn')
+                    </button>
+                @endif
 
-            {!! view_render_event('bagisto.admin.sales.orders.create.after') !!}
-        </div>
-    </div>
+                {!! view_render_event('bagisto.admin.sales.orders.create.after') !!}
+            </div>
+        </section>
 
-    <v-customer-search ref="selectCustomerComponent"></v-customer-search>
+        <v-customer-search ref="selectCustomerComponent"></v-customer-search>
 
-    <x-admin::datagrid :src="route('admin.sales.orders.index')" :isMultiRow="true">
+        <x-admin::datagrid
+            class="sales-orders-modern-datagrid"
+            :src="route('admin.sales.orders.index')"
+            :isMultiRow="true"
+        >
         <template #header="{
             isLoading,
             available,
@@ -44,19 +49,19 @@
 
             <template v-else>
                 <!-- Grid Header Columns -->
-                <div class="row grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 items-center border-b px-2 sm:px-4 py-2.5 dark:border-gray-800">
+                <div class="row grid grid-cols-1 items-center border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:grid-cols-2 md:grid-cols-4 dark:border-slate-800 dark:bg-slate-950/40">
                     <div
                         class="flex select-none items-center gap-2.5"
                         v-for="(columnGroup, index) in [['increment_id', 'created_at', 'status'], ['base_grand_total', 'method', 'channel_id'], ['full_name', 'customer_email', 'location'], ['items']]"
                     >
-                        <p class="text-gray-600 dark:text-gray-300 text-sm sm:text-base">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             <span class="[&>*]:after:content-['_/_']">
                                 <template v-for="column in columnGroup">
                                     <span
                                         class="after:content-['/'] last:after:content-['']"
                                         :class="{
-                                            'font-medium text-gray-800 dark:text-white': applied.sort.column == column,
-                                            'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
+                                            'font-semibold text-slate-950 dark:text-white': applied.sort.column == column,
+                                            'cursor-pointer hover:text-slate-950 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
                                         }"
                                         @click="
                                             available.columns.find(columnTemp => columnTemp.index === column)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === column)) : {}
@@ -68,7 +73,7 @@
                             </span>
 
                             <i
-                                class="align-text-bottom text-base text-gray-800 dark:text-white ltr:ml-1.5 rtl:mr-1.5"
+                                class="align-text-bottom text-base text-slate-600 dark:text-slate-300 ltr:ml-1.5 rtl:mr-1.5"
                                 :class="[applied.sort.order === 'asc' ? 'icon-down-stat': 'icon-up-stat']"
                                 v-if="columnGroup.includes(applied.sort.column)"
                             >
@@ -94,16 +99,16 @@
             <template v-else>
                 <!-- Order Rows -->
                 <div
-                    class="row grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-4 border-b px-2 sm:px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
+                    class="row grid grid-cols-1 gap-y-4 border-b border-slate-100 px-5 py-4 transition hover:bg-slate-50/80 sm:grid-cols-2 md:grid-cols-4 dark:border-slate-800 dark:hover:bg-slate-800/60"
                     v-for="record in available.records"
                 >
                     <!-- Order Id, Created, Status Section -->
                     <div class="flex flex-col gap-1.5">
-                        <p class="text-sm sm:text-base font-semibold text-gray-800 dark:text-white">
+                        <p class="text-sm font-semibold text-slate-950 sm:text-base dark:text-white">
                             @{{ "@lang('admin::app.sales.orders.index.datagrid.id')".replace(':id', record.increment_id) }}
                         </p>
 
-                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                        <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-400">
                             @{{ record.created_at }}
                         </p>
                         
@@ -112,30 +117,30 @@
 
                     <!-- Total Amount, Pay Via, Channel -->
                     <div class="flex flex-col gap-1.5">
-                        <p class="text-sm sm:text-base font-semibold text-gray-800 dark:text-white">
+                        <p class="text-sm font-semibold text-slate-950 sm:text-base dark:text-white">
                             @{{ $admin.formatPrice(record.base_grand_total) }}
                         </p>
 
-                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                        <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-400">
                             @lang('admin::app.sales.orders.index.datagrid.pay-by', ['method' => ''])@{{ record.method }}
                         </p>
 
-                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                        <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-400">
                             @{{ record.channel_name }}
                         </p>
                     </div>
 
                     <!-- Customer, Email, Location Section -->
                     <div class="flex flex-col gap-1.5">
-                        <p class="text-sm sm:text-base text-gray-800 dark:text-white">
+                        <p class="text-sm text-slate-950 sm:text-base dark:text-white">
                             @{{ record.full_name }}
                         </p>
 
-                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                        <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-400">
                             @{{ record.customer_email }}
                         </p>
 
-                        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                        <p class="text-xs text-slate-500 sm:text-sm dark:text-slate-400">
                             @{{ record.location }}
                         </p>
                     </div>
@@ -149,15 +154,40 @@
                         </div>
 
                         <a :href="'{{ route('admin.sales.orders.view', ':id') }}'.replace(':id', record.id)">
-                            <span class="icon-sort-right rtl:icon-sort-left cursor-pointer p-1.5 text-xl sm:text-2xl hover:rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"></span>
+                            <span class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-lg p-1.5 text-xl transition hover:bg-slate-100 sm:text-2xl dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"></span>
                         </a>
                     </div>
                 </div>
             </template>
         </template>
-    </x-admin::datagrid>
+        </x-admin::datagrid>
+    </div>
 
     @include('admin::customers.customers.index.create')
+
+    @pushOnce('styles')
+        <style>
+            .sales-orders-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
+
+            .sales-orders-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
+
+            .sales-orders-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .sales-orders-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+        </style>
+    @endPushOnce
 
     @pushOnce('scripts')
         <script

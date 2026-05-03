@@ -3,16 +3,16 @@
         @lang('admin::app.customers.customers.index.title')
     </x-slot>
 
-    <div class="flex items-center justify-between">
-        <p class="text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.customers.customers.index.title')
-        </p>
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.customers.customers.index.title')
+            </h1>
 
-        <div class="flex items-center gap-x-2.5">
-            <!-- Export Modal -->
-            <x-admin::datagrid.export src="{{ route('admin.customers.customers.index') }}" />
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                <!-- Export Modal -->
+                <x-admin::datagrid.export src="{{ route('admin.customers.customers.index') }}" />
 
-            <div class="flex items-center gap-x-2.5">
                 <!-- Included customer create blade file -->
                 @if (bouncer()->hasPermission('customers.customers.create'))
                     {!! view_render_event('bagisto.admin.customers.customers.create.before') !!}
@@ -27,23 +27,23 @@
                     {!! view_render_event('bagisto.admin.customers.customers.create.after') !!}
 
                     <button
-                        class="primary-button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                         @click="$refs.createCustomerComponent.openModal()"
                     >
                         @lang('admin::app.customers.customers.index.create.create-btn')
                     </button>
                 @endif
             </div>
-        </div>
-    </div>
+        </section>
 
-    {!! view_render_event('bagisto.admin.customers.customers.list.before') !!}
+        {!! view_render_event('bagisto.admin.customers.customers.list.before') !!}
 
-    <x-admin::datagrid
-        :src="route('admin.customers.customers.index')"
-        ref="customerDatagrid"
-        :isMultiRow="true"
-    >
+        <x-admin::datagrid
+            class="customers-modern-datagrid"
+            :src="route('admin.customers.customers.index')"
+            ref="customerDatagrid"
+            :isMultiRow="true"
+        >
         @php
             $hasPermission = bouncer()->hasPermission('customers.customers.edit') || bouncer()->hasPermission('customers.customers.delete');
         @endphp
@@ -61,7 +61,7 @@
             </template>
 
             <template v-else>
-                <div class="row grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] grid-rows-1 gap-1 items-center border-b px-4 py-2.5 dark:border-gray-800 min-w-full">
+                <div class="row grid min-w-full grid-cols-1 grid-rows-1 items-center gap-1 border-b border-slate-100 bg-slate-50/80 px-5 py-4 md:grid-cols-[2fr_1fr_1fr] dark:border-slate-800 dark:bg-slate-950/40">
                     <div
                         class="flex select-none items-center gap-2.5"
                         v-for="(columnGroup, index) in [['full_name', 'email', 'phone'], ['status', 'gender', 'group', 'customer_id', 'channel_id'], ['revenue', 'order_count', 'address_count']]"
@@ -93,14 +93,14 @@
                             </label>
                         @endif
 
-                        <p class="text-gray-600 dark:text-gray-300">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             <span class="[&>*]:after:content-['_/_']">
                                 <template v-for="column in columnGroup">
                                     <span
                                         class="after:content-['/'] last:after:content-['']"
                                         :class="{
-                                            'font-medium text-gray-800 dark:text-white': applied.sort.column == column,
-                                            'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
+                                            'font-semibold text-slate-950 dark:text-white': applied.sort.column == column,
+                                            'cursor-pointer hover:text-slate-950 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === column)?.sortable,
                                         }"
                                         @click="
                                             available.columns.find(columnTemp => columnTemp.index === column)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === column)): {}
@@ -112,7 +112,7 @@
                             </span>
 
                             <i
-                                class="align-text-bottom text-base text-gray-800 dark:text-white ltr:ml-1.5 rtl:mr-1.5"
+                                class="align-text-bottom text-base text-slate-600 dark:text-slate-300 ltr:ml-1.5 rtl:mr-1.5"
                                 :class="[applied.sort.order === 'asc' ? 'icon-down-stat': 'icon-up-stat']"
                                 v-if="columnGroup.includes(applied.sort.column)"
                             ></i>
@@ -136,7 +136,7 @@
 
             <template v-else>
                 <div
-                    class="row grid grid-cols-1 gap-2 md:grid-cols-[minmax(150px,_2fr)_1fr_1fr] md:gap-0 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 min-w-full"
+                    class="row grid min-w-full grid-cols-1 gap-2 border-b border-slate-100 px-4 py-3 transition hover:bg-slate-50/80 md:grid-cols-[minmax(150px,_2fr)_1fr_1fr] md:gap-0 dark:border-slate-800 dark:hover:bg-slate-800/60"
                     v-for="record in available.records"
                 >
                     <div class="flex gap-2.5">
@@ -227,14 +227,14 @@
 
                         <div class="flex items-center">
                             <a
-                                class="icon-login cursor-pointer p-1.5 text-2xl hover:rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"
+                                class="icon-login cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"
                                 :href="'{{ route('admin.customers.customers.login_as_customer', ':id') }}'.replace(':id', record.customer_id)"
                                 target="_blank"
                             >
                             </a>
 
                             <a
-                                class="icon-sort-right rtl:icon-sort-left cursor-pointer p-1.5 text-2xl hover:rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"
+                                class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"
                                 :href="'{{ route('admin.customers.customers.view', ':id') }}'.replace(':id', record.customer_id)"
                             >
                             </a>
@@ -243,7 +243,32 @@
                 </div>
             </template>
         </template>
-    </x-admin::datagrid>
+        </x-admin::datagrid>
 
-    {!! view_render_event('bagisto.admin.customers.customers.list.after') !!}
+        {!! view_render_event('bagisto.admin.customers.customers.list.after') !!}
+    </div>
+
+    @pushOnce('styles')
+        <style>
+            .customers-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
+
+            .customers-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
+
+            .customers-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .customers-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+        </style>
+    @endPushOnce
 </x-admin::layouts>

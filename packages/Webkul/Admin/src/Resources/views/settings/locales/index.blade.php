@@ -6,57 +6,63 @@
     {!! view_render_event('bagisto.admin.settings.locales.create.before') !!}
 
     <v-locales>
-        <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
-                @lang('admin::app.settings.locales.index.title')
-            </p>
+        <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+            <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                    @lang('admin::app.settings.locales.index.title')
+                </h1>
 
-            <div class="flex items-center gap-x-2.5">
-                @if (bouncer()->hasPermission('settings.locales.create'))
-                    <button
-                        type="button"
-                        class="primary-button"
-                    >
-                        @lang('admin::app.settings.locales.index.create-btn')
-                    </button>
-                @endif
-            </div>
+                <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                    @if (bouncer()->hasPermission('settings.locales.create'))
+                        <button
+                            type="button"
+                            class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        >
+                            @lang('admin::app.settings.locales.index.create-btn')
+                        </button>
+                    @endif
+                </div>
+            </section>
+
+            <!-- DataGrid Shimmer -->
+            <x-admin::shimmer.datagrid />
         </div>
-
-        <!-- DataGrid Shimmer -->
-        <x-admin::shimmer.datagrid />
     </v-locales>
 
     {!! view_render_event('bagisto.admin.settings.locales.create.after') !!}
+
+    @include('admin::settings.partials.modern-index-styles')
 
     @pushOnce('scripts')
         <script
             type="text/x-template"
             id="v-locales-template"
         >
-            <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
-                    @lang('admin::app.settings.locales.index.title')
-                </p>
+            <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+                <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                        @lang('admin::app.settings.locales.index.title')
+                    </h1>
 
-                <div class="flex items-center gap-x-2.5">
-                    <!-- Locale Create Button -->
-                    @if (bouncer()->hasPermission('settings.locales.create'))
-                        <button
-                            type="button"
-                            class="primary-button"
-                            @click="selectedLocales=0;resetForm();$refs.localeUpdateOrCreateModal.toggle()"
-                        >
-                            @lang('admin::app.settings.locales.index.create-btn')
-                        </button>
-                    @endif
-                </div>
-            </div>
+                    <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                        <!-- Locale Create Button -->
+                        @if (bouncer()->hasPermission('settings.locales.create'))
+                            <button
+                                type="button"
+                                class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                                @click="selectedLocales=0;resetForm();$refs.localeUpdateOrCreateModal.toggle()"
+                            >
+                                @lang('admin::app.settings.locales.index.create-btn')
+                            </button>
+                        @endif
+                    </div>
+                </section>
 
-            <x-admin::datagrid
-                :src="route('admin.settings.locales.index')"
-                ref="datagrid"
-            >
+                <x-admin::datagrid
+                    class="settings-modern-datagrid"
+                    :src="route('admin.settings.locales.index')"
+                    ref="datagrid"
+                >
                 <!-- DataGrid Body -->
                 <template #body="{
                     isLoading,
@@ -73,7 +79,7 @@
                     <template v-else>
                         <div
                             v-for="record in available.records"
-                            class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                            class="row grid items-center gap-2.5 border-b border-slate-100 px-4 py-4 text-gray-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-gray-300 dark:hover:bg-slate-800/60"
                             :style="`grid-template-columns: repeat(${gridsCount}, minmax(0, 1fr))`"
                         >
                             <!-- ID -->
@@ -94,7 +100,7 @@
                                     <a @click="selectedLocales=1; editModal(record.actions.find(action => action.index === 'edit')?.url)">
                                         <span
                                             :class="record.actions.find(action => action.index === 'edit')?.icon"
-                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                         >
                                         </span>
                                     </a>
@@ -104,7 +110,7 @@
                                     <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                         <span
                                             :class="record.actions.find(action => action.index === 'delete')?.icon"
-                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                         >
                                         </span>
                                     </a>
@@ -113,9 +119,9 @@
                         </div>
                     </template>
                 </template>
-            </x-admin::datagrid>
+                </x-admin::datagrid>
 
-            <x-admin::form
+                <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
                 ref="modalForm"
@@ -268,7 +274,8 @@
                     {!! view_render_event('bagisto.admin.settings.locales.create_form_controls.after') !!}
 
                 </form>
-            </x-admin::form>
+                </x-admin::form>
+            </div>
         </script>
 
         <script type="module">

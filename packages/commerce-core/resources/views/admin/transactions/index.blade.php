@@ -3,36 +3,78 @@
         Transactions
     </x-slot>
 
-    <div class="flex items-start justify-between gap-4 max-sm:flex-wrap">
-        <div class="grid gap-1">
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                 Transactions
-            </p>
+            </h1>
 
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-                Unified finance ledger for invoice payments and courier COD remittances. Create invoice payments here; record COD remittances from COD Receivables.
-            </p>
-        </div>
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                <x-admin::datagrid.export :src="route('admin.sales.transactions.index')" />
 
-        <div class="flex items-center gap-x-2.5">
-            <x-admin::datagrid.export :src="route('admin.sales.transactions.index')" />
+                <v-create-transaction-form>
+                    <button
+                        type="button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                    >
+                        Create Invoice Payment
+                    </button>
+                </v-create-transaction-form>
+            </div>
+        </section>
 
-            <v-create-transaction-form>
-                <button
-                    type="button"
-                    class="primary-button"
-                >
-                    Create Invoice Payment
-                </button>
-            </v-create-transaction-form>
-        </div>
+        <v-transaction-drawer ref="transactionDrawer" />
     </div>
 
-    <v-transaction-drawer ref="transactionDrawer" />
+    @pushOnce('styles')
+        <style>
+            .sales-transactions-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
+
+            .sales-transactions-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
+
+            .sales-transactions-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .sales-transactions-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+
+            .sales-transactions-modern-datagrid .table-responsive > .row {
+                border-color: rgb(226 232 240);
+            }
+
+            .sales-transactions-modern-datagrid .table-responsive > .row:first-child {
+                background: rgb(248 250 252 / 0.8);
+                color: rgb(100 116 139);
+                font-size: 0.75rem;
+                letter-spacing: 0.025em;
+                text-transform: uppercase;
+            }
+
+            .dark .sales-transactions-modern-datagrid .table-responsive > .row {
+                border-color: rgb(30 41 59);
+            }
+
+            .dark .sales-transactions-modern-datagrid .table-responsive > .row:first-child {
+                background: rgb(2 6 23 / 0.4);
+                color: rgb(148 163 184);
+            }
+        </style>
+    @endPushOnce
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-transaction-drawer-template">
             <x-admin::datagrid
+                class="sales-transactions-modern-datagrid"
                 :src="route('admin.sales.transactions.index')"
                 :isMultiRow="true"
                 ref="datagrid"
@@ -48,10 +90,10 @@
                     <template v-else>
                         <div
                             v-for="record in available.records"
-                            class="row grid items-center gap-3 border-b px-4 py-4 text-sm text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                            class="row grid items-center gap-3 border-b border-slate-100 px-4 py-4 text-sm text-slate-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
                             :style="`grid-template-columns: 1.1fr .9fr .9fr 1.5fr 1.1fr .8fr .8fr .3fr`"
                         >
-                            <p class="break-words font-semibold text-gray-800 dark:text-white" v-text="record.transaction_ref"></p>
+                            <p class="break-words font-semibold text-slate-950 dark:text-white" v-text="record.transaction_ref"></p>
 
                             <p class="break-words" v-text="record.transaction_date"></p>
 
@@ -61,7 +103,7 @@
 
                             <p class="break-words" v-text="record.counterparty"></p>
 
-                            <p class="break-words font-semibold text-gray-800 dark:text-white" v-text="record.amount"></p>
+                            <p class="break-words font-semibold text-slate-950 dark:text-white" v-text="record.amount"></p>
 
                             <p class="break-words" v-text="record.status"></p>
 
@@ -72,7 +114,7 @@
                                         @click="view(record.actions.find(action => action.title === '@lang('admin::app.sales.transactions.index.datagrid.view')')?.url)"
                                     >
                                         <span
-                                            class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"
+                                            class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"
                                             role="button"
                                             tabindex="0"
                                         ></span>
@@ -195,7 +237,7 @@
             <div>
                 <button
                     type="button"
-                    class="primary-button"
+                    class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                     @click="$refs.transactionModel.toggle()"
                 >
                     Create Invoice Payment

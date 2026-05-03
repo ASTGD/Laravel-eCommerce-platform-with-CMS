@@ -4,28 +4,74 @@
         @lang('admin::app.sales.transactions.index.title')
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-        <p class="text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.sales.transactions.index.title')
-        </p>
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                @lang('admin::app.sales.transactions.index.title')
+            </h1>
 
-        <div class="flex items-center gap-x-2.5">
+            <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                <!-- Export Modal -->
+                <x-admin::datagrid.export :src="route('admin.sales.transactions.index')" />
 
-            <!-- Export Modal -->
-            <x-admin::datagrid.export :src="route('admin.sales.transactions.index')" />
+                <v-create-transaction-form>
+                    <button
+                        type="button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                    >
+                        @lang('admin::app.sales.transactions.index.create.create-transaction')
+                    </button>
+                </v-create-transaction-form>
+            </div>
+        </section>
 
-            <v-create-transaction-form>
-                <button
-                    type="button"
-                    class="primary-button"
-                >
-                    @lang('admin::app.sales.transactions.index.create.create-transaction')
-                </button>
-            </v-create-transaction-form>
-        </div>
+        <v-transaction-drawer ref="transactionDrawer"/>
     </div>
 
-    <v-transaction-drawer ref="transactionDrawer"/>
+    @pushOnce('styles')
+        <style>
+            .sales-transactions-modern-datagrid > .mt-7 {
+                margin-top: 0;
+            }
+
+            .sales-transactions-modern-datagrid > .mt-4 {
+                margin-top: 1rem;
+            }
+
+            .sales-transactions-modern-datagrid .table-responsive.box-shadow {
+                border: 0;
+                border-radius: 1.25rem;
+                box-shadow: 0 1px 2px 0 rgb(148 163 184 / 0.18);
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            .dark .sales-transactions-modern-datagrid .table-responsive.box-shadow {
+                background: rgb(15 23 42);
+            }
+
+            .sales-transactions-modern-datagrid .table-responsive > .row {
+                border-color: rgb(226 232 240);
+            }
+
+            .sales-transactions-modern-datagrid .table-responsive > .row:first-child {
+                background: rgb(248 250 252 / 0.8);
+                color: rgb(100 116 139);
+                font-size: 0.75rem;
+                letter-spacing: 0.025em;
+                text-transform: uppercase;
+            }
+
+            .dark .sales-transactions-modern-datagrid .table-responsive > .row {
+                border-color: rgb(30 41 59);
+            }
+
+            .dark .sales-transactions-modern-datagrid .table-responsive > .row:first-child {
+                background: rgb(2 6 23 / 0.4);
+                color: rgb(148 163 184);
+            }
+        </style>
+    @endPushOnce
 
     <!-- Transaction View Component -->
     @pushOnce('scripts')
@@ -34,6 +80,7 @@
             id="v-transaction-drawer-template"
         >
             <x-admin::datagrid
+                class="sales-transactions-modern-datagrid"
                 :src="route('admin.sales.transactions.index')"
                 :isMultiRow="true"
                 ref="datagrid"
@@ -53,7 +100,7 @@
                     <template v-else>
                         <div
                             v-for="record in available.records"
-                            class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                            class="row grid items-center gap-2.5 border-b border-slate-100 px-4 py-4 text-slate-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800/60"
                             :style="`grid-template-columns: repeat(${gridsCount}, minmax(0, 1fr))`"
                         >
                             <!-- ID -->
@@ -111,7 +158,7 @@
                                         @click="view(record.actions.find(action => action.title === '@lang('admin::app.sales.transactions.index.datagrid.view')')?.url)"
                                     >
                                         <span
-                                            class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"
+                                            class="icon-sort-right rtl:icon-sort-left cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 ltr:ml-1 rtl:mr-1"
                                             role="button"
                                             tabindex="0"
                                         >
@@ -232,7 +279,7 @@
             <div>
                 <button
                     type="button"
-                    class="primary-button"
+                    class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
                     @click="$refs.transactionModel.toggle()"
                 >
                     @lang('admin::app.sales.transactions.index.create.create-transaction')

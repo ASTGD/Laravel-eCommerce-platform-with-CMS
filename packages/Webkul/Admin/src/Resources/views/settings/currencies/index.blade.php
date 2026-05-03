@@ -6,58 +6,64 @@
     {!! view_render_event('bagisto.admin.settings.currencies.create.before') !!}
 
     <v-currencies>
-        <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
-                @lang('admin::app.settings.currencies.index.title')
-            </p>
+        <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+            <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                    @lang('admin::app.settings.currencies.index.title')
+                </h1>
 
-            <div class="flex items-center gap-x-2.5">
-                <!-- Create Currency Button -->
-                @if (bouncer()->hasPermission('settings.currencies.create'))
-                    <button
-                        type="button"
-                        class="primary-button"
-                    >
-                        @lang('admin::app.settings.currencies.index.create-btn')
-                    </button>
-                @endif
-            </div>
+                <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                    <!-- Create Currency Button -->
+                    @if (bouncer()->hasPermission('settings.currencies.create'))
+                        <button
+                            type="button"
+                            class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        >
+                            @lang('admin::app.settings.currencies.index.create-btn')
+                        </button>
+                    @endif
+                </div>
+            </section>
+
+            <!-- DataGrid Shimmer -->
+            <x-admin::shimmer.datagrid />
         </div>
-
-        <!-- DataGrid Shimmer -->
-        <x-admin::shimmer.datagrid />
     </v-currencies>
 
     {!! view_render_event('bagisto.admin.settings.currencies.create.after') !!}
+
+    @include('admin::settings.partials.modern-index-styles')
 
     @pushOnce('scripts')
         <script
             type="text/x-template"
             id="v-currencies-template"
         >
-            <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
-                    @lang('admin::app.settings.currencies.index.title')
-                </p>
+            <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+                <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                        @lang('admin::app.settings.currencies.index.title')
+                    </h1>
 
-                <div class="flex items-center gap-x-2.5">
-                    <!-- Create Currency Button -->
-                    @if (bouncer()->hasPermission('settings.currencies.create'))
-                        <button
-                            type="button"
-                            class="primary-button"
-                            @click="isEditable=0; selectedCurrency={}; $refs.currencyUpdateOrCreateModal.toggle();"
-                        >
-                            @lang('admin::app.settings.currencies.index.create-btn')
-                        </button>
-                    @endif
-                </div>
-            </div>
+                    <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                        <!-- Create Currency Button -->
+                        @if (bouncer()->hasPermission('settings.currencies.create'))
+                            <button
+                                type="button"
+                                class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                                @click="isEditable=0; selectedCurrency={}; $refs.currencyUpdateOrCreateModal.toggle();"
+                            >
+                                @lang('admin::app.settings.currencies.index.create-btn')
+                            </button>
+                        @endif
+                    </div>
+                </section>
 
-            <x-admin::datagrid
-                :src="route('admin.settings.currencies.index')"
-                ref="datagrid"
-            >
+                <x-admin::datagrid
+                    class="settings-modern-datagrid"
+                    :src="route('admin.settings.currencies.index')"
+                    ref="datagrid"
+                >
                 <template #body="{
                     isLoading,
                     available,
@@ -73,7 +79,7 @@
                     <template v-else>
                         <div
                             v-for="record in available.records"
-                            class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                            class="row grid items-center gap-2.5 border-b border-slate-100 px-4 py-4 text-gray-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-gray-300 dark:hover:bg-slate-800/60"
                             :style="`grid-template-columns: repeat(${gridsCount}, minmax(0, 1fr))`"
                         >
                             <!-- Currency ID -->
@@ -91,7 +97,7 @@
                                     <a @click="selectedCurrencies=1; editModal(record.actions.find(action => action.index === 'edit')?.url)">
                                         <span
                                             :class="record.actions.find(action => action.index === 'edit')?.icon"
-                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                         >
                                         </span>
                                     </a>
@@ -101,7 +107,7 @@
                                     <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                         <span
                                             :class="record.actions.find(action => action.index === 'delete')?.icon"
-                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                            class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                         >
                                         </span>
                                     </a>
@@ -110,10 +116,10 @@
                         </div>
                     </template>
                 </template>
-            </x-admin::datagrid>
+                </x-admin::datagrid>
 
-            <!-- Modal Form -->
-            <x-admin::form
+                <!-- Modal Form -->
+                <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
                 ref="modalForm"
@@ -317,7 +323,8 @@
                         </x-slot>
                     </x-admin::modal>
                 </form>
-            </x-admin::form>
+                </x-admin::form>
+            </div>
         </script>
 
         <script type="module">

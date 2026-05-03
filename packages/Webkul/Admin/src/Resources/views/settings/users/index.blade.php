@@ -4,54 +4,60 @@
     </x-slot>
 
     <v-users>
-        <div class="flex items-center justify-between">
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
-                @lang('admin::app.settings.users.index.title')
-            </p>
+        <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+            <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                    @lang('admin::app.settings.users.index.title')
+                </h1>
 
-            <div class="flex items-center gap-x-2.5">
-                <!-- Create Button -->
-                @if (bouncer()->hasPermission('settings.users.create'))
-                    <button
-                        type="button"
-                        class="primary-button"
-                    >
-                        @lang('admin::app.settings.users.index.create.title')
-                    </button>
-                @endif
-            </div>
+                <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                    <!-- Create Button -->
+                    @if (bouncer()->hasPermission('settings.users.create'))
+                        <button
+                            type="button"
+                            class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        >
+                            @lang('admin::app.settings.users.index.create.title')
+                        </button>
+                    @endif
+                </div>
+            </section>
+
+            <x-admin::shimmer.datagrid />
         </div>
-
-        <x-admin::shimmer.datagrid />
     </v-users>
+
+    @include('admin::settings.partials.modern-index-styles')
 
     @pushOnce('scripts')
         <script
             type="text/x-template"
             id="v-users-template"
         >
-            <div class="flex items-center justify-between">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
-                    @lang('admin::app.settings.users.index.title')
-                </p>
+            <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+                <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                        @lang('admin::app.settings.users.index.title')
+                    </h1>
 
-                <div class="flex items-center gap-x-2.5">
-                    @if (bouncer()->hasPermission('settings.users.create'))
-                        <button
-                            type="button"
-                            class="primary-button"
-                            @click="resetForm();$refs.userUpdateOrCreateModal.open()"
-                        >
-                            @lang('admin::app.settings.users.index.create.title')
-                        </button>
-                    @endif
-                </div>
-            </div>
+                    <div class="flex flex-wrap items-center gap-2.5 max-sm:w-full">
+                        @if (bouncer()->hasPermission('settings.users.create'))
+                            <button
+                                type="button"
+                                class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                                @click="resetForm();$refs.userUpdateOrCreateModal.open()"
+                            >
+                                @lang('admin::app.settings.users.index.create.title')
+                            </button>
+                        @endif
+                    </div>
+                </section>
 
-            <x-admin::datagrid
-                :src="route('admin.settings.users.index')"
-                ref="datagrid"
-            >
+                <x-admin::datagrid
+                    class="settings-modern-datagrid"
+                    :src="route('admin.settings.users.index')"
+                    ref="datagrid"
+                >
                 @php
                     $hasPermission = bouncer()->hasPermission('settings.users.edit') || bouncer()->hasPermission('settings.users.delete');
                 @endphp
@@ -65,20 +71,20 @@
                     performAction
                 }">
                     <div 
-                        class="row grid grid-rows-1 gap-2.5 items-center px-4 py-2.5 border-b dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 font-semibold"
+                        class="row grid grid-rows-1 items-center gap-2.5 border-b border-slate-100 bg-slate-50/80 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-400"
                         style="grid-template-columns: repeat({{ $hasPermission ? '6' : '5' }}, minmax(150px, 1fr));"
                     >
                         <div
                             class="flex cursor-pointer gap-2.5"
                             v-for="(columnGroup, index) in ['user_id', 'user_name', 'status', 'email', 'role_name']"
                         >
-                            <p class="text-gray-600 dark:text-gray-300">
+                            <p>
                                 <span class="[&>*]:after:content-['_/_']">
                                     <span
                                         class="after:content-['/'] last:after:content-['']"
                                         :class="{
-                                            'text-gray-800 dark:text-white font-medium': applied.sort.column == columnGroup,
-                                            'cursor-pointer hover:text-gray-800 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === columnGroup)?.sortable,
+                                            'font-semibold text-slate-950 dark:text-white': applied.sort.column == columnGroup,
+                                            'cursor-pointer hover:text-slate-950 dark:hover:text-white': available.columns.find(columnTemp => columnTemp.index === columnGroup)?.sortable,
                                         }"
                                         @click="
                                             available.columns.find(columnTemp => columnTemp.index === columnGroup)?.sortable ? sort(available.columns.find(columnTemp => columnTemp.index === columnGroup)): {}
@@ -90,7 +96,7 @@
 
                                 <!-- Filter Arrow Icon -->
                                 <i
-                                    class="align-text-bottom text-base text-gray-800 dark:text-white ltr:ml-1.5 rtl:mr-1.5"
+                                    class="align-text-bottom text-base text-slate-600 dark:text-slate-300 ltr:ml-1.5 rtl:mr-1.5"
                                     :class="[applied.sort.order === 'asc' ? 'icon-down-stat': 'icon-up-stat']"
                                     v-if="columnGroup.includes(applied.sort.column)"
                                 ></i>
@@ -121,7 +127,7 @@
                     <template v-else>
                         <div
                             v-for="record in available.records"
-                            class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                            class="row grid items-center gap-2.5 border-b border-slate-100 px-4 py-4 text-gray-600 transition hover:bg-slate-50/80 dark:border-slate-800 dark:text-gray-300 dark:hover:bg-slate-800/60"
                             style="grid-template-columns: repeat({{ $hasPermission ? '6' : '5' }}, minmax(150px, 1fr));"
                         >
                             <!-- ID -->
@@ -170,7 +176,7 @@
                                 <a @click="id=1; editModal(record.actions.find(action => action.index === 'edit')?.url)">
                                     <span
                                         :class="record.actions.find(action => action.index === 'edit')?.icon"
-                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                        class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                     >
                                     </span>
                                 </a>
@@ -178,7 +184,7 @@
                                 <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                     <span
                                         :class="record.actions.find(action => action.index === 'delete')?.icon"
-                                        class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800 max-sm:place-self-center"
+                                        class="cursor-pointer rounded-lg p-1.5 text-2xl transition hover:bg-slate-100 dark:hover:bg-slate-800 max-sm:place-self-center"
                                     >
                                     </span>
                                 </a>
@@ -186,10 +192,10 @@
                         </div>
                     </template>
                 </template>
-            </x-admin::datagrid>
+                </x-admin::datagrid>
 
-            <!-- Modal Form -->
-            <x-admin::form
+                <!-- Modal Form -->
+                <x-admin::form
                 v-slot="{ meta, errors, handleSubmit }"
                 as="div"
                 ref="modalForm"
@@ -401,7 +407,8 @@
                         </x-slot>
                     </x-admin::modal>
                 </form>
-            </x-admin::form>
+                </x-admin::form>
+            </div>
         </script>
 
         <script type="module">
