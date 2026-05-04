@@ -96,6 +96,28 @@ abstract class AbstractReporting
     }
 
     /**
+     * Sets the full reporting date range and recalculates the comparison range.
+     */
+    public function setDateRange(Carbon $startDate, Carbon $endDate): self
+    {
+        $this->startDate = $startDate->copy()->startOfDay();
+
+        $this->endDate = $endDate->copy();
+
+        if ($this->endDate->isFuture()) {
+            $this->endDate = now();
+        }
+
+        $this->lastStartDate = $this->startDate
+            ->copy()
+            ->subDays((int) abs($this->startDate->diffInDays($this->endDate)));
+
+        $this->lastEndDate = $this->startDate->copy();
+
+        return $this;
+    }
+
+    /**
      * Get the start date.
      *
      * @return \Carbon\Carbon

@@ -39,7 +39,10 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('admin::dashboard.index');
+        return view('admin::dashboard.index', [
+            'dashboardDateFilter' => $this->dashboardHelper->getDateFilter(),
+            'dashboardDateRangeOptions' => $this->dashboardHelper->getDateRangeOptions(),
+        ]);
     }
 
     /**
@@ -54,6 +57,7 @@ class DashboardController extends Controller
         return response()->json([
             'statistics' => $stats,
             'date_range' => $this->dashboardHelper->getDateRange(),
+            'date_filter' => $this->dashboardHelper->getDateFilter(),
         ]);
     }
 }
