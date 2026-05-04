@@ -14,6 +14,21 @@ use Webkul\Sales\Models\Invoice;
 class Dashboard
 {
     /**
+     * Dashboard date filter options.
+     */
+    protected const DATE_RANGES = [
+        'today' => 'Today',
+        'last_7_days' => 'Last 7 Days',
+        'last_30_days' => 'Last 30 Days',
+        'this_month' => 'This Month',
+    ];
+
+    /**
+     * Resolved dashboard date filter state.
+     */
+    protected array $dateFilter;
+
+    /**
      * Create a controller instance.
      *
      * @return void
@@ -23,7 +38,29 @@ class Dashboard
         protected Product $productReporting,
         protected Customer $customerReporting,
         protected AdminOperationsDashboardService $operationsDashboardService
-    ) {}
+    ) {
+        $this->dateFilter = $this->resolveDateFilter();
+
+        if ($this->dateFilter['is_filtered']) {
+            $this->applyDateRange($this->dateFilter['start_date'], $this->dateFilter['end_date']);
+        }
+    }
+
+    /**
+     * Returns the supported dashboard date range options.
+     */
+    public function getDateRangeOptions(): array
+    {
+        return self::DATE_RANGES;
+    }
+
+    /**
+     * Returns the resolved dashboard date filter state.
+     */
+    public function getDateFilter(): array
+    {
+        return $this->dateFilter;
+    }
 
     /**
      * Returns the overall statistics.
@@ -42,7 +79,7 @@ class Dashboard
                 'formatted_total' => $pendingInvoices['formatted_total'],
                 'count' => $pendingInvoices['count'],
             ],
-            ...$this->operationsDashboardService->executiveMetrics(),
+            ...$this->operationsDashboardService->executiveMetrics($this->getStartDate(), $this->getEndDate()),
         ];
     }
 
@@ -134,7 +171,7 @@ class Dashboard
      */
     public function getOperationsOverviewStats(): array
     {
-        return $this->operationsDashboardService->operationsOverview();
+        return $this->operationsDashboardService->operationsOverview($this->getStartDate(), $this->getEndDate());
     }
 
     /**
@@ -203,8 +240,12 @@ class Dashboard
      */
     protected function getPendingInvoiceSummary(int $limit = 0): array
     {
-        $query = Invoice::query()->with('order')->where('state', Invoice::STATUS_PENDING);
-        $total = (float) $this->saleReporting->getTotalPendingInvoicesAmount();
+        $query = Invoice::query()
+            ->with('order')
+            ->where('state', Invoice::STATUS_PENDING)
+            ->whereBetween('created_at', [$this->getStartDate(), $this->getEndDate()]);
+
+        $total = (float) (clone $query)->sum('grand_total');
         $recent = collect();
 
         if ($limit > 0) {
@@ -230,5 +271,122 @@ class Dashboard
             'count' => (clone $query)->count(),
             'recent' => $recent,
         ];
+    }
+
+    /**
+     * Applies the selected dashboard range to date-aware reporting helpers.
+     */
+    protected function applyDateRange(Carbon $startDate, Carbon $endDate): void
+    {
+        $this->saleReporting->setDateRange($startDate, $endDate);
+        $this->productReporting->setDateRange($startDate, $endDate);
+        $this->customerReporting->setDateRange($startDate, $endDate);
+    }
+
+    /**
+     * Resolves dashboard filter query parameters into a safe date range.
+     */
+    protected function resolveDateFilter(): array
+    {
+        $range = request()->query('range');
+
+        if (request()->filled('from') || request()->filled('to') || request()->filled('start') || request()->filled('end')) {
+            return $this->customDateFilter(
+                request()->query('from', request()->query('start')),
+                request()->query('to', request()->query('end'))
+            );
+        }
+
+        if (! array_key_exists($range, self::DATE_RANGES)) {
+            return $this->defaultDateFilter($range);
+        }
+
+        $now = now();
+
+        [$startDate, $endDate] = match ($range) {
+            'today' => [$now->copy()->startOfDay(), $now],
+            'last_7_days' => [$now->copy()->subDays(6)->startOfDay(), $now],
+            'last_30_days' => [$now->copy()->subDays(29)->startOfDay(), $now],
+            'this_month' => [$now->copy()->startOfMonth(), $now],
+        };
+
+        return $this->dateFilterState($range, $startDate, $endDate, [
+            'range' => $range,
+        ]);
+    }
+
+    /**
+     * Builds a custom date filter or falls back to the default range.
+     */
+    protected function customDateFilter(mixed $from, mixed $to): array
+    {
+        $startDate = $this->parseDateInput($from);
+        $endDate = $this->parseDateInput($to);
+
+        if (! $startDate || ! $endDate || $startDate->gt($endDate) || $startDate->isFuture() || $endDate->startOfDay()->isFuture()) {
+            return $this->defaultDateFilter('custom');
+        }
+
+        $endDate = $endDate->isToday()
+            ? now()
+            : $endDate->endOfDay();
+
+        return $this->dateFilterState('custom', $startDate->startOfDay(), $endDate, [
+            'range' => 'custom',
+            'from' => $startDate->toDateString(),
+            'to' => $endDate->toDateString(),
+        ]);
+    }
+
+    /**
+     * Returns default filter state without changing the native dashboard range.
+     */
+    protected function defaultDateFilter(?string $requestedRange = null): array
+    {
+        return [
+            'selected' => null,
+            'requested' => $requestedRange,
+            'is_filtered' => false,
+            'start_date' => $this->getStartDate(),
+            'end_date' => $this->getEndDate(),
+            'from' => $this->getStartDate()->toDateString(),
+            'to' => $this->getEndDate()->toDateString(),
+            'query' => [],
+        ];
+    }
+
+    /**
+     * Formats a resolved dashboard filter state.
+     */
+    protected function dateFilterState(string $selected, Carbon $startDate, Carbon $endDate, array $query): array
+    {
+        return [
+            'selected' => $selected,
+            'requested' => $selected,
+            'is_filtered' => true,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'from' => $startDate->toDateString(),
+            'to' => $endDate->toDateString(),
+            'query' => $query,
+        ];
+    }
+
+    /**
+     * Parses a YYYY-MM-DD date input without accepting partial or malformed dates.
+     */
+    protected function parseDateInput(mixed $value): ?Carbon
+    {
+        if (! is_string($value) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        try {
+            $date = Carbon::createFromFormat('Y-m-d', $value);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $date?->format('Y-m-d') === $value ? $date : null;
     }
 }

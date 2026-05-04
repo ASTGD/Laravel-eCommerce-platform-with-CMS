@@ -5,9 +5,12 @@
 
     @php
         $dashboardUserName = auth('admin')->user()?->name ?: 'User';
+        $baseDashboardQuery = request()->except(['range', 'from', 'to', 'start', 'end']);
+        $customFromValue = $dashboardDateFilter['from'] ?? now()->subDays(30)->toDateString();
+        $customToValue = $dashboardDateFilter['to'] ?? now()->toDateString();
     @endphp
 
-    <div class="space-y-12 bg-transparent pb-8" style="background-color: #eff3f8;">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
         <p class="sr-only">
             @lang('admin::app.dashboard.index.overall-details')
             @lang('admin::app.dashboard.index.total-sales')
@@ -15,7 +18,7 @@
             @lang('admin::app.dashboard.index.today-sales')
         </p>
 
-        <section class="space-y-1 pb-8 pt-1 md:pb-10">
+        <section class="flex flex-col gap-5 pb-1 pt-1 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-1">
                 <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                     Dashboard
@@ -25,6 +28,55 @@
                     Welcome Back, {{ $dashboardUserName }}.
                 </p>
             </div>
+
+            <form
+                method="GET"
+                action="{{ route('admin.dashboard.index') }}"
+                class="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end"
+            >
+                @foreach ($baseDashboardQuery as $key => $value)
+                    @if (is_scalar($value))
+                        <input
+                            type="hidden"
+                            name="{{ $key }}"
+                            value="{{ $value }}"
+                        >
+                    @endif
+                @endforeach
+
+                <input
+                    type="hidden"
+                    name="range"
+                    value="custom"
+                >
+
+                <label class="sr-only" for="dashboard-filter-from">From</label>
+                <input
+                    id="dashboard-filter-from"
+                    type="date"
+                    name="from"
+                    value="{{ $customFromValue }}"
+                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/10"
+                >
+
+                <span class="text-sm text-slate-400 dark:text-slate-500">to</span>
+
+                <label class="sr-only" for="dashboard-filter-to">To</label>
+                <input
+                    id="dashboard-filter-to"
+                    type="date"
+                    name="to"
+                    value="{{ $customToValue }}"
+                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/10"
+                >
+
+                <button
+                    type="submit"
+                    class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100 dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15"
+                >
+                    Apply
+                </button>
+            </form>
         </section>
 
         <section id="dashboard-executive-kpis">
@@ -73,6 +125,33 @@
     </div>
 
     @pushOnce('scripts')
+        <script>
+            window.dashboardStatsFilters = @json($dashboardDateFilter['query'] ?? []);
+            window.dashboardStatsEndpoint = @json(route('admin.dashboard.stats'));
+
+            function registerDashboardStatsFilterInterceptor() {
+                if (! window.axios || window.dashboardStatsFilterInterceptorRegistered) {
+                    return;
+                }
+
+                window.dashboardStatsFilterInterceptorRegistered = true;
+
+                window.axios.interceptors.request.use((config) => {
+                    const requestPath = new URL(config.url, window.location.origin).pathname;
+                    const statsPath = new URL(window.dashboardStatsEndpoint, window.location.origin).pathname;
+
+                    if (requestPath === statsPath) {
+                        config.params = Object.assign({}, window.dashboardStatsFilters, config.params || {});
+                    }
+
+                    return config;
+                });
+            }
+
+            registerDashboardStatsFilterInterceptor();
+            window.addEventListener('load', registerDashboardStatsFilterInterceptor, { once: true });
+        </script>
+
         <script
             type="module"
             src="{{ bagisto_asset('js/chart.js') }}"

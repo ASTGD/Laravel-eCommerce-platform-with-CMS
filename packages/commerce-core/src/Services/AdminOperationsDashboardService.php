@@ -2,12 +2,13 @@
 
 namespace Platform\CommerceCore\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Platform\CommerceCore\Models\CodRemittance;
 use Platform\CommerceCore\Models\CodSettlement;
 use Platform\CommerceCore\Models\ShipmentRecord;
+use Webkul\Sales\Models\Order;
 
 class AdminOperationsDashboardService
 {
@@ -15,10 +16,10 @@ class AdminOperationsDashboardService
         protected ManualToShipService $manualToShipService,
     ) {}
 
-    public function executiveMetrics(): array
+    public function executiveMetrics(?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
         $shipment = $this->shipmentOverview();
-        $cod = $this->codOverview();
+        $cod = $this->codOverview($startDate, $endDate);
 
         return [
             'to_ship' => [
@@ -37,17 +38,17 @@ class AdminOperationsDashboardService
                 'current' => $cod['receivable']['amount'],
                 'formatted_total' => $cod['receivable']['formatted_amount'],
                 'count' => $cod['receivable']['count'],
-                'secondary' => $cod['receivable']['count'].' COD settlements pending',
+                'secondary' => $cod['active_orders']['count'].' active COD orders',
                 'progress' => null,
             ],
         ];
     }
 
-    public function operationsOverview(): array
+    public function operationsOverview(?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
         return [
             'shipment' => $this->shipmentOverview(),
-            'cod' => $this->codOverview(),
+            'cod' => $this->codOverview($startDate, $endDate),
         ];
     }
 
@@ -169,34 +170,59 @@ class AdminOperationsDashboardService
         ];
     }
 
-    protected function codOverview(): array
+    protected function codOverview(?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
-        $receivable = $this->codOutstandingAggregate($this->codReceivableStatuses());
-        $partial = $this->codOutstandingAggregate([CodSettlement::STATUS_REMITTED]);
-        $receivedToday = $this->codReceivedToday();
+        $startDate = ($startDate ?? now()->subDays(30))->copy()->startOfDay();
+        $endDate = ($endDate ?? now())->copy();
+
+        if ($endDate->isFuture()) {
+            $endDate = now();
+        }
+
+        if (! $this->hasTables(['orders', 'order_payment'])) {
+            return $this->emptyCodOverview();
+        }
+
+        $codOrders = $this->codOrdersQuery($startDate, $endDate);
+        $receivableOrders = (clone $codOrders)->whereNotIn('status', $this->excludedCodReceivableStatuses());
+
+        $receivableAmount = (float) $receivableOrders
+            ->selectRaw('COALESCE(SUM(GREATEST(COALESCE(base_grand_total, 0) - COALESCE(base_grand_total_refunded, 0), 0)), 0) as aggregate')
+            ->value('aggregate');
 
         return [
             'receivable' => [
-                'amount' => $receivable['amount'],
-                'formatted_amount' => core()->formatBasePrice($receivable['amount']),
-                'count' => $receivable['count'],
+                'amount' => $receivableAmount,
+                'formatted_amount' => core()->formatBasePrice($receivableAmount),
+                'count' => (int) (clone $receivableOrders)->count(),
             ],
 
-            'received_today' => [
-                'amount' => $receivedToday,
-                'formatted_amount' => core()->formatBasePrice($receivedToday),
+            'active_orders' => [
+                'count' => (int) (clone $codOrders)
+                    ->whereIn('status', $this->activeCodOrderStatuses())
+                    ->count(),
             ],
 
-            'pending_courier_remittance' => [
-                'amount' => $receivable['amount'],
-                'formatted_amount' => core()->formatBasePrice($receivable['amount']),
-                'count' => $receivable['count'],
+            'shipped_orders' => [
+                'count' => (int) (clone $codOrders)
+                    ->where('status', Order::STATUS_SHIPPED)
+                    ->count(),
             ],
 
-            'partially_settled' => [
-                'amount' => $partial['amount'],
-                'formatted_amount' => core()->formatBasePrice($partial['amount']),
-                'count' => $partial['count'],
+            'completed_orders' => [
+                'count' => (int) (clone $codOrders)
+                    ->where('status', Order::STATUS_COMPLETED)
+                    ->count(),
+            ],
+
+            'exceptions' => [
+                'count' => (int) (clone $codOrders)
+                    ->where(function (Builder $query) {
+                        $query
+                            ->whereIn('status', $this->codExceptionStatuses())
+                            ->orWhere('base_grand_total_refunded', '>', 0);
+                    })
+                    ->count(),
             ],
         ];
     }
@@ -233,38 +259,11 @@ class AdminOperationsDashboardService
             ->all();
     }
 
-    protected function codOutstandingAggregate(array $statuses): array
+    protected function codOrdersQuery(Carbon $startDate, Carbon $endDate): Builder
     {
-        if (! $this->hasTables(['cod_settlements'])) {
-            return [
-                'amount' => 0.0,
-                'count' => 0,
-            ];
-        }
-
-        $outstandingExpression = '(net_amount - remitted_amount - disputed_amount)';
-        $outstandingCase = "CASE WHEN {$outstandingExpression} > 0 THEN {$outstandingExpression} ELSE 0 END";
-        $query = DB::table('cod_settlements')
-            ->whereIn('status', $statuses)
-            ->whereRaw("{$outstandingExpression} > 0");
-
-        return [
-            'amount' => (float) (clone $query)
-                ->selectRaw("COALESCE(SUM({$outstandingCase}), 0) as aggregate")
-                ->value('aggregate'),
-            'count' => (int) (clone $query)->count(),
-        ];
-    }
-
-    protected function codReceivedToday(): float
-    {
-        if (! $this->hasTables(['cod_remittances'])) {
-            return 0.0;
-        }
-
-        return (float) CodRemittance::query()
-            ->whereBetween('received_at', [now()->startOfDay(), now()->endOfDay()])
-            ->sum('amount_received');
+        return Order::query()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('payment', fn (Builder $query) => $query->where('method', 'cashondelivery'));
     }
 
     protected function toShipQueues(): array
@@ -299,11 +298,42 @@ class AdminOperationsDashboardService
         ];
     }
 
-    protected function codReceivableStatuses(): array
+    protected function activeCodOrderStatuses(): array
     {
         return [
-            CodSettlement::STATUS_COLLECTED_BY_CARRIER,
-            CodSettlement::STATUS_REMITTED,
+            Order::STATUS_PENDING,
+            Order::STATUS_PENDING_PAYMENT,
+            Order::STATUS_PROCESSING,
+            Order::STATUS_SHIPPED,
+        ];
+    }
+
+    protected function excludedCodReceivableStatuses(): array
+    {
+        return $this->codExceptionStatuses();
+    }
+
+    protected function codExceptionStatuses(): array
+    {
+        return [
+            Order::STATUS_CANCELED,
+            Order::STATUS_CLOSED,
+            Order::STATUS_FRAUD,
+        ];
+    }
+
+    protected function emptyCodOverview(): array
+    {
+        return [
+            'receivable' => [
+                'amount' => 0.0,
+                'formatted_amount' => core()->formatBasePrice(0),
+                'count' => 0,
+            ],
+            'active_orders' => ['count' => 0],
+            'shipped_orders' => ['count' => 0],
+            'completed_orders' => ['count' => 0],
+            'exceptions' => ['count' => 0],
         ];
     }
 
