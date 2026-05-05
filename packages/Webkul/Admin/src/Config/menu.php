@@ -199,10 +199,10 @@ return [
     ], [
         'key' => 'my-website.settings',
         'name' => 'admin::app.components.layouts.sidebar.settings',
-        'route' => 'admin.cms.site-settings.index',
+        'route' => 'admin.cms.settings.index',
         'sort' => 4,
         'icon' => '',
-        'permission' => 'cms.platform.site_settings',
+        'permission' => 'cms.platform.settings',
     ],
 
     /**
