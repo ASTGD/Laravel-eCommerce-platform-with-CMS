@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 use Webkul\Core\Models\Channel;
 
@@ -72,4 +73,22 @@ it('synchronizes app url, channel hostname, and local footer links', function ()
         ->toBe('https://example.com/help');
 
     @unlink($envFile);
+});
+
+it('forces generated urls to follow the incoming host without mutating the global app url', function () {
+    Route::middleware('web')->get('/__lan-url-check', function () {
+        return response()->json([
+            'app_url' => config('app.url'),
+            'generated_url' => url('/customer/account'),
+            'storage_url' => config('filesystems.disks.public.url'),
+        ]);
+    });
+
+    $this->get('http://192.168.0.189:8001/__lan-url-check')
+        ->assertOk()
+        ->assertJson([
+            'app_url' => 'http://192.168.0.189:8001',
+            'generated_url' => 'http://192.168.0.189:8001/customer/account',
+            'storage_url' => 'http://192.168.0.189:8001/storage',
+        ]);
 });

@@ -54,12 +54,12 @@
 
 @if ($breadcrumbs->isNotEmpty())
     <nav
-        class="mb-4 flex min-h-5 items-center gap-2 overflow-x-auto whitespace-nowrap text-sm text-slate-600 dark:text-gray-300"
+        class="mb-4 flex min-h-5 items-center gap-2 overflow-x-auto whitespace-nowrap text-sm font-normal text-slate-500 dark:text-slate-400"
         aria-label="Breadcrumb"
     >
         <a
             href="{{ route('admin.dashboard.index') }}"
-            class="inline-flex items-center justify-center text-slate-500 transition hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+            class="inline-flex items-center justify-center font-normal text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
             aria-label="Dashboard"
         >
             <svg
@@ -111,12 +111,12 @@
             @if (! $loop->last && ! empty($breadcrumb['url']))
                 <a
                     href="{{ $breadcrumb['url'] }}"
-                    class="font-medium text-slate-500 transition hover:text-slate-900 dark:text-gray-400 dark:hover:text-white"
+                    class="font-normal text-slate-500 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
                 >
                     {{ $breadcrumb['label'] }}
                 </a>
             @else
-                <span class="font-semibold text-slate-900 dark:text-white">
+                <span class="font-normal text-slate-500 dark:text-slate-400">
                     {{ $breadcrumb['label'] }}
                 </span>
             @endif

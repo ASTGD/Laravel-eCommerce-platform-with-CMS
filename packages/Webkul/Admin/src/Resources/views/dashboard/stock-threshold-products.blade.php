@@ -31,53 +31,47 @@
 
                 <template v-if="report.statistics.length">
                     <div class="divide-y divide-slate-200 dark:divide-slate-800">
-                        <div
+                        <a
                             v-for="product in report.statistics"
-                            class="flex flex-col gap-4 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between"
+                            :href="'{{ route('admin.catalog.products.edit', ':replace') }}'.replace(':replace', product.id)"
+                            class="flex items-center gap-3 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
                         >
-                            <div class="flex min-w-0 flex-1 items-start gap-3">
-                                <template v-if="product.image">
-                                    <img
-                                        class="h-[64px] w-[64px] rounded-2xl object-cover shadow-sm"
-                                        :src="product.image"
-                                    >
-                                </template>
+                            <template v-if="product.image">
+                                <img
+                                    class="h-[64px] w-[64px] rounded-2xl object-cover shadow-sm"
+                                    :src="product.image"
+                                >
+                            </template>
 
-                                <template v-else>
-                                    <div class="relative flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
-                                        <img src="{{ bagisto_asset('images/product-placeholders/front.svg') }}" class="h-10 w-10">
-                                    </div>
-                                </template>
+                            <template v-else>
+                                <div class="relative flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-950">
+                                    <img src="{{ bagisto_asset('images/product-placeholders/front.svg') }}" class="h-10 w-10">
+                                </div>
+                            </template>
 
-                                <div class="min-w-0">
-                                    <p class="text-base font-semibold text-slate-950 dark:text-white">
-                                        @{{ product.name }}
-                                    </p>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-base font-semibold text-slate-950 dark:text-white" v-text="product.name"></p>
 
-                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                                    <span>
                                         @{{ "@lang('admin::app.dashboard.index.sku', ['sku' => ':replace'])".replace(':replace', product.sku) }}
-                                    </p>
-                                </div>
-                            </div>
+                                    </span>
 
-                            <div class="flex flex-nowrap items-center gap-2 sm:justify-end sm:whitespace-nowrap">
-                                <div
-                                    class="shrink-0 inline-flex min-w-[92px] items-center justify-center rounded-full border px-3 py-2 text-center"
-                                    :class="[product.total_qty > {{ core()->getConfigData('catalog.inventory.stock_options.out_of_stock_threshold') }} ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300' : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300']"
-                                >
-                                    <p class="text-sm font-semibold leading-none whitespace-nowrap">
+                                    <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+
+                                    <span
+                                        class="text-xs font-semibold leading-none whitespace-nowrap"
+                                        :class="[product.total_qty > {{ core()->getConfigData('catalog.inventory.stock_options.out_of_stock_threshold') }} ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300']"
+                                    >
                                         @{{ "@lang('admin::app.dashboard.index.total-stock', ['total_stock' => ':replace'])".replace(':replace', product.total_qty) }}
-                                    </p>
+                                    </span>
                                 </div>
-
-                                <a
-                                    :href="'{{ route('admin.catalog.products.edit', ':replace') }}'.replace(':replace', product.id)"
-                                    class="shrink-0 inline-flex items-center text-sm font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                >
-                                    Open
-                                </a>
                             </div>
-                        </div>
+
+                            <div class="flex items-center text-slate-400">
+                                <span class="icon-sort-right rtl:icon-sort-left text-2xl"></span>
+                            </div>
+                        </a>
                     </div>
                 </template>
 

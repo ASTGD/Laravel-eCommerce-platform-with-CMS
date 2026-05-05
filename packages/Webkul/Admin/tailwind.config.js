@@ -40,7 +40,7 @@ module.exports = {
             },
 
             fontFamily: {
-                inter: ['Inter'],
+                inter: ['Inter', 'system-ui', '-apple-system', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                 icon: ['icomoon']
             }
         },

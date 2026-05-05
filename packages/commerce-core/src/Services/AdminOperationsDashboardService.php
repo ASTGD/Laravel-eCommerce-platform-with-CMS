@@ -14,6 +14,7 @@ class AdminOperationsDashboardService
 {
     public function __construct(
         protected ManualToShipService $manualToShipService,
+        protected ManualCodReceivableService $manualCodReceivableService,
     ) {}
 
     public function executiveMetrics(?Carbon $startDate = null, ?Carbon $endDate = null): array
@@ -197,6 +198,10 @@ class AdminOperationsDashboardService
                 'count' => (int) (clone $receivableOrders)->count(),
             ],
 
+            'pending_payments' => $this->manualCodReceivableService->pendingCourierSummaries(4)
+                ->values()
+                ->all(),
+
             'active_orders' => [
                 'count' => (int) (clone $codOrders)
                     ->whereIn('status', $this->activeCodOrderStatuses())
@@ -330,6 +335,7 @@ class AdminOperationsDashboardService
                 'formatted_amount' => core()->formatBasePrice(0),
                 'count' => 0,
             ],
+            'pending_payments' => [],
             'active_orders' => ['count' => 0],
             'shipped_orders' => ['count' => 0],
             'completed_orders' => ['count' => 0],

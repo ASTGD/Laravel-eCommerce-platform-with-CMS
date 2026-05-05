@@ -21,12 +21,6 @@
                         <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             Revenue / Orders Trend
                         </h3>
-
-                        <div class="mt-3">
-                            <span class="font-sans text-2xl leading-8 font-bold tracking-tight text-slate-950 dark:text-white">
-                                @{{ report.statistics.total_sales.formatted_total }}
-                            </span>
-                        </div>
                     </div>
                 </div>
 

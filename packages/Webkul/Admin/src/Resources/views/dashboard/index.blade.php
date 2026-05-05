@@ -3,6 +3,13 @@
         @lang('admin::app.dashboard.index.title')
     </x-slot>
 
+    <p class="sr-only">
+        @lang('admin::app.dashboard.index.overall-details')
+        @lang('admin::app.dashboard.index.total-sales')
+        @lang('admin::app.dashboard.index.product-image')
+        @lang('admin::app.dashboard.index.today-sales')
+    </p>
+
     @php
         $dashboardUserName = auth('admin')->user()?->name ?: 'User';
         $baseDashboardQuery = request()->except(['range', 'from', 'to', 'start', 'end']);
@@ -11,14 +18,7 @@
     @endphp
 
     <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
-        <p class="sr-only">
-            @lang('admin::app.dashboard.index.overall-details')
-            @lang('admin::app.dashboard.index.total-sales')
-            @lang('admin::app.dashboard.index.product-image')
-            @lang('admin::app.dashboard.index.today-sales')
-        </p>
-
-        <section class="flex flex-col gap-5 pb-1 pt-1 lg:flex-row lg:items-start lg:justify-between">
+        <section class="flex flex-col gap-4 pb-0 pt-1 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-1">
                 <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                     Dashboard
@@ -113,7 +113,7 @@
             </div>
         </section>
 
-        <section id="dashboard-attention" class="mt-6 grid gap-8 xl:mt-8 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+        <section id="dashboard-attention" class="mt-6 grid gap-8 xl:mt-8 xl:grid-cols-2">
             <div class="min-w-0">
                 @include('admin::dashboard.stock-threshold-products')
             </div>

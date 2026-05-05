@@ -32,7 +32,7 @@
                 <div v-if="report.statistics.length" class="divide-y divide-slate-200 dark:divide-slate-800">
                     <a
                         :href="'{{ route('admin.catalog.products.edit', ':id') }}'.replace(':id', item.id)"
-                        class="flex gap-3 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
+                        class="flex items-center gap-3 px-6 py-5 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
                         v-for="item in report.statistics"
                     >
                         <template v-if="item.images?.length">

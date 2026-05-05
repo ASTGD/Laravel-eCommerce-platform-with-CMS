@@ -70,6 +70,7 @@ class Dashboard
         $pendingInvoices = $this->getPendingInvoiceSummary();
 
         return [
+            'comparison_label' => $this->getComparisonLabel(),
             'total_customers' => $this->customerReporting->getTotalCustomersProgress(),
             'total_orders' => $this->saleReporting->getTotalOrdersProgress(),
             'total_sales' => $this->saleReporting->getTotalSalesProgress(),
@@ -233,6 +234,35 @@ class Dashboard
     public function getDateRange(): string
     {
         return $this->getStartDate()->format('d M').' - '.$this->getEndDate()->format('d M');
+    }
+
+    /**
+     * Returns the comparison range label for KPI cards.
+     */
+    public function getComparisonLabel(): string
+    {
+        $range = $this->dateFilter['selected'] ?? $this->dateFilter['requested'] ?? null;
+
+        return match ($range) {
+            'today' => 'vs yesterday',
+            'last_7_days' => 'vs last 7 days',
+            'last_30_days', null => 'vs last 30 days',
+            'this_month' => 'vs last month',
+            'custom' => $this->customComparisonLabel(),
+            default => 'vs previous period',
+        };
+    }
+
+    /**
+     * Returns a comparison label for custom date ranges.
+     */
+    protected function customComparisonLabel(): string
+    {
+        $days = max(1, (int) $this->getStartDate()->diffInDays($this->getEndDate()) + 1);
+
+        return $days === 1
+            ? 'vs yesterday'
+            : 'vs last '.$days.' days';
     }
 
     /**
