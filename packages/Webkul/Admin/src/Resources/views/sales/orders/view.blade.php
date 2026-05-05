@@ -59,13 +59,6 @@
             @endif
 
             @if (
-                $order->canShip()
-                && bouncer()->hasPermission('sales.shipments.create')
-            )
-                @include('admin::sales.shipments.create')
-            @endif
-
-            @if (
                 $order->canRefund()
                 && bouncer()->hasPermission('sales.refunds.create')
             )
