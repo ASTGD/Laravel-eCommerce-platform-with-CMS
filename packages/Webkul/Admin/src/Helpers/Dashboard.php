@@ -239,17 +239,17 @@ class Dashboard
     /**
      * Returns the comparison range label for KPI cards.
      */
-    public function getComparisonLabel(): string
+    public function getComparisonLabel(): ?string
     {
         $range = $this->dateFilter['selected'] ?? $this->dateFilter['requested'] ?? null;
 
         return match ($range) {
             'today' => 'vs yesterday',
             'last_7_days' => 'vs last 7 days',
-            'last_30_days', null => 'vs last 30 days',
+            'last_30_days', null => null,
             'this_month' => 'vs last month',
             'custom' => $this->customComparisonLabel(),
-            default => 'vs previous period',
+            default => null,
         };
     }
 
