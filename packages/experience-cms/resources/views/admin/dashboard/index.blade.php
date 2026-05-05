@@ -1,266 +1,272 @@
+@php
+    $cardClass = 'rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-gray-800 dark:bg-gray-900';
+    $cardTitleClass = 'font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white';
+    $smallLabelClass = 'text-sm leading-6 text-slate-500 dark:text-gray-400';
+    $metricValueClass = 'font-sans text-2xl leading-8 font-bold tracking-tight text-slate-950 dark:text-white';
+    $badgeBaseClass = 'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium';
+    $readyBadgeClass = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300';
+    $warningBadgeClass = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300';
+    $neutralBadgeClass = 'bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-300';
+    $blueBadgeClass = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300';
+
+    $themeName = $overview['active_theme']['name'] ?? 'Not Selected';
+    $themeCode = $overview['active_theme']['code'] ?? null;
+    $isSetupComplete = $overview['setup']['is_complete'];
+
+    $homepageStatus = match ($overview['homepage']['status']) {
+        'published' => ['label' => 'Published', 'class' => $readyBadgeClass],
+        'draft' => ['label' => 'Draft', 'class' => $warningBadgeClass],
+        default => ['label' => 'Missing', 'class' => $warningBadgeClass],
+    };
+
+    $setupRows = [
+        [
+            'label' => 'Homepage',
+            'value' => $overview['homepage']['label'],
+            'badge' => $homepageStatus['label'],
+            'class' => $homepageStatus['class'],
+        ],
+        [
+            'label' => 'Active Theme',
+            'value' => $themeName,
+            'badge' => $overview['setup']['has_theme'] ? 'Configured' : 'Missing',
+            'class' => $overview['setup']['has_theme'] ? $readyBadgeClass : $warningBadgeClass,
+        ],
+        [
+            'label' => 'Header',
+            'value' => $overview['setup']['has_header'] ? 'Configured' : 'Missing',
+            'badge' => $overview['setup']['has_header'] ? 'Ready' : 'Needs Setup',
+            'class' => $overview['setup']['has_header'] ? $readyBadgeClass : $warningBadgeClass,
+        ],
+        [
+            'label' => 'Footer',
+            'value' => $overview['setup']['has_footer'] ? 'Configured' : 'Missing',
+            'badge' => $overview['setup']['has_footer'] ? 'Ready' : 'Needs Setup',
+            'class' => $overview['setup']['has_footer'] ? $readyBadgeClass : $warningBadgeClass,
+        ],
+        [
+            'label' => 'Navigation Menu',
+            'value' => $overview['setup']['has_menu'] ? 'Configured' : 'Missing',
+            'badge' => $overview['setup']['has_menu'] ? 'Ready' : 'Needs Setup',
+            'class' => $overview['setup']['has_menu'] ? $readyBadgeClass : $warningBadgeClass,
+        ],
+        [
+            'label' => 'Site Settings',
+            'value' => $overview['setup']['has_site_settings'] ? 'Configured' : 'Missing',
+            'badge' => $overview['setup']['has_site_settings'] ? 'Ready' : 'Needs Setup',
+            'class' => $overview['setup']['has_site_settings'] ? $readyBadgeClass : $warningBadgeClass,
+        ],
+    ];
+
+    $contentRows = [
+        ['label' => 'Total Pages', 'value' => $overview['pages']['total']],
+        ['label' => 'Published Pages', 'value' => $overview['pages']['published']],
+        ['label' => 'Draft Pages', 'value' => $overview['pages']['draft']],
+        ['label' => 'Content Entries', 'value' => $overview['content_entries']],
+        ['label' => 'Menus', 'value' => $overview['menus']],
+        ['label' => 'Header Configs', 'value' => $overview['header_configs']],
+        ['label' => 'Footer Configs', 'value' => $overview['footer_configs']],
+    ];
+
+    $quickActions = [
+        [
+            'title' => 'Manage CMS',
+            'description' => 'Create and update storefront pages.',
+            'url' => $urls['cms'],
+        ],
+        [
+            'title' => 'Manage Themes',
+            'description' => 'Select and configure website themes.',
+            'url' => $urls['themes'],
+        ],
+        [
+            'title' => 'Website Settings',
+            'description' => 'Update global website configuration.',
+            'url' => $urls['settings'],
+        ],
+        [
+            'title' => 'Header & Footer',
+            'description' => 'Manage storefront layout sections.',
+            'url' => $urls['header_footer'],
+        ],
+    ];
+@endphp
+
 <x-admin::layouts>
-    <x-slot:title>CMS Dashboard</x-slot:title>
+    <x-slot:title>My Website</x-slot:title>
 
     <div class="space-y-6 pb-8">
-        <section class="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 px-6 py-6 text-white shadow-2xl shadow-slate-950/20 lg:px-8 lg:py-8 dark:border-slate-800">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(251,146,60,0.22),_transparent_42%),radial-gradient(circle_at_bottom_left,_rgba(59,130,246,0.16),_transparent_35%)]"></div>
+        <section class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="space-y-2">
+                <h1 class="font-sans text-3xl font-semibold tracking-normal text-slate-950 dark:text-white">
+                    My Website
+                </h1>
 
-            <div class="relative grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.85fr)] lg:items-end">
-                <div class="space-y-4">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-slate-200">
-                        Platform CMS
-                    </div>
-
-                    <div class="space-y-3">
-                        <h1 class="text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                            CMS Dashboard
-                        </h1>
-
-                        <p class="max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                            Manage pages, templates, presets, and structured content from one overview screen before drilling into the detailed workflows.
-                        </p>
-                    </div>
-
-                    <div class="flex flex-wrap gap-3">
-                        <a
-                            href="{{ route('admin.cms.pages.create') }}"
-                            class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                        >
-                            New page
-                        </a>
-
-                        <a
-                            href="{{ route('admin.cms.pages.index') }}"
-                            class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-                        >
-                            View pages
-                        </a>
-                    </div>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2">
-                    <article class="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-300">
-                            Most used template
-                        </p>
-                        <p class="mt-2 text-lg font-semibold text-white">
-                            {{ $mostUsedTemplate?->name ?? 'No active template yet' }}
-                        </p>
-                        <p class="mt-1 text-sm text-slate-300">
-                            {{ $mostUsedTemplate?->pages_count ?? 0 }} pages currently use this layout.
-                        </p>
-                    </article>
-
-                    <article class="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-300">
-                            Latest publish
-                        </p>
-                        <p class="mt-2 text-lg font-semibold text-white">
-                            {{ $latestPublishedPage?->title ?? 'Nothing published yet' }}
-                        </p>
-                        <p class="mt-1 text-sm text-slate-300">
-                            {{ $latestPublishedPage?->published_at?->diffForHumans() ?? 'Publish a page to populate this card.' }}
-                        </p>
-                    </article>
-                </div>
+                <p class="{{ $smallLabelClass }}">
+                    Manage storefront content, theme, layout, and website settings.
+                </p>
             </div>
+
+            <a
+                href="{{ $urls['preview'] }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+            >
+                Preview Storefront
+            </a>
         </section>
 
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            @foreach ($stats as $stat)
-                <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                                {{ $stat['label'] }}
-                            </p>
-                            <p class="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                                {{ $stat['value'] }}
-                            </p>
-                        </div>
+        <section class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <article class="{{ $cardClass }}">
+                <div class="flex items-start justify-between gap-4">
+                    <h2 class="{{ $cardTitleClass }}">
+                        Storefront Mode
+                    </h2>
 
-                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white shadow-sm shadow-slate-900/20 dark:bg-white dark:text-slate-950">
-                            {{ strtoupper(substr($stat['label'], 0, 1)) }}
-                        </span>
-                    </div>
-
-                    <p class="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                        {{ $stat['help'] }}
-                    </p>
-                </article>
-            @endforeach
-        </section>
-
-        <section class="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)]">
-            <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            Recent pages
-                        </p>
-                        <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            Working set
-                        </h2>
-                        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
-                            The latest pages in this workspace, grouped by template and status for quick review.
-                        </p>
-                    </div>
-
-                    <a
-                        href="{{ route('admin.cms.pages.create') }}"
-                        class="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
-                    >
-                        Create page
-                    </a>
+                    <span class="{{ $badgeBaseClass }} {{ $overview['storefront_mode']['is_cms'] ? $blueBadgeClass : $neutralBadgeClass }}">
+                        {{ $overview['storefront_mode']['label'] }}
+                    </span>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full border-separate border-spacing-0 text-left">
-                        <thead class="bg-slate-50/80 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:bg-slate-950 dark:text-slate-400">
-                            <tr>
-                                <th class="px-6 py-4">Page</th>
-                                <th class="px-6 py-4">Template</th>
-                                <th class="px-6 py-4">Status</th>
-                                <th class="px-6 py-4">Updated</th>
-                                <th class="px-6 py-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
+                <p class="mt-5 {{ $metricValueClass }}">
+                    {{ $overview['storefront_mode']['label'] }}
+                </p>
 
-                        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                            @forelse ($pages as $page)
-                                <tr class="bg-white transition hover:bg-slate-50/80 dark:bg-slate-900 dark:hover:bg-slate-800/60">
-                                    <td class="px-6 py-5">
-                                        <div class="space-y-1">
-                                            <p class="text-base font-semibold text-slate-950 dark:text-white">
-                                                {{ $page->title }}
-                                            </p>
+                <p class="mt-1 {{ $smallLabelClass }}">
+                    Current website rendering mode
+                </p>
+            </article>
 
-                                            <p class="font-mono text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                                {{ $page->slug }}
-                                            </p>
-                                        </div>
-                                    </td>
+            <article class="{{ $cardClass }}">
+                <div class="flex items-start justify-between gap-4">
+                    <h2 class="{{ $cardTitleClass }}">
+                        Active Theme
+                    </h2>
 
-                                    <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-300">
-                                        {{ $page->template?->name ?? 'No template' }}
-                                    </td>
+                    <span class="{{ $badgeBaseClass }} {{ $themeCode ? $neutralBadgeClass : $warningBadgeClass }}">
+                        {{ $themeCode ?? 'Missing' }}
+                    </span>
+                </div>
 
-                                    <td class="px-6 py-5">
-                                        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] {{ $page->isPublished() ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' }}">
-                                            {{ $page->isPublished() ? 'Published' : 'Draft' }}
-                                        </span>
-                                    </td>
+                <p class="mt-5 break-words {{ $metricValueClass }}">
+                    {{ $themeName }}
+                </p>
 
-                                    <td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-300">
-                                        {{ $page->updated_at?->diffForHumans() ?? '—' }}
-                                    </td>
+                <p class="mt-1 {{ $smallLabelClass }}">
+                    Current storefront theme preset
+                </p>
+            </article>
 
-                                    <td class="px-6 py-5 text-right">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <a
-                                                href="{{ route('admin.cms.pages.preview', $page) }}"
-                                                target="_blank"
-                                                class="inline-flex items-center rounded-full border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                                            >
-                                                Preview
-                                            </a>
+            <article class="{{ $cardClass }}">
+                <div class="flex items-start justify-between gap-4">
+                    <h2 class="{{ $cardTitleClass }}">
+                        Published Pages
+                    </h2>
 
-                                            <a
-                                                href="{{ route('admin.cms.pages.edit', $page) }}"
-                                                class="inline-flex items-center rounded-full border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                                            >
-                                                Edit
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-16 text-center">
-                                        <div class="mx-auto max-w-md space-y-3">
-                                            <p class="text-lg font-semibold text-slate-950 dark:text-white">
-                                                No pages created yet.
-                                            </p>
+                    <span class="{{ $badgeBaseClass }} {{ $neutralBadgeClass }}">
+                        {{ $overview['pages']['total'] }} total
+                    </span>
+                </div>
 
-                                            <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                                Create the first structured page to populate this dashboard and start the CMS workflow.
-                                            </p>
+                <p class="mt-5 {{ $metricValueClass }}">
+                    {{ $overview['pages']['published'] }}
+                </p>
 
-                                            <a
-                                                href="{{ route('admin.cms.pages.create') }}"
-                                                class="inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950"
-                                            >
-                                                Create page
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <p class="mt-1 {{ $smallLabelClass }}">
+                    Live CMS pages available to storefront
+                </p>
+            </article>
+
+            <article class="{{ $cardClass }}">
+                <div class="flex items-start justify-between gap-4">
+                    <h2 class="{{ $cardTitleClass }}">
+                        Website Setup
+                    </h2>
+
+                    <span class="{{ $badgeBaseClass }} {{ $isSetupComplete ? $readyBadgeClass : $warningBadgeClass }}">
+                        {{ $isSetupComplete ? 'Ready' : 'Needs Setup' }}
+                    </span>
+                </div>
+
+                <p class="mt-5 {{ $metricValueClass }}">
+                    {{ $isSetupComplete ? 'Complete' : 'Incomplete' }}
+                </p>
+
+                <p class="mt-1 {{ $smallLabelClass }}">
+                    Header, footer, menu, and settings
+                </p>
+            </article>
+        </section>
+
+        <section class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <article class="{{ $cardClass }} xl:col-span-2">
+                <h2 class="{{ $cardTitleClass }}">
+                    Website Setup
+                </h2>
+
+                <div class="mt-3">
+                    @foreach ($setupRows as $row)
+                        <div class="flex items-center justify-between gap-4 border-b border-slate-100 py-4 last:border-b-0 dark:border-gray-800">
+                            <div class="min-w-0">
+                                <p class="font-sans text-sm font-semibold text-slate-950 dark:text-white">
+                                    {{ $row['label'] }}
+                                </p>
+
+                                <p class="mt-1 truncate {{ $smallLabelClass }}">
+                                    {{ $row['value'] }}
+                                </p>
+                            </div>
+
+                            <span class="{{ $badgeBaseClass }} shrink-0 {{ $row['class'] }}">
+                                {{ $row['badge'] }}
+                            </span>
+                        </div>
+                    @endforeach
                 </div>
             </article>
 
-            <div class="space-y-6">
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                    <div class="border-b border-slate-200 px-6 py-6 dark:border-slate-800">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            Quick actions
-                        </p>
-                        <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            Jump to the working areas
-                        </h3>
-                    </div>
+            <article class="{{ $cardClass }}">
+                <h2 class="{{ $cardTitleClass }}">
+                    Content Summary
+                </h2>
 
-                    <div class="grid gap-3 px-6 py-6">
-                        @foreach ($quickLinks as $link)
-                            <a
-                                href="{{ $link['route'] }}"
-                                class="group rounded-2xl border border-slate-200 px-4 py-4 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60"
-                            >
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p class="text-sm font-semibold text-slate-950 transition group-hover:text-slate-900 dark:text-white">
-                                            {{ $link['label'] }}
-                                        </p>
-                                        <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                                            {{ $link['description'] }}
-                                        </p>
-                                    </div>
+                <div class="mt-3">
+                    @foreach ($contentRows as $row)
+                        <div class="flex items-center justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0 dark:border-gray-800">
+                            <span class="{{ $smallLabelClass }}">
+                                {{ $row['label'] }}
+                            </span>
 
-                                    <span class="text-lg text-slate-400 transition group-hover:text-slate-600 dark:text-slate-500">
-                                        →
-                                    </span>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                </article>
+                            <span class="font-sans text-base font-semibold text-slate-950 dark:text-white">
+                                {{ $row['value'] }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+            </article>
+        </section>
 
-                <article class="rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:shadow-none">
-                    <div class="border-b border-white/10 px-6 py-6">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
-                            Workspace inventory
-                        </p>
-                        <h3 class="mt-2 text-xl font-semibold tracking-tight">
-                            Structured CMS assets
-                        </h3>
-                    </div>
+        <section class="{{ $cardClass }}">
+            <h2 class="{{ $cardTitleClass }}">
+                Quick Actions
+            </h2>
 
-                    <div class="grid gap-3 px-6 py-6">
-                        @foreach ($inventory as $item)
-                            <div class="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                                <p class="text-sm font-medium text-white">
-                                    {{ $item['label'] }}
-                                </p>
+            <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach ($quickActions as $action)
+                    <a
+                        href="{{ $action['url'] }}"
+                        class="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:bg-blue-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-blue-800 dark:hover:bg-blue-950/20"
+                    >
+                        <span class="font-sans text-base font-semibold text-slate-950 dark:text-white">
+                            {{ $action['title'] }}
+                        </span>
 
-                                <p class="text-sm font-semibold text-slate-200">
-                                    {{ $item['value'] }}
-                                </p>
-                            </div>
-                        @endforeach
-                    </div>
-                </article>
+                        <span class="mt-1 block text-sm leading-6 text-slate-500 dark:text-gray-400">
+                            {{ $action['description'] }}
+                        </span>
+                    </a>
+                @endforeach
             </div>
         </section>
     </div>

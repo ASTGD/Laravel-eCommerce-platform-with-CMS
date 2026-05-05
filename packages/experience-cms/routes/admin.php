@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Platform\ExperienceCms\Http\Controllers\Admin\DashboardController;
-use Platform\ExperienceCms\Http\Controllers\Admin\ContentEntryController;
 use Platform\ExperienceCms\Http\Controllers\Admin\ComponentTypeController;
+use Platform\ExperienceCms\Http\Controllers\Admin\ContentEntryController;
+use Platform\ExperienceCms\Http\Controllers\Admin\DashboardController;
 use Platform\ExperienceCms\Http\Controllers\Admin\FooterConfigController;
 use Platform\ExperienceCms\Http\Controllers\Admin\HeaderConfigController;
 use Platform\ExperienceCms\Http\Controllers\Admin\MenuController;
@@ -17,7 +17,7 @@ use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::group([
     'middleware' => ['admin', NoCacheMiddleware::class],
-    'prefix'     => config('app.admin_url'),
+    'prefix' => config('app.admin_url'),
 ], function () {
     Route::controller(DashboardController::class)
         ->prefix('cms/dashboard')

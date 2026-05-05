@@ -1,14 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Platform\ExperienceCms\Http\Controllers\Admin\CmsController as PlatformCmsController;
 use Webkul\Admin\Http\Controllers\CMS\PageController;
 
 /**
  * CMS routes.
  */
-Route::controller(PageController::class)->prefix('cms')->group(function () {
-    Route::get('/', 'index')->name('admin.cms.index');
+Route::get('cms', [PlatformCmsController::class, 'index'])
+    ->middleware('platform.acl:cms.platform')
+    ->name('admin.cms.index');
 
+Route::controller(PageController::class)->prefix('cms')->group(function () {
     Route::get('create', 'create')->name('admin.cms.create');
 
     Route::post('create', 'store')->name('admin.cms.store');
