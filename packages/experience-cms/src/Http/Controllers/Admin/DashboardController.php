@@ -84,10 +84,10 @@ class DashboardController extends Controller
 
         $urls = [
             'preview' => $this->routeUrl('shop.home.index'),
-            'cms' => $this->routeUrl('admin.cms.pages.index', 'admin.cms.dashboard.index'),
+            'cms' => $this->routeUrl('admin.cms.index', 'admin.cms.dashboard.index'),
             'themes' => $this->routeUrl('admin.theme.presets.index', 'admin.cms.dashboard.index'),
-            'settings' => $this->routeUrl('admin.cms.site-settings.index', 'admin.cms.dashboard.index'),
-            'header_footer' => $this->routeUrl('admin.cms.header-configs.index', 'admin.cms.dashboard.index'),
+            'settings' => $this->routeUrl('admin.cms.settings.index', 'admin.cms.index'),
+            'header_footer' => $this->routeUrl('admin.cms.index', 'admin.cms.dashboard.index'),
         ];
 
         return view('experience-cms::admin.dashboard.index', [

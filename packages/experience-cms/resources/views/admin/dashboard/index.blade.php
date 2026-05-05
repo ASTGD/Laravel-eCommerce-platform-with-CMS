@@ -64,8 +64,8 @@
         ['label' => 'Draft Pages', 'value' => $overview['pages']['draft']],
         ['label' => 'Content Entries', 'value' => $overview['content_entries']],
         ['label' => 'Menus', 'value' => $overview['menus']],
-        ['label' => 'Header Configs', 'value' => $overview['header_configs']],
-        ['label' => 'Footer Configs', 'value' => $overview['footer_configs']],
+        ['label' => 'Header Builders', 'value' => $overview['header_configs']],
+        ['label' => 'Footer Builders', 'value' => $overview['footer_configs']],
     ];
 
     $quickActions = [

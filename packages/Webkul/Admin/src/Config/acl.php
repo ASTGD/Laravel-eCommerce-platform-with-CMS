@@ -703,38 +703,8 @@ return [
     ], [
         'key' => 'my-website.settings',
         'name' => 'admin::app.acl.settings',
-        'route' => 'admin.cms.site-settings.index',
+        'route' => 'admin.cms.settings.index',
         'sort' => 4,
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | CMS
-    |--------------------------------------------------------------------------
-    |
-    | All ACLs related to cms will be placed here.
-    |
-    */
-    [
-        'key' => 'cms',
-        'name' => 'admin::app.acl.cms',
-        'route' => 'admin.cms.index',
-        'sort' => 7,
-    ], [
-        'key' => 'cms.create',
-        'name' => 'admin::app.acl.create',
-        'route' => 'admin.cms.create',
-        'sort' => 1,
-    ], [
-        'key' => 'cms.edit',
-        'name' => 'admin::app.acl.edit',
-        'route' => 'admin.cms.edit',
-        'sort' => 2,
-    ], [
-        'key' => 'cms.delete',
-        'name' => 'admin::app.acl.delete',
-        'route' => 'admin.cms.delete',
-        'sort' => 3,
     ],
 
     /*

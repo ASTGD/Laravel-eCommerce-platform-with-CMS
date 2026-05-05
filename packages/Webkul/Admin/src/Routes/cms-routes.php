@@ -1,26 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Platform\ExperienceCms\Http\Controllers\Admin\CmsController as PlatformCmsController;
-use Webkul\Admin\Http\Controllers\CMS\PageController;
-
 /**
  * CMS routes.
+ *
+ * The structured CMS Studio is registered by the experience-cms package.
+ * Legacy standalone CMS admin CRUD routes are intentionally not registered.
  */
-Route::get('cms', [PlatformCmsController::class, 'index'])
-    ->middleware('platform.acl:cms.platform')
-    ->name('admin.cms.index');
-
-Route::controller(PageController::class)->prefix('cms')->group(function () {
-    Route::get('create', 'create')->name('admin.cms.create');
-
-    Route::post('create', 'store')->name('admin.cms.store');
-
-    Route::get('edit/{id}', 'edit')->name('admin.cms.edit');
-
-    Route::put('edit/{id}', 'update')->name('admin.cms.update');
-
-    Route::delete('edit/{id}', 'delete')->name('admin.cms.delete');
-
-    Route::post('mass-delete', 'massDelete')->name('admin.cms.mass_delete');
-});
