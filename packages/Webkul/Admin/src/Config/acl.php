@@ -674,6 +674,41 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | My Website
+    |--------------------------------------------------------------------------
+    |
+    | Admin navigation grouping for storefront website management.
+    |
+    */
+    [
+        'key' => 'my-website',
+        'name' => 'admin::app.acl.my-website',
+        'route' => 'admin.cms.dashboard.index',
+        'sort' => 7,
+    ], [
+        'key' => 'my-website.overview',
+        'name' => 'admin::app.acl.overview',
+        'route' => 'admin.cms.dashboard.index',
+        'sort' => 1,
+    ], [
+        'key' => 'my-website.cms',
+        'name' => 'admin::app.acl.cms',
+        'route' => 'admin.cms.index',
+        'sort' => 2,
+    ], [
+        'key' => 'my-website.themes',
+        'name' => 'admin::app.acl.themes',
+        'route' => 'admin.theme.presets.index',
+        'sort' => 3,
+    ], [
+        'key' => 'my-website.settings',
+        'name' => 'admin::app.acl.settings',
+        'route' => 'admin.cms.site-settings.index',
+        'sort' => 4,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | CMS
     |--------------------------------------------------------------------------
     |

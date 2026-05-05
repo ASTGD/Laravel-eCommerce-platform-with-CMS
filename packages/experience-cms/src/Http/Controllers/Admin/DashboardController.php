@@ -3,138 +3,151 @@
 namespace Platform\ExperienceCms\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Closure;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
-use Platform\ExperienceCms\Models\ComponentType;
 use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
 use Platform\ExperienceCms\Models\Page;
-use Platform\ExperienceCms\Models\PageAssignment;
-use Platform\ExperienceCms\Models\SectionType;
 use Platform\ExperienceCms\Models\SiteSetting;
-use Platform\ExperienceCms\Models\Template;
 use Platform\ThemeCore\Models\ThemePreset;
 
 class DashboardController extends Controller
 {
     public function index(): View
     {
-        $pages = Page::query()
-            ->with('template')
-            ->orderByDesc('updated_at')
-            ->limit(5)
-            ->get();
+        $homepage = $this->firstModel(Page::class, fn ($query) => $query->where('slug', 'home'));
 
-        $mostUsedTemplate = Template::query()
-            ->withCount('pages')
-            ->orderByDesc('pages_count')
-            ->orderBy('name')
-            ->first();
+        $activeThemePreset = $this->firstModel(ThemePreset::class, fn ($query) => $query->where('is_default', true))
+            ?? $this->firstModel(ThemePreset::class, fn ($query) => $query
+                ->where('is_active', true)
+                ->orderBy('name'));
 
-        $latestPublishedPage = Page::query()
-            ->published()
-            ->orderByDesc('published_at')
-            ->first();
+        $activeHeaderConfig = $this->firstModel(HeaderConfig::class, fn ($query) => $query->where('is_default', true))
+            ?? $this->firstModel(HeaderConfig::class, fn ($query) => $query->orderBy('code'));
+
+        $activeFooterConfig = $this->firstModel(FooterConfig::class, fn ($query) => $query->where('is_default', true))
+            ?? $this->firstModel(FooterConfig::class, fn ($query) => $query->orderBy('code'));
+
+        $activeMenu = $this->firstModel(Menu::class, fn ($query) => $query
+            ->where('is_active', true)
+            ->orderBy('name'));
+
+        $siteSettings = $this->firstModel(SiteSetting::class, fn ($query) => $query->orderBy('key'));
+
+        $isCmsMode = config('experience-cms.storefront_mode') === 'cms';
+        $homepageStatus = $homepage
+            ? ($homepage->isPublished() ? 'published' : 'draft')
+            : 'missing';
+        $hasTheme = (bool) $activeThemePreset;
+        $hasHeader = (bool) $activeHeaderConfig;
+        $hasFooter = (bool) $activeFooterConfig;
+        $hasMenu = (bool) $activeMenu;
+        $hasSiteSettings = (bool) $siteSettings;
+
+        $overview = [
+            'storefront_mode' => [
+                'label' => $isCmsMode ? 'CMS Mode' : 'Native Mode',
+                'is_cms' => $isCmsMode,
+            ],
+            'active_theme' => [
+                'name' => $activeThemePreset?->name,
+                'code' => $activeThemePreset?->code,
+            ],
+            'pages' => [
+                'total' => $this->countModel(Page::class),
+                'published' => $this->countModel(Page::class, fn ($query) => $query->where('status', Page::STATUS_PUBLISHED)),
+                'draft' => $this->countModel(Page::class, fn ($query) => $query->where('status', Page::STATUS_DRAFT)),
+            ],
+            'content_entries' => $this->countModel(ContentEntry::class),
+            'menus' => $this->countModel(Menu::class),
+            'header_configs' => $this->countModel(HeaderConfig::class),
+            'footer_configs' => $this->countModel(FooterConfig::class),
+            'site_settings' => $this->countModel(SiteSetting::class),
+            'homepage' => [
+                'label' => $homepage?->title ?? 'Homepage',
+                'status' => $homepageStatus,
+            ],
+            'setup' => [
+                'has_theme' => $hasTheme,
+                'has_header' => $hasHeader,
+                'has_footer' => $hasFooter,
+                'has_menu' => $hasMenu,
+                'has_site_settings' => $hasSiteSettings,
+                'is_complete' => $hasHeader && $hasFooter && $hasMenu && $hasSiteSettings,
+            ],
+        ];
+
+        $urls = [
+            'preview' => $this->routeUrl('shop.home.index'),
+            'cms' => $this->routeUrl('admin.cms.pages.index', 'admin.cms.dashboard.index'),
+            'themes' => $this->routeUrl('admin.theme.presets.index', 'admin.cms.dashboard.index'),
+            'settings' => $this->routeUrl('admin.cms.site-settings.index', 'admin.cms.dashboard.index'),
+            'header_footer' => $this->routeUrl('admin.cms.header-configs.index', 'admin.cms.dashboard.index'),
+        ];
 
         return view('experience-cms::admin.dashboard.index', [
-            'pages' => $pages,
-            'stats' => [
-                [
-                    'label' => 'Pages',
-                    'value' => Page::query()->count(),
-                    'help' => 'Structured pages available in this workspace',
-                ],
-                [
-                    'label' => 'Published',
-                    'value' => Page::query()->published()->count(),
-                    'help' => 'Pages currently live on the storefront',
-                ],
-                [
-                    'label' => 'Drafts',
-                    'value' => Page::query()->where('status', Page::STATUS_DRAFT)->count(),
-                    'help' => 'Pages still waiting on review or publish',
-                ],
-                [
-                    'label' => 'Templates',
-                    'value' => Template::query()->where('is_active', true)->count(),
-                    'help' => 'Active layouts ready for new page builds',
-                ],
-                [
-                    'label' => 'Theme presets',
-                    'value' => ThemePreset::query()->where('is_active', true)->count(),
-                    'help' => 'Active visual presets available to pages',
-                ],
-                [
-                    'label' => 'Menus',
-                    'value' => Menu::query()->where('is_active', true)->count(),
-                    'help' => 'Navigation trees available to the storefront',
-                ],
-            ],
-            'inventory' => [
-                [
-                    'label' => 'Section types',
-                    'value' => SectionType::query()->where('is_active', true)->count(),
-                ],
-                [
-                    'label' => 'Component types',
-                    'value' => ComponentType::query()->where('is_active', true)->count(),
-                ],
-                [
-                    'label' => 'Assignments',
-                    'value' => PageAssignment::query()->where('is_active', true)->count(),
-                ],
-                [
-                    'label' => 'Content entries',
-                    'value' => ContentEntry::query()->count(),
-                ],
-                [
-                    'label' => 'Header configs',
-                    'value' => HeaderConfig::query()->count(),
-                ],
-                [
-                    'label' => 'Footer configs',
-                    'value' => FooterConfig::query()->count(),
-                ],
-                [
-                    'label' => 'Site settings',
-                    'value' => SiteSetting::query()->count(),
-                ],
-            ],
-            'quickLinks' => [
-                [
-                    'label' => 'New page',
-                    'route' => route('admin.cms.pages.create'),
-                    'description' => 'Start a structured page from the CMS workflow.',
-                ],
-                [
-                    'label' => 'Templates',
-                    'route' => route('admin.cms.templates.index'),
-                    'description' => 'Review reusable page layouts and area schemas.',
-                ],
-                [
-                    'label' => 'Section types',
-                    'route' => route('admin.cms.section-types.index'),
-                    'description' => 'Inspect the approved section registry.',
-                ],
-                [
-                    'label' => 'Component types',
-                    'route' => route('admin.cms.component-types.index'),
-                    'description' => 'Manage reusable block and control definitions.',
-                ],
-                [
-                    'label' => 'Menus',
-                    'route' => route('admin.cms.menus.index'),
-                    'description' => 'Adjust navigation and link structure.',
-                ],
-                [
-                    'label' => 'Site settings',
-                    'route' => route('admin.cms.site-settings.index'),
-                    'description' => 'Update structured store and CMS settings.',
-                ],
-            ],
-            'mostUsedTemplate' => $mostUsedTemplate,
-            'latestPublishedPage' => $latestPublishedPage,
+            'overview' => $overview,
+            'urls' => $urls,
         ]);
+    }
+
+    private function countModel(string $modelClass, ?Closure $queryCallback = null): int
+    {
+        if (! $this->modelIsQueryable($modelClass)) {
+            return 0;
+        }
+
+        $query = $modelClass::query();
+
+        if ($queryCallback) {
+            $queryCallback($query);
+        }
+
+        return $query->count();
+    }
+
+    private function firstModel(string $modelClass, ?Closure $queryCallback = null): ?Model
+    {
+        if (! $this->modelIsQueryable($modelClass)) {
+            return null;
+        }
+
+        $query = $modelClass::query();
+
+        if ($queryCallback) {
+            $queryCallback($query);
+        }
+
+        return $query->first();
+    }
+
+    private function modelIsQueryable(string $modelClass): bool
+    {
+        if (! class_exists($modelClass)) {
+            return false;
+        }
+
+        $model = new $modelClass;
+
+        return $model instanceof Model
+            && Schema::hasTable($model->getTable());
+    }
+
+    private function routeUrl(string $routeName, ?string $fallbackRouteName = null): string
+    {
+        if (Route::has($routeName)) {
+            return route($routeName);
+        }
+
+        if ($fallbackRouteName && Route::has($fallbackRouteName)) {
+            return route($fallbackRouteName);
+        }
+
+        return url('/');
     }
 }

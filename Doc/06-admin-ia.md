@@ -13,15 +13,21 @@ Relevant admin areas now exposed:
 - Sales
 - Customers
 - Promotions
-- CMS
-- Theme
+- My Website
 - SEO
 - Media
 - Settings
 - Users & Roles
 - Audit Logs
 
-The Platform CMS area now opens on a dedicated dashboard overview screen at `admin.cms.dashboard.index`. It summarizes pages, templates, theme presets, section and component registries, and the broader structured content inventory before the admin drills into the detailed management screens.
+The `My Website` area groups storefront website management into one parent menu:
+
+- Overview
+- CMS
+- Themes
+- Settings
+
+`My Website > Overview` opens the existing CMS dashboard route at `admin.cms.dashboard.index`. It now acts as the website management overview for storefront content, theme, layout, and website settings. `My Website > CMS` links to the existing structured CMS pages screen, `My Website > Themes` links to existing theme presets, and `My Website > Settings` links to existing CMS site settings.
 
 ## Optional Module Visibility
 

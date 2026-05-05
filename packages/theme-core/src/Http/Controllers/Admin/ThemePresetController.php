@@ -4,33 +4,55 @@ namespace Platform\ThemeCore\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Platform\ThemeCore\Http\Requests\Admin\ThemePresetRequest;
 use Platform\ThemeCore\Models\ThemePreset;
-use Platform\ThemeCore\Models\ThemeTokenSet;
 
 class ThemePresetController extends Controller
 {
     public function index(): View
     {
-        $presets = ThemePreset::query()
-            ->orderByDesc('is_default')
-            ->orderBy('name')
-            ->get();
+        $themePresetColumns = [
+            'name' => $this->hasThemePresetColumn('name'),
+            'code' => $this->hasThemePresetColumn('code'),
+            'description' => $this->hasThemePresetColumn('description'),
+            'is_active' => $this->hasThemePresetColumn('is_active'),
+            'is_default' => $this->hasThemePresetColumn('is_default'),
+            'active' => $this->hasThemePresetColumn('active'),
+            'default' => $this->hasThemePresetColumn('default'),
+            'status' => $this->hasThemePresetColumn('status'),
+        ];
 
-        $defaultPreset = $presets->firstWhere('is_default', true) ?? $presets->first();
+        $presets = $this->themePresetTableExists()
+            ? ThemePreset::query()
+                ->when($themePresetColumns['is_default'], fn ($query) => $query->orderByDesc('is_default'))
+                ->when($themePresetColumns['is_active'], fn ($query) => $query->orderByDesc('is_active'))
+                ->when($themePresetColumns['name'], fn ($query) => $query->orderBy('name'))
+                ->get()
+            : collect();
+
+        $activePreset = $this->resolveActivePreset($presets, $themePresetColumns);
+        $themeActions = [
+            'create' => $this->routeUrl('admin.theme.presets.create'),
+            'index' => $this->routeUrl('admin.theme.presets.index'),
+            'preview' => $this->routeUrl('shop.home.index') ?? url('/'),
+            'edit_route_exists' => Route::has('admin.theme.presets.edit'),
+            'delete_route_exists' => Route::has('admin.theme.presets.destroy'),
+            'activate_route' => collect([
+                'admin.theme.presets.activate',
+                'admin.theme.presets.set-active',
+            ])->first(fn ($route) => Route::has($route)),
+        ];
 
         return view('theme-core::admin.theme-presets.index', [
-            'presets'          => $presets,
-            'defaultPreset'     => $defaultPreset,
-            'activePresetCount' => $presets->where('is_active', true)->count(),
-            'tokenSetCount'     => ThemeTokenSet::query()->count(),
-            'variantCount'      => $presets
-                ->pluck('settings_json')
-                ->map(fn ($settings) => data_get($settings, 'product_card_variant'))
-                ->filter()
-                ->unique()
-                ->count(),
+            'presets' => $presets,
+            'activePreset' => $activePreset,
+            'activePresetId' => $activePreset?->getKey(),
+            'themeActions' => $themeActions,
+            'themePresetColumns' => $themePresetColumns,
         ]);
     }
 
@@ -38,7 +60,7 @@ class ThemePresetController extends Controller
     {
         return view('theme-core::admin.theme-presets.form', [
             'preset' => new ThemePreset([
-                'is_active'  => true,
+                'is_active' => true,
                 'is_default' => false,
                 'tokens_json' => [],
                 'settings_json' => [],
@@ -84,6 +106,54 @@ class ThemePresetController extends Controller
             ->with('success', 'Theme preset deleted.');
     }
 
+    public function setActive(int|string $id): RedirectResponse
+    {
+        $themePreset = ThemePreset::query()->find($id);
+
+        if (! $themePreset) {
+            return redirect()
+                ->back()
+                ->with('error', 'Theme preset not found.');
+        }
+
+        $activationColumns = $this->themeActivationColumns();
+
+        if (empty($activationColumns)) {
+            return redirect()
+                ->back()
+                ->with('error', 'No theme activation column is available.');
+        }
+
+        DB::transaction(function () use ($themePreset, $activationColumns): void {
+            $inactiveValues = [];
+            $activeValues = [];
+
+            foreach ($activationColumns as $column) {
+                if ($column === 'status') {
+                    $inactiveValues[$column] = 'inactive';
+                    $activeValues[$column] = 'active';
+
+                    continue;
+                }
+
+                $inactiveValues[$column] = false;
+                $activeValues[$column] = true;
+            }
+
+            ThemePreset::query()
+                ->whereKeyNot($themePreset->getKey())
+                ->update($inactiveValues);
+
+            ThemePreset::query()
+                ->whereKey($themePreset->getKey())
+                ->update($activeValues);
+        });
+
+        return redirect()
+            ->back()
+            ->with('success', 'Theme preset activated successfully.');
+    }
+
     protected function syncDefaultPreset(ThemePreset $themePreset): void
     {
         if (! $themePreset->is_default) {
@@ -93,5 +163,70 @@ class ThemePresetController extends Controller
         ThemePreset::query()
             ->whereKeyNot($themePreset->getKey())
             ->update(['is_default' => false]);
+    }
+
+    protected function resolveActivePreset($presets, array $themePresetColumns): ?ThemePreset
+    {
+        if ($presets->isEmpty()) {
+            return null;
+        }
+
+        if ($themePresetColumns['is_active'] && $themePresetColumns['is_default']) {
+            return $presets->first(fn ($preset) => $preset->is_active && $preset->is_default)
+                ?? $presets->firstWhere('is_active', true);
+        }
+
+        if ($themePresetColumns['is_default']) {
+            return $presets->firstWhere('is_default', true);
+        }
+
+        if ($themePresetColumns['is_active']) {
+            return $presets->firstWhere('is_active', true);
+        }
+
+        if ($themePresetColumns['default']) {
+            return $presets->firstWhere('default', true);
+        }
+
+        if ($themePresetColumns['active']) {
+            return $presets->firstWhere('active', true);
+        }
+
+        if ($themePresetColumns['status']) {
+            return $presets->firstWhere('status', 'active');
+        }
+
+        return null;
+    }
+
+    protected function themeActivationColumns(): array
+    {
+        return array_values(array_filter([
+            $this->hasThemePresetColumn('is_active') ? 'is_active' : null,
+            $this->hasThemePresetColumn('is_default') ? 'is_default' : null,
+            $this->hasThemePresetColumn('active') ? 'active' : null,
+            $this->hasThemePresetColumn('default') ? 'default' : null,
+            $this->hasThemePresetColumn('status') ? 'status' : null,
+        ]));
+    }
+
+    protected function themePresetTableExists(): bool
+    {
+        return Schema::hasTable((new ThemePreset)->getTable());
+    }
+
+    protected function hasThemePresetColumn(string $column): bool
+    {
+        return $this->themePresetTableExists()
+            && Schema::hasColumn((new ThemePreset)->getTable(), $column);
+    }
+
+    protected function routeUrl(string $routeName): ?string
+    {
+        if (! Route::has($routeName)) {
+            return null;
+        }
+
+        return route($routeName);
     }
 }

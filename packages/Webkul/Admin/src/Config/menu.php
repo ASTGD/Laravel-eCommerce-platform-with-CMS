@@ -166,14 +166,43 @@ return [
     ],
 
     /**
-     * CMS.
+     * My Website.
      */
     [
-        'key' => 'cms',
-        'name' => 'admin::app.components.layouts.sidebar.cms',
-        'route' => 'admin.cms.index',
+        'key' => 'my-website',
+        'name' => 'admin::app.components.layouts.sidebar.my-website',
+        'route' => 'admin.cms.dashboard.index',
         'sort' => 5,
         'icon' => 'icon-cms',
+        'permission' => 'cms.platform',
+    ], [
+        'key' => 'my-website.overview',
+        'name' => 'admin::app.components.layouts.sidebar.overview',
+        'route' => 'admin.cms.dashboard.index',
+        'sort' => 1,
+        'icon' => '',
+        'permission' => 'cms.platform',
+    ], [
+        'key' => 'my-website.cms',
+        'name' => 'admin::app.components.layouts.sidebar.cms',
+        'route' => 'admin.cms.index',
+        'sort' => 2,
+        'icon' => '',
+        'permission' => 'cms.platform',
+    ], [
+        'key' => 'my-website.themes',
+        'name' => 'admin::app.components.layouts.sidebar.themes',
+        'route' => 'admin.theme.presets.index',
+        'sort' => 3,
+        'icon' => '',
+        'permission' => 'theme.presets',
+    ], [
+        'key' => 'my-website.settings',
+        'name' => 'admin::app.components.layouts.sidebar.settings',
+        'route' => 'admin.cms.site-settings.index',
+        'sort' => 4,
+        'icon' => '',
+        'permission' => 'cms.platform.site_settings',
     ],
 
     /**

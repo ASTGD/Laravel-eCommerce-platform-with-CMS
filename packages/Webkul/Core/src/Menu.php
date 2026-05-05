@@ -55,7 +55,7 @@ class Menu
         switch ($area) {
             case self::ADMIN:
                 $this->configMenu = $configMenu
-                    ->filter(fn ($item) => bouncer()->hasPermission($item['key']))
+                    ->filter(fn ($item) => $this->hasAdminMenuPermission($item, $configMenu))
                     ->toArray();
                 break;
 
@@ -81,6 +81,21 @@ class Menu
 
         return collect($this->removeUnauthorizedMenuItem())
             ->sortBy('sort');
+    }
+
+    /**
+     * Check if an admin menu item can be shown.
+     */
+    private function hasAdminMenuPermission(array $item, Collection $configMenu): bool
+    {
+        if (bouncer()->hasPermission($item['permission'] ?? $item['key'])) {
+            return true;
+        }
+
+        return $configMenu->contains(function ($childItem) use ($item) {
+            return str_starts_with($childItem['key'], $item['key'].'.')
+                && bouncer()->hasPermission($childItem['permission'] ?? $childItem['key']);
+        });
     }
 
     /**
