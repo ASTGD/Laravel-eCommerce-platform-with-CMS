@@ -17,18 +17,14 @@
 
         <template v-else>
             <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-end sm:justify-between dark:border-slate-800">
+                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            @lang('admin::app.dashboard.index.customer-with-most-sales')
-                        </p>
-
-                        <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            Top customers
+                        <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
+                            Top Customers
                         </h3>
                     </div>
 
-                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         @{{ report.date_range }}
                     </span>
                 </div>
@@ -70,10 +66,6 @@
                     <div class="flex flex-col items-center">
                         <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
                             No top customers yet
-                        </p>
-
-                        <p class="text-sm text-slate-400 dark:text-slate-400">
-                            Customer revenue will appear here after sales are recorded.
                         </p>
                     </div>
                 </div>
