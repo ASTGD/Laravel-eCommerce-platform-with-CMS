@@ -22,7 +22,7 @@
 <main class="flex min-h-screen flex-col bg-[#f6f3f2] text-slate-900">
     @include('theme-default::storefront.checkout-header')
 
-    <div class="mx-auto w-full max-w-[1440px] flex-1 px-6 py-10 lg:px-10 xl:px-12 lg:py-12">
+    <div class="mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-12 xl:px-12">
         <v-checkout>
             <x-shop::shimmer.checkout.onepage />
         </v-checkout>
@@ -43,9 +43,9 @@
         <template v-else>
             <div
                 id="steps-container"
-                class="grid gap-10 xl:grid-cols-[minmax(0,1.03fr)_minmax(22rem,0.97fr)]"
+                class="space-y-6"
             >
-                <div class="space-y-3">
+                <div class="space-y-6">
                     @guest('customer')
                         @include('shop::checkout.login')
                     @endguest
@@ -53,36 +53,36 @@
                     @include('shop::checkout.coupon')
                 </div>
 
-                <div class="hidden xl:block"></div>
+                <div class="grid items-start gap-8 xl:grid-cols-[minmax(0,1.05fr)_minmax(24rem,0.95fr)] xl:gap-10">
+                    <div class="flex flex-col">
+                        @include('shop::checkout.onepage.address')
+                    </div>
 
-                <div class="flex h-full flex-col">
-                    @include('shop::checkout.onepage.address')
+                    <aside class="space-y-6 xl:sticky xl:top-8 xl:self-start">
+                        @include('theme-default::storefront.checkout-summary')
+
+                        @include('shop::checkout.onepage.payment')
+
+                        <template v-if="cart && cart.payment_method == 'paypal_smart_button'">
+                            {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.before') !!}
+
+                            <v-paypal-smart-button></v-paypal-smart-button>
+
+                            {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.after') !!}
+                        </template>
+
+                        <template v-else>
+                            <button
+                                type="button"
+                                class="primary-button flex w-full items-center justify-center rounded-2xl bg-[#2f5ec5] px-11 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-white shadow-sm transition hover:bg-[#244cad] max-md:rounded-xl max-md:px-8 max-md:py-3 max-md:text-xs max-md:tracking-[0.16em]"
+                                :disabled="isPlacingOrder"
+                                @click.prevent="submitOrder"
+                            >
+                                @lang('shop::app.checkout.onepage.summary.place-order')
+                            </button>
+                        </template>
+                    </aside>
                 </div>
-
-                <aside class="space-y-6 xl:sticky xl:top-8">
-                    @include('theme-default::storefront.checkout-summary')
-
-                    @include('shop::checkout.onepage.payment')
-
-                    <template v-if="cart && cart.payment_method == 'paypal_smart_button'">
-                        {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.before') !!}
-
-                        <v-paypal-smart-button></v-paypal-smart-button>
-
-                        {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.after') !!}
-                    </template>
-
-                    <template v-else>
-                        <button
-                            type="button"
-                            class="primary-button flex w-full items-center justify-center rounded-2xl bg-[#2f5ec5] px-11 py-4 text-center text-sm font-semibold uppercase tracking-[0.2em] text-white shadow-sm transition hover:bg-[#244cad] max-md:rounded-xl max-md:px-8 max-md:py-3 max-md:text-xs max-md:tracking-[0.16em]"
-                            :disabled="isPlacingOrder"
-                            @click.prevent="submitOrder"
-                        >
-                            @lang('shop::app.checkout.onepage.summary.place-order')
-                        </button>
-                    </template>
-                </aside>
             </div>
         </template>
     </script>

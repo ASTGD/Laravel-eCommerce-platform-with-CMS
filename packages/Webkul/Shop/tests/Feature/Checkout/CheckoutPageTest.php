@@ -2,8 +2,8 @@
 
 use Webkul\Checkout\Models\Cart;
 use Webkul\Checkout\Models\CartItem;
-use Webkul\Customer\Models\Customer;
 use Webkul\Core\Models\CoreConfig;
+use Webkul\Customer\Models\Customer;
 use Webkul\Faker\Helpers\Product as ProductFaker;
 use Webkul\Sales\Models\Order;
 
@@ -177,6 +177,10 @@ it('renders the simplified checkout form contract for authenticated customers', 
 
     get(route('shop.checkout.custom.index'))
         ->assertOk()
+        ->assertSee('px-4 py-8 sm:px-6', false)
+        ->assertSee('hidden whitespace-nowrap md:inline', false)
+        ->assertSee('grid items-start gap-8 xl:grid-cols-[minmax(0,1.05fr)_minmax(24rem,0.95fr)]', false)
+        ->assertDontSee('hidden xl:block', false)
         ->assertSeeText('Your Order')
         ->assertDontSeeText('Cart Summary')
         ->assertSeeText('Name')
