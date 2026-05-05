@@ -16,15 +16,17 @@
 
         <template v-else>
             <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                <div class="border-b border-slate-200 px-6 py-6 dark:border-slate-800">
+                <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
                     <div class="min-w-0">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
+                        <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             Revenue / Orders Trend
-                        </p>
-
-                        <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            @{{ report.statistics.total_sales.formatted_total }}
                         </h3>
+
+                        <div class="mt-3">
+                            <span class="font-sans text-2xl leading-8 font-bold tracking-tight text-slate-950 dark:text-white">
+                                @{{ report.statistics.total_sales.formatted_total }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 

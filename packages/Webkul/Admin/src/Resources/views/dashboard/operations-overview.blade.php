@@ -26,13 +26,9 @@
         <template v-else>
             <div class="grid h-full gap-6 md:grid-cols-2">
                 <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                    <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            Shipment Overview
-                        </p>
-
-                        <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            Orders moving
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+                        <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
+                            Orders Moving
                         </h3>
                     </div>
 
@@ -60,18 +56,14 @@
                 </article>
 
                 <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                    <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            Cash-on-delivery orders
-                        </p>
-
-                        <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+                        <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             COD Collection
                         </h3>
                     </div>
 
                     <div class="px-6 py-5">
-                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                        <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
                             COD Receivable
                         </p>
 
@@ -93,7 +85,7 @@
                             :href="item.url"
                             class="rounded-[1rem] bg-slate-50 px-4 py-3 transition hover:bg-slate-100/80 dark:bg-slate-950 dark:hover:bg-slate-800"
                         >
-                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                            <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
                                 @{{ item.label }}
                             </p>
 

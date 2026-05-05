@@ -17,12 +17,8 @@
         <template v-else>
             <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
                 <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                        Attention
-                    </p>
-
-                    <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                        Needs action
+                    <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
+                        Needs Action
                     </h3>
                 </div>
 
@@ -33,11 +29,11 @@
                     >
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-rose-700 dark:text-rose-300">
+                                <span class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                                     Unpaid Invoices
-                                </p>
+                                </span>
 
-                                <p class="mt-2 text-2xl font-semibold tracking-tight text-rose-950 dark:text-rose-100">
+                                <p class="mt-2 font-sans text-2xl leading-8 font-bold tracking-tight text-rose-950 dark:text-rose-100">
                                     @{{ unpaid.formatted_total }}
                                 </p>
                             </div>
@@ -55,7 +51,7 @@
                         :href="item.url"
                         class="rounded-[1.125rem] bg-slate-50 px-4 py-3 transition hover:bg-slate-100/80 dark:bg-slate-950 dark:hover:bg-slate-800"
                     >
-                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                            <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
                                 @{{ item.label }}
                             </p>
 

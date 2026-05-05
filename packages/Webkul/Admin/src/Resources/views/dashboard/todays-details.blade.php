@@ -17,11 +17,7 @@
         <template v-else>
             <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
                 <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                        @lang('admin::app.dashboard.index.today-details')
-                    </p>
-
-                    <h3 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                    <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                         Today's Orders
                     </h3>
                 </div>
@@ -32,7 +28,7 @@
                         :key="item.label"
                         class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950"
                     >
-                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                        <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
                             @{{ item.label }}
                         </p>
 
@@ -59,7 +55,7 @@
                                 </p>
 
                                 <span
-                                    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em]"
+                                    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
                                     :class="'label-' + order.status"
                                 >
                                     @{{ order.status_label }}
@@ -95,10 +91,6 @@
                     <div class="flex flex-col items-center">
                         <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
                             No orders today
-                        </p>
-
-                        <p class="text-sm text-slate-400 dark:text-slate-400">
-                            Today's orders will appear here when customers place them.
                         </p>
                     </div>
                 </div>

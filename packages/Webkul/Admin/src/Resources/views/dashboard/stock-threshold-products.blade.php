@@ -17,19 +17,15 @@
 
         <template v-else>
             <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-6 sm:flex-row sm:items-end sm:justify-between dark:border-slate-800">
+                <div class="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
-                            @lang('admin::app.dashboard.index.stock-threshold')
-                        </p>
-
-                        <h3 class="mt-2 text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                            Inventory watchlist
+                        <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
+                            Inventory Watchlist
                         </h3>
                     </div>
 
-                    <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                        Low stock
+                    <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                        Low Stock
                     </span>
                 </div>
 
@@ -90,15 +86,11 @@
                         <img src="{{ bagisto_asset('images/icon-add-product.svg') }}" class="h-20 w-20 dark:mix-blend-exclusion dark:invert">
 
                         <div class="flex flex-col items-center">
-                            <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
-                                No low-stock items yet
-                            </p>
-
-                            <p class="text-sm text-slate-400 dark:text-slate-400">
-                                Inventory that falls under the threshold will appear here.
-                            </p>
-                        </div>
+                        <p class="text-base font-semibold text-slate-500 dark:text-slate-300">
+                            No low-stock items yet
+                        </p>
                     </div>
+                </div>
                 </template>
             </article>
         </template>
