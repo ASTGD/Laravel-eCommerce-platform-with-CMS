@@ -58,41 +58,47 @@
                 <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
                     <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
                         <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
-                            COD Collection
+                            Courier Pending Payments
                         </h3>
                     </div>
 
-                    <div class="px-6 py-5">
-                        <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
-                            COD Receivable
-                        </p>
+                    <div
+                        v-if="pendingPayments.length"
+                        class="divide-y divide-slate-200 dark:divide-slate-800"
+                    >
+                        <a
+                            v-for="item in pendingPayments"
+                            :key="item.carrier_id"
+                            :href="'{{ route('admin.sales.cod-receivables.index') }}?search=' + encodeURIComponent(item.courier_name)"
+                            class="flex items-center justify-between gap-4 px-6 py-4 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60"
+                        >
+                            <div class="min-w-0">
+                                <p class="font-semibold text-slate-950 dark:text-white">
+                                    @{{ item.courier_name }}
+                                </p>
 
-                        <div class="mt-2 flex flex-wrap items-end justify-between gap-3">
-                            <p class="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                                @{{ cod.receivable?.formatted_amount ?? '$0.00' }}
-                            </p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    @{{ item.settlement_count }} delivered COD shipment(s)
+                                </p>
+                            </div>
 
-                            <span class="text-sm font-medium text-slate-500 dark:text-slate-400">
-                                @{{ cod.receivable?.count ?? 0 }} eligible orders
-                            </span>
-                        </div>
+                            <div class="shrink-0 text-right">
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    Pending
+                                </p>
+
+                                <p class="mt-1 text-lg font-semibold tracking-tight text-slate-950 dark:text-white">
+                                    @{{ item.pending_total_formatted }}
+                                </p>
+                            </div>
+                        </a>
                     </div>
 
-                    <div class="grid gap-3 border-t border-slate-200 px-6 py-5 sm:grid-cols-2 dark:border-slate-800">
-                        <a
-                            v-for="item in codCards"
-                            :key="item.label"
-                            :href="item.url"
-                            class="rounded-[1rem] bg-slate-50 px-4 py-3 transition hover:bg-slate-100/80 dark:bg-slate-950 dark:hover:bg-slate-800"
-                        >
-                            <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
-                                @{{ item.label }}
-                            </p>
-
-                            <p class="mt-2 text-xl font-semibold tracking-tight text-slate-950 dark:text-white">
-                                @{{ item.value }}
-                            </p>
-                        </a>
+                    <div
+                        v-else
+                        class="px-6 py-8 text-sm text-slate-500 dark:text-slate-400"
+                    >
+                        No courier pending payments right now.
                     </div>
                 </article>
             </div>
@@ -117,10 +123,6 @@
             },
 
             computed: {
-                cod() {
-                    return this.report.statistics?.cod ?? {};
-                },
-
                 shipmentCards() {
                     const shipment = this.report.statistics?.shipment ?? {};
 
@@ -152,31 +154,8 @@
                     ];
                 },
 
-                codCards() {
-                    const cod = this.report.statistics?.cod ?? {};
-
-                    return [
-                        {
-                            label: 'Active COD Orders',
-                            value: cod.active_orders?.count ?? 0,
-                            url: "{{ route('admin.sales.orders.index') }}",
-                        },
-                        {
-                            label: 'Shipped COD',
-                            value: cod.shipped_orders?.count ?? 0,
-                            url: "{{ route('admin.sales.orders.index') }}",
-                        },
-                        {
-                            label: 'Completed COD',
-                            value: cod.completed_orders?.count ?? 0,
-                            url: "{{ route('admin.sales.orders.index') }}",
-                        },
-                        {
-                            label: 'COD Exceptions',
-                            value: cod.exceptions?.count ?? 0,
-                            url: "{{ route('admin.sales.orders.index') }}",
-                        },
-                    ];
+                pendingPayments() {
+                    return this.report.statistics?.cod?.pending_payments ?? [];
                 },
             },
 

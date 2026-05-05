@@ -19,34 +19,7 @@ class ManualCodReceivableService
 
     public function courierSummaries(int $perPage = 10, ?string $search = null): LengthAwarePaginator
     {
-        $summaries = CodSettlement::query()
-            ->with('carrier:id,name')
-            ->whereNotNull('shipment_carrier_id')
-            ->whereIn('status', $this->summaryStatuses())
-            ->get()
-            ->groupBy('shipment_carrier_id')
-            ->map(function (Collection $settlements, $carrierId): array {
-                $firstSettlement = $settlements->first();
-
-                $receivableTotal = round((float) $settlements->sum('net_amount'), 2);
-                $receivedTotal = round((float) $settlements->sum('remitted_amount'), 2);
-                $pendingTotal = round((float) $settlements->sum(fn (CodSettlement $settlement) => $settlement->outstanding_amount), 2);
-
-                return [
-                    'carrier_id' => (int) $carrierId,
-                    'courier_name' => $firstSettlement?->carrier?->name ?: 'Unknown Courier',
-                    'settlement_count' => $settlements->count(),
-                    'receivable_total' => $receivableTotal,
-                    'receivable_total_formatted' => core()->formatBasePrice($receivableTotal),
-                    'received_total' => $receivedTotal,
-                    'received_total_formatted' => core()->formatBasePrice($receivedTotal),
-                    'pending_total' => $pendingTotal,
-                    'pending_total_formatted' => core()->formatBasePrice($pendingTotal),
-                    'can_record_receipt' => $pendingTotal > 0,
-                ];
-            })
-            ->sortBy('courier_name')
-            ->values();
+        $summaries = $this->buildCourierSummaryCollection();
 
         if ($search = $this->normalizeSearchTerm($search)) {
             $summaries = $summaries->filter(function (array $summary) use ($search) {
@@ -55,6 +28,17 @@ class ManualCodReceivableService
         }
 
         return $this->paginateCollection($summaries, $perPage);
+    }
+
+    public function pendingCourierSummaries(int $limit = 5): Collection
+    {
+        return $this->buildCourierSummaryCollection()
+            ->filter(function (array $summary) {
+                return $summary['pending_total'] > 0;
+            })
+            ->sortByDesc('pending_total')
+            ->take($limit)
+            ->values();
     }
 
     public function recordReceipt(
@@ -173,6 +157,38 @@ class ManualCodReceivableService
             CodSettlement::STATUS_REMITTED,
             CodSettlement::STATUS_SETTLED,
         ];
+    }
+
+    protected function buildCourierSummaryCollection(): Collection
+    {
+        return CodSettlement::query()
+            ->with('carrier:id,name')
+            ->whereNotNull('shipment_carrier_id')
+            ->whereIn('status', $this->summaryStatuses())
+            ->get()
+            ->groupBy('shipment_carrier_id')
+            ->map(function (Collection $settlements, $carrierId): array {
+                $firstSettlement = $settlements->first();
+
+                $receivableTotal = round((float) $settlements->sum('net_amount'), 2);
+                $receivedTotal = round((float) $settlements->sum('remitted_amount'), 2);
+                $pendingTotal = round((float) $settlements->sum(fn (CodSettlement $settlement) => $settlement->outstanding_amount), 2);
+
+                return [
+                    'carrier_id' => (int) $carrierId,
+                    'courier_name' => $firstSettlement?->carrier?->name ?: 'Unknown Courier',
+                    'settlement_count' => $settlements->count(),
+                    'receivable_total' => $receivableTotal,
+                    'receivable_total_formatted' => core()->formatBasePrice($receivableTotal),
+                    'received_total' => $receivedTotal,
+                    'received_total_formatted' => core()->formatBasePrice($receivedTotal),
+                    'pending_total' => $pendingTotal,
+                    'pending_total_formatted' => core()->formatBasePrice($pendingTotal),
+                    'can_record_receipt' => $pendingTotal > 0,
+                ];
+            })
+            ->sortBy('courier_name')
+            ->values();
     }
 
     protected function normalizeSearchTerm(?string $search): ?string

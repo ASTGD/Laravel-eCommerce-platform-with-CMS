@@ -22,14 +22,23 @@
                     class="group relative min-h-[136px] rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-none transition-colors duration-200 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
                 >
                     <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0 space-y-2.5 pr-16">
+                        <div class="min-w-0 space-y-1.5 pr-16">
                             <h3 class="font-sans text-[13px] leading-5 font-medium tracking-normal text-slate-500 dark:text-slate-400">
                                 @{{ card.label }}
                             </h3>
 
-                            <span class="font-sans text-[26px] leading-8 font-bold tracking-tight text-slate-950 dark:text-white">
-                                @{{ card.value }}
-                            </span>
+                            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                <span class="font-sans text-[26px] leading-8 font-bold tracking-tight text-slate-950 dark:text-white">
+                                    @{{ card.value }}
+                                </span>
+
+                                <span
+                                    v-if="card.comparisonLabel"
+                                    class="font-sans text-[12px] leading-5 font-medium tracking-normal text-slate-400 dark:text-slate-500"
+                                >
+                                    @{{ card.comparisonLabel }}
+                                </span>
+                            </div>
                         </div>
 
                         <div
@@ -91,6 +100,7 @@
                             label: "@lang('admin::app.dashboard.index.total-sales')",
                             value: stats.total_sales?.formatted_total ?? '$0.00',
                             change: stats.total_sales?.progress,
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/total-sales.svg') }}",
                             iconBoxClass: '!border-slate-300 !bg-slate-100 dark:!border-slate-700 dark:!bg-slate-800/60',
                         }),
@@ -98,6 +108,7 @@
                             label: "@lang('admin::app.dashboard.index.total-orders')",
                             value: stats.total_orders?.current ?? 0,
                             change: stats.total_orders?.progress,
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/total-orders.svg') }}",
                             iconBoxClass: '!border-blue-200 !bg-blue-50 dark:!border-blue-500/30 dark:!bg-blue-500/15',
                         }),
@@ -105,6 +116,7 @@
                             label: "@lang('admin::app.dashboard.index.average-sale')",
                             value: stats.avg_sales?.formatted_total ?? '$0.00',
                             change: stats.avg_sales?.progress,
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/average-orders.svg') }}",
                             iconBoxClass: '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/15',
                         }),
@@ -112,6 +124,7 @@
                             label: 'New Customers',
                             value: stats.total_customers?.current ?? 0,
                             change: stats.total_customers?.progress,
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/customers.svg') }}",
                             iconBoxClass: '!border-emerald-200 !bg-emerald-50 dark:!border-emerald-500/30 dark:!bg-emerald-500/15',
                         }),
@@ -119,6 +132,7 @@
                             label: "@lang('admin::app.dashboard.index.total-unpaid-invoices')",
                             value: stats.total_unpaid_invoices?.formatted_total ?? '$0.00',
                             badgeText: 'Review',
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/unpaid-invoices.svg') }}",
                             iconBoxClass: '!border-rose-200 !bg-rose-50 dark:!border-rose-500/30 dark:!bg-rose-500/15',
                             tone: 'rose',
@@ -127,6 +141,7 @@
                             label: 'To Ship',
                             value: stats.to_ship?.current ?? 0,
                             badgeText: 'Queue',
+                            comparisonLabel: stats.comparison_label,
                             iconClass: 'icon-ship',
                             iconBoxClass: '!border-sky-200 !bg-sky-50 dark:!border-sky-500/30 dark:!bg-sky-500/15',
                             iconTextClass: '!text-sky-600 dark:!text-sky-300',
@@ -136,6 +151,7 @@
                             label: 'In Delivery',
                             value: stats.in_delivery?.current ?? 0,
                             badgeText: 'Active',
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/settings/shipping.svg') }}",
                             iconBoxClass: '!border-violet-200 !bg-violet-50 dark:!border-violet-500/30 dark:!bg-violet-500/15',
                             tone: 'amber',
@@ -144,6 +160,7 @@
                             label: 'COD Receivable',
                             value: stats.cod_receivable?.formatted_total ?? '$0.00',
                             badgeText: 'Collect',
+                            comparisonLabel: stats.comparison_label,
                             icon: "{{ bagisto_asset('images/settings/payment-method.svg') }}",
                             iconBoxClass: '!border-orange-200 !bg-orange-50 dark:!border-orange-500/30 dark:!bg-orange-500/15',
                             tone: 'orange',
