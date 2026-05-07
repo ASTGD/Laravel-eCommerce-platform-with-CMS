@@ -41,7 +41,7 @@ class HeroBannerSectionType extends AbstractSectionType
             'primary_cta_label' => 'Shop now',
             'primary_cta_url' => '/catalog',
             'secondary_cta_label' => 'Learn more',
-            'secondary_cta_url' => '/pages/about',
+            'secondary_cta_url' => '/contact-us',
         ];
     }
 

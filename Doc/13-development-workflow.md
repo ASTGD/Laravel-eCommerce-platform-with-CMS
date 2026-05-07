@@ -48,7 +48,7 @@ Use the frontend workspace for:
 
 The frontend workspace should not invent a separate app or a new top-level `frontend/` folder. The storefront theme layer stays inside this Laravel application.
 
-The public storefront is Bagisto-native by default. The structured CMS storefront remains available behind the `EXPERIENCE_CMS_STOREFRONT_MODE=cms` switch for later theme implementation work.
+The public storefront renders through Bagisto routes and controllers by default. Visual storefront changes are delivered as Bagisto shop themes selected on the current channel. Bagisto remains the core for admin, customer portal, checkout, catalog data, cart, orders, payment, shipping, and business rules.
 
 ## Figma Workflow
 
@@ -59,9 +59,7 @@ Workflow:
 1. Approved storefront concepts are designed in Figma Make.
 2. Codex receives the approved Figma file or node links through the Figma MCP workflow.
 3. The design context is used as the reference for storefront implementation.
-4. Codex implements the UI in `packages/theme-core` and `packages/theme-default`.
-
-When you are not actively implementing the custom CMS storefront, keep `EXPERIENCE_CMS_STOREFRONT_MODE=native` so the public app stays on the native Bagisto storefront.
+4. Codex implements approved UI as Bagisto shop theme view overrides and shared theme-package support code.
 
 Rules:
 
@@ -99,7 +97,7 @@ This repository has multiple asset workspaces, but it is still one Laravel appli
 Use the correct package depending on what you are changing:
 
 - root `package.json`
-  Use for the custom `theme-default` storefront shell
+  Use for custom platform/theme support assets
   Output: `public/build`
 
   This is part of the Laravel application, not a separate frontend app.
@@ -120,8 +118,10 @@ For storefront feature work in this repository, the Codex frontend workspace sho
 
 - `packages/theme-core`
 - `packages/theme-default`
+- `resources/themes/<theme-code>`
+- `public/themes/shop/<theme-code>`
 
-Shared rendering contracts live in `theme-core`. Visual presentation and responsive storefront implementation live in `theme-default`.
+Shared rendering contracts live in `theme-core`. Visual presentation and responsive storefront implementation live in Bagisto shop theme view overrides and reusable theme package views.
 
 ## Install Flow
 
@@ -167,7 +167,6 @@ At minimum confirm:
 - `CACHE_STORE=redis`
 - `SESSION_DRIVER=redis`
 - `QUEUE_CONNECTION=redis`
-- `EXPERIENCE_CMS_STOREFRONT_MODE=native`
 
 4. Install PHP dependencies:
 
@@ -227,7 +226,7 @@ Do not mix a host-installed root `node_modules` tree with `./vendor/bin/sail npm
 
 10. Start Vite only for the workspace you are actively editing.
 
-11. If you later want the custom CMS storefront active, switch `EXPERIENCE_CMS_STOREFRONT_MODE=cms`, then clear config and route caches before reloading the app.
+11. Clear config and route caches after changing service-provider or route-level storefront behavior.
 
 ## Recommended `.env` Values For Local Dev
 
@@ -539,8 +538,8 @@ The most useful local URLs are:
 
 After `php artisan db:seed --force`, these platform-specific URLs are also useful:
 
-- homepage seed preview: `http://127.0.0.1:8000/home-preview` when `EXPERIENCE_CMS_STOREFRONT_MODE=cms`
-- structured CMS preview route: `http://127.0.0.1:8000/preview/pages/{slug}` when `EXPERIENCE_CMS_STOREFRONT_MODE=cms`
+- homepage seed preview: `http://127.0.0.1:8000/home-preview`
+- structured CMS preview route: `http://127.0.0.1:8000/preview/pages/{slug}`
 
 ## Daily Developer Startup Checklist
 
@@ -575,7 +574,7 @@ After a fresh local boot:
 3. Sign into admin.
 4. Confirm catalog pages load.
 5. Confirm the custom CMS menu items load in admin.
-6. Open the homepage preview route if seeded and CMS storefront mode is enabled.
+6. Open the homepage preview route if seeded.
 7. Confirm customer login/register pages load.
 
 ## Troubleshooting

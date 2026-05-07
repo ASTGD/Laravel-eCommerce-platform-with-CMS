@@ -1,11 +1,22 @@
-@php($settings = array_replace($siteSettings['store.contact'] ?? [], $footer?->settings_json ?? []))
+@php
+    $settings = array_replace($siteSettings['store.contact'] ?? [], $footer?->settings_json ?? []);
+    $textValue = static function (mixed $value, string $fallback): string {
+        if (is_array($value)) {
+            return (string) ($value['text'] ?? $value['label'] ?? $value['name'] ?? $fallback);
+        }
+
+        return (string) ($value ?: $fallback);
+    };
+    $headline = $textValue($settings['headline'] ?? $settings['name'] ?? null, config('app.name'));
+    $description = $textValue($settings['description'] ?? null, 'Structured commerce experience powered by reusable CMS-driven storefront composition.');
+@endphp
 <footer class="mt-16 bg-slate-950 text-slate-100">
     <div class="mx-auto max-w-6xl px-6 py-12">
         <div class="grid gap-8 md:grid-cols-2">
             <div>
-                <p class="text-lg font-semibold">{{ $settings['headline'] ?? config('app.name') }}</p>
+                <p class="text-lg font-semibold">{{ $headline }}</p>
                 <p class="mt-3 max-w-xl text-sm text-slate-300">
-                    {{ $settings['description'] ?? 'Structured commerce experience powered by reusable CMS-driven storefront composition.' }}
+                    {{ $description }}
                 </p>
 
                 <div class="mt-4">
@@ -24,7 +35,9 @@
                         <p class="font-medium text-white">{{ $column['title'] ?? 'Links' }}</p>
                         <div class="mt-3 space-y-2">
                             @foreach (($column['links'] ?? []) as $link)
-                                <a href="{{ $link['url'] ?? '#' }}" class="block hover:text-white">{{ $link['label'] ?? 'Link' }}</a>
+                                <a href="{{ is_string($link['url'] ?? null) ? $link['url'] : '#' }}" class="block hover:text-white">
+                                    {{ $textValue($link['label'] ?? null, 'Link') }}
+                                </a>
                             @endforeach
                         </div>
                     </div>

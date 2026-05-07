@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Platform\ExperienceCms\Models\ComponentType;
 use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
@@ -12,12 +13,11 @@ use Platform\ExperienceCms\Models\SectionType;
 use Platform\ExperienceCms\Models\SiteSetting;
 use Platform\ExperienceCms\Models\Template;
 use Platform\ThemeCore\Models\ThemePreset;
+use Webkul\Admin\Tests\AdminTestCase;
+use Webkul\Category\Models\Category;
+use Webkul\Faker\Helpers\Category as CategoryFaker;
 use Webkul\User\Models\Admin as AdminModel;
 use Webkul\User\Models\Role;
-use Webkul\Category\Models\Category;
-use Webkul\Admin\Tests\AdminTestCase;
-use Webkul\Faker\Helpers\Category as CategoryFaker;
-use Webkul\Product\Models\ProductFlat;
 
 uses(AdminTestCase::class);
 
@@ -393,8 +393,8 @@ it('creates a category page assignment from the admin screen', function () {
 });
 
 it('redirects admin preview to a signed storefront preview URL and records publish transitions', function () {
-    if (config('experience-cms.storefront_mode') !== 'cms') {
-        $this->markTestSkipped('CMS storefront mode is disabled by default.');
+    if (! Route::has('admin.cms.pages.preview')) {
+        $this->markTestSkipped('CMS Studio page preview route is not registered in this runtime.');
     }
 
     $this->loginAsAdmin();

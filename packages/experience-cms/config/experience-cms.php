@@ -2,9 +2,7 @@
 
 return [
     /*
-     * Native Bagisto storefront is the default.
-     * Set to "cms" when the structured CMS storefront should override
-     * the public home/category/product routes and preview routes.
+     * Public storefront rendering is controlled by Bagisto channel themes.
+     * Experience CMS preview routes do not override Bagisto storefront routes.
      */
-    'storefront_mode' => env('EXPERIENCE_CMS_STOREFRONT_MODE', 'native'),
 ];
