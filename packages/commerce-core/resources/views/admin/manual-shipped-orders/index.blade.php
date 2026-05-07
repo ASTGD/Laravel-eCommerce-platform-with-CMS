@@ -3,18 +3,18 @@
         In Delivery
     </x-slot>
 
-    <div class="grid gap-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="grid gap-1">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                     In Delivery
-                </p>
+                </h1>
 
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Daily follow-up queue for parcels already physically handed over to the courier. Mark delivery here without opening advanced shipment operations.
                 </p>
             </div>
-        </div>
+        </section>
 
         <x-commerce-core::admin.basic-list-toolbar
             :paginator="$shipmentRecords"
@@ -25,7 +25,7 @@
         >
             <x-slot:filters>
                 <div class="grid gap-4 p-4">
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                         Search shipments by order number, courier, tracking number, phone, or address.
                     </p>
 
@@ -35,14 +35,14 @@
                         <input type="hidden" name="page" value="1">
 
                         <div class="grid gap-1.5">
-                            <label for="carrier_id" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                            <label for="carrier_id" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                 Courier
                             </label>
 
                             <select
                                 id="carrier_id"
                                 name="carrier_id"
-                                class="min-w-[220px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                                class="min-w-[220px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                             >
                                 <option value="">All couriers</option>
 
@@ -53,7 +53,7 @@
                                 @endforeach
                             </select>
 
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">
                                 Use this filter when you need to review one courier's active deliveries only.
                             </p>
                         </div>
@@ -61,7 +61,7 @@
                         <div class="flex flex-wrap gap-2">
                             <button
                                 type="submit"
-                                class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                class="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                             >
                                 Apply Filter
                             </button>
@@ -72,7 +72,7 @@
                                         'search' => request('search'),
                                         'per_page' => request('per_page'),
                                     ])) }}"
-                                    class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                    class="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                                 >
                                     Clear
                                 </a>
@@ -83,9 +83,9 @@
             </x-slot>
         </x-commerce-core::admin.basic-list-toolbar>
 
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-none dark:border-gray-800 dark:bg-gray-900">
             @if ($shipmentRecords->isEmpty())
-                <div class="p-10 text-center text-sm text-gray-600 dark:text-gray-300">
+                <div class="p-10 text-center text-sm leading-6 text-slate-500 dark:text-slate-400">
                     @if ($selectedCarrierId)
                         No active shipments are in delivery for this courier right now.
                     @else
@@ -95,7 +95,7 @@
             @else
                 <div class="overflow-x-auto">
                     <x-admin::table class="min-w-[1100px]">
-                        <thead class="bg-slate-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+                        <thead class="bg-slate-50/80 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300">
                             <tr>
                                 <x-admin::table.th>Order</x-admin::table.th>
                                 <x-admin::table.th>Customer</x-admin::table.th>
@@ -125,7 +125,7 @@
 
                                     <x-admin::table.td class="whitespace-normal">
                                         <div class="grid gap-1">
-                                            <span class="font-semibold text-gray-800 dark:text-gray-100">
+                                            <span class="font-semibold text-slate-950 dark:text-white">
                                                 {{ $shipmentRecord->recipient_name ?: $shipmentRecord->order?->customer_full_name ?: 'N/A' }}
                                             </span>
 
@@ -172,7 +172,7 @@
 
                                     <x-admin::table.td class="whitespace-normal">
                                         <div class="grid gap-1">
-                                            <span class="font-semibold text-gray-800 dark:text-gray-100">
+                                            <span class="font-semibold text-slate-950 dark:text-white">
                                                 {{ $shipmentRecord->status_label }}
                                             </span>
 
@@ -203,7 +203,7 @@
 
                                         <button
                                             type="button"
-                                            class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                            class="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                                             @click="$emitter.emit('open-confirm-modal', {
                                                 title: @js('Confirm Delivery'),
                                                 message: @js($deliveryPrompt),
