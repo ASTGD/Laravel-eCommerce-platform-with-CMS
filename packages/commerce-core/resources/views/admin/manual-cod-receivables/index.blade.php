@@ -3,18 +3,18 @@
         COD Receivables
     </x-slot>
 
-    <div class="grid gap-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="grid gap-1">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                     COD Receivables
-                </p>
+                </h1>
 
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Track how much each courier still owes your business for delivered COD orders. "Collected by courier" means the customer paid the courier, while "received by merchant" means the courier has already remitted that money to your business.
                 </p>
             </div>
-        </div>
+        </section>
 
         <x-commerce-core::admin.basic-list-toolbar
             :paginator="$courierSummaries"
@@ -24,7 +24,7 @@
             :preserve-query="request()->query()"
         >
             <x-slot:filters>
-                <div class="grid gap-3 p-4 text-sm text-gray-600 dark:text-gray-300">
+                <div class="grid gap-3 p-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
                     <p>
                         Search couriers by name.
                     </p>
@@ -36,15 +36,15 @@
             </x-slot>
         </x-commerce-core::admin.basic-list-toolbar>
 
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-none dark:border-gray-800 dark:bg-gray-900">
             @if ($courierSummaries->isEmpty())
-                <div class="p-10 text-center text-sm text-gray-600 dark:text-gray-300">
+                <div class="p-10 text-center text-sm leading-6 text-slate-500 dark:text-slate-400">
                     No COD receivables are ready yet. Delivered COD shipments will appear here after they move into collected-by-courier state.
                 </div>
             @else
                 <div class="overflow-x-auto">
                     <x-admin::table class="min-w-[980px]">
-                        <thead class="bg-slate-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+                        <thead class="bg-slate-50/80 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300">
                             <tr>
                                 <x-admin::table.th>Courier</x-admin::table.th>
                                 <x-admin::table.th>Receivable Amount Total</x-admin::table.th>
@@ -63,7 +63,7 @@
                                 <tr class="border-t border-slate-200 align-top dark:border-gray-800">
                                     <x-admin::table.td class="whitespace-normal">
                                         <div class="grid gap-1">
-                                            <span class="font-semibold text-gray-800 dark:text-gray-100">
+                                            <span class="font-semibold text-slate-950 dark:text-white">
                                                 {{ $summary['courier_name'] }}
                                             </span>
 
@@ -96,7 +96,7 @@
                                                 <x-slot:toggle>
                                                     <button
                                                         type="button"
-                                                        class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                        class="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                                                     >
                                                         Record COD Received
                                                     </button>
@@ -104,7 +104,7 @@
 
                                                 <x-slot:header>
                                                     <div class="grid gap-1">
-                                                        <p class="text-lg font-bold text-gray-800 dark:text-white">
+                                                        <p class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                                                             Record COD Received
                                                         </p>
                                                     </div>
@@ -118,14 +118,14 @@
                                                         <input type="hidden" name="shipment_carrier_id" value="{{ $summary['carrier_id'] }}">
 
                                                         <div class="grid gap-4">
-                                                            <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-gray-800 dark:bg-gray-950/40 dark:text-gray-200">
                                                                 <p class="font-semibold">{{ $summary['courier_name'] }}</p>
                                                                 <p>
                                                                     {{ $summary['pending_total_formatted'] }} pending. Recorded receipts are applied oldest-first to the courier's delivered COD shipments.
                                                                 </p>
                                                             </div>
 
-                                                            <div class="rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-gray-800 dark:bg-gray-950/40 dark:text-gray-200">
                                                                 <p class="font-semibold">Pending amount</p>
                                                                 <p>{{ $summary['pending_total_formatted'] }}</p>
                                                             </div>
@@ -175,7 +175,7 @@
                                                         <div class="mt-6 flex items-center justify-end gap-3">
                                                             <button
                                                                 type="submit"
-                                                                class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                                class="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                                                             >
                                                                 Save Receipt
                                                             </button>
@@ -184,7 +184,7 @@
                                                 </x-slot>
                                             </x-admin::modal>
                                         @else
-                                            <span class="text-xs font-semibold uppercase tracking-wide text-emerald-600">
+                                            <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
                                                 Up to date
                                             </span>
                                         @endif

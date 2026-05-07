@@ -46,33 +46,33 @@
         To Ship
     </x-slot>
 
-    <div class="grid gap-4">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="grid gap-1">
-                <p class="text-xl font-bold text-gray-800 dark:text-white">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
+        <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                     To Ship
-                </p>
+                </h1>
 
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Prepare parcels, print shipping documents, and confirm courier handover before they move into In Delivery.
                 </p>
             </div>
-        </div>
+        </section>
 
         <section id="needs-booking" class="grid gap-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="grid gap-1">
+                <div class="space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+                        <h2 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             Needs Booking
                         </h2>
 
-                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-gray-800 dark:text-gray-200">
+                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-gray-800 dark:text-gray-300">
                             {{ $queueCounts['needs_booking'] ?? 0 }}
                         </span>
                     </div>
 
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                         Orders that still need parcel preparation and courier booking.
                     </p>
                 </div>
@@ -90,7 +90,7 @@
                 :preserve-query="$needsSectionQuery"
             >
                 <x-slot:filters>
-                    <div class="grid gap-3 p-4 text-sm text-gray-600 dark:text-gray-300">
+                    <div class="grid gap-3 p-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
                         <p>
                             Search confirmed orders by order number, customer, phone, or delivery address.
                         </p>
@@ -115,15 +115,15 @@
                 </div>
             @endif
 
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div class="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-none dark:border-gray-800 dark:bg-gray-900">
                 @if ($needsBookingOrders->isEmpty())
-                    <div class="p-10 text-center text-sm text-gray-600 dark:text-gray-300">
+                    <div class="p-10 text-center text-sm leading-6 text-slate-500 dark:text-slate-400">
                         No confirmed orders are waiting for booking right now.
                     </div>
                 @else
                     <div class="overflow-x-auto">
                         <x-admin::table class="min-w-[1400px]">
-                            <thead class="bg-slate-50 text-gray-800 dark:bg-gray-800 dark:text-gray-100">
+                            <thead class="bg-slate-50/80 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300">
                                 <tr>
                                     <x-admin::table.th>Order</x-admin::table.th>
                                     <x-admin::table.th>Customer</x-admin::table.th>
@@ -264,7 +264,7 @@
                                                             data-booking-modal-open
                                                             data-shipment-form-id="{{ $bookingFormId }}"
                                                             data-booking-draft-fetch-url="{{ route('admin.sales.to-ship.booking-draft.show', $order->id) }}"
-                                                            class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                            class="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                                                         >
                                                             Book Shipment
                                                         </button>
@@ -272,11 +272,11 @@
 
                                                     <x-slot:header>
                                                         <div class="grid gap-1">
-                                                            <p class="text-lg font-bold text-gray-800 dark:text-white">
+                                                            <p class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                                                                 Pack and Book Shipment
                                                             </p>
 
-                                                            <p class="text-sm font-normal text-gray-600 dark:text-gray-300">
+                                                            <p class="text-sm font-normal leading-6 text-slate-500 dark:text-slate-400">
                                                                 Save the parcel booking here, then complete courier handover later from Parcel Ready for Handover.
                                                             </p>
                                                         </div>
@@ -309,9 +309,9 @@
                                                             @endforeach
 
                                                             <div class="grid gap-5">
-                                                                <section class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/60">
+                                                                <section class="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950/40">
                                                                     <div class="flex flex-wrap items-start justify-between gap-3">
-                                                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-700 dark:text-gray-200">
+                                                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-6 text-slate-700 dark:text-gray-200">
                                                                             <span class="font-semibold text-gray-900 dark:text-white">
                                                                                 Order #{{ $order->increment_id }}
                                                                             </span>
@@ -343,13 +343,13 @@
                                                                 </section>
 
                                                                 <div class="grid gap-5 lg:grid-cols-2">
-                                                                    <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
+                                                                    <section class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                                                                         <div class="mb-4 grid gap-1">
-                                                                            <p class="text-base font-semibold text-gray-800 dark:text-white">
+                                                                            <p class="font-sans text-base font-semibold text-slate-950 dark:text-white">
                                                                                 Parcel Preparation
                                                                             </p>
 
-                                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                            <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                                                                                 Capture how the parcel was packed before courier handover.
                                                                             </p>
                                                                         </div>
@@ -362,8 +362,8 @@
                                                                             >
 
                                                                             <div class="grid gap-4 sm:grid-cols-2">
-                                                                                <div class="grid gap-1 rounded-lg bg-slate-50 px-4 py-3 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                                                                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Packed By</p>
+                                                                                <div class="grid gap-1 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-gray-800 dark:bg-gray-950/40 dark:text-gray-200">
+                                                                                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Packed By</p>
                                                                                     <p class="font-semibold" data-booking-packed-by>{{ $packedByLabel }}</p>
                                                                                     <p class="text-xs text-gray-500 dark:text-gray-400" data-booking-packed-at>{{ $packedAtLabel }}</p>
                                                                                 </div>
@@ -500,13 +500,13 @@
                                                                         </div>
                                                                     </section>
 
-                                                                    <section class="rounded-xl border border-slate-200 p-4 dark:border-gray-800">
+                                                                    <section class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                                                                         <div class="mb-4 grid gap-1">
-                                                                            <p class="text-base font-semibold text-gray-800 dark:text-white">
+                                                                            <p class="font-sans text-base font-semibold text-slate-950 dark:text-white">
                                                                                 Courier Booking
                                                                             </p>
 
-                                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                            <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                                                                                 Save the courier details your team will use to follow the parcel.
                                                                             </p>
                                                                         </div>
@@ -599,11 +599,11 @@
                                                             class="grid w-full gap-4"
                                                             data-booking-document-status="{{ $bookingFormId }}"
                                                         >
-                                                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-800/60">
+                                                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm dark:border-gray-800 dark:bg-gray-950/40">
                                                                 <div class="flex flex-wrap items-center gap-2">
-                                                                    <span class="font-semibold text-gray-800 dark:text-white">Document readiness</span>
+                                                                    <span class="font-semibold text-slate-950 dark:text-white">Document readiness</span>
                                                                     <span class="text-gray-400">•</span>
-                                                                    <span class="text-gray-600 dark:text-gray-300">Complete Booking requires both documents to be ready.</span>
+                                                                    <span class="text-slate-500 dark:text-slate-400">Complete Booking requires both documents to be ready.</span>
                                                                 </div>
 
                                                                 <div class="flex flex-wrap items-center gap-2">
@@ -741,18 +741,18 @@
 
         <section id="parcel-ready-for-handover" class="grid gap-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="grid gap-1">
+                <div class="space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">
+                        <h2 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             Parcel Ready for Handover
                         </h2>
 
-                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-gray-800 dark:text-gray-200">
+                        <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-gray-800 dark:text-gray-300">
                             {{ $queueCounts['ready_for_handover'] ?? 0 }}
                         </span>
                     </div>
 
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                         Prepared parcels waiting for actual courier pickup or staff drop-off confirmation.
                     </p>
                 </div>
@@ -775,7 +775,7 @@
             >
                 <x-slot:filters>
                     <div class="grid gap-4 p-4">
-                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                        <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                             Find ready parcels by courier, prepared date, handover mode, order number, tracking number, or customer.
                         </p>
 
@@ -790,14 +790,14 @@
 
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div class="grid gap-1.5">
-                                    <label for="ready_carrier_id" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    <label for="ready_carrier_id" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                         Courier
                                     </label>
 
                                     <select
                                         id="ready_carrier_id"
                                         name="ready_carrier_id"
-                                        class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                                        class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                                     >
                                         <option value="">All couriers</option>
 
@@ -810,7 +810,7 @@
                                 </div>
 
                                 <div class="grid gap-1.5">
-                                    <label for="ready_prepared_date" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    <label for="ready_prepared_date" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                         Prepared Date
                                     </label>
 
@@ -819,19 +819,19 @@
                                         type="date"
                                         name="ready_prepared_date"
                                         value="{{ request('ready_prepared_date') }}"
-                                        class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                                        class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                                     >
                                 </div>
 
                                 <div class="grid gap-1.5 md:col-span-2">
-                                    <label for="ready_handover_mode" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    <label for="ready_handover_mode" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                         Handover Mode
                                     </label>
 
                                     <select
                                         id="ready_handover_mode"
                                         name="ready_handover_mode"
-                                        class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                                        class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                                     >
                                         <option value="">All handover modes</option>
 
@@ -847,7 +847,7 @@
                             <div class="flex flex-wrap gap-2">
                                 <button
                                     type="submit"
-                                    class="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                    class="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                                 >
                                     Apply Filter
                                 </button>
@@ -859,7 +859,7 @@
                                             'ready_search' => request('ready_search'),
                                             'ready_per_page' => request('ready_per_page'),
                                         ])) }}#parcel-ready-for-handover"
-                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                        class="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                                     >
                                         Clear
                                     </a>
@@ -870,19 +870,19 @@
                 </x-slot:filters>
             </x-commerce-core::admin.basic-list-toolbar>
 
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div class="overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-none dark:border-gray-800 dark:bg-gray-900">
                 @if ($readyShipments->isEmpty())
-                    <div class="p-10 text-center text-sm text-gray-600 dark:text-gray-300">
+                    <div class="p-10 text-center text-sm leading-6 text-slate-500 dark:text-slate-400">
                         No parcels are waiting for actual courier handover right now.
                     </div>
                 @else
                     <div class="grid gap-4 p-4">
-                        <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-gray-800 dark:bg-gray-950/30">
+                        <div class="grid gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-gray-800 dark:bg-gray-950/30">
                             <div class="flex flex-wrap items-start justify-between gap-4">
                                 <div class="grid gap-1">
                                     <div
                                         id="ready-shipment-selection-summary"
-                                        class="text-sm font-semibold text-gray-800 dark:text-gray-100"
+                                        class="text-sm font-semibold text-slate-950 dark:text-white"
                                     >
                                         No parcels selected
                                     </div>
@@ -899,7 +899,7 @@
                                     <button
                                         type="button"
                                         data-handover-bulk-action="prepare"
-                                        class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                                        class="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                                         disabled
                                     >
                                         Create/Print Handover Sheet
@@ -927,19 +927,31 @@
                             </div>
                         @endif
 
-                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-800">
-                            <x-admin::table class="min-w-[1320px]">
-                                <thead class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+                        <div class="overflow-hidden rounded-2xl border border-slate-200/70 dark:border-gray-800">
+                            <x-admin::table class="w-full table-fixed">
+                                <colgroup>
+                                    <col style="width: 44px;">
+                                    <col style="width: 13%;">
+                                    <col style="width: 12%;">
+                                    <col style="width: 10%;">
+                                    <col style="width: 8%;">
+                                    <col style="width: 9%;">
+                                    <col style="width: 14%;">
+                                    <col style="width: 10%;">
+                                    <col style="width: 15%;">
+                                </colgroup>
+
+                                <thead class="bg-slate-50/80 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300">
                                     <tr>
-                                        <x-admin::table.th class="w-[56px]"></x-admin::table.th>
-                                        <x-admin::table.th>Order / Courier</x-admin::table.th>
-                                        <x-admin::table.th>Customer / Selection</x-admin::table.th>
-                                        <x-admin::table.th>Tracking Number</x-admin::table.th>
-                                        <x-admin::table.th>Parcel Count</x-admin::table.th>
-                                        <x-admin::table.th>COD Amount</x-admin::table.th>
-                                        <x-admin::table.th>Packed / Prepared Time</x-admin::table.th>
-                                        <x-admin::table.th>Handover Mode</x-admin::table.th>
-                                        <x-admin::table.th>Note / Status</x-admin::table.th>
+                                        <x-admin::table.th></x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Order / Courier</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Customer / Selection</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Tracking Number</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Parcel Count</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">COD Amount</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Packed / Prepared Time</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Handover Mode</x-admin::table.th>
+                                        <x-admin::table.th class="whitespace-normal">Note / Status</x-admin::table.th>
                                     </tr>
                                 </thead>
 
@@ -951,7 +963,7 @@
                                             class="border-t border-slate-200 align-top dark:border-gray-800"
                                         >
                                             <x-admin::table.td colspan="9" class="!p-0">
-                                                <div class="flex items-start justify-between gap-4 bg-slate-100 px-4 py-4 dark:bg-gray-950/60">
+                                                <div class="flex items-start justify-between gap-4 bg-slate-100 px-4 py-4 pr-8 dark:bg-gray-950/60">
                                                     <div class="flex min-w-0 items-start gap-4">
                                                         <input
                                                             type="checkbox"
@@ -1176,11 +1188,11 @@
         >
             <div class="admin-modal-header flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-1">
-                    <p id="handover-batch-modal-title" class="text-lg font-semibold text-gray-800 dark:text-white">
+                    <p id="handover-batch-modal-title" class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                         Prepare Handover Sheet
                     </p>
 
-                    <p id="handover-batch-modal-description" class="text-sm text-gray-600 dark:text-gray-300">
+                    <p id="handover-batch-modal-description" class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                         Add the courier handover details, then generate the handover sheet preview.
                     </p>
                 </div>
@@ -1196,21 +1208,21 @@
             </div>
 
             <div class="admin-modal-body grid min-h-0 gap-5 overflow-y-auto px-6 py-5 text-gray-700 dark:text-gray-200">
-                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 dark:border-gray-800 dark:bg-gray-800/60">
+                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-4 dark:border-gray-800 dark:bg-gray-950/40">
                     <div class="grid gap-4 md:grid-cols-3">
                         <div>
-                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Courier</div>
-                            <div id="handover-batch-modal-courier" class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">Not selected</div>
+                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Courier</div>
+                            <div id="handover-batch-modal-courier" class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">Not selected</div>
                         </div>
 
                         <div>
-                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Selected Parcels</div>
-                            <div id="handover-batch-modal-parcels" class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">0</div>
+                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Selected Parcels</div>
+                            <div id="handover-batch-modal-parcels" class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">0</div>
                         </div>
 
                         <div>
-                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Total COD Amount</div>
-                            <div id="handover-batch-modal-cod" class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">{{ core()->formatBasePrice(0) }}</div>
+                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Total COD Amount</div>
+                            <div id="handover-batch-modal-cod" class="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{{ core()->formatBasePrice(0) }}</div>
                         </div>
                     </div>
                 </div>
@@ -1222,7 +1234,7 @@
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="grid gap-1.5">
-                        <label for="handover_at" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        <label for="handover_at" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                             Handover Date &amp; Time
                         </label>
 
@@ -1230,20 +1242,20 @@
                             id="handover_at"
                             type="datetime-local"
                             value="{{ now()->format('Y-m-d\TH:i') }}"
-                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                         >
 
                         <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="handover_at"></p>
                     </div>
 
                     <div class="grid gap-1.5">
-                        <label for="handover_type" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        <label for="handover_type" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                             Handover Type
                         </label>
 
                         <select
                             id="handover_type"
-                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                         >
                             @foreach ($batchHandoverTypes as $handoverTypeValue => $handoverTypeLabel)
                                 <option value="{{ $handoverTypeValue }}" @selected(\Platform\CommerceCore\Models\ShipmentHandoverBatch::TYPE_COURIER_PICKUP === $handoverTypeValue)>
@@ -1256,7 +1268,7 @@
                     </div>
 
                     <div class="grid gap-1.5 md:col-span-2">
-                        <label for="receiver_name" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        <label for="receiver_name" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                             Receiver / Driver Name
                         </label>
 
@@ -1264,14 +1276,14 @@
                             id="receiver_name"
                             type="text"
                             placeholder="Optional"
-                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                         >
 
                         <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="receiver_name"></p>
                     </div>
 
                     <div class="grid gap-1.5 md:col-span-2">
-                        <label for="handover_notes" class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        <label for="handover_notes" class="text-sm font-medium text-slate-700 dark:text-gray-300">
                             Handover Notes
                         </label>
 
@@ -1279,7 +1291,7 @@
                             id="handover_notes"
                             rows="3"
                             placeholder="Optional batch note"
-                            class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950"
                         ></textarea>
 
                         <p class="hidden text-xs font-medium text-red-600 dark:text-red-400" data-handover-error-for="notes"></p>
@@ -1291,7 +1303,7 @@
                 <button
                     type="button"
                     onclick="window.closeHandoverBatchModal && window.closeHandoverBatchModal()"
-                    class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    class="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                     Cancel
                 </button>
@@ -1319,8 +1331,8 @@
         >
             <div class="admin-modal-header flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-1">
-                    <p class="text-lg font-semibold text-gray-800 dark:text-white">Confirm Handover</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">Use this only after the courier has physically received the selected parcels.</p>
+                    <p class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">Confirm Handover</p>
+                    <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">Use this only after the courier has physically received the selected parcels.</p>
                 </div>
 
                 <button
@@ -1334,11 +1346,11 @@
             </div>
 
             <div class="admin-modal-body grid min-h-0 gap-4 overflow-y-auto px-6 py-5 text-gray-700 dark:text-gray-200">
-                <div id="handover-confirm-modal-summary" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-semibold text-gray-800 dark:border-gray-800 dark:bg-gray-800/60 dark:text-gray-100">
+                <div id="handover-confirm-modal-summary" class="rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-4 text-sm font-semibold text-slate-950 dark:border-gray-800 dark:bg-gray-950/40 dark:text-white">
                     No parcels selected
                 </div>
 
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                     Confirming handover will move the selected parcels from Parcel Ready for Handover to In Delivery.
                 </p>
             </div>
@@ -1347,7 +1359,7 @@
                 <button
                     type="button"
                     onclick="window.closeHandoverConfirmModal && window.closeHandoverConfirmModal()"
-                    class="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-slate-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    class="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                     Cancel
                 </button>
@@ -1376,11 +1388,11 @@
         >
             <div class="admin-modal-header flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900">
                 <div class="grid gap-1">
-                    <p id="shipment-print-preview-title" class="text-lg font-semibold text-gray-800 dark:text-white">
+                    <p id="shipment-print-preview-title" class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                         Print Preview
                     </p>
 
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
                         Review the document, then print it directly from this preview.
                     </p>
                 </div>
