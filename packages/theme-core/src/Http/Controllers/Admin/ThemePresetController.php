@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Platform\ThemeCore\Http\Requests\Admin\ThemePresetRequest;
 use Platform\ThemeCore\Models\ThemePreset;
+use Webkul\Core\Models\Channel;
 
 class ThemePresetController extends Controller
 {
@@ -124,7 +125,15 @@ class ThemePresetController extends Controller
                 ->with('error', 'No theme activation column is available.');
         }
 
-        DB::transaction(function () use ($themePreset, $activationColumns): void {
+        $shopThemeCode = $this->shopThemeCode($themePreset);
+
+        if (! $this->isRegisteredShopTheme($shopThemeCode)) {
+            return redirect()
+                ->back()
+                ->with('error', sprintf('Shop theme [%s] is not registered.', $shopThemeCode));
+        }
+
+        DB::transaction(function () use ($themePreset, $activationColumns, $shopThemeCode): void {
             $inactiveValues = [];
             $activeValues = [];
 
@@ -147,6 +156,17 @@ class ThemePresetController extends Controller
             ThemePreset::query()
                 ->whereKey($themePreset->getKey())
                 ->update($activeValues);
+
+            $channel = core()->getCurrentChannel();
+
+            if ($channel) {
+                Channel::query()
+                    ->whereKey($channel->getKey())
+                    ->update(['theme' => $shopThemeCode]);
+
+                $channel->theme = $shopThemeCode;
+                core()->setCurrentChannel($channel);
+            }
         });
 
         return redirect()
@@ -201,13 +221,40 @@ class ThemePresetController extends Controller
 
     protected function themeActivationColumns(): array
     {
-        return array_values(array_filter([
+        $activeColumns = array_values(array_filter([
             $this->hasThemePresetColumn('is_active') ? 'is_active' : null,
-            $this->hasThemePresetColumn('is_default') ? 'is_default' : null,
             $this->hasThemePresetColumn('active') ? 'active' : null,
-            $this->hasThemePresetColumn('default') ? 'default' : null,
             $this->hasThemePresetColumn('status') ? 'status' : null,
         ]));
+
+        if (! empty($activeColumns)) {
+            return $activeColumns;
+        }
+
+        return array_values(array_filter([
+            $this->hasThemePresetColumn('is_default') ? 'is_default' : null,
+            $this->hasThemePresetColumn('default') ? 'default' : null,
+        ]));
+    }
+
+    protected function shopThemeCode(ThemePreset $themePreset): string
+    {
+        $settingsThemeCode = data_get($themePreset->settings_json, 'shop_theme_code');
+
+        if (is_string($settingsThemeCode) && $settingsThemeCode !== '') {
+            return $settingsThemeCode;
+        }
+
+        if ($this->isRegisteredShopTheme((string) $themePreset->code)) {
+            return (string) $themePreset->code;
+        }
+
+        return (string) config('themes.shop-default', 'default');
+    }
+
+    protected function isRegisteredShopTheme(string $themeCode): bool
+    {
+        return array_key_exists($themeCode, config('themes.shop', []));
     }
 
     protected function themePresetTableExists(): bool

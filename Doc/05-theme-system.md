@@ -2,100 +2,109 @@
 
 ## Scope
 
-The backend-complete theme layer supports homepage, category page, and product detail page rendering through one structured payload pipeline. The output remains intentionally plain, but the contracts are now stable enough for frontend implementation work.
+The storefront is server-rendered and Bagisto-native by default. Bagisto routes and controllers remain the public storefront skeleton; the active Bagisto channel theme controls which Blade views are used.
 
-The public storefront remains Bagisto-native by default. The CMS/theme storefront pipeline is opt-in and becomes active only when `EXPERIENCE_CMS_STOREFRONT_MODE=cms` is set.
+Custom visual work is delivered as normal Bagisto shop themes. The current custom theme is `gadget`, registered in `config/themes.php`, with views under `resources/themes/gadget/views` and public assets under `public/themes/shop/gadget`.
 
 ## Principles
 
-- one theme core
-- one default theme
-- configuration-driven variation
-- no business logic in Blade templates
-- no per-page ad hoc rendering branches
+- keep Bagisto as the storefront route, controller, and commerce core
+- use one theme-core package for shared contracts and preset activation behavior
+- use Bagisto shop themes for visual variation
+- override only the views a theme actually owns
+- let non-overridden views fall back to native Bagisto
+- keep business logic out of Blade templates
 
 ## Runtime Render Pipeline
 
-The storefront now renders through these layers:
+Normal public storefront rendering follows Bagisto:
 
-1. storefront route resolves the target surface
-2. CMS-aware controllers or preview routes resolve the relevant `Page`
-3. `PagePreviewService` delegates to the correct payload builder for homepage, category page, or product page
-4. `StructuredPagePayloadBuilder` composes the common shell payload
-5. commerce-aware builders add category listing or PDP-specific payload data
-6. `DataSourceResolverContract`, `ContentEntryResolverContract`, and `SiteSettingsResolverContract` resolve structured content dependencies
-7. header, footer, menu, and preset resolvers normalize shared presentation assignments
-8. section and nested component payloads are rendered through `theme-default` views
+1. Bagisto resolves the route and controller.
+2. The shop theme middleware reads the current channel `theme`.
+3. Bagisto view resolution searches the active theme view path first.
+4. If the active theme does not provide an override, Bagisto falls back to native shop views.
+5. Product, category, cart, checkout, customer, order, price, inventory, and promotion logic stay in Bagisto.
 
-This same pipeline is used for:
+The `default` shop theme renders native Bagisto views. The `gadget` shop theme currently overrides only `shop::home.index` through `resources/themes/gadget/views/home/index.blade.php`.
 
-- published homepage rendering
-- published category page rendering
-- published product page rendering
-- signed preview rendering
-- explicit CMS page rendering routes
+## Gadget Theme
 
-## Upstream Commerce Touchpoints
+`gadget` is a saved Bagisto shop theme, not a replacement storefront application.
 
-The storefront root route belongs to the commerce core by default. In native mode, Bagisto serves the storefront directly. When CMS storefront mode is enabled, the CMS homepage is injected by binding the upstream shop home controller to a CMS-aware wrapper that:
+Current implementation:
 
-- checks for a published CMS page with slug `home`
-- renders the page through the CMS preview service when present
-- falls back to the upstream commerce homepage when no published CMS homepage exists
+- `views_path`: `resources/themes/gadget/views`
+- `assets_path`: `public/themes/shop/gadget`
+- homepage override: `resources/themes/gadget/views/home/index.blade.php`
+- homepage partials: `resources/themes/gadget/views/homepage/...`
+- scoped CSS: `public/themes/shop/gadget/gadget.css`
+- Vite points to the existing Bagisto shop build so native JavaScript and Vue components continue to work
 
-This keeps the Bagisto storefront route in place while allowing the product homepage to become CMS-driven when explicitly enabled.
+Because only the homepage is overridden, these pages continue to fall back to native Bagisto while `gadget` is active:
 
-Category and product route ownership also stays with the commerce core by default. When CMS storefront mode is enabled, the CMS integrates by binding the upstream product/category proxy controller to a CMS-aware wrapper that:
+- category listing
+- product detail
+- policy/static CMS pages
+- search
+- cart
+- checkout
+- customer account
+- orders
 
-- checks for a matching category or product
-- resolves an active page assignment
-- renders the CMS-composed category or PDP layout when an assignment exists
-- falls back to the native Bagisto commerce surface when no assignment exists
+Future Gadget category, product, policy, and customer page designs should be added as Bagisto theme view overrides, not as route/controller replacements.
 
-No upstream core files are modified. The integration point is controller binding plus commerce repository usage, gated behind the storefront mode switch.
+## Admin Activation
 
-## Theme Assignments And Shared Payload
+Theme selection is managed through `Admin -> Theme -> Presets`.
 
-Pages can now assign:
+Preset activation updates two things in one transaction:
 
-- one theme preset
-- one header config
-- one footer config
-- one menu
+- exactly one `theme_presets` record is active
+- the current Bagisto channel `theme` is set to `settings_json.shop_theme_code`
 
-These are persisted on the page and resolved by dedicated services rather than hardcoded view logic.
+Seeded presets:
 
-Shared render payload also includes resolved site settings so storefront surfaces can consume:
+- `Default`: `settings_json.shop_theme_code = default`
+- `Gadget`: `settings_json.shop_theme_code = gadget`
 
-- store identity
-- contact data
-- social links
-- trust badges
-- page-level defaults for category and product surfaces
+Activating `Default` restores the native Bagisto storefront. Activating `Gadget` loads the Gadget homepage override while all non-overridden pages remain Bagisto-native.
 
-## Preset Model
+## CMS Preview Pipeline
 
-Theme presets remain configuration-driven. The current slice resolves tokens and settings from `theme_presets` and passes the selected preset into the page view model.
+Structured CMS still owns authoring, schema-backed sections, component rendering, and signed previews.
+
+CMS preview routes are separate from normal Bagisto storefront routes:
+
+- `/home-preview`
+- `/preview/pages/{slug}`
+- `/preview/category-pages/{page}/{categorySlug}`
+- `/preview/product-pages/{page}/{productSlug}`
+
+Those routes are signed and are not used for normal public browsing. They exist so admins and developers can preview structured CMS/page-composition work without replacing Bagisto storefront controllers.
+
+## Theme Presets
+
+Theme presets remain configuration-driven.
 
 Current preset responsibilities:
 
-- preset code selection
-- token payload resolution
-- default/fallback preset handling
+- active preset selection in the CMS/admin layer
+- mapping a preset to a Bagisto shop theme code through `settings_json.shop_theme_code`
+- token payload storage for future design-token-driven rendering
 
-Future frontend work can expand this into stronger token usage for product cards, category lists, account surfaces, and richer component styling without changing the page composition model.
+The active preset is not a route/controller switch. It is an admin-facing configuration record that also updates the Bagisto channel theme.
 
 ## Section And Component Rendering
 
-Current section rendering follows a stable contract:
+Current structured rendering still follows a stable contract for CMS previews:
 
 - section type definition provides defaults and validation
 - authored section settings are merged with registry defaults
 - supported data source output is attached to the section payload
-- the view renders only prepared payload data
+- the view renders prepared payload data
 - nested components are validated, normalized, and rendered from prepared payloads
 
-The current default theme includes explicit section views for:
+Current section views include:
 
 - hero banner
 - featured products
@@ -114,7 +123,7 @@ The current default theme includes explicit section views for:
 - trust badges
 - generic section fallback
 
-The current default theme includes explicit nested component views for:
+Current nested component views include:
 
 - headline
 - body text
@@ -124,61 +133,30 @@ The current default theme includes explicit nested component views for:
 
 ## Header, Footer, And Menu Rendering
 
-The render path now uses dedicated services for global areas:
+Bagisto-native public pages use their native header, footer, menu, and component behavior unless a theme view override changes the markup.
+
+CMS preview views continue to use dedicated services for structured global areas:
 
 - `MenuResolver`
 - `HeaderResolver`
 - `FooterResolver`
 
-The header partial prefers resolved menu items and only falls back to static link settings when no menu is assigned.
-
-Category and product templates receive the same shared shell payload as the homepage, so frontend implementation can assume one header/footer/menu/preset model across storefront surfaces.
-
-## Commerce-Aware Payload Builders
-
-The theme layer now receives stable payload shapes from dedicated backend services:
-
-- `StructuredPagePayloadBuilder`
-- `CategoryPagePayloadBuilder`
-- `ProductPagePayloadBuilder`
-
-Current category-specific payload areas:
-
-- `heroSections`
-- `preListingSections`
-- `listing`
-- `postListingSections`
-- `category`
-
-Current product-specific payload areas:
-
-- `gallerySections`
-- `summarySections`
-- `detailsSections`
-- `relatedSections`
-- `product`
-- `productData`
-
-## SEO Output
-
-The storefront layout now renders CMS-owned SEO fields where available:
-
-- SEO title
-- meta description
-- canonical URL
-
-This is enough for the current homepage slice and keeps the view layer aligned with persisted CMS metadata.
+Gadget homepage v1 has its own theme-local header/footer partials that keep Bagisto links, search, cart, account, and channel data functional.
 
 ## Asset Loading Rule
 
-The custom storefront layout now targets the root application Vite build directory explicitly instead of relying on the Bagisto theme Vite singleton state. This avoids runtime manifest collisions between Bagisto theme assets and the custom storefront shell.
+Native Bagisto shop assets remain under `public/themes/shop/default/build`.
 
-In local development, the same layout also normalizes Vite hot asset hosts such as `0.0.0.0` and `[::]` to the current request host before emitting the asset tags. This keeps browser-facing pages like `/checkout/custom` usable on `127.0.0.1` and LAN hosts even when the Vite server is bound to all interfaces.
+The Gadget theme keeps its Figma-specific homepage CSS in `public/themes/shop/gadget/gadget.css` and loads it only from the Gadget homepage override. Root `resources/css/app.css` must not carry Gadget-only CSS because that would affect native Bagisto and CMS/admin surfaces.
+
+## Theme Creation Guide
+
+Follow `Doc/19-theme-creation-guide.md` when creating new themes or adding new Gadget page overrides.
 
 ## Remaining Gaps Before Frontend Polish
 
-- the default theme is still intentionally minimal
-- checkout page presentation is now owned by the default theme shell and consumes the single checkout contract
-- preset tokens are resolved but not yet exhaustively applied across all storefront surfaces
-- category and PDP payloads are stable, but the final visual implementation is still pending
-- customer account pages are not yet moved onto the same structured theme implementation
+- Gadget currently overrides homepage only
+- category and PDP Gadget designs are pending
+- policy/static page Gadget design is pending
+- customer account visual alignment can be added later through theme overrides
+- preset tokens are stored but not yet exhaustively applied to native Bagisto fallback pages

@@ -255,7 +255,7 @@ class ExperienceCmsSeeder extends Seeder
                 'primary_cta_label' => 'Browse Catalog',
                 'primary_cta_url' => '/',
                 'secondary_cta_label' => 'Read Docs',
-                'secondary_cta_url' => '/pages/home',
+                'secondary_cta_url' => '/contact-us',
             ],
             'is_active' => true,
         ]);

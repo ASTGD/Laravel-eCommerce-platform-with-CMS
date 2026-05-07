@@ -121,20 +121,20 @@
             <article class="{{ $cardClass }}">
                 <div class="flex items-start justify-between gap-4">
                     <h2 class="{{ $cardTitleClass }}">
-                        Storefront Mode
+                        Public Site
                     </h2>
 
-                    <span class="{{ $badgeBaseClass }} {{ $overview['storefront_mode']['is_cms'] ? $blueBadgeClass : $neutralBadgeClass }}">
-                        {{ $overview['storefront_mode']['label'] }}
+                    <span class="{{ $badgeBaseClass }} {{ $blueBadgeClass }}">
+                        {{ $overview['public_site']['label'] }}
                     </span>
                 </div>
 
                 <p class="mt-5 {{ $metricValueClass }}">
-                    {{ $overview['storefront_mode']['label'] }}
+                    {{ $overview['public_site']['label'] }}
                 </p>
 
                 <p class="mt-1 {{ $smallLabelClass }}">
-                    Current website rendering mode
+                    {{ $overview['public_site']['description'] }}
                 </p>
             </article>
 

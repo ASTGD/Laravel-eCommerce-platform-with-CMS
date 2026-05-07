@@ -23,7 +23,7 @@ class LinkListComponentType extends AbstractComponentType
     {
         return [
             'links' => [
-                ['label' => 'About', 'url' => '/pages/about'],
+                ['label' => 'About', 'url' => '/contact-us'],
                 ['label' => 'Support', 'url' => '/contact-us'],
             ],
         ];

@@ -170,6 +170,13 @@
 
                             <div class="mt-5 grid gap-2 text-sm leading-6 text-slate-500 dark:text-gray-400">
                                 <div class="flex items-center justify-between gap-3">
+                                    <span>Shop Theme</span>
+                                    <span class="font-medium text-slate-950 dark:text-white">
+                                        {{ data_get($preset->settings_json, 'shop_theme_code', $preset->code) }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center justify-between gap-3">
                                     <span>Header</span>
                                     <span class="font-medium text-slate-950 dark:text-white">
                                         {{ data_get($preset->settings_json, 'header_variant', 'standard') }}

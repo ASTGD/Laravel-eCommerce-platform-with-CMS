@@ -4,7 +4,7 @@
 
 This note records the final major backend architecture pass completed after the homepage CMS vertical slice and before frontend-focused storefront implementation.
 
-The CMS storefront remains opt-in. The public store stays Bagisto-native by default until `EXPERIENCE_CMS_STOREFRONT_MODE=cms` is enabled.
+The public storefront now renders through native Bagisto routes/controllers by default. Bagisto remains the commerce core for admin, customer portal, checkout, catalog data, cart, orders, payment, shipping, and business rules. Custom storefront visuals are delivered through Bagisto shop themes selected on the current channel.
 
 ## Category Page Assignment Model
 
@@ -12,7 +12,7 @@ Category pages use `page_assignments` with deterministic precedence:
 
 1. exact active category assignment with the highest priority
 2. active global category-page assignment with the highest priority
-3. native Bagisto category rendering when no CMS assignment exists
+3. native Bagisto category rendering on the live storefront until a theme override is added
 
 Current category page composition supports:
 
@@ -28,7 +28,7 @@ Product detail pages use the same `page_assignments` table and precedence model:
 
 1. exact active product assignment with the highest priority
 2. active global product-page assignment with the highest priority
-3. native Bagisto product rendering when no CMS assignment exists
+3. native Bagisto product rendering on the live storefront until a theme override is added
 
 Current PDP composition supports these controlled block areas:
 
@@ -114,12 +114,11 @@ This remains form-driven and schema-backed. There is no drag-and-drop visual bui
 
 ## What Frontend Can Safely Assume
 
-Frontend work in `packages/theme-core` and `packages/theme-default` can now assume, once CMS storefront mode is enabled:
+Frontend work in `packages/theme-core`, `packages/theme-default`, and `resources/themes/<theme-code>` can now assume:
 
-- homepage, category page, and PDP payload contracts are stable
+- CMS preview payload contracts are stable for homepage, category page, PDP, and policy/CMS page exploration
 - header, footer, menu, preset, site settings, and SEO metadata are consistently available in the render payload
-- category pages receive structured hero, pre-listing, listing, and post-listing payload areas
-- product pages receive structured gallery, summary, details, and related payload areas
+- live category and product pages remain Bagisto-native unless the active shop theme provides view overrides
 - nested section components are available in the section payload where supported
 - preview routes exist for homepage, category pages, and product pages
 - Bagisto commerce data remains the source of truth for category listings and product details
@@ -131,7 +130,7 @@ Still pending after this backend pass:
 - final storefront UI implementation in the theme packages
 - token-driven visual refinement and responsive polish
 - Figma-driven storefront mapping once approved designs are provided
-- customer portal page implementation against the shared theme-layer contracts
+- customer portal visual work remains Bagisto-owned unless explicitly scoped later
 - richer merchandising sources beyond the current approved set
 - version history diff or compare tooling
 
@@ -139,9 +138,11 @@ Still pending after this backend pass:
 
 No upstream core files were modified during this pass.
 
-The main integration touchpoints are controller bindings around Bagisto-owned storefront routes when CMS storefront mode is enabled:
+The main integration touchpoints are Bagisto-compatible extension points:
 
-- CMS-aware home controller binding
-- CMS-aware product/category proxy controller binding
+- Bagisto channel `theme` selects the active shop theme
+- `config/themes.php` registers custom shop themes
+- signed CMS preview routes render structured preview payloads
+- Admin Theme Presets can update the current channel theme through preset activation
 
-This preserves upgrade safety while allowing CMS composition to wrap native commerce surfaces.
+No Bagisto public storefront controller binding is active. Admin and customer portal routes stay on Bagisto core.

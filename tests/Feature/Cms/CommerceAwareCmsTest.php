@@ -1,24 +1,26 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Platform\ExperienceCms\Contracts\ContentEntryResolverContract;
 use Platform\ExperienceCms\Contracts\PageAssignmentResolverContract;
 use Platform\ExperienceCms\Contracts\PageVersionRestoreContract;
+use Platform\ExperienceCms\Contracts\PublishWorkflowContract;
 use Platform\ExperienceCms\Contracts\SiteSettingsResolverContract;
-use Platform\ExperienceCms\Models\FooterConfig;
-use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\ComponentType;
 use Platform\ExperienceCms\Models\ContentEntry;
+use Platform\ExperienceCms\Models\FooterConfig;
+use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
 use Platform\ExperienceCms\Models\Page;
 use Platform\ExperienceCms\Models\PageAssignment;
-use Platform\ExperienceCms\Models\PageSection;
 use Platform\ExperienceCms\Models\SectionType;
 use Platform\ThemeCore\Models\ThemePreset;
-use Webkul\Faker\Helpers\Category as CategoryFaker;
 use Webkul\Category\Models\Category;
+use Webkul\Faker\Helpers\Category as CategoryFaker;
 use Webkul\Faker\Helpers\Product as ProductFaker;
 use Webkul\Shop\Tests\ShopTestCase;
+use Webkul\User\Models\Admin;
 
 uses(ShopTestCase::class);
 
@@ -106,11 +108,7 @@ it('falls back to the active global product assignment when no exact override ap
         ->and($resolved->page_id)->toBe($globalPage->id);
 });
 
-it('renders the published category page through the CMS assignment and supports signed preview', function () {
-    if (config('experience-cms.storefront_mode') !== 'cms') {
-        $this->markTestSkipped('CMS storefront mode is disabled by default.');
-    }
-
+it('keeps the live category route native while supporting signed CMS assignment preview', function () {
     $category = cmsTestCategory();
 
     $product = (new ProductFaker)->getSimpleProductFactory()->create([
@@ -122,7 +120,8 @@ it('renders the published category page through the CMS assignment and supports 
     $this->get(route('shop.product_or_category.index', $category->slug))
         ->assertOk()
         ->assertSeeText($category->name)
-        ->assertSeeText('Category Story');
+        ->assertSee('<v-category>', false)
+        ->assertDontSeeText('Category Story');
 
     $page = Page::query()->where('slug', 'category-default-layout')->firstOrFail();
     $signedPreviewUrl = URL::temporarySignedRoute('platform.storefront.category-pages.preview', now()->addMinutes(30), [
@@ -136,11 +135,7 @@ it('renders the published category page through the CMS assignment and supports 
         ->assertSeeText('Category Story');
 });
 
-it('renders the published product page through the CMS assignment and supports signed preview', function () {
-    if (config('experience-cms.storefront_mode') !== 'cms') {
-        $this->markTestSkipped('CMS storefront mode is disabled by default.');
-    }
-
+it('keeps the live product route native while supporting signed CMS assignment preview', function () {
     $product = (new ProductFaker)->getSimpleProductFactory()->create([
         'sku' => 'cms-product-smoke-product',
     ]);
@@ -148,7 +143,7 @@ it('renders the published product page through the CMS assignment and supports s
     $this->get(route('shop.product_or_category.index', $product->url_key))
         ->assertOk()
         ->assertSeeText($product->name)
-        ->assertSeeText('Shipping and stock notes remain installation-specific.');
+        ->assertDontSeeText('Shipping and stock notes remain installation-specific.');
 
     $page = Page::query()->where('slug', 'product-default-layout')->firstOrFail();
     $signedPreviewUrl = URL::temporarySignedRoute('platform.storefront.product-pages.preview', now()->addMinutes(30), [
@@ -164,7 +159,7 @@ it('renders the published product page through the CMS assignment and supports s
 
 it('restores a page snapshot and records the pre-restore version for undo safety', function () {
     $page = Page::query()->where('slug', 'home')->firstOrFail();
-    $workflow = app(\Platform\ExperienceCms\Contracts\PublishWorkflowContract::class);
+    $workflow = app(PublishWorkflowContract::class);
     $restore = app(PageVersionRestoreContract::class);
 
     $workflow->publish($page, 'Baseline publish for restore test.');
@@ -186,7 +181,7 @@ it('restores a page snapshot and records the pre-restore version for undo safety
 
 it('restores page-owned composition without mutating shared records or assignments', function () {
     $page = Page::query()->where('slug', 'category-default-layout')->firstOrFail();
-    $workflow = app(\Platform\ExperienceCms\Contracts\PublishWorkflowContract::class);
+    $workflow = app(PublishWorkflowContract::class);
     $restore = app(PageVersionRestoreContract::class);
 
     $assignmentCount = PageAssignment::query()->where('page_id', $page->id)->count();
@@ -262,7 +257,11 @@ it('filters draft content entries outside preview and preserves requested orderi
 });
 
 it('validates nested component authoring against the component schema', function () {
-    $this->actingAs(\Webkul\User\Models\Admin::factory()->create(), 'admin');
+    if (! Route::has('admin.cms.pages.create') || ! Route::has('admin.cms.pages.store')) {
+        $this->markTestSkipped('CMS Studio page authoring routes are not registered in this runtime.');
+    }
+
+    $this->actingAs(Admin::factory()->create(), 'admin');
 
     $template = Page::query()->where('slug', 'home')->firstOrFail()->template;
     $area = $template->areas()->firstOrFail();

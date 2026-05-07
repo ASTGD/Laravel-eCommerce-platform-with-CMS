@@ -188,7 +188,7 @@ Checkout behavior in this slice:
 - storefront home returns `200`
 - admin login returns `200`
 - customer login returns `200`
-- `home-preview` returns `200` when `EXPERIENCE_CMS_STOREFRONT_MODE=cms`
+- `home-preview` returns `200` for the custom storefront preview
 - `./vendor/bin/sail artisan db:seed --force` succeeds after install
 - `./vendor/bin/sail npm run build` emits `public/build/assets/*.css` and `public/build/assets/*.js`
 

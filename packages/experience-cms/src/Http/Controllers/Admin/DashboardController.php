@@ -39,7 +39,6 @@ class DashboardController extends Controller
 
         $siteSettings = $this->firstModel(SiteSetting::class, fn ($query) => $query->orderBy('key'));
 
-        $isCmsMode = config('experience-cms.storefront_mode') === 'cms';
         $homepageStatus = $homepage
             ? ($homepage->isPublished() ? 'published' : 'draft')
             : 'missing';
@@ -48,11 +47,12 @@ class DashboardController extends Controller
         $hasFooter = (bool) $activeFooterConfig;
         $hasMenu = (bool) $activeMenu;
         $hasSiteSettings = (bool) $siteSettings;
+        $shopThemeCode = core()->getCurrentChannel()?->theme ?: config('themes.shop-default');
 
         $overview = [
-            'storefront_mode' => [
-                'label' => $isCmsMode ? 'CMS Mode' : 'Native Mode',
-                'is_cms' => $isCmsMode,
+            'public_site' => [
+                'label' => $shopThemeCode === config('themes.shop-default') ? 'Default' : ucfirst((string) $shopThemeCode),
+                'description' => 'Public storefront routes use the active Bagisto channel theme.',
             ],
             'active_theme' => [
                 'name' => $activeThemePreset?->name,

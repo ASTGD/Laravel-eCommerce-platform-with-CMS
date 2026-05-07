@@ -24,7 +24,7 @@ class CtaButtonGroupComponentType extends AbstractComponentType
         return [
             'buttons' => [
                 ['label' => 'Shop now', 'url' => '/'],
-                ['label' => 'Learn more', 'url' => '/pages/about'],
+                ['label' => 'Learn more', 'url' => '/contact-us'],
             ],
         ];
     }
