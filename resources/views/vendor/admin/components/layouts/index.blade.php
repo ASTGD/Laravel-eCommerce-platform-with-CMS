@@ -80,7 +80,7 @@
 <body
     class="h-full dark:bg-gray-950"
     @if (! (request()->cookie('dark_mode') ?? 0))
-        style="background-color: #eff3f8;"
+        style="background-color: #f5f5f5;"
     @endif
 >
     {!! view_render_event('bagisto.admin.layout.body.before') !!}
@@ -90,7 +90,7 @@
         id="app"
         class="h-full"
         @if (! (request()->cookie('dark_mode') ?? 0))
-            style="background-color: #eff3f8;"
+            style="background-color: #f5f5f5;"
         @endif
     >
         <!-- Flash Message Blade Component -->
@@ -113,7 +113,7 @@
                 <x-admin::layouts.sidebar />
             </div>
 
-            <div class="flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-transparent transition-all duration-300 dark:bg-gray-950 pt-6 px-4 sm:px-6 lg:pt-6 lg:px-6 lg:ltr:pl-[294px] lg:group-[.sidebar-collapsed]/container:ltr:pl-[94px] lg:rtl:pr-[294px] lg:group-[.sidebar-collapsed]/container:rtl:pr-[94px]" @if (! (request()->cookie('dark_mode') ?? 0)) style="background-color: #eff3f8;" @endif>
+            <div class="flex min-h-[calc(100vh-62px)] max-w-full flex-1 flex-col bg-transparent transition-all duration-300 dark:bg-gray-950 pt-6 px-4 sm:px-6 lg:pt-6 lg:px-6 lg:ltr:pl-[294px] lg:group-[.sidebar-collapsed]/container:ltr:pl-[94px] lg:rtl:pr-[294px] lg:group-[.sidebar-collapsed]/container:rtl:pr-[94px]" @if (! (request()->cookie('dark_mode') ?? 0)) style="background-color: #f5f5f5;" @endif>
                 <!-- Added dynamic tabs for third level menus -->
                 <div class="pb-4 lg:pb-6">
                     <x-admin::layouts.breadcrumbs :title="$title ?? null" />

@@ -17,7 +17,7 @@
         $customToValue = $dashboardDateFilter['to'] ?? now()->toDateString();
     @endphp
 
-    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
         <section class="flex flex-col gap-4 pb-0 pt-1 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-1">
                 <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">

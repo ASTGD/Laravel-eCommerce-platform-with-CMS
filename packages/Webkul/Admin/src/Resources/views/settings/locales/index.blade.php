@@ -6,7 +6,7 @@
     {!! view_render_event('bagisto.admin.settings.locales.create.before') !!}
 
     <v-locales>
-        <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+        <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
             <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
                 <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                     @lang('admin::app.settings.locales.index.title')
@@ -38,7 +38,7 @@
             type="text/x-template"
             id="v-locales-template"
         >
-            <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+            <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
                 <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
                     <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                         @lang('admin::app.settings.locales.index.title')
