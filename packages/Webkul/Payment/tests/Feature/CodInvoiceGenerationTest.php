@@ -4,6 +4,7 @@ use Webkul\Core\Models\CoreConfig;
 use Webkul\Payment\Tests\Concerns\ProvidePaymentHelpers;
 use Webkul\Sales\Models\Invoice;
 use Webkul\Sales\Models\Order;
+use Webkul\Sales\Repositories\OrderRepository;
 
 use function Pest\Laravel\postJson;
 
@@ -40,9 +41,28 @@ it('creates a cod invoice on order placement even when the legacy generate-invoi
 
     $order = Order::query()->where('cart_id', $cart->id)->firstOrFail();
 
+    expect($order->status)->toBe(Order::STATUS_PENDING)
+        ->and($order->canConfirm())->toBeTrue();
+
     expect(Invoice::query()->where('order_id', $order->id)->exists())->toBeTrue();
 
     $invoice = Invoice::query()->where('order_id', $order->id)->firstOrFail();
 
     expect($invoice->state)->toBe(Invoice::STATUS_PENDING_PAYMENT);
+});
+
+it('does not move cod orders back to pending payment when an open cod invoice exists', function () {
+    $cart = $this->createCartWithItems('cashondelivery');
+
+    postJson(route('shop.checkout.onepage.orders.store'))
+        ->assertOk()
+        ->assertJsonPath('data.redirect', true);
+
+    $order = Order::query()->where('cart_id', $cart->id)->firstOrFail();
+
+    $order->forceFill(['status' => Order::STATUS_PROCESSING])->save();
+
+    app(OrderRepository::class)->updateOrderStatus($order->fresh(['payment', 'items']), Order::STATUS_PENDING_PAYMENT);
+
+    expect($order->fresh()->status)->toBe(Order::STATUS_PROCESSING);
 });

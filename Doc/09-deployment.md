@@ -33,6 +33,8 @@
 - callback/IPN traffic must reach the application directly over HTTPS
 - `sales.payment_methods.sslcommerz_gateway.strict_amount_validation` should remain enabled unless SSLCommerz support requires a different amount contract
 - `sales.payment_methods.sslcommerz_gateway.log_payloads` can be disabled in stricter environments if raw callback retention is not desired
+- the Laravel scheduler must be running because pending online payment reconciliation and expiry/cancel automation are scheduled jobs
+- `sales.payment_methods.pending_payment_expiry.expire_after_minutes` controls how long unresolved online-payment orders may remain in `Pending Payment`; the default is 60 minutes
 - direct bKash credentials must be configured separately from SSLCommerz:
   - `sales.payment_methods.bkash_gateway.username`
   - `sales.payment_methods.bkash_gateway.password`

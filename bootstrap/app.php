@@ -50,7 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withSchedule(function (Schedule $schedule) {
-        //
+        $schedule->command('platform:payments:reconcile-pending --older-than=5 --limit=50')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(10);
+
+        $schedule->command('platform:payments:expire-pending --limit=50')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(10);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

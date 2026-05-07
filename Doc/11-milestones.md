@@ -170,6 +170,8 @@ Current implementation notes:
 - Bagisto native shipment creation no longer acts as the first transition out of `Pending`
 - payment success paths no longer auto-promote supported orders to `Processing`
 - admin order confirmation is now the explicit gate before shipment
+- COD order status remains operational (`Pending` until admin confirmation); COD invoice/payment collection can remain `Pending Payment` without changing the order status
+- external online payments now have a permanent expiry policy: unresolved attempts are scheduled for reconciliation, and unpaid `Pending Payment` orders are canceled after the configured expiry window
 - later shipment sub-stages and courier workflow detail are still deferred to a dedicated shipment slice
 
 ## Shipment And COD Workstream Note

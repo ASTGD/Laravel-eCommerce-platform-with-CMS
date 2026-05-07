@@ -36,7 +36,7 @@ class GenerateInvoice
             $this->invoiceRepository->create(
                 $this->prepareInvoiceData($order),
                 core()->getConfigData('sales.payment_methods.cashondelivery.invoice_status') ?? Invoice::STATUS_PENDING_PAYMENT,
-                core()->getConfigData('sales.payment_methods.cashondelivery.order_status') ?? Order::STATUS_PENDING_PAYMENT
+                core()->getConfigData('sales.payment_methods.cashondelivery.order_status') ?? Order::STATUS_PENDING
             );
         }
 
