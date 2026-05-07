@@ -3,7 +3,7 @@
         @lang('admin::app.catalog.families.index.title')
     </x-slot>
 
-    <div class="space-y-8 bg-transparent pb-8" style="background-color: #eff3f8;">
+    <div class="space-y-8 bg-transparent pb-8" style="background-color: #f5f5f5;">
         <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
             <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                 @lang('admin::app.catalog.families.index.title')
