@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Platform\CommerceCore\Console\Commands\ExpirePendingPaymentsCommand;
 use Platform\CommerceCore\Console\Commands\ImportCodSettlementsCommand;
 use Platform\CommerceCore\Console\Commands\ReconcilePendingPaymentsCommand;
 use Platform\CommerceCore\Console\Commands\SyncShipmentTrackingCommand;
@@ -78,6 +79,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ExpirePendingPaymentsCommand::class,
                 ImportCodSettlementsCommand::class,
                 ReconcilePendingPaymentsCommand::class,
                 SyncShipmentTrackingCommand::class,

@@ -14,7 +14,7 @@ return [
         'active' => true,
         'generate_invoice' => true,
         'invoice_status' => 'pending_payment',
-        'order_status' => 'pending_payment',
+        'order_status' => 'pending',
         'sort' => 6,
     ],
 

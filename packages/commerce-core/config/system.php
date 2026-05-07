@@ -228,6 +228,37 @@ return [
             ],
         ],
     ], [
+        'key' => 'sales.payment_methods.pending_payment_expiry',
+        'name' => 'Pending Payment Expiry',
+        'info' => 'Automatically reconciles stale online payments and cancels unpaid pending-payment orders.',
+        'sort' => 12,
+        'fields' => [
+            [
+                'name' => 'active',
+                'title' => 'Status',
+                'type' => 'boolean',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => true,
+            ], [
+                'name' => 'expire_after_minutes',
+                'title' => 'Expire After (minutes)',
+                'type' => 'text',
+                'validation' => 'numeric|min:1',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => 60,
+            ], [
+                'name' => 'reconcile_older_than_minutes',
+                'title' => 'Reconcile Grace (minutes)',
+                'type' => 'text',
+                'validation' => 'numeric|min:0',
+                'channel_based' => true,
+                'locale_based' => false,
+                'default' => 5,
+            ],
+        ],
+    ], [
         'key' => 'sales.carriers.courier',
         'name' => 'Courier',
         'info' => 'District-based delivery charges for checkout.',

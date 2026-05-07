@@ -31,7 +31,7 @@ Current customer-facing order lifecycle:
 - admin-confirmed order: `Processing`
 - shipped order: `Shipped`
 
-The customer order history and order detail views now render the same order state progression as the admin sales area for this slice.
+The customer order history and order detail views now render the same order state progression as the admin sales area for this slice. For COD orders, payment collection remains separate from the customer-facing order status, so a new COD order still appears as `Pending`. Online-payment orders remain `Pending Payment` only while the gateway result is unresolved; successful reconciliation moves the order to `Pending`, while failed or expired attempts cancel the order instead of leaving it pending forever.
 
 Current shipment-tracking coverage on order detail:
 

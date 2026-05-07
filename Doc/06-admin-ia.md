@@ -460,6 +460,8 @@ Current admin behavior for this slice:
 - `Confirm` action is available only for `Pending` orders
 - shipment creation is blocked until the order is `Processing`
 - order status filters and badges in the sales order screens now include `Shipped`
+- COD orders keep the same operational order flow; COD collection is tracked through invoice/COD settlement state instead of changing the order itself to `Pending Payment`
+- online-payment orders can stay in `Pending Payment` only while the gateway result is unresolved; successful reconciliation moves them into the normal `Pending` admin-confirmation flow, while failed or expired attempts cancel the order
 
 This slice intentionally stops at `Shipped`. Courier handover, delivery tracking, and later shipment sub-stages remain a separate shipment workstream.
 
@@ -527,7 +529,9 @@ The underlying payment attempt detail route remains available for support workfl
 Current reconciliation coverage:
 
 - `sslcommerz` supports manual reconcile, scheduled reconcile, and refund status follow-up
-- direct `bkash` supports manual reconcile, scheduled reconcile, and refund status follow-up
+- `bkash` supports manual reconcile, scheduled reconcile, and refund status follow-up
+- stale online payment attempts are reconciled before expiry; if still unpaid after the configured window, the linked `Pending Payment` order is canceled automatically
+- the default pending-payment expiry window is 60 minutes and is configurable under `Configuration > Sales > Payment Methods > Pending Payment Expiry`
 
 Refund handling stays inside the native Bagisto order workflow:
 

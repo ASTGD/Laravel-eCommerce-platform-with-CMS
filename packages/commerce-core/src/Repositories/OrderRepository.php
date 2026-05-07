@@ -30,7 +30,10 @@ class OrderRepository extends BaseOrderRepository
     {
         Event::dispatch('sales.order.update-status.before', $order);
 
-        if (! empty($orderState)) {
+        if (
+            ! empty($orderState)
+            && ! $this->shouldKeepCodOrderOperational($order, $orderState)
+        ) {
             $status = $orderState;
         } else {
             $status = $this->resolveCalculatedStatus($order);
@@ -63,7 +66,10 @@ class OrderRepository extends BaseOrderRepository
             return Order::STATUS_COMPLETED;
         }
 
-        if ($order->status === Order::STATUS_PENDING_PAYMENT) {
+        if (
+            $order->status === Order::STATUS_PENDING_PAYMENT
+            && $order->payment?->method !== 'cashondelivery'
+        ) {
             return Order::STATUS_PENDING_PAYMENT;
         }
 
@@ -72,6 +78,12 @@ class OrderRepository extends BaseOrderRepository
         }
 
         return Order::STATUS_PROCESSING;
+    }
+
+    protected function shouldKeepCodOrderOperational($order, ?string $orderState): bool
+    {
+        return $orderState === Order::STATUS_PENDING_PAYMENT
+            && $order->payment?->method === 'cashondelivery';
     }
 
     protected function isInShippedState($order): bool
