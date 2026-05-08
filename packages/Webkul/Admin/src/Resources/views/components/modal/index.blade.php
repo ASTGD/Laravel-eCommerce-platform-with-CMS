@@ -16,11 +16,11 @@
 
     @isset($header)
         <template v-slot:header="{ toggle, isOpen }">
-            <div {{ $header->attributes->merge(['class' => 'flex items-center justify-between gap-2.5 border-b px-4 py-3 dark:border-gray-800']) }}>
+            <div {{ $header->attributes->merge(['class' => 'flex items-center justify-between gap-2.5 border-b border-slate-200 bg-white px-4 py-3 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200']) }}>
                 {{ $header }}
 
                 <span
-                    class="icon-cancel-1 cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                    class="icon-cancel-1 cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="toggle"
                 >
                 </span>
@@ -30,7 +30,7 @@
 
     @isset($content)
         <template v-slot:content>
-            <div {{ $content->attributes->merge(['class' => 'border-b px-4 py-2.5 dark:border-gray-800']) }}>
+            <div {{ $content->attributes->merge(['class' => 'border-b border-slate-200 bg-white px-4 py-2.5 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300']) }}>
                 {{ $content }}
             </div>
         </template>
@@ -38,7 +38,7 @@
 
     @isset($footer)
         <template v-slot:footer>
-            <div {{ $footer->attributes->merge(['class' => 'flex justify-end px-4 py-2.5']) }}>
+            <div {{ $footer->attributes->merge(['class' => 'flex justify-end bg-slate-50/80 px-4 py-2.5 dark:bg-gray-950/50']) }}>
                 {{ $footer }}
             </div>
         </template>
@@ -67,7 +67,7 @@
                 leave-to-class="opacity-0"
             >
                 <div
-                    class="fixed inset-0 z-[10001] bg-gray-500 bg-opacity-50 transition-opacity"
+                    class="fixed inset-0 z-[10001] bg-slate-950/70 backdrop-blur-[2px] transition-opacity"
                     v-show="isOpen"
                 ></div>
             </transition>
@@ -88,7 +88,7 @@
                 >
                     <div class="flex min-h-screen items-end justify-center p-4 sm:items-center sm:p-0">
                         <div
-                            class="box-shadow relative z-[999] w-screen max-w-[568px] rounded-lg bg-white dark:bg-gray-900 max-lg:mb-4 max-lg:mt-4 max-md:w-[90%] {{ $boxClass }}"
+                            class="box-shadow relative z-[999] w-screen max-w-[568px] overflow-hidden rounded-lg bg-white dark:border-gray-800 dark:bg-gray-900 max-lg:mb-4 max-lg:mt-4 max-md:w-[90%] {{ $boxClass }}"
                             style="{{ $boxStyle }}"
                         >
                             <!-- Header Slot -->

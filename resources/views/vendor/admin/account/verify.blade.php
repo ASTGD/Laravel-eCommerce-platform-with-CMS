@@ -50,7 +50,7 @@
 
                             <button
                                 type="button"
-                                class="cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950 sm:px-5 sm:text-base"
+                                class="cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white sm:px-5 sm:text-base"
                                 onclick="event.preventDefault(); document.getElementById('adminLogout').submit();"
                             >
                                 @lang('admin::app.users.verify.back')

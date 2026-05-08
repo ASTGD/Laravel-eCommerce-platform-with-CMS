@@ -35,7 +35,7 @@
                     <!-- Modal Header -->
                     <x-slot:header>
                         <p class="flex items-center gap-2.5 text-lg font-bold text-gray-800 dark:text-white">
-                            <span class="icon-magic text-2xl text-gray-800"></span>
+                            <span class="icon-magic text-2xl text-gray-800 dark:text-gray-300"></span>
 
                             @lang('admin::app.components.tinymce.ai-generation.title')
                         </p>

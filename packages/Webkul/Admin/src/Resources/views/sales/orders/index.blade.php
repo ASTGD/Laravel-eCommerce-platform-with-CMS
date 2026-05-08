@@ -184,7 +184,8 @@
             }
 
             .dark .sales-orders-modern-datagrid .table-responsive.box-shadow {
-                background: rgb(15 23 42);
+                border-color: rgb(55 65 81);
+                background: rgb(31 41 55);
             }
         </style>
     @endPushOnce
@@ -237,7 +238,7 @@
                             v-if="searchedCustomers.length"
                         >
                             <div
-                                class="grid cursor-pointer place-content-start gap-1.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
+                                class="grid cursor-pointer place-content-start gap-1.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-800"
                                 v-for="customer in searchedCustomers"
                                 @click="createCart(customer)"
                             >

@@ -53,7 +53,7 @@
             }
 
             .dark .catalog-categories-modern-datagrid .table-responsive.box-shadow {
-                background: rgb(15 23 42);
+                background: rgb(31 41 55);
             }
 
             .catalog-categories-modern-datagrid .table-responsive > .row {

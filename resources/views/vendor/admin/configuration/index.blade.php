@@ -59,7 +59,7 @@
                         @endphp
 
                         <a
-                            class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                            class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
                             href="{{ route('admin.configuration.index', ($item->getKey() . '/' . $childKey)) }}"
                         >
                             @if ($icon = $child->getIcon())
@@ -116,7 +116,7 @@
                         <div class="grid max-h-[400px] overflow-y-auto">
                             <a
                                 :href="category.url"
-                                class="cursor-pointer border-b p-4 text-sm font-semibold text-gray-600 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950"
+                                class="cursor-pointer border-b p-4 text-sm font-semibold text-gray-600 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
                                 v-for="category in searchedResults.data"
                             >
                                 @{{ category.title }}

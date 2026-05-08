@@ -84,7 +84,7 @@
                                         @foreach ($channels as $channel)
                                             <a
                                                 href="?{{ Arr::query(['channel' => $channel->code, 'locale' => $currentLocale->code]) }}"
-                                                class="flex cursor-pointer gap-2.5 px-5 py-2 text-base hover:bg-gray-100 dark:text-white dark:hover:bg-gray-950"
+                                                class="flex cursor-pointer gap-2.5 px-5 py-2 text-base hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800"
                                             >
                                                 {{ $channel->name }}
                                             </a>
@@ -119,7 +119,7 @@
                                         @foreach ($currentChannel->locales->sortBy('name') as $locale)
                                             <a
                                                 href="?{{ Arr::query(['channel' => $currentChannel->code, 'locale' => $locale->code]) }}"
-                                                class="flex gap-2.5 px-5 py-2 text-base cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-950 dark:text-white {{ $locale->code == $currentLocale->code ? 'bg-gray-100 dark:bg-gray-950' : ''}}"
+                                                class="flex gap-2.5 px-5 py-2 text-base cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-white {{ $locale->code == $currentLocale->code ? 'bg-gray-100 dark:bg-blue-950/40' : ''}}"
                                             >
                                                 {{ $locale->name }}
                                             </a>

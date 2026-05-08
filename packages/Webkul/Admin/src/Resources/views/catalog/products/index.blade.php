@@ -410,7 +410,8 @@
             }
 
             .dark .catalog-products-modern-datagrid .table-responsive.box-shadow {
-                background: rgb(15 23 42);
+                border-color: rgb(55 65 81);
+                background: rgb(31 41 55);
             }
         </style>
     @endPushOnce

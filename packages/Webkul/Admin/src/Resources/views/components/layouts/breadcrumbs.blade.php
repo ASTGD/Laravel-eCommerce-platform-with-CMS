@@ -116,7 +116,7 @@
                     {{ $breadcrumb['label'] }}
                 </a>
             @else
-                <span class="font-normal text-slate-500 dark:text-slate-400">
+                <span class="font-normal text-slate-600 dark:text-slate-300">
                     {{ $breadcrumb['label'] }}
                 </span>
             @endif

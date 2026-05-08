@@ -19,6 +19,50 @@
         @apply bg-gray-50;
     }
 
+    html.dark,
+    html.dark body,
+    html.dark #app {
+        @apply bg-slate-950 text-slate-100;
+    }
+
+    html.dark .admin-main-surface {
+        @apply bg-slate-900;
+    }
+
+    /*
+     * The native toggle applies html.dark client-side without a reload.
+     * Some redesigned admin pages still ship legacy inline light backgrounds,
+     * so this is intentionally scoped to those known admin shell colors.
+     */
+    html.dark body[style*="background-color: #f5f5f5"],
+    html.dark body[style*="background-color:#f5f5f5"],
+    html.dark body[style*="background-color: rgb(245, 245, 245)"],
+    html.dark body[style*="background-color:rgb(245, 245, 245)"],
+    html.dark #app[style*="background-color: #f5f5f5"],
+    html.dark #app[style*="background-color:#f5f5f5"],
+    html.dark #app[style*="background-color: rgb(245, 245, 245)"],
+    html.dark #app[style*="background-color:rgb(245, 245, 245)"] {
+        background-color: rgb(2 6 23) !important;
+    }
+
+    html.dark .admin-main-surface[style*="background-color: #f5f5f5"],
+    html.dark .admin-main-surface[style*="background-color:#f5f5f5"],
+    html.dark .admin-main-surface[style*="background-color: rgb(245, 245, 245)"],
+    html.dark .admin-main-surface[style*="background-color:rgb(245, 245, 245)"] {
+        background-color: rgb(15 23 42) !important;
+    }
+
+    html.dark [style*="background-color: #f5f5f5"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color:#f5f5f5"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color: #eff3f8"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color:#eff3f8"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color: rgb(245, 245, 245)"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color:rgb(245, 245, 245)"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color: rgb(239, 243, 248)"]:not(body):not(#app):not(.admin-main-surface),
+    html.dark [style*="background-color:rgb(239, 243, 248)"]:not(body):not(#app):not(.admin-main-surface) {
+        background-color: transparent !important;
+    }
+
     button:disabled {
         @apply cursor-not-allowed opacity-50;
     }
@@ -67,6 +111,13 @@
         @apply border-[1px] dark:border-gray-800 shadow-[0px_0px_0px_0px_rgba(0,0,0,0.03),0px_1px_1px_0px_rgba(0,0,0,0.03),0px_3px_3px_0px_rgba(0,0,0,0.03),0px_6px_4px_0px_rgba(0,0,0,0.02),0px_11px_4px_0px_rgba(0,0,0,0.00),0px_17px_5px_0px_rgba(0,0,0,0.00)];
     }
 
+    html.dark .box-shadow,
+    html.dark .table-responsive {
+        background-color: rgb(31 41 55) !important;
+        border-color: rgb(55 65 81) !important;
+        color: rgb(229 231 235);
+    }
+
     .admin-modal-backdrop {
         @apply fixed inset-0 bg-slate-950/70 backdrop-blur-[2px] transition-opacity;
     }
@@ -84,7 +135,7 @@
     }
 
     .admin-modal-panel {
-        @apply relative z-[999] flex w-full max-w-[568px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.65),0_12px_32px_-18px_rgba(15,23,42,0.35)] ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10;
+        @apply relative z-[999] flex w-full max-w-[568px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.65),0_12px_32px_-18px_rgba(15,23,42,0.35)] ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-800 dark:ring-white/10;
         max-height: calc(100vh - 2rem);
     }
 
@@ -93,7 +144,7 @@
     }
 
     .admin-modal-header {
-        @apply flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-800 dark:bg-gray-900;
+        @apply flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 dark:border-gray-700 dark:bg-gray-800;
     }
 
     .admin-modal-body {
@@ -101,7 +152,7 @@
     }
 
     .admin-modal-footer {
-        @apply flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-gray-800 dark:bg-gray-950/50;
+        @apply flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/50;
     }
 
     .admin-modal-close {
@@ -597,16 +648,28 @@
         @apply outline-none;
     }
 
+    html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+    html.dark textarea,
+    html.dark select {
+        @apply border-gray-600 bg-gray-700 text-gray-100 placeholder-gray-400;
+    }
+
+    html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):focus,
+    html.dark textarea:focus,
+    html.dark select:focus {
+        @apply border-blue-700 ring-2 ring-blue-950;
+    }
+
     .primary-button {
         @apply bg-blue-600 border border-blue-700 cursor-pointer flex focus:opacity-[0.9] font-semibold gap-x-1 hover:opacity-[0.9] items-center place-content-center px-3 py-1.5 rounded-md text-gray-50 transition-all;
     }
 
     .secondary-button {
-        @apply flex cursor-pointer place-content-center items-center gap-x-1 whitespace-nowrap rounded-md border-2 border-blue-600 bg-white px-3 py-1.5 font-semibold text-blue-600 transition-all hover:bg-[#eff6ff61] focus:bg-[#eff6ff61] dark:border-gray-400 dark:bg-gray-800 dark:text-white dark:hover:opacity-80;
+        @apply flex cursor-pointer place-content-center items-center gap-x-1 whitespace-nowrap rounded-md border-2 border-blue-600 bg-white px-3 py-1.5 font-semibold text-blue-600 transition-all hover:bg-[#eff6ff61] focus:bg-[#eff6ff61] dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/60;
     }
 
     .transparent-button {
-        @apply flex cursor-pointer appearance-none place-content-center items-center gap-x-1 whitespace-nowrap rounded-md border-2 border-transparent px-3 py-1.5 font-semibold text-gray-600 transition-all marker:shadow hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-gray-950;
+        @apply flex cursor-pointer appearance-none place-content-center items-center gap-x-1 whitespace-nowrap rounded-md border-2 border-transparent px-3 py-1.5 font-semibold text-gray-600 transition-all marker:shadow hover:bg-gray-100 focus:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white dark:focus:bg-gray-800;
     }
 
     .journal-scroll::-webkit-scrollbar {
@@ -698,6 +761,39 @@
 
     .status-disable {
         @apply text-red-600;
+    }
+
+    html.dark .label-pending,
+    html.dark .label-pending_payment {
+        @apply bg-amber-950/40 text-amber-300;
+    }
+
+    html.dark .label-processing,
+    html.dark .label-shipped,
+    html.dark .label-closed {
+        @apply bg-blue-950/40 text-blue-300;
+    }
+
+    html.dark .label-completed,
+    html.dark .label-active {
+        @apply bg-emerald-950/40 text-emerald-300;
+    }
+
+    html.dark .label-canceled,
+    html.dark .label-fraud {
+        @apply bg-red-950/40 text-red-300;
+    }
+
+    html.dark .label-info {
+        @apply bg-gray-800 text-gray-300;
+    }
+
+    html.dark .status-enable {
+        @apply text-emerald-300;
+    }
+
+    html.dark .status-disable {
+        @apply text-red-300;
     }
 
 	.icon-star-fill:before {

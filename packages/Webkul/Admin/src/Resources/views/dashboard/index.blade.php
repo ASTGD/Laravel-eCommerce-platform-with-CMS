@@ -56,7 +56,7 @@
                     type="date"
                     name="from"
                     value="{{ $customFromValue }}"
-                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/10"
+                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/10"
                 >
 
                 <span class="text-sm text-slate-400 dark:text-slate-500">to</span>
@@ -67,7 +67,7 @@
                     type="date"
                     name="to"
                     value="{{ $customToValue }}"
-                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/10"
+                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-800 dark:text-slate-300 dark:focus:border-blue-500/50 dark:focus:ring-blue-500/10"
                 >
 
                 <button

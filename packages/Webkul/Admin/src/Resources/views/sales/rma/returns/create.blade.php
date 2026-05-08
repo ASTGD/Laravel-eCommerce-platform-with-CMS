@@ -100,7 +100,7 @@
                     }">
                         <template v-if="! isLoading">
                             <div
-                                class="row grid grid-cols-[0.5fr_1fr_1fr_0.5fr_1fr_1fr_0.1fr] grid-rows-1 px-4 py-2.5 border-b dark:border-gray-800 transition-all hover:bg-gray-50 dark:hover:bg-gray-950"
+                                class="row grid grid-cols-[0.5fr_1fr_1fr_0.5fr_1fr_1fr_0.1fr] grid-rows-1 px-4 py-2.5 border-b dark:border-gray-800 transition-all hover:bg-gray-50 dark:hover:bg-gray-800"
                                 v-for="record in available.records"
                             >
                                 <!-- Name, SKU, Attribute Family Columns -->

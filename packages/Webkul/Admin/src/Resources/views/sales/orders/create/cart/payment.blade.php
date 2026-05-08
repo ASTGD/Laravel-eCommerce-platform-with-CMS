@@ -37,7 +37,7 @@
                     {!! view_render_event('bagisto.admin.sales.order.create.cart.payment.before') !!}
 
                     <label
-                        class="flex cursor-pointer items-center gap-2 border-b p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
+                        class="flex cursor-pointer items-center gap-2 border-b p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
                         v-for="payment in methods"
                         :for="payment.method"
                     >
