@@ -10,16 +10,16 @@
                         @if ($menuItem->isActive()) open @endif
                     >
                         <summary
-                            class="ast-sidebar-menu-toggle peer flex h-11 w-full cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'bg-blue-50 font-medium text-blue-600 shadow-[inset_3px_0_0_#2563eb]' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-slate-100 dark:hover:bg-gray-800 group-[.sidebar-collapsed]/container:justify-center group-[.sidebar-collapsed]/container:px-0"
+                            class="ast-sidebar-menu-toggle peer flex h-11 w-full cursor-pointer list-none items-center gap-3 rounded-xl px-3 text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'bg-blue-50 font-medium text-blue-600 shadow-[inset_3px_0_0_#2563eb] dark:bg-blue-950/40 dark:text-blue-300 dark:shadow-[inset_3px_0_0_#1d4ed8]' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-slate-100 dark:hover:bg-gray-800 dark:hover:text-blue-300 group-[.sidebar-collapsed]/container:justify-center group-[.sidebar-collapsed]/container:px-0"
                         >
-                            <span class="{{ $menuItem->getIcon() }} text-[20px] leading-none transition-all duration-200 {{ $menuItem->isActive() ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300' }}"></span>
+                            <span class="{{ $menuItem->getIcon() }} text-[20px] leading-none transition-all duration-200 {{ $menuItem->isActive() ? 'text-blue-600 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300' }}"></span>
                             
-                            <p class="whitespace-nowrap text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'font-medium text-blue-600' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-colors duration-200 group-[.sidebar-collapsed]/container:hidden">
+                            <p class="whitespace-nowrap text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'font-medium text-blue-600 dark:text-blue-300' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-colors duration-200 group-[.sidebar-collapsed]/container:hidden">
                                 {{ $menuItem->getName() }}
                             </p>
 
                             <span
-                                class="ast-sidebar-menu-chevron icon-sort-down text-[16px] leading-none transition-all duration-200 ltr:ml-auto rtl:mr-auto {{ $menuItem->isActive() ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300' }}"
+                                class="ast-sidebar-menu-chevron icon-sort-down text-[16px] leading-none transition-all duration-200 ltr:ml-auto rtl:mr-auto {{ $menuItem->isActive() ? 'text-blue-600 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300' }}"
                                 aria-hidden="true"
                             ></span>
                         </summary>
@@ -44,11 +44,11 @@
                     >
                         <a
                             href="{{ $menuItem->getUrl() }}"
-                            class="peer flex h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'bg-blue-50 font-medium text-blue-600 shadow-[inset_3px_0_0_#2563eb]' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-slate-100 dark:hover:bg-gray-800 group-[.sidebar-collapsed]/container:justify-center group-[.sidebar-collapsed]/container:px-0"
+                            class="peer flex h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'bg-blue-50 font-medium text-blue-600 shadow-[inset_3px_0_0_#2563eb] dark:bg-blue-950/40 dark:text-blue-300 dark:shadow-[inset_3px_0_0_#1d4ed8]' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-slate-100 dark:hover:bg-gray-800 dark:hover:text-blue-300 group-[.sidebar-collapsed]/container:justify-center group-[.sidebar-collapsed]/container:px-0"
                         >
-                            <span class="{{ $menuItem->getIcon() }} text-[20px] leading-none transition-all duration-200 {{ $menuItem->isActive() ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300' }}"></span>
+                            <span class="{{ $menuItem->getIcon() }} text-[20px] leading-none transition-all duration-200 {{ $menuItem->isActive() ? 'text-blue-600 dark:text-blue-300' : 'text-slate-700 dark:text-slate-300' }}"></span>
                             
-                            <p class="whitespace-nowrap text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'font-medium text-blue-600' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-colors duration-200 group-[.sidebar-collapsed]/container:hidden">
+                            <p class="whitespace-nowrap text-[16px] leading-6 tracking-normal {{ $menuItem->isActive() ? 'font-medium text-blue-600 dark:text-blue-300' : 'font-normal text-slate-700 dark:text-slate-300' }} transition-colors duration-200 group-[.sidebar-collapsed]/container:hidden">
                                 {{ $menuItem->getName() }}
                             </p>
                         </a>

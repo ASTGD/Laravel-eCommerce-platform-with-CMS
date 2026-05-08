@@ -40,7 +40,7 @@
             }
 
             .dark .customer-gdpr-modern-datagrid .table-responsive.box-shadow {
-                background: rgb(15 23 42);
+                background: rgb(31 41 55);
             }
         </style>
     @endPushOnce

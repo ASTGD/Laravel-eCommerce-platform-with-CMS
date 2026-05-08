@@ -9,20 +9,20 @@
         id="v-dashboard-attention-summary-template"
     >
         <template v-if="isLoading">
-            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
+            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
                 <x-admin::shimmer.dashboard.todays-details />
             </div>
         </template>
 
         <template v-else>
-            <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+            <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
+                <div class="border-b border-slate-200 px-6 py-5 dark:border-gray-700">
                     <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                         Needs Action
                     </h3>
                 </div>
 
-                <div class="grid gap-3 border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+                <div class="grid gap-3 border-b border-slate-200 px-6 py-5 dark:border-gray-700">
                     <a
                         href="{{ route('admin.sales.invoices.index') }}"
                         class="rounded-[1.125rem] bg-rose-50 px-4 py-4 transition hover:bg-rose-100/70 dark:bg-rose-500/10 dark:hover:bg-rose-500/15"
@@ -49,7 +49,7 @@
                         v-for="item in exceptionCards"
                         :key="item.label"
                         :href="item.url"
-                        class="rounded-[1.125rem] bg-slate-50 px-4 py-3 transition hover:bg-slate-100/80 dark:bg-slate-950 dark:hover:bg-slate-800"
+                        class="rounded-[1.125rem] bg-slate-50 px-4 py-3 transition hover:bg-slate-100/80 dark:bg-gray-800 dark:hover:bg-slate-800"
                     >
                             <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
                                 @{{ item.label }}

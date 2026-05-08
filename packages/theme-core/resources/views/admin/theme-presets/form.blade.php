@@ -24,7 +24,7 @@
     @endphp
 
     <div class="space-y-6 pb-8">
-        <section class="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+        <section class="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white px-6 py-6 shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none">
             <div class="absolute inset-y-0 right-0 w-2/5 bg-[radial-gradient(circle_at_top_right,_rgba(234,88,12,0.16),_transparent_45%)]"></div>
 
             <div class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -43,7 +43,7 @@
                 </div>
 
                 <div class="grid gap-3 sm:grid-cols-2 xl:w-[30rem]">
-                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-700/60">
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                             Preset state
                         </p>
@@ -55,7 +55,7 @@
                         </p>
                     </article>
 
-                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-gray-600 dark:bg-gray-700/60">
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                             Visual hint
                         </p>
@@ -81,8 +81,8 @@
                     @method('PUT')
                 @endif
 
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                    <div class="border-b border-slate-200 px-6 py-6 dark:border-slate-800">
+                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none">
+                    <div class="border-b border-slate-200 px-6 py-6 dark:border-gray-700">
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                             Preset identity
                         </p>
@@ -97,7 +97,7 @@
                             <input
                                 name="name"
                                 value="{{ old('name', $preset->name) }}"
-                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
+                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
                                 placeholder="Modern"
                                 required
                             >
@@ -108,15 +108,15 @@
                             <input
                                 name="code"
                                 value="{{ old('code', $preset->code) }}"
-                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
+                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
                                 placeholder="modern"
                             >
                         </label>
                     </div>
                 </article>
 
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                    <div class="border-b border-slate-200 px-6 py-6 dark:border-slate-800">
+                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none">
+                    <div class="border-b border-slate-200 px-6 py-6 dark:border-gray-700">
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                             Theme tokens
                         </p>
@@ -131,7 +131,7 @@
                             <textarea
                                 name="tokens_json"
                                 rows="18"
-                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
+                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
                                 spellcheck="false"
                             >{{ old('tokens_json', json_encode($preset->tokens_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
                         </label>
@@ -141,15 +141,15 @@
                             <textarea
                                 name="settings_json"
                                 rows="18"
-                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
+                                class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-white dark:focus:ring-white/10"
                                 spellcheck="false"
                             >{{ old('settings_json', json_encode($preset->settings_json ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) }}</textarea>
                         </label>
                     </div>
                 </article>
 
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-                    <div class="border-b border-slate-200 px-6 py-6 dark:border-slate-800">
+                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none">
+                    <div class="border-b border-slate-200 px-6 py-6 dark:border-gray-700">
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                             Publish controls
                         </p>
@@ -166,7 +166,7 @@
                                     name="is_default"
                                     value="1"
                                     {{ old('is_default', $preset->is_default) ? 'checked' : '' }}
-                                    class="h-5 w-5 rounded border-slate-300 text-slate-950 focus:ring-slate-950 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-white/20"
+                                    class="h-5 w-5 rounded border-slate-300 text-slate-950 focus:ring-slate-950 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-500 dark:focus:ring-blue-950"
                                 >
                                 Default preset
                             </label>
@@ -177,16 +177,16 @@
                                     name="is_active"
                                     value="1"
                                     {{ old('is_active', $preset->exists ? $preset->is_active : true) ? 'checked' : '' }}
-                                    class="h-5 w-5 rounded border-slate-300 text-slate-950 focus:ring-slate-950 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-white/20"
+                                    class="h-5 w-5 rounded border-slate-300 text-slate-950 focus:ring-slate-950 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-500 dark:focus:ring-blue-950"
                                 >
                                 Active
                             </label>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6 dark:border-slate-800">
+                        <div class="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-6 dark:border-gray-700">
                             <button
                                 type="submit"
-                                class="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
+                                class="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
                             >
                                 Save preset
                             </button>
@@ -203,7 +203,7 @@
             </form>
 
             <aside class="space-y-6 xl:sticky xl:top-6">
-                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:shadow-none">
+                <article class="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:shadow-none">
                     <div class="border-b border-white/10 px-6 py-6">
                         <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">
                             Live preview
@@ -255,7 +255,7 @@
                     </div>
                 </article>
 
-                <article class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <article class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none">
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                         Notes
                     </p>
@@ -277,7 +277,7 @@
                     </div>
                 </article>
 
-                <article class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
+                <article class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60 dark:border-gray-700 dark:bg-gray-800 dark:shadow-none">
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400">
                         Current token hints
                     </p>

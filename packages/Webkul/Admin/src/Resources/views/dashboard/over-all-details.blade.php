@@ -9,7 +9,7 @@
         id="v-dashboard-overall-details-template"
     >
         <template v-if="isLoading">
-            <div class="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-slate-800 dark:bg-slate-900">
+            <div class="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-gray-700 dark:bg-gray-800">
                 <x-admin::shimmer.dashboard.over-all-details />
             </div>
         </template>
@@ -19,7 +19,7 @@
                 <article
                     v-for="card in cards"
                     :key="card.label"
-                    class="group relative min-h-[136px] rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-none transition-colors duration-200 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                    class="group relative min-h-[136px] rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-none transition-colors duration-200 hover:border-slate-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0 space-y-1.5 pr-16">

@@ -13,11 +13,11 @@
     >
         <template v-if="isLoading">
             <div class="grid gap-6 md:grid-cols-2">
-                <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
+                <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
                     <x-admin::shimmer.dashboard.todays-details />
                 </div>
 
-                <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
+                <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
                     <x-admin::shimmer.dashboard.todays-details />
                 </div>
             </div>
@@ -25,8 +25,8 @@
 
         <template v-else>
             <div class="grid h-full gap-6 md:grid-cols-2">
-                <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+                <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-gray-700">
                         <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             Orders Moving
                         </h3>
@@ -55,8 +55,8 @@
                     </div>
                 </article>
 
-                <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+                <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-gray-700">
                         <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                             Courier Pending Payments
                         </h3>

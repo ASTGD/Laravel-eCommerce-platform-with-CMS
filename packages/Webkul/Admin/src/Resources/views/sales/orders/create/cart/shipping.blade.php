@@ -38,7 +38,7 @@
                         {!! view_render_event('bagisto.admin.sales.order.create.cart.shipping.before') !!}
 
                         <label
-                            class="grid cursor-pointer gap-4 border-b p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950"
+                            class="grid cursor-pointer gap-4 border-b p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
                             v-for="rate in method.rates"
                             :for="rate.method"
                         >

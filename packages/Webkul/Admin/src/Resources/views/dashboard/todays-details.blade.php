@@ -9,24 +9,24 @@
         id="v-dashboard-todays-details-template"
     >
         <template v-if="isLoading">
-            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
+            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
                 <x-admin::shimmer.dashboard.todays-details />
             </div>
         </template>
 
         <template v-else>
-            <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+            <article class="h-full overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
+                <div class="border-b border-slate-200 px-6 py-5 dark:border-gray-700">
                     <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                         Today's Orders
                     </h3>
                 </div>
 
-                <div class="grid gap-3 border-b border-slate-200 px-6 py-5 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3 dark:border-slate-800">
+                <div class="grid gap-3 border-b border-slate-200 px-6 py-5 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3 dark:border-gray-700">
                     <div
                         v-for="item in summaryCards"
                         :key="item.label"
-                        class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950"
+                        class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800"
                     >
                         <p class="font-sans text-sm leading-5 font-medium tracking-normal text-slate-600 dark:text-slate-300">
                             @{{ item.label }}

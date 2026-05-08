@@ -18,12 +18,12 @@
 
     @isset($header)
         <template v-slot:header="{ close }">
-            <div {{ $header->attributes->merge(['class' => 'grid gap-y-2.5 border-b p-3 dark:border-gray-800 max-sm:px-4']) }}>
+            <div {{ $header->attributes->merge(['class' => 'grid gap-y-2.5 border-b border-slate-200 bg-white p-3 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200 max-sm:px-4']) }}>
                 {{ $header }}
 
                 <div class="absolute top-3 ltr:right-3 rtl:left-3">
                     <span
-                        class="icon-cross cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                        class="icon-cross cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                         @click="close"
                     >
                     </span>
@@ -34,7 +34,7 @@
 
     @isset($content)
         <template v-slot:content>
-            <div {{ $content->attributes->merge(['class' => 'flex-1 overflow-auto p-3 max-sm:px-4']) }}>
+            <div {{ $content->attributes->merge(['class' => 'flex-1 overflow-auto bg-white p-3 text-gray-700 dark:bg-gray-900 dark:text-gray-300 max-sm:px-4']) }}>
                 {{ $content }}
             </div>
         </template>
@@ -42,7 +42,7 @@
 
     @isset($footer)
         <template v-slot:footer>
-            <div {{ $footer->attributes->merge(['class' => 'pb-8']) }}>
+            <div {{ $footer->attributes->merge(['class' => 'bg-white pb-8 dark:bg-gray-900']) }}>
                 {{ $footer }}
             </div>
         </template>
@@ -73,7 +73,7 @@
                 leave-to-class="opacity-0"
             >
                 <div
-                    class="fixed inset-0 z-[10001] bg-gray-500 bg-opacity-50 transition-opacity"
+                    class="fixed inset-0 z-[10001] bg-slate-950/70 backdrop-blur-[2px] transition-opacity"
                     v-show="isOpen"
                 ></div>
             </transition>
@@ -90,7 +90,7 @@
                 :leave-to-class="enterFromLeaveToClasses"
             >
                 <div
-                    class="fixed z-[10002] bg-white dark:bg-gray-900 max-sm:!w-full"
+                    class="fixed z-[10002] border border-slate-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 max-sm:!w-full"
                     :class="{
                         'inset-x-0 top-0': position == 'top',
                         'inset-x-0 bottom-0': position == 'bottom',
@@ -100,7 +100,7 @@
                     :style="'width:' + width"
                     v-if="isOpen"
                 >
-                    <div class="pointer-events-auto h-full w-full overflow-auto bg-white dark:bg-gray-900">
+                    <div class="pointer-events-auto h-full w-full overflow-auto bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-300">
                         <div class="flex h-full w-full flex-col">
                             <div class="min-h-0 min-w-0 flex-1 overflow-auto">
                                 <div class="flex h-full flex-col">

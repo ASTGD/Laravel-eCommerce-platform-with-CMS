@@ -1,21 +1,21 @@
 @php
     $pageTitleClass = 'font-sans text-2xl leading-8 font-bold tracking-tight text-slate-950 dark:text-white';
     $pageSubtitleClass = 'mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400';
-    $navClass = 'rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-none dark:border-gray-800 dark:bg-gray-900';
-    $panelClass = 'rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-gray-800 dark:bg-gray-900';
+    $navClass = 'rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-none dark:border-gray-700 dark:bg-gray-800';
+    $panelClass = 'rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-gray-700 dark:bg-gray-800';
     $panelTitleClass = 'font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white';
     $bodyTextClass = 'text-sm leading-6 text-slate-500 dark:text-gray-400';
     $labelClass = 'mb-2 block text-sm font-medium text-slate-700 dark:text-gray-300';
-    $inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:focus:border-blue-700 dark:focus:ring-blue-950';
-    $headerSectionClass = 'rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-none dark:border-gray-800 dark:bg-gray-900';
+    $inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:border-blue-700 dark:focus:ring-blue-950';
+    $headerSectionClass = 'rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-none dark:border-gray-700 dark:bg-gray-800';
     $headerSectionTitleClass = 'font-sans text-base font-semibold text-slate-950 dark:text-white';
     $headerSectionDescriptionClass = 'mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400';
     $headerLabelClass = 'mb-2 block text-sm font-medium text-slate-700 dark:text-gray-300';
-    $headerInputClass = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:focus:border-blue-700 dark:focus:ring-blue-950';
+    $headerInputClass = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:border-blue-700 dark:focus:ring-blue-950';
     $headerHelperClass = 'mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400';
-    $headerToggleRowClass = 'flex items-center justify-between gap-4 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-950';
+    $headerToggleRowClass = 'flex items-center justify-between gap-4 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/60';
     $toggleClass = 'h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-950';
-    $secondaryButtonClass = 'inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300';
+    $secondaryButtonClass = 'inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300';
     $primaryButtonClass = 'inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700';
     $navChipBaseClass = 'inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition';
     $navChipActiveClass = 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300';
@@ -306,7 +306,7 @@
                                 @enderror
                             </label>
                         @else
-                            <p class="mt-5 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+                            <p class="mt-5 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
                                 No navigation menus available yet.
                             </p>
                         @endif
@@ -360,7 +360,7 @@
 
                         <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
                             @foreach ($editor['variants'] as $variant => $label)
-                                <label class="cms-header-variant-card cursor-pointer rounded-xl border border-slate-200/70 bg-slate-50 p-4 transition dark:border-gray-800 dark:bg-gray-950">
+                                <label class="cms-header-variant-card cursor-pointer rounded-xl border border-slate-200/70 bg-slate-50 p-4 transition dark:border-gray-700 dark:bg-gray-950">
                                     <input
                                         type="radio"
                                         name="variant"
@@ -444,7 +444,7 @@
                         @enderror
                     </label>
 
-                    <div class="rounded-2xl border border-slate-200/70 p-5 dark:border-gray-800">
+                    <div class="rounded-2xl border border-slate-200/70 p-5 dark:border-gray-700">
                         <input type="hidden" name="newsletter_enabled" value="0">
 
                         <label class="inline-flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-gray-300">
@@ -521,7 +521,7 @@
                     </label>
                 </form>
             @else
-                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-6 dark:border-gray-800 dark:bg-gray-950">
+                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-6 dark:border-gray-700 dark:bg-gray-950">
                     <h3 class="{{ $panelTitleClass }}">
                         {{ $editor['title'] }}
                     </h3>
@@ -549,14 +549,14 @@
                     {{ $preview['title'] }}
                 </h2>
 
-                <div class="flex rounded-xl border border-slate-200 bg-white p-1 dark:border-gray-800 dark:bg-gray-900" data-preview-tabs>
+                <div class="flex rounded-xl border border-slate-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800" data-preview-tabs>
                     <button type="button" class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 dark:bg-blue-950/40 dark:text-blue-300" data-preview-mode="desktop">Desktop</button>
                     <button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300" data-preview-mode="tablet">Tablet</button>
                     <button type="button" class="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-300" data-preview-mode="mobile">Mobile</button>
                 </div>
             </div>
 
-            <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-6 dark:border-gray-800 dark:bg-gray-950">
+            <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-6 dark:border-gray-700 dark:bg-gray-950">
                 <div class="cms-studio-preview-viewport cms-preview-desktop" data-preview-viewport>
                     @if ($preview['type'] === 'header')
                         @php
@@ -575,7 +575,7 @@
                                 : array_values(array_unique(array_merge([$selectedMenuLabel], $preview['navigation_labels'] ?? [])));
                         @endphp
 
-                        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-none dark:border-gray-800 dark:bg-gray-900" data-header-preview>
+                        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-none dark:border-gray-700 dark:bg-gray-800" data-header-preview>
                             <div
                                 class="{{ $previewValues['announcement_enabled'] ? '' : 'hidden' }} bg-slate-950 px-4 py-2 text-center text-xs font-medium text-white dark:bg-gray-800"
                                 data-header-announcement
@@ -584,7 +584,7 @@
                             </div>
 
                             <div class="cms-header-preview-main gap-4 px-6 py-5" data-header-main data-header-variant="{{ $previewValues['variant'] }}">
-                                <span class="cms-preview-mobile-only h-10 w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+                                <span class="cms-preview-mobile-only h-10 w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                                     <span class="h-0.5 w-5 rounded-full bg-slate-500 dark:bg-gray-400"></span>
                                     <span class="h-0.5 w-5 rounded-full bg-slate-500 dark:bg-gray-400"></span>
                                     <span class="h-0.5 w-5 rounded-full bg-slate-500 dark:bg-gray-400"></span>
@@ -615,21 +615,21 @@
                                         Sticky
                                     </span>
 
-                                    <span class="{{ $previewValues['show_search'] ? '' : 'hidden' }} inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" data-header-search>
+                                    <span class="{{ $previewValues['show_search'] ? '' : 'hidden' }} inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-header-search>
                                         Search
                                     </span>
 
-                                    <span class="{{ $previewValues['show_account'] ? '' : 'hidden' }} inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" data-header-account>
+                                    <span class="{{ $previewValues['show_account'] ? '' : 'hidden' }} inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-header-account>
                                         Account
                                     </span>
 
-                                    <span class="{{ $previewValues['show_cart'] ? '' : 'hidden' }} inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" data-header-cart>
+                                    <span class="{{ $previewValues['show_cart'] ? '' : 'hidden' }} inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300" data-header-cart>
                                         Cart
                                     </span>
                                 </div>
                             </div>
 
-                            <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3 text-xs text-slate-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+                            <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3 text-xs text-slate-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
                                 <span data-header-variant-label>{{ $editor['variants'][$previewValues['variant']] ?? 'Classic' }}</span>
                                 <span data-header-menu-label>{{ $selectedMenuLabel }}</span>
                             </div>
@@ -645,7 +645,7 @@
                             $previewValues['copyright_text'] = old('copyright_text', $previewValues['copyright_text'] ?? null);
                         @endphp
 
-                        <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                        <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                             <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
                                 <div>
                                     <p class="font-sans text-lg font-semibold text-slate-950 dark:text-white">Storefront</p>
@@ -670,7 +670,7 @@
                                     <div class="rounded-2xl bg-slate-50 p-5 dark:bg-gray-950">
                                         <p class="font-medium text-slate-900 dark:text-white">{{ $previewValues['newsletter_heading'] ?: 'Join our newsletter' }}</p>
                                         <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-gray-400">{{ $previewValues['newsletter_text'] ?: 'Get updates and offers from the store.' }}</p>
-                                        <div class="mt-5 flex overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                                        <div class="mt-5 flex overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                                             <div class="h-11 flex-1"></div>
                                             <div class="w-28 bg-blue-600"></div>
                                         </div>
@@ -678,12 +678,12 @@
                                 @endif
                             </div>
 
-                            <p class="border-t border-slate-200 px-6 py-4 text-sm text-slate-500 dark:border-gray-800 dark:text-gray-400">
+                            <p class="border-t border-slate-200 px-6 py-4 text-sm text-slate-500 dark:border-gray-700 dark:text-gray-400">
                                 {{ $previewValues['copyright_text'] ?: 'Copyright Storefront. All rights reserved.' }}
                             </p>
                         </div>
                     @else
-                        <div class="rounded-[24px] border border-slate-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
+                        <div class="rounded-[24px] border border-slate-200 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-800">
                             <p class="{{ $bodyTextClass }}">
                                 {{ $preview['description'] }}
                             </p>

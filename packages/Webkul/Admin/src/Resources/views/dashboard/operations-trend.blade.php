@@ -9,14 +9,14 @@
         id="v-dashboard-operations-trend-template"
     >
         <template v-if="isLoading">
-            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
+            <div class="overflow-hidden rounded-[1.25rem] bg-white p-6 shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
                 <x-admin::shimmer.dashboard.total-sales />
             </div>
         </template>
 
         <template v-else>
-            <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-slate-900 dark:shadow-none" style="border-radius: 1.25rem;">
-                <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+            <article class="overflow-hidden rounded-[1.25rem] bg-white shadow-sm shadow-slate-200/60 dark:bg-gray-800 dark:shadow-none" style="border-radius: 1.25rem;">
+                <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-gray-700">
                     <h3 class="font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white">
                         Courier Movement
                     </h3>

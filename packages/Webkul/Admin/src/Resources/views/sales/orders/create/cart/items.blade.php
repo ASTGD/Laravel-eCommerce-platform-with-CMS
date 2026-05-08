@@ -70,7 +70,7 @@
                 v-if="cart.items.length"
             >
                 <div
-                    class="row grid gap-4 border-b bg-white p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-950"
+                    class="row grid gap-4 border-b bg-white p-4 transition-all hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800"
                     v-for="item in cart.items"
                 >
                     <!-- Item Information -->
