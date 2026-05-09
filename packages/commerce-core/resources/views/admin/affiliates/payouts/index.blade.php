@@ -3,19 +3,15 @@
         Affiliate Payouts
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
+    <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                 Affiliate Payouts
-            </p>
-
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                Review withdrawal requests and completed payout records.
-            </p>
+            </h1>
         </div>
-    </div>
+    </section>
 
-    <div class="mt-5 rounded bg-white p-4 dark:bg-gray-900">
+    <div class="mt-6 rounded bg-white p-4 dark:bg-gray-900">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap gap-2">
                 @foreach ($statusOptions as $statusCode => $statusLabel)

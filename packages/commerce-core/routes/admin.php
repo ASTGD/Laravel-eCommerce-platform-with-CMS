@@ -56,6 +56,10 @@ Route::group([
                     Route::post('{affiliateCommission}/reverse', 'reverse')->name('admin.affiliates.commissions.reverse');
                 });
 
+            Route::get('overview', [AffiliateReportController::class, 'index'])
+                ->middleware('platform.acl:affiliates.reports')
+                ->name('admin.affiliates.overview.index');
+
             Route::get('reports', [AffiliateReportController::class, 'index'])
                 ->middleware('platform.acl:affiliates.reports')
                 ->name('admin.affiliates.reports.index');

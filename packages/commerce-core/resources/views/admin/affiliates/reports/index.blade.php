@@ -185,70 +185,68 @@
 
 <x-admin::layouts>
     <x-slot:title>
-        Affiliate Reports
+        Affiliate Overview
     </x-slot>
 
     <div class="grid w-full min-w-0 gap-6">
-        <div class="min-w-0 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex items-center justify-between gap-4 max-lg:flex-wrap">
-                <div>
-                    <p class="text-xl font-bold text-gray-900 dark:text-white">
-                        Affiliate Reports
-                    </p>
-
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                        Real traffic, attributed orders, commissions, payout movement, and affiliate performance from the shared affiliate records.
-                    </p>
-                </div>
-
-                <form method="GET" action="{{ route('admin.affiliates.reports.index') }}" class="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-950">
-                    <label for="range" class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        Chart Range
-                    </label>
-
-                    <select
-                        id="range"
-                        name="range"
-                        class="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-[#00A4EF] dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                        onchange="this.form.submit()"
-                    >
-                        @foreach ($rangeOptions as $option)
-                            <option value="{{ $option }}" @selected($rangeDays === $option)>
-                                Last {{ $option }} days
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
+        <section class="flex flex-col gap-4 pt-1 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                    Affiliate Overview
+                </h1>
             </div>
-        </div>
 
-        <div class="affiliate-report-kpi-grid min-w-0">
+            <form
+                method="GET"
+                action="{{ route('admin.affiliates.overview.index') }}"
+                class="flex w-full flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:w-auto"
+            >
+                <label for="range" class="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Chart Range
+                </label>
+
+                <select
+                    id="range"
+                    name="range"
+                    class="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm outline-none transition focus:border-[#00A4EF] dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                    onchange="this.form.submit()"
+                >
+                    @foreach ($rangeOptions as $option)
+                        <option value="{{ $option }}" @selected($rangeDays === $option)>
+                            Last {{ $option }} days
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </section>
+
+        <div class="affiliate-report-kpi-grid grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($kpiCards as $card)
                 <div
-                    class="affiliate-report-kpi-card relative min-w-0 overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-gray-900"
+                    class="group relative min-h-[136px] min-w-0 overflow-hidden rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-none transition-colors duration-200 hover:border-slate-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
                     style="--affiliate-report-color: {{ $card['color'] }};"
                 >
-                    <div class="affiliate-report-kpi-accent"></div>
-
-                    <div class="relative flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0 space-y-1.5 pr-16">
+                            <h3 class="font-sans text-[13px] font-medium leading-5 tracking-normal text-slate-500 dark:text-slate-400">
                                 {{ $card['label'] }}
-                            </p>
+                            </h3>
 
-                            <p class="affiliate-report-kpi-value mt-3 text-gray-950 dark:text-white">
-                                {{ $card['value'] }}
-                            </p>
-
-                            <p class="mt-2 text-sm leading-5 text-gray-500 dark:text-gray-400">
-                                {{ $card['helper'] }}
-                            </p>
+                            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                <span class="font-sans text-[26px] font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
+                                    {{ $card['value'] }}
+                                </span>
+                            </div>
                         </div>
 
-                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 {{ $card['badge'] }}">
+                        <span class="relative top-1 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none dark:border-gray-700 dark:bg-gray-900 {{ $card['badge'] }}">
                             <span class="affiliate-report-kpi-icon {{ $card['icon'] }} text-xl" aria-hidden="true"></span>
                         </span>
                     </div>
+
+                    <span class="absolute bottom-5 left-5 inline-flex max-w-[calc(100%-5.5rem)] shrink-0 truncate rounded-full bg-slate-100 px-3 py-1 text-[12px] font-semibold text-slate-600 dark:bg-gray-900 dark:text-slate-300">
+                        {{ $card['helper'] }}
+                    </span>
                 </div>
             @endforeach
         </div>
@@ -747,37 +745,6 @@
         </script>
 
         <style>
-            .affiliate-report-kpi-grid {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr);
-                gap: 1rem;
-            }
-
-            .affiliate-report-kpi-card {
-                border-color: color-mix(in srgb, var(--affiliate-report-color) 30%, rgb(229 231 235));
-                box-shadow:
-                    inset 0 0 0 1px color-mix(in srgb, var(--affiliate-report-color) 10%, transparent),
-                    0 1px 2px rgb(15 23 42 / 0.04);
-            }
-
-            .dark .affiliate-report-kpi-card {
-                border-color: color-mix(in srgb, var(--affiliate-report-color) 42%, rgb(31 41 55));
-            }
-
-            .affiliate-report-kpi-accent {
-                position: absolute;
-                inset: 0 auto 0 0;
-                width: 0.38rem;
-                background: var(--affiliate-report-color);
-            }
-
-            .affiliate-report-kpi-value {
-                font-size: 1.5rem;
-                font-weight: 600;
-                letter-spacing: -0.025em;
-                line-height: 1.15 !important;
-            }
-
             .affiliate-report-kpi-icon {
                 color: var(--affiliate-report-color) !important;
             }
@@ -839,17 +806,7 @@
                 min-width: 0;
             }
 
-            @media (min-width: 768px) {
-                .affiliate-report-kpi-grid {
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                }
-            }
-
             @media (min-width: 1024px) {
-                .affiliate-report-kpi-grid {
-                    grid-template-columns: repeat(4, minmax(0, 1fr));
-                }
-
                 .affiliate-report-finance-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
                 }

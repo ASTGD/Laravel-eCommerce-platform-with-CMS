@@ -237,14 +237,15 @@ Affiliate work is planned as a dedicated top-level admin area, backed by the sha
 Current v1 navigation:
 
 - Affiliates
-  - My Affiliates
+  - Overview
+  - My Affiliate
   - Payouts
-  - Reports
   - Affiliate Settings
 
 Current admin workflow:
 
 - create an affiliate profile directly for an existing customer account
+- open My Affiliate to the full affiliate list by default, with All Affiliates, Pending, Active, and Suspended status tabs
 - review pending affiliate applications
 - approve, reject, suspend, or reactivate affiliate profiles
 - use the affiliate profile page as the main operational screen
@@ -255,7 +256,7 @@ Current admin workflow:
 - approve, reject, and mark payout requests as paid through one lifecycle shared with the customer portal
 - view customer-entered payout account details on payout records while keeping payout references system-generated
 - record the external transaction number/reference when an admin completes a payout for any payout method
-- review affiliate reports for clicks, attributed orders, attributed sales, commissions, payouts, daily trends, and top affiliates
+- use Affiliate Overview for clicks, attributed orders, attributed sales, commissions, payouts, daily trends, and top affiliates
 - manage minimum v1 affiliate settings without changing code
 
 Current payout lifecycle:
@@ -276,7 +277,8 @@ Current admin routes:
 - `admin.affiliates.profiles.suspend`
 - `admin.affiliates.profiles.reactivate`
 - `admin.affiliates.payouts.index`
-- `admin.affiliates.reports.index`
+- `admin.affiliates.overview.index` (preferred Affiliate Overview route)
+- `admin.affiliates.reports.index` (backward-compatible alias)
 - `admin.affiliates.settings.index`
 - `admin.affiliates.settings.update`
 

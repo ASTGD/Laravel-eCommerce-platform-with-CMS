@@ -19,7 +19,7 @@ use function Pest\Laravel\post;
 
 uses(AdminTestCase::class);
 
-it('shows affiliate reports from shared traffic sales commission and payout records', function () {
+it('shows affiliate overview from shared traffic sales commission and payout records', function () {
     $this->loginAsAdmin();
 
     AffiliateSetting::query()->delete();
@@ -74,9 +74,10 @@ it('shows affiliate reports from shared traffic sales commission and payout reco
         'requested_at' => now(),
     ]);
 
-    get(route('admin.affiliates.reports.index'))
+    get(route('admin.affiliates.overview.index'))
         ->assertOk()
-        ->assertSeeText('Affiliate Reports')
+        ->assertSeeText('Affiliate Overview')
+        ->assertDontSeeText('Affiliate Reports')
         ->assertSeeText('Total Clicks')
         ->assertSeeText('Unique Visitors')
         ->assertSeeText('Referred Orders')
@@ -93,6 +94,12 @@ it('shows affiliate reports from shared traffic sales commission and payout reco
         ->assertDontSeeText('Email Affiliate')
         ->assertDontSeeText('Banner')
         ->assertDontSeeText('Text Ad');
+
+    get(route('admin.affiliates.reports.index'))
+        ->assertOk()
+        ->assertSeeText('Affiliate Overview')
+        ->assertSeeText('Top Affiliates')
+        ->assertSeeText($profile->referral_code);
 });
 
 it('builds report KPIs and chart series from real affiliate records only', function () {
