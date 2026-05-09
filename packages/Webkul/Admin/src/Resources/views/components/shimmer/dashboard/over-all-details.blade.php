@@ -7,7 +7,7 @@
                 <div class="min-w-0 flex-1">
                     <div class="shimmer h-3 w-24 rounded"></div>
 
-                    <div class="shimmer mt-4 h-7 w-28 rounded"></div>
+                    <div class="shimmer mt-4 h-5 w-28 rounded md:h-6"></div>
 
                     <div class="mt-3 flex items-center gap-2">
                         <div class="shimmer h-6 w-14 rounded-full"></div>

@@ -751,19 +751,19 @@
                         <div class="affiliate-profile-summary-grid">
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Total Commissions</p>
-                                <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($kpis['total_commission_earned']) }}</p>
+                                <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($kpis['total_commission_earned']) }}</p>
                             </div>
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Pending</p>
-                                <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['commission_summary'][AffiliateCommission::STATUS_PENDING]) }}</p>
+                                <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($dashboard['commission_summary'][AffiliateCommission::STATUS_PENDING]) }}</p>
                             </div>
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Approved</p>
-                                <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($approvedCommissionTotal) }}</p>
+                                <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($approvedCommissionTotal) }}</p>
                             </div>
                             <div class="affiliate-profile-card">
                                 <p class="text-xs uppercase text-gray-500">Reversed</p>
-                                <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['commission_summary'][AffiliateCommission::STATUS_REVERSED]) }}</p>
+                                <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($dashboard['commission_summary'][AffiliateCommission::STATUS_REVERSED]) }}</p>
                             </div>
                         </div>
 
@@ -912,19 +912,19 @@
                             <div class="affiliate-profile-summary-grid">
                                 <div class="affiliate-profile-card">
                                     <p class="text-xs uppercase text-gray-500">Available Balance</p>
-                                    <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['balance']['available_balance']) }}</p>
+                                    <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($dashboard['balance']['available_balance']) }}</p>
                                 </div>
                                 <div class="affiliate-profile-card">
                                     <p class="text-xs uppercase text-gray-500">Requested</p>
-                                    <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['payout_summary'][AffiliatePayout::STATUS_REQUESTED]) }}</p>
+                                    <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($dashboard['payout_summary'][AffiliatePayout::STATUS_REQUESTED]) }}</p>
                                 </div>
                                 <div class="affiliate-profile-card">
                                     <p class="text-xs uppercase text-gray-500">Approved</p>
-                                    <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['payout_summary'][AffiliatePayout::STATUS_APPROVED]) }}</p>
+                                    <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($dashboard['payout_summary'][AffiliatePayout::STATUS_APPROVED]) }}</p>
                                 </div>
                                 <div class="affiliate-profile-card">
                                     <p class="text-xs uppercase text-gray-500">Paid Out</p>
-                                    <p class="mt-2 text-xl font-bold text-gray-900 dark:text-white">{{ $formatMoney($dashboard['payout_summary'][AffiliatePayout::STATUS_PAID]) }}</p>
+                                    <p class="mt-2 text-lg font-semibold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">{{ $formatMoney($dashboard['payout_summary'][AffiliatePayout::STATUS_PAID]) }}</p>
                                 </div>
                             </div>
 
@@ -1641,7 +1641,7 @@
             }
 
             .affiliate-profile-kpi-value {
-                font-size: 1.5rem;
+                font-size: 1.125rem;
                 font-weight: 600;
                 letter-spacing: -0.025em;
                 line-height: 1.15 !important;
@@ -1654,6 +1654,10 @@
             @media (min-width: 768px) {
                 .affiliate-profile-kpi-grid {
                     grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .affiliate-profile-kpi-value {
+                    font-size: 1.375rem;
                 }
             }
 
