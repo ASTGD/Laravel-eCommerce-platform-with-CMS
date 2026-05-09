@@ -102,65 +102,41 @@
             'label' => 'Total Clicks',
             'value' => number_format($kpis['total_clicks']),
             'helper' => 'Tracked referral visits',
-            'color' => '#00A4EF',
-            'badge' => 'bg-[#00A4EF]/12 text-[#007db7] ring-[#00A4EF]/28 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
-            'icon' => 'cursor',
         ],
         [
             'label' => 'Unique Visitors',
             'value' => number_format($dashboard['traffic_summary']['unique_visitors']),
             'helper' => 'Distinct referral visitors',
-            'color' => '#737373',
-            'badge' => 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
-            'icon' => 'visitors',
         ],
         [
             'label' => 'Referred Orders',
             'value' => number_format($kpis['referred_orders']),
             'helper' => 'Orders attributed to this affiliate',
-            'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
-            'icon' => 'orders',
         ],
         [
             'label' => 'Conversion Rate',
             'value' => number_format($kpis['conversion_rate'], 2).'%',
             'helper' => 'Orders divided by tracked clicks',
-            'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
-            'icon' => 'conversion',
         ],
         [
             'label' => 'Commission Earned',
             'value' => $formatMoney($kpis['total_commission_earned']),
             'helper' => 'Pending, approved, and paid commission',
-            'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
-            'icon' => 'commission',
         ],
         [
             'label' => 'Available Balance',
             'value' => $formatMoney($kpis['available_balance']),
             'helper' => 'Currently available for payout',
-            'color' => '#7FBA00',
-            'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
-            'icon' => 'balance',
         ],
         [
             'label' => 'Paid Out',
             'value' => $formatMoney($kpis['total_paid_out']),
             'helper' => 'Total completed payouts',
-            'color' => '#737373',
-            'badge' => 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
-            'icon' => 'paid',
         ],
         [
             'label' => 'Pending Requests',
             'value' => number_format($kpis['pending_withdrawals']),
             'helper' => 'Withdrawal requests waiting for admin action',
-            'color' => '#FFB900',
-            'badge' => 'bg-[#FFB900]/14 text-[#8a6400] ring-[#FFB900]/32 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
-            'icon' => 'pending',
         ],
     ];
 @endphp
@@ -431,84 +407,18 @@
 
         <div class="affiliate-profile-kpi-grid">
             @foreach ($kpiCards as $card)
-                <div
-                    class="affiliate-profile-kpi-card relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-gray-900"
-                    style="--affiliate-kpi-color: {{ $card['color'] }};"
-                >
-                    <div class="affiliate-profile-kpi-accent"></div>
+                <div class="affiliate-profile-kpi-card rounded-2xl border border-slate-200/70 bg-white p-5 shadow-none dark:border-gray-700 dark:bg-gray-800">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        {{ $card['label'] }}
+                    </p>
 
-                    <div class="flex h-full items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                {{ $card['label'] }}
-                            </p>
+                    <p class="affiliate-profile-kpi-value mt-4 break-words text-slate-950 dark:text-white">
+                        {{ $card['value'] }}
+                    </p>
 
-                            <p class="affiliate-profile-kpi-value mt-3 break-words text-gray-900 dark:text-white">
-                                {{ $card['value'] }}
-                            </p>
-
-                            <p class="mt-2 text-sm leading-5 text-gray-500 dark:text-gray-400">
-                                {{ $card['helper'] }}
-                            </p>
-                        </div>
-
-                        <div class="affiliate-profile-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 {{ $card['badge'] }}">
-                            <svg
-                                class="h-5 w-5"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.8"
-                                stroke="currentColor"
-                                aria-hidden="true"
-                            >
-                                @switch($card['icon'])
-                                    @case('cursor')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 4l10 7-5 1.5 3.5 5.5-2.5 1.5-3.5-5.5L6 18 7 4z" />
-                                        @break
-
-                                    @case('orders')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5h10.5l1 11h-12.5l1-11z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9.5V7a3 3 0 116 0v2.5" />
-                                        @break
-
-                                    @case('conversion')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 18.5h16" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.5 15l3.5-4 3 2.5 4.5-6" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5h1.5V9" />
-                                        @break
-
-                                    @case('visitors')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.5 11a3 3 0 100-6 3 3 0 000 6z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.5 19c.75-3 2.5-4.5 5-4.5s4.25 1.5 5 4.5" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 15c2.25.25 3.75 1.6 4.5 4" />
-                                        @break
-
-                                    @case('commission')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 9.25c-.5-.75-1.5-1.25-3-1.25-1.75 0-3 .8-3 2s1.25 1.75 3 2 3 .75 3 2-1.25 2-3 2c-1.5 0-2.5-.5-3-1.25" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        @break
-
-                                    @case('balance')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5h15v10h-15v-10z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12h.01" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7.5V6h10v1.5" />
-                                        @break
-
-                                    @case('paid')
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 12.5l3 3 7-7" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        @break
-
-                                    @default
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                @endswitch
-                            </svg>
-                        </div>
-                    </div>
+                    <p class="mt-3 text-sm leading-5 text-slate-500 dark:text-slate-400">
+                        {{ $card['helper'] }}
+                    </p>
                 </div>
             @endforeach
         </div>
@@ -1622,33 +1532,11 @@
                 gap: 1rem;
             }
 
-            .affiliate-profile-kpi-card {
-                border-color: color-mix(in srgb, var(--affiliate-kpi-color) 30%, rgb(229 231 235));
-                box-shadow:
-                    inset 0 0 0 1px color-mix(in srgb, var(--affiliate-kpi-color) 10%, transparent),
-                    0 1px 2px rgb(15 23 42 / 0.04);
-            }
-
-            .dark .affiliate-profile-kpi-card {
-                border-color: color-mix(in srgb, var(--affiliate-kpi-color) 42%, rgb(31 41 55));
-            }
-
-            .affiliate-profile-kpi-accent {
-                position: absolute;
-                inset: 0 auto 0 0;
-                width: 0.38rem;
-                background: var(--affiliate-kpi-color);
-            }
-
             .affiliate-profile-kpi-value {
                 font-size: 1.125rem;
                 font-weight: 600;
                 letter-spacing: -0.025em;
                 line-height: 1.15 !important;
-            }
-
-            .affiliate-profile-kpi-icon {
-                color: var(--affiliate-kpi-color) !important;
             }
 
             @media (min-width: 768px) {
