@@ -255,7 +255,7 @@
         }
 
         .dashboard-kpi-value {
-            font-size: 1.5rem;
+            font-size: 1.125rem;
             font-weight: 600;
             letter-spacing: -0.025em;
             line-height: 1.15 !important;
@@ -268,6 +268,12 @@
         @media (min-width: 640px) {
             .dashboard-kpi-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-kpi-value {
+                font-size: 1.375rem;
             }
         }
 

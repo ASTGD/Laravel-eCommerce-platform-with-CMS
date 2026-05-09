@@ -233,7 +233,7 @@
                             </h3>
 
                             <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                                <span class="font-sans text-[26px] font-bold leading-8 tracking-tight text-slate-950 dark:text-white">
+                                <span class="font-sans text-lg font-semibold leading-tight tracking-tight text-slate-950 md:text-[22px] dark:text-white">
                                     {{ $card['value'] }}
                                 </span>
                             </div>
