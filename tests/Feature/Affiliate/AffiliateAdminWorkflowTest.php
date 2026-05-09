@@ -19,24 +19,75 @@ uses(AdminTestCase::class);
 it('shows the affiliate admin area with status buckets and without excluded MVP features', function () {
     $this->loginAsAdmin();
 
-    $customer = Customer::factory()->create([
+    $adminMenu = collect(config('menu.admin'));
+    $affiliateMenu = $adminMenu->firstWhere('key', 'affiliates');
+    $affiliateOverviewMenu = $adminMenu->firstWhere('key', 'affiliates.reports');
+    $affiliateProfilesMenu = $adminMenu->firstWhere('key', 'affiliates.profiles');
+
+    expect($affiliateMenu['route'] ?? null)->toBe('admin.affiliates.overview.index')
+        ->and($affiliateOverviewMenu['name'] ?? null)->toBe('Overview')
+        ->and($affiliateOverviewMenu['route'] ?? null)->toBe('admin.affiliates.overview.index')
+        ->and($affiliateOverviewMenu['permission_key'] ?? null)->toBe('affiliates.reports')
+        ->and($affiliateProfilesMenu['name'] ?? null)->toBe('My Affiliate');
+
+    $affiliateProfileService = app(AffiliateProfileService::class);
+
+    $pendingCustomer = Customer::factory()->create([
         'first_name' => 'Pending',
         'last_name' => 'Affiliate',
     ]);
 
-    app(AffiliateProfileService::class)->apply($customer, [
+    $affiliateProfileService->apply($pendingCustomer, [
         'application_note' => 'I want to promote the store.',
         'terms_accepted' => true,
     ]);
 
+    $activeCustomer = Customer::factory()->create([
+        'first_name' => 'Active',
+        'last_name' => 'Affiliate',
+    ]);
+
+    $affiliateProfileService->approve($affiliateProfileService->apply($activeCustomer, [
+        'application_note' => 'Ready to promote.',
+        'terms_accepted' => true,
+    ]));
+
+    $suspendedCustomer = Customer::factory()->create([
+        'first_name' => 'Suspended',
+        'last_name' => 'Affiliate',
+    ]);
+
+    $affiliateProfileService->suspend($affiliateProfileService->approve($affiliateProfileService->apply($suspendedCustomer, [
+        'application_note' => 'Temporarily paused.',
+        'terms_accepted' => true,
+    ])), null, 'Paused by policy.');
+
+    get(route('admin.affiliates.overview.index'))
+        ->assertOk()
+        ->assertSeeText('Affiliate Overview')
+        ->assertSeeText('Overview')
+        ->assertSeeText('My Affiliate')
+        ->assertSeeText('Payouts')
+        ->assertDontSeeText('Reports')
+        ->assertDontSeeText('Email Affiliate')
+        ->assertDontSeeText('Banner')
+        ->assertDontSeeText('Text Ad');
+
     get(route('admin.affiliates.profiles.index'))
         ->assertOk()
-        ->assertSeeText('Affiliates')
-        ->assertSeeText('My Affiliates')
+        ->assertSeeText('My Affiliate')
+        ->assertSeeText('Overview')
+        ->assertSeeText('All Affiliates')
+        ->assertSeeText('Active Affiliate')
+        ->assertSeeText('Suspended Affiliate')
         ->assertSeeText('Add Affiliate')
         ->assertSeeText('Payouts')
         ->assertSeeText('Pending Affiliate')
         ->assertSeeText('Pending')
+        ->assertSeeText('Active')
+        ->assertSeeText('Suspended')
+        ->assertDontSeeText('Rejected')
+        ->assertDontSeeText('Reports')
         ->assertDontSeeText('Email Affiliate')
         ->assertDontSeeText('Banner')
         ->assertDontSeeText('Text Ad');

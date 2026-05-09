@@ -9,62 +9,63 @@
         id="v-dashboard-overall-details-template"
     >
         <template v-if="isLoading">
-            <div class="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-gray-700 dark:bg-gray-800">
+            <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                 <x-admin::shimmer.dashboard.over-all-details />
             </div>
         </template>
 
         <template v-else>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="dashboard-kpi-grid min-w-0">
                 <article
                     v-for="card in cards"
                     :key="card.label"
-                    class="group relative min-h-[136px] rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-none transition-colors duration-200 hover:border-slate-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
+                    class="dashboard-kpi-card relative min-w-0 overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-gray-900"
+                    :style="{ '--dashboard-kpi-color': card.color }"
                 >
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0 space-y-1.5 pr-16">
-                            <h3 class="font-sans text-[13px] leading-5 font-medium tracking-normal text-slate-500 dark:text-slate-400">
+                    <div class="dashboard-kpi-accent"></div>
+
+                    <div class="relative flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <h3 class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                 @{{ card.label }}
                             </h3>
 
-                            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                                <span class="font-sans text-[26px] leading-8 font-bold tracking-tight text-slate-950 dark:text-white">
-                                    @{{ card.value }}
+                            <div class="dashboard-kpi-value mt-3 text-gray-950 dark:text-white">
+                                @{{ card.value }}
+                            </div>
+
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <span
+                                    v-if="card.badgeText"
+                                    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none"
+                                    :class="card.badgeClass"
+                                >
+                                    <span
+                                        v-if="card.trendIcon"
+                                        :class="card.trendIcon"
+                                        class="mr-1 text-sm"
+                                    ></span>
+
+                                    @{{ card.badgeText }}
+                                </span>
+
+                                <span class="text-sm leading-5 text-gray-500 dark:text-gray-400">
+                                    @{{ card.helper }}
                                 </span>
                             </div>
                         </div>
 
-                        <div
-                            class="relative top-1 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-white shadow-none dark:border-slate-700 dark:bg-slate-800/60"
-                            :class="card.iconBoxClass"
-                        >
-                            <img
-                                v-if="card.icon"
-                                :src="card.icon"
-                                class="h-6 w-6 opacity-100"
-                                :alt="card.label"
-                            >
-
-                            <span
-                                v-else
-                                class="text-[22px] leading-none"
-                                :class="[card.iconClass, card.iconTextClass ?? '!text-slate-600 dark:!text-slate-300']"
-                            ></span>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-5 left-5 inline-flex shrink-0 items-center rounded-full px-3 py-1 text-[12px] font-semibold"
-                        :class="card.badgeClass"
-                    >
                         <span
-                            v-if="card.trendIcon"
-                            :class="card.trendIcon"
-                            class="mr-1 text-sm"
-                        ></span>
-
-                        @{{ card.badgeText }}
-                    </span>
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1"
+                            :class="card.iconBadgeClass"
+                        >
+                            <span
+                                class="dashboard-kpi-icon text-xl"
+                                :class="card.iconClass"
+                                aria-hidden="true"
+                            ></span>
+                        </span>
+                    </div>
                 </article>
             </div>
         </template>
@@ -92,62 +93,77 @@
                         this.metric({
                             label: "@lang('admin::app.dashboard.index.total-sales')",
                             value: stats.total_sales?.formatted_total ?? '$0.00',
+                            helper: 'Revenue in selected range',
                             change: stats.total_sales?.progress,
-                            icon: "{{ bagisto_asset('images/total-sales.svg') }}",
-                            iconBoxClass: '!border-slate-300 !bg-slate-100 dark:!border-slate-700 dark:!bg-slate-800/60',
+                            color: '#00A4EF',
+                            iconClass: 'icon-sales',
+                            iconBadgeClass: 'bg-[#00A4EF]/12 text-[#007db7] ring-[#00A4EF]/28 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
                         }),
                         this.metric({
                             label: "@lang('admin::app.dashboard.index.total-orders')",
                             value: stats.total_orders?.current ?? 0,
+                            helper: 'Orders placed in range',
                             change: stats.total_orders?.progress,
-                            icon: "{{ bagisto_asset('images/total-orders.svg') }}",
-                            iconBoxClass: '!border-blue-200 !bg-blue-50 dark:!border-blue-500/30 dark:!bg-blue-500/15',
+                            color: '#7FBA00',
+                            iconClass: 'icon-cart',
+                            iconBadgeClass: 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
                         }),
                         this.metric({
                             label: "@lang('admin::app.dashboard.index.average-sale')",
                             value: stats.avg_sales?.formatted_total ?? '$0.00',
+                            helper: 'Average order value',
                             change: stats.avg_sales?.progress,
-                            icon: "{{ bagisto_asset('images/average-orders.svg') }}",
-                            iconBoxClass: '!border-amber-200 !bg-amber-50 dark:!border-amber-500/30 dark:!bg-amber-500/15',
+                            color: '#FFB900',
+                            iconClass: 'icon-up-stat',
+                            iconBadgeClass: 'bg-[#FFB900]/14 text-[#8a6400] ring-[#FFB900]/32 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
                         }),
                         this.metric({
                             label: 'New Customers',
                             value: stats.total_customers?.current ?? 0,
+                            helper: 'Customer accounts created',
                             change: stats.total_customers?.progress,
-                            icon: "{{ bagisto_asset('images/customers.svg') }}",
-                            iconBoxClass: '!border-emerald-200 !bg-emerald-50 dark:!border-emerald-500/30 dark:!bg-emerald-500/15',
+                            color: '#737373',
+                            iconClass: 'icon-customer-2',
+                            iconBadgeClass: 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
                         }),
                         this.metric({
                             label: "@lang('admin::app.dashboard.index.total-unpaid-invoices')",
                             value: stats.total_unpaid_invoices?.formatted_total ?? '$0.00',
+                            helper: 'Invoice amount pending',
                             badgeText: 'Review',
-                            icon: "{{ bagisto_asset('images/unpaid-invoices.svg') }}",
-                            iconBoxClass: '!border-rose-200 !bg-rose-50 dark:!border-rose-500/30 dark:!bg-rose-500/15',
+                            color: '#F25022',
+                            iconClass: 'icon-information',
+                            iconBadgeClass: 'bg-[#F25022]/12 text-[#aa3214] ring-[#F25022]/28 dark:bg-[#F25022]/18 dark:text-[#ffab92] dark:ring-[#F25022]/40',
                             tone: 'rose',
                         }),
                         this.metric({
                             label: 'To Ship',
                             value: stats.to_ship?.current ?? 0,
+                            helper: 'Orders ready for shipping',
                             badgeText: 'Queue',
+                            color: '#00A4EF',
                             iconClass: 'icon-ship',
-                            iconBoxClass: '!border-sky-200 !bg-sky-50 dark:!border-sky-500/30 dark:!bg-sky-500/15',
-                            iconTextClass: '!text-sky-600 dark:!text-sky-300',
+                            iconBadgeClass: 'bg-[#00A4EF]/12 text-[#007db7] ring-[#00A4EF]/28 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
                             tone: 'blue',
                         }),
                         this.metric({
                             label: 'In Delivery',
                             value: stats.in_delivery?.current ?? 0,
+                            helper: 'Shipments currently moving',
                             badgeText: 'Active',
-                            icon: "{{ bagisto_asset('images/settings/shipping.svg') }}",
-                            iconBoxClass: '!border-violet-200 !bg-violet-50 dark:!border-violet-500/30 dark:!bg-violet-500/15',
+                            color: '#FFB900',
+                            iconClass: 'icon-done',
+                            iconBadgeClass: 'bg-[#FFB900]/14 text-[#8a6400] ring-[#FFB900]/32 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
                             tone: 'amber',
                         }),
                         this.metric({
                             label: 'COD Receivable',
                             value: stats.cod_receivable?.formatted_total ?? '$0.00',
+                            helper: 'Cash awaiting collection',
                             badgeText: 'Collect',
-                            icon: "{{ bagisto_asset('images/settings/payment-method.svg') }}",
-                            iconBoxClass: '!border-orange-200 !bg-orange-50 dark:!border-orange-500/30 dark:!bg-orange-500/15',
+                            color: '#7FBA00',
+                            iconClass: 'icon-report',
+                            iconBadgeClass: 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
                             tone: 'orange',
                         }),
                     ];
@@ -173,8 +189,8 @@
                             : card.badgeText,
                         badgeClass: hasProgress
                             ? (positive
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                                : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300')
+                                ? 'bg-[#7FBA00]/12 text-[#5f8c00] dark:bg-[#7FBA00]/18 dark:text-[#b7e56a]'
+                                : 'bg-[#F25022]/12 text-[#aa3214] dark:bg-[#F25022]/18 dark:text-[#ffab92]')
                             : (card.badgeClass ?? this.badgeClass(card.tone)),
                         trendIcon: hasProgress ? (positive ? 'icon-up-stat' : 'icon-down-stat') : null,
                         iconClass: card.iconClass,
@@ -210,4 +226,55 @@
             }
         });
     </script>
+@endPushOnce
+
+@pushOnce('styles')
+    <style>
+        .dashboard-kpi-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 1rem;
+        }
+
+        .dashboard-kpi-card {
+            border-color: color-mix(in srgb, var(--dashboard-kpi-color) 30%, rgb(229 231 235));
+            box-shadow:
+                inset 0 0 0 1px color-mix(in srgb, var(--dashboard-kpi-color) 10%, transparent),
+                0 1px 2px rgb(15 23 42 / 0.04);
+        }
+
+        .dark .dashboard-kpi-card {
+            border-color: color-mix(in srgb, var(--dashboard-kpi-color) 42%, rgb(31 41 55));
+        }
+
+        .dashboard-kpi-accent {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 0.38rem;
+            background: var(--dashboard-kpi-color);
+        }
+
+        .dashboard-kpi-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            line-height: 1.15 !important;
+        }
+
+        .dashboard-kpi-icon {
+            color: var(--dashboard-kpi-color) !important;
+        }
+
+        @media (min-width: 640px) {
+            .dashboard-kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .dashboard-kpi-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+    </style>
 @endPushOnce

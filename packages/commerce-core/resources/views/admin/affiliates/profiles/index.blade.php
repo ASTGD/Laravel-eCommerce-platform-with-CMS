@@ -1,36 +1,37 @@
 <x-admin::layouts>
     <x-slot:title>
-        Affiliates
+        My Affiliate
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
+    <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
-                Affiliates
-            </p>
-
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                Review customer applications and manage active affiliate profiles.
-            </p>
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                My Affiliate
+            </h1>
         </div>
 
         @if (bouncer()->hasPermission('affiliates.profiles.create'))
             <a
                 href="{{ route('admin.affiliates.profiles.create') }}"
-                class="primary-button"
+                class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
             >
                 Add Affiliate
             </a>
         @endif
-    </div>
+    </section>
 
-    <div class="mt-5 rounded bg-white p-4 dark:bg-gray-900">
+    <div class="mt-6 rounded bg-white p-4 dark:bg-gray-900">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap gap-2">
                 @foreach ($statusOptions as $statusCode => $statusLabel)
+                    @php
+                        $isAllStatus = $statusCode === 'all';
+                        $isActiveStatus = $isAllStatus ? $status === null : $status === $statusCode;
+                    @endphp
+
                     <a
-                        href="{{ route('admin.affiliates.profiles.index', ['status' => $statusCode]) }}"
-                        class="{{ $status === $statusCode ? 'primary-button' : 'transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800' }}"
+                        href="{{ $isAllStatus ? route('admin.affiliates.profiles.index') : route('admin.affiliates.profiles.index', ['status' => $statusCode]) }}"
+                        class="{{ $isActiveStatus ? 'primary-button' : 'transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800' }}"
                     >
                         {{ $statusLabel }}
                         <span class="ltr:ml-1 rtl:mr-1">({{ $statusCounts[$statusCode] ?? 0 }})</span>
@@ -43,11 +44,13 @@
                 action="{{ route('admin.affiliates.profiles.index') }}"
                 class="flex min-w-[320px] items-center gap-2 max-sm:min-w-full"
             >
-                <input
-                    type="hidden"
-                    name="status"
-                    value="{{ $status }}"
-                >
+                @if ($status)
+                    <input
+                        type="hidden"
+                        name="status"
+                        value="{{ $status }}"
+                    >
+                @endif
 
                 <input
                     type="search"
@@ -128,7 +131,7 @@
                                 colspan="7"
                                 class="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-300"
                             >
-                                No affiliates found for this status.
+                                No affiliates found for this filter.
                             </td>
                         </tr>
                     @endforelse

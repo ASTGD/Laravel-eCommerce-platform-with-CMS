@@ -183,7 +183,7 @@ return [
         'sort' => 20,
     ], [
         'key' => 'affiliates.profiles',
-        'name' => 'Affiliate Profiles',
+        'name' => 'My Affiliate',
         'route' => 'admin.affiliates.profiles.index',
         'sort' => 1,
     ], [
@@ -233,8 +233,8 @@ return [
         'sort' => 3,
     ], [
         'key' => 'affiliates.reports',
-        'name' => 'Reports',
-        'route' => 'admin.affiliates.reports.index',
+        'name' => 'Overview',
+        'route' => 'admin.affiliates.overview.index',
         'sort' => 4,
     ], [
         'key' => 'affiliates.settings',

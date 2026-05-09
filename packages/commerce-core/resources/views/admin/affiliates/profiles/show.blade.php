@@ -171,130 +171,128 @@
     </x-slot>
 
     <div class="grid gap-6">
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex items-start justify-between gap-5 max-lg:flex-wrap">
-                <div class="grid gap-3">
-                    <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-300">
-                        <a
-                            href="{{ route('admin.affiliates.profiles.index') }}"
-                            class="text-blue-600 hover:underline"
-                        >
-                            Affiliates
-                        </a>
+        <section class="flex flex-col gap-5 pt-1 xl:flex-row xl:items-start xl:justify-between">
+            <div class="min-w-0 space-y-3">
+                <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <a
+                        href="{{ route('admin.affiliates.profiles.index') }}"
+                        class="text-blue-600 hover:underline dark:text-blue-300"
+                    >
+                        My Affiliate
+                    </a>
 
-                        <span>/</span>
+                    <span>/</span>
 
-                        <a
-                            href="{{ route('admin.affiliates.profiles.index', ['status' => $profile->status]) }}"
-                            class="text-blue-600 hover:underline"
-                        >
-                            {{ $profile->status_label }}
-                        </a>
+                    <a
+                        href="{{ route('admin.affiliates.profiles.index', ['status' => $profile->status]) }}"
+                        class="text-blue-600 hover:underline dark:text-blue-300"
+                    >
+                        {{ $profile->status_label }}
+                    </a>
 
-                        <span>/</span>
-                        <span>{{ $customerName }}</span>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-3">
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-                            Affiliate Profile
-                        </h1>
-
-                        <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold {{ $statusClass }}">
-                            {{ $profile->status_label }}
-                        </span>
-                    </div>
-
-                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-300">
-                        <span>Customer ID #{{ $identity['customer_id'] }}</span>
-                        <span>Joined {{ $identity['joined_at'] ? core()->formatDate($identity['joined_at'], 'd M Y') : 'N/A' }}</span>
-                        <span>Source: {{ $applicationSource }}</span>
-                    </div>
+                    <span>/</span>
+                    <span>{{ $customerName }}</span>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-end gap-2">
-                    @if ($canCreatePayout)
-                        <button
-                            type="button"
-                            class="primary-button"
-                            data-affiliate-tab-trigger="payouts"
-                            data-affiliate-tab-scroll-target="#payout-create"
-                        >
-                            Create Payout
-                        </button>
-                    @endif
+                <div class="flex flex-wrap items-center gap-3">
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
+                        Affiliate Profile
+                    </h1>
 
-                    @if ($profile->status === AffiliateProfile::STATUS_PENDING && bouncer()->hasPermission('affiliates.profiles.approve'))
-                        <form method="POST" action="{{ route('admin.affiliates.profiles.approve', $profile) }}">
-                            @csrf
+                    <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold {{ $statusClass }}">
+                        {{ $profile->status_label }}
+                    </span>
+                </div>
 
-                            <button type="submit" class="primary-button">
-                                Approve
-                            </button>
-                        </form>
-                    @endif
-
-                    @if (in_array($profile->status, [AffiliateProfile::STATUS_PENDING, AffiliateProfile::STATUS_ACTIVE], true) && bouncer()->hasPermission('affiliates.profiles.reject'))
-                        <form method="POST" action="{{ route('admin.affiliates.profiles.reject', $profile) }}">
-                            @csrf
-
-                            <input type="hidden" name="reason" value="Rejected by admin.">
-
-                            <button type="submit" class="secondary-button">
-                                Reject
-                            </button>
-                        </form>
-                    @endif
-
-                    @if ($profile->status === AffiliateProfile::STATUS_ACTIVE && bouncer()->hasPermission('affiliates.profiles.suspend'))
-                        <form method="POST" action="{{ route('admin.affiliates.profiles.suspend', $profile) }}">
-                            @csrf
-
-                            <input type="hidden" name="reason" value="Suspended by admin.">
-
-                            <button type="submit" class="secondary-button">
-                                Suspend
-                            </button>
-                        </form>
-                    @endif
-
-                    @if (in_array($profile->status, [AffiliateProfile::STATUS_SUSPENDED, AffiliateProfile::STATUS_REJECTED], true) && bouncer()->hasPermission('affiliates.profiles.reactivate'))
-                        <form method="POST" action="{{ route('admin.affiliates.profiles.reactivate', $profile) }}">
-                            @csrf
-
-                            <button type="submit" class="primary-button">
-                                Reactivate
-                            </button>
-                        </form>
-                    @endif
-
-                    <details class="relative">
-                        <summary class="secondary-button cursor-pointer list-none">
-                            More Actions
-                        </summary>
-
-                        <div class="absolute right-0 z-10 mt-2 grid min-w-[240px] gap-1 rounded-lg border border-gray-200 bg-white p-2 text-sm shadow-lg dark:border-gray-800 dark:bg-gray-900">
-                            <button
-                                type="button"
-                                class="rounded px-3 py-2 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                                data-affiliate-copy-value="{{ $referral['url'] }}"
-                            >
-                                Copy Referral Link
-                            </button>
-
-                            @if ($customerUrl)
-                                <a
-                                    href="{{ $customerUrl }}"
-                                    class="rounded px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
-                                >
-                                    View Customer Account
-                                </a>
-                            @endif
-                        </div>
-                    </details>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+                    <span>Customer ID #{{ $identity['customer_id'] }}</span>
+                    <span>Joined {{ $identity['joined_at'] ? core()->formatDate($identity['joined_at'], 'd M Y') : 'N/A' }}</span>
+                    <span>Source: {{ $applicationSource }}</span>
                 </div>
             </div>
-        </div>
+
+            <div class="flex flex-wrap items-center gap-2 xl:justify-end">
+                @if ($canCreatePayout)
+                    <button
+                        type="button"
+                        class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60"
+                        data-affiliate-tab-trigger="payouts"
+                        data-affiliate-tab-scroll-target="#payout-create"
+                    >
+                        Create Payout
+                    </button>
+                @endif
+
+                @if ($profile->status === AffiliateProfile::STATUS_PENDING && bouncer()->hasPermission('affiliates.profiles.approve'))
+                    <form method="POST" action="{{ route('admin.affiliates.profiles.approve', $profile) }}">
+                        @csrf
+
+                        <button type="submit" class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60">
+                            Approve
+                        </button>
+                    </form>
+                @endif
+
+                @if (in_array($profile->status, [AffiliateProfile::STATUS_PENDING, AffiliateProfile::STATUS_ACTIVE], true) && bouncer()->hasPermission('affiliates.profiles.reject'))
+                    <form method="POST" action="{{ route('admin.affiliates.profiles.reject', $profile) }}">
+                        @csrf
+
+                        <input type="hidden" name="reason" value="Rejected by admin.">
+
+                        <button type="submit" class="secondary-button !rounded-xl !px-4 !py-2 !text-sm">
+                            Reject
+                        </button>
+                    </form>
+                @endif
+
+                @if ($profile->status === AffiliateProfile::STATUS_ACTIVE && bouncer()->hasPermission('affiliates.profiles.suspend'))
+                    <form method="POST" action="{{ route('admin.affiliates.profiles.suspend', $profile) }}">
+                        @csrf
+
+                        <input type="hidden" name="reason" value="Suspended by admin.">
+
+                        <button type="submit" class="secondary-button !rounded-xl !px-4 !py-2 !text-sm">
+                            Suspend
+                        </button>
+                    </form>
+                @endif
+
+                @if (in_array($profile->status, [AffiliateProfile::STATUS_SUSPENDED, AffiliateProfile::STATUS_REJECTED], true) && bouncer()->hasPermission('affiliates.profiles.reactivate'))
+                    <form method="POST" action="{{ route('admin.affiliates.profiles.reactivate', $profile) }}">
+                        @csrf
+
+                        <button type="submit" class="primary-button !rounded-xl !px-4 !py-2 !text-sm !shadow-sm !shadow-blue-200/60">
+                            Reactivate
+                        </button>
+                    </form>
+                @endif
+
+                <details class="relative">
+                    <summary class="secondary-button cursor-pointer list-none !rounded-xl !px-4 !py-2 !text-sm">
+                        More Actions
+                    </summary>
+
+                    <div class="absolute right-0 z-10 mt-2 grid min-w-[240px] gap-1 rounded-lg border border-gray-200 bg-white p-2 text-sm shadow-lg dark:border-gray-800 dark:bg-gray-900">
+                        <button
+                            type="button"
+                            class="rounded px-3 py-2 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                            data-affiliate-copy-value="{{ $referral['url'] }}"
+                        >
+                            Copy Referral Link
+                        </button>
+
+                        @if ($customerUrl)
+                            <a
+                                href="{{ $customerUrl }}"
+                                class="rounded px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                            >
+                                View Customer Account
+                            </a>
+                        @endif
+                    </div>
+                </details>
+            </div>
+        </section>
 
         @if (session('success'))
             <div class="rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">

@@ -3,20 +3,16 @@
         Affiliate Settings
     </x-slot>
 
-    <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
+    <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                 Affiliate Settings
-            </p>
-
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                Configure the shared affiliate rules used by both admin and customer portal workflows.
-            </p>
+            </h1>
         </div>
-    </div>
+    </section>
 
     @if (session('success'))
-        <div class="mt-5 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+        <div class="mt-6 rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
             {{ session('success') }}
         </div>
     @endif
@@ -24,7 +20,7 @@
     <form
         method="POST"
         action="{{ route('admin.affiliates.settings.update') }}"
-        class="mt-5 grid gap-4"
+        class="mt-6 grid gap-4"
     >
         @csrf
 

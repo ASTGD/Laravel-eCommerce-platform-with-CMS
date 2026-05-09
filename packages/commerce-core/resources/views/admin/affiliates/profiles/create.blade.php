@@ -3,29 +3,25 @@
         Add Affiliate
     </x-slot>
 
-    <div class="flex items-start justify-between gap-4 max-sm:flex-wrap">
+    <section class="flex flex-col gap-4 pt-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <p class="text-xl font-bold text-gray-800 dark:text-white">
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white">
                 Add Affiliate
-            </p>
-
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
-                Create one affiliate profile for an existing customer account.
-            </p>
+            </h1>
         </div>
 
         <a
             href="{{ route('admin.affiliates.profiles.index') }}"
-            class="transparent-button hover:bg-gray-200 dark:text-white dark:hover:bg-gray-800"
+            class="secondary-button !rounded-xl !px-4 !py-2 !text-sm"
         >
             Back
         </a>
-    </div>
+    </section>
 
     <form
         method="POST"
         action="{{ route('admin.affiliates.profiles.store') }}"
-        class="mt-5 grid gap-4 lg:grid-cols-[2fr_1fr]"
+        class="mt-6 grid gap-4 lg:grid-cols-[2fr_1fr]"
     >
         @csrf
 

@@ -58,7 +58,7 @@ class AffiliateProfileController extends Controller
             'profiles' => $profiles,
             'status' => $status,
             'search' => $search,
-            'statusOptions' => AffiliateProfile::statusLabels(),
+            'statusOptions' => $this->statusTabs(),
             'statusCounts' => $this->statusCounts(),
         ]);
     }
@@ -173,9 +173,25 @@ class AffiliateProfileController extends Controller
 
     protected function resolvedStatus(?string $status): ?string
     {
+        $status = trim((string) $status);
+
+        if ($status === '' || $status === 'all') {
+            return null;
+        }
+
         return in_array($status, AffiliateProfile::statuses(), true)
             ? $status
-            : AffiliateProfile::STATUS_PENDING;
+            : null;
+    }
+
+    protected function statusTabs(): array
+    {
+        return [
+            'all' => 'All Affiliates',
+            AffiliateProfile::STATUS_PENDING => 'Pending',
+            AffiliateProfile::STATUS_ACTIVE => 'Active',
+            AffiliateProfile::STATUS_SUSPENDED => 'Suspended',
+        ];
     }
 
     protected function statusCounts(): array
@@ -186,9 +202,14 @@ class AffiliateProfileController extends Controller
             ->pluck('aggregate', 'status')
             ->all();
 
-        return collect(AffiliateProfile::statuses())
+        $statusCounts = collect(AffiliateProfile::statuses())
             ->mapWithKeys(fn (string $status) => [$status => (int) ($counts[$status] ?? 0)])
             ->all();
+
+        return [
+            'all' => array_sum($statusCounts),
+            ...$statusCounts,
+        ];
     }
 
     protected function customersWithoutAffiliateProfile()
