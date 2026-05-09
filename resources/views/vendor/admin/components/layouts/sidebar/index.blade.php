@@ -141,9 +141,27 @@
 
             mounted() {
                 this.syncLayoutClass();
+                window.addEventListener('admin-sidebar:collapse-change', this.handleSidebarCollapseChange);
+            },
+
+            beforeDestroy() {
+                window.removeEventListener('admin-sidebar:collapse-change', this.handleSidebarCollapseChange);
+            },
+
+            beforeUnmount() {
+                window.removeEventListener('admin-sidebar:collapse-change', this.handleSidebarCollapseChange);
             },
 
             methods: {
+                handleSidebarCollapseChange(event) {
+                    if (! event.detail || typeof event.detail.collapsed === 'undefined') {
+                        return;
+                    }
+
+                    this.isCollapsed = Number(Boolean(event.detail.collapsed));
+                    this.syncLayoutClass();
+                },
+
                 toggle() {
                     this.isCollapsed = parseInt(this.isCollapsedCookie()) ? 0 : 1;
 

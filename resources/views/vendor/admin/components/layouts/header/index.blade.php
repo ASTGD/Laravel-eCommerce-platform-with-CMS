@@ -1,136 +1,171 @@
 @php
     $admin = auth()->guard('admin')->user();
     $adminName = $admin?->name ?? 'Admin';
+    $adminEmail = $admin?->email ?? '';
 @endphp
 
-<header class="sticky top-0 z-[10001] flex items-center justify-between border-b border-slate-200/70 bg-white px-2 py-2 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 sm:px-4 sm:py-2.5">
-    <div class="flex items-center gap-1 sm:gap-1.5">
-        <!-- Hamburger Menu -->
-        <i
-            class="icon-menu cursor-pointer rounded-md p-1.5 text-xl hover:bg-gray-100 dark:hover:bg-gray-800 lg:hidden sm:text-2xl"
-            @click="$refs.sidebarMenuDrawer.open()"
-        >
-        </i>
-
-        <!-- Logo -->
-        @include('admin.partials.brand-lockup', [
-            'link' => route('admin.dashboard.index'),
-            'containerClass' => 'flex flex-shrink-0 items-center gap-2',
-            'imageClass' => 'h-8 w-auto sm:h-10',
-            'markClass' => 'flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm sm:h-10 sm:w-10',
-            'eyebrowClass' => 'text-sm font-bold uppercase tracking-[0.14em] text-blue-600 dark:text-blue-400',
-            'nameClass' => 'text-base font-bold text-gray-900 dark:text-white',
-        ])
-
-        <!-- Mega Search Bar Vue Component -->
-        <v-mega-search class="hidden sm:block">
-            <div class="relative flex w-[180px] items-center sm:w-[260px] md:w-[300px] lg:w-[420px] xl:w-[525px] xl:max-w-[525px] ltr:ml-2 rtl:mr-2 sm:ltr:ml-2.5 sm:rtl:mr-2.5">
-                <i class="icon-search absolute top-1.5 flex items-center text-xl ltr:left-2 rtl:right-2 sm:text-2xl sm:ltr:left-3 sm:rtl:right-3"></i>
-
-                <input 
-                    type="text"
-                    class="block w-full rounded-lg border bg-white px-8 py-1.5 text-sm leading-6 text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:placeholder-gray-500 dark:hover:border-gray-600 dark:focus:border-blue-700 sm:px-10 sm:text-base"
-                    placeholder="@lang('admin::app.components.layouts.header.mega-search.title')"
-                >
-            </div>
-        </v-mega-search>
-    </div>
-
-    <div class="flex items-center gap-1 sm:gap-2.5">
-        <!-- Dark mode Switcher -->
-        <v-dark>
-            <div class="flex">
-                <span
-                    class="{{ request()->cookie('dark_mode') ? 'icon-light' : 'icon-dark' }} cursor-pointer rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800 sm:text-2xl"
-                ></span>
-            </div>
-        </v-dark>
-
-        <!-- Visit Shop Link -->
-        <a 
-            href="{{ route('shop.home.index') }}"
-            target="_blank"
-            class="hidden sm:flex"
-        >
-            <span 
-                class="icon-store cursor-pointer rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800 sm:text-2xl"
-                title="@lang('admin::app.components.layouts.header.visit-shop')"
+<header class="sticky top-0 z-[10001] flex h-[62px] items-center border-b border-slate-200/80 bg-white/95 font-inter text-slate-700 shadow-[0_1px_0_rgba(15,23,42,0.03)] backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 dark:text-gray-300">
+    <div class="flex h-full w-full min-w-0 items-center">
+        <div class="flex h-full w-auto shrink-0 items-center gap-2 border-r border-slate-200/70 px-3 dark:border-gray-800 sm:px-4 lg:w-[270px]">
+            <!-- Mobile Menu -->
+            <button
+                type="button"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 lg:hidden"
+                aria-label="Open admin menu"
+                @click="$refs.sidebarMenuDrawer.open()"
             >
-            </span>
-        </a>
+                <span class="icon-menu text-[21px] leading-none"></span>
+            </button>
 
-       <!-- Notification Component -->
-        <v-notifications {{ $attributes }}>
-            <span class="relative flex">
-                <span 
-                    class="icon-notification cursor-pointer rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800 sm:text-2xl"
-                    title="@lang('admin::app.components.layouts.header.notifications')"
+            <!-- Logo -->
+            @include('admin.partials.brand-lockup', [
+                'link' => route('admin.dashboard.index'),
+                'containerClass' => 'flex min-w-0 flex-shrink-0 items-center gap-2.5',
+                'imageClass' => 'h-8 w-auto max-w-[44px] sm:h-9',
+                'markClass' => 'flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm',
+                'eyebrowClass' => 'text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400',
+                'nameClass' => 'text-sm font-bold text-gray-900 dark:text-white sm:text-base',
+            ])
+        </div>
+
+        <div class="flex h-full min-w-0 flex-1 items-center justify-between gap-3 px-3 sm:px-4">
+            <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                <!-- Desktop Sidebar Toggle -->
+                <button
+                    type="button"
+                    class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 lg:inline-flex"
+                    aria-label="Toggle desktop sidebar"
+                    data-admin-topbar-sidebar-toggle
                 >
-                </span>
-            </span>
-        </v-notifications>
+                    <span class="icon-menu text-[21px] leading-none"></span>
+                </button>
 
-        <!-- Admin profile -->
-        <x-admin::dropdown position="bottom-{{ core()->getCurrentLocale()->direction === 'ltr' ? 'right' : 'left' }}">
-            <x-slot:toggle>
-                @if ($admin?->image)
-                    <button class="flex h-8 w-8 cursor-pointer overflow-hidden rounded-full hover:opacity-80 focus:opacity-80 sm:h-9 sm:w-9">
-                        <img
-                            src="{{ $admin->image_url }}"
-                            class="h-full w-full object-cover"
-                        />
-                    </button>
-                @else
-                    <button class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-400 text-xs font-semibold leading-6 text-white transition-all hover:bg-blue-500 focus:bg-blue-500 sm:h-9 sm:w-9 sm:text-sm">
-                        {{ substr($adminName, 0, 1) }}
-                    </button>
-                @endif
-            </x-slot>
+                <!-- Mega Search Bar Vue Component -->
+                <v-mega-search class="hidden min-w-0 md:block">
+                    <div class="relative flex w-[260px] max-w-full items-center lg:w-[360px] xl:w-[420px]">
+                        <i class="icon-search absolute top-1/2 flex -translate-y-1/2 items-center text-xl text-slate-400 ltr:left-3 rtl:right-3"></i>
 
-            <!-- Admin Dropdown -->
-            <x-slot:content class="!p-0">
-                <div class="flex items-center gap-2 border-b border-slate-200 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:px-5 sm:py-2.5">
-                    @include('admin.partials.brand-mark', [
-                        'class' => 'flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm sm:h-6 sm:w-6',
-                    ])
+                        <input
+                            type="text"
+                            class="block h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-10 py-2 text-sm leading-6 text-slate-700 transition-all placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-blue-300 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:placeholder-gray-500 dark:hover:border-gray-700 dark:focus:border-blue-700 ltr:pr-16 rtl:pl-16"
+                            placeholder="@lang('admin::app.components.layouts.header.mega-search.title')"
+                        >
 
-                    <div class="grid gap-0.5 leading-none">
-                        <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 sm:text-sm">
-                            ASTGD ECommerce
-                        </p>
-
-                        <p class="text-[11px] text-gray-400 sm:text-xs">
-                            @lang('admin::app.components.layouts.header.app-version', ['version' => 'v' . core()->version()])
-                        </p>
+                        <span class="pointer-events-none absolute top-1/2 hidden -translate-y-1/2 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 ltr:right-2 rtl:left-2 lg:inline-flex">
+                            Ctrl K
+                        </span>
                     </div>
-                </div>
+                </v-mega-search>
+            </div>
 
-                <div class="grid gap-1 pb-2.5">
-                    <a
-                        class="cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white sm:px-5 sm:text-base"
-                        href="{{ route('admin.account.edit') }}"
-                    >
-                        @lang('admin::app.components.layouts.header.my-account')
-                    </a>
+            <div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                <!-- Visit Shop Link -->
+                <a
+                    href="{{ route('shop.home.index') }}"
+                    target="_blank"
+                    class="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 sm:inline-flex"
+                    title="@lang('admin::app.components.layouts.header.visit-shop')"
+                >
+                    <span class="icon-store text-[21px] leading-none"></span>
+                </a>
 
-                    <!--Admin logout-->
-                    <x-admin::form
-                        method="DELETE"
-                        action="{{ route('admin.session.destroy') }}"
-                        id="adminLogout"
-                    >
-                    </x-admin::form>
+                <!-- Dark mode Switcher -->
+                <v-dark>
+                    <div class="flex">
+                        <span
+                            class="{{ request()->cookie('dark_mode') ? 'icon-light' : 'icon-dark' }} flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-[21px] leading-none text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300"
+                        ></span>
+                    </div>
+                </v-dark>
 
-                    <a
-                        class="cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white sm:px-5 sm:text-base"
-                        href="{{ route('admin.session.destroy') }}"
-                        onclick="event.preventDefault(); document.getElementById('adminLogout').submit();"
-                    >
-                        @lang('admin::app.components.layouts.header.logout')
-                    </a>
-                </div>
-            </x-slot>
-        </x-admin::dropdown>
+                <!-- Notification Component -->
+                <v-notifications {{ $attributes }}>
+                    <span class="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300">
+                        <span
+                            class="icon-notification text-[21px] leading-none"
+                            title="@lang('admin::app.components.layouts.header.notifications')"
+                        >
+                        </span>
+                    </span>
+                </v-notifications>
+
+                <!-- Admin profile -->
+                <x-admin::dropdown position="bottom-{{ core()->getCurrentLocale()->direction === 'ltr' ? 'right' : 'left' }}">
+                    <x-slot:toggle>
+                        <button class="flex min-w-0 cursor-pointer items-center gap-2 rounded-2xl border border-transparent p-1 transition-all hover:border-slate-200 hover:bg-slate-50 focus:border-slate-200 focus:bg-slate-50 dark:hover:border-gray-800 dark:hover:bg-gray-800 dark:focus:border-gray-800 dark:focus:bg-gray-800 sm:pr-2.5">
+                            @if ($admin?->image)
+                                <span class="flex h-9 w-9 shrink-0 overflow-hidden rounded-full">
+                                    <img
+                                        src="{{ $admin->image_url }}"
+                                        class="h-full w-full object-cover"
+                                    />
+                                </span>
+                            @else
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold leading-6 text-white shadow-sm">
+                                    {{ substr($adminName, 0, 1) }}
+                                </span>
+                            @endif
+
+                            <span class="hidden min-w-0 text-left leading-tight xl:block">
+                                <span class="block max-w-[150px] truncate text-sm font-semibold text-slate-900 dark:text-white">
+                                    {{ $adminName }}
+                                </span>
+
+                                @if ($adminEmail)
+                                    <span class="block max-w-[150px] truncate text-xs text-slate-500 dark:text-slate-400">
+                                        {{ $adminEmail }}
+                                    </span>
+                                @endif
+                            </span>
+                        </button>
+                    </x-slot>
+
+                    <!-- Admin Dropdown -->
+                    <x-slot:content class="!p-0">
+                        <div class="flex items-center gap-2 border-b border-slate-200 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:px-5 sm:py-2.5">
+                            @include('admin.partials.brand-mark', [
+                                'class' => 'flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm sm:h-6 sm:w-6',
+                            ])
+
+                            <div class="grid gap-0.5 leading-none">
+                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 sm:text-sm">
+                                    ASTGD ECommerce
+                                </p>
+
+                                <p class="text-[11px] text-gray-400 sm:text-xs">
+                                    @lang('admin::app.components.layouts.header.app-version', ['version' => 'v' . core()->version()])
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-1 pb-2.5">
+                            <a
+                                class="cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white sm:px-5 sm:text-base"
+                                href="{{ route('admin.account.edit') }}"
+                            >
+                                @lang('admin::app.components.layouts.header.my-account')
+                            </a>
+
+                            <!--Admin logout-->
+                            <x-admin::form
+                                method="DELETE"
+                                action="{{ route('admin.session.destroy') }}"
+                                id="adminLogout"
+                            >
+                            </x-admin::form>
+
+                            <a
+                                class="cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white sm:px-5 sm:text-base"
+                                href="{{ route('admin.session.destroy') }}"
+                                onclick="event.preventDefault(); document.getElementById('adminLogout').submit();"
+                            >
+                                @lang('admin::app.components.layouts.header.logout')
+                            </a>
+                        </div>
+                    </x-slot>
+                </x-admin::dropdown>
+            </div>
+        </div>
     </div>
 </header>
 
@@ -189,25 +224,82 @@
 </x-admin::drawer>
 
 @pushOnce('scripts')
+    <script type="module">
+        const initAdminTopbarSidebarToggle = () => {
+            const toggle = document.querySelector('[data-admin-topbar-sidebar-toggle]');
+            const layout = document.querySelector('[data-admin-layout]');
+
+            if (! toggle || ! layout || toggle.__adminTopbarSidebarToggleReady) {
+                return;
+            }
+
+            toggle.__adminTopbarSidebarToggleReady = true;
+
+            const isCollapsed = () => layout.classList.contains('sidebar-collapsed');
+
+            const setCollapsed = (collapsed) => {
+                const expiryDate = new Date();
+
+                expiryDate.setMonth(expiryDate.getMonth() + 1);
+
+                document.cookie = 'sidebar_collapsed=' + Number(collapsed) + '; path=/; expires=' + expiryDate.toGMTString();
+
+                layout.classList.toggle('sidebar-collapsed', collapsed);
+                layout.classList.toggle('sidebar-not-collapsed', ! collapsed);
+                toggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+
+                window.dispatchEvent(new CustomEvent('admin-sidebar:collapse-change', {
+                    detail: {
+                        collapsed,
+                        source: 'topbar',
+                    },
+                }));
+            };
+
+            toggle.setAttribute('aria-pressed', isCollapsed() ? 'true' : 'false');
+            toggle.addEventListener('click', () => setCollapsed(! isCollapsed()));
+            window.addEventListener('admin-sidebar:collapse-change', (event) => {
+                if (! event.detail || typeof event.detail.collapsed === 'undefined') {
+                    return;
+                }
+
+                toggle.setAttribute('aria-pressed', event.detail.collapsed ? 'true' : 'false');
+            });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAdminTopbarSidebarToggle, { once: true });
+        } else {
+            initAdminTopbarSidebarToggle();
+        }
+
+        window.addEventListener('load', () => window.setTimeout(initAdminTopbarSidebarToggle, 0), { once: true });
+    </script>
+
     <script
         type="text/x-template"
         id="v-mega-search-template"
     >
-        <div class="relative flex w-[180px] items-center sm:w-[260px] md:w-[300px] lg:w-[420px] xl:w-[525px] xl:max-w-[525px] ltr:ml-2 rtl:mr-2 sm:ltr:ml-2.5 sm:rtl:mr-2.5">
-            <i class="icon-search absolute top-1.5 flex items-center text-xl ltr:left-2 rtl:right-2 sm:text-2xl sm:ltr:left-3 sm:rtl:right-3"></i>
+        <div class="relative flex w-[260px] max-w-full items-center lg:w-[360px] xl:w-[420px]">
+            <i class="icon-search absolute top-1/2 flex -translate-y-1/2 items-center text-xl text-slate-400 ltr:left-3 rtl:right-3"></i>
 
             <input 
                 type="text"
-                class="peer block w-full rounded-lg border bg-white px-8 py-1.5 text-sm leading-6 text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:placeholder-gray-500 dark:hover:border-gray-600 dark:focus:border-blue-700 sm:px-10 sm:text-base"
-                :class="{'border-gray-400': isDropdownOpen}"
+                class="peer block h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-10 py-2 text-sm leading-6 text-slate-700 transition-all placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-blue-300 focus:bg-white focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:placeholder-gray-500 dark:hover:border-gray-700 dark:focus:border-blue-700 ltr:pr-16 rtl:pl-16"
+                :class="{'border-blue-300 bg-white dark:border-blue-700': isDropdownOpen}"
+                ref="searchInput"
                 placeholder="@lang('admin::app.components.layouts.header.mega-search.title')"
                 v-model.lazy="searchTerm"
                 @click="searchTerm.length >= 2 ? isDropdownOpen = true : {}"
                 v-debounce="500"
             >
 
+            <span class="pointer-events-none absolute top-1/2 hidden -translate-y-1/2 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-slate-500 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 ltr:right-2 rtl:left-2 lg:inline-flex">
+                Ctrl K
+            </span>
+
             <div
-                class="absolute top-8 z-10 w-full rounded-lg border bg-white shadow-[0px_0px_0px_0px_rgba(0,0,0,0.10),0px_1px_3px_0px_rgba(0,0,0,0.10),0px_5px_5px_0px_rgba(0,0,0,0.09),0px_12px_7px_0px_rgba(0,0,0,0.05),0px_22px_9px_0px_rgba(0,0,0,0.01),0px_34px_9px_0px_rgba(0,0,0,0.00)] dark:border-gray-800 dark:bg-gray-900 sm:top-10"
+                class="absolute top-12 z-10 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)] dark:border-gray-800 dark:bg-gray-900"
                 v-if="isDropdownOpen"
             >
                 <!-- Search Tabs -->
@@ -477,13 +569,33 @@
 
             created() {
                 window.addEventListener('click', this.handleFocusOut);
+                window.addEventListener('keydown', this.handleSearchShortcut);
             },
 
             beforeDestroy() {
                 window.removeEventListener('click', this.handleFocusOut);
+                window.removeEventListener('keydown', this.handleSearchShortcut);
+            },
+
+            beforeUnmount() {
+                window.removeEventListener('click', this.handleFocusOut);
+                window.removeEventListener('keydown', this.handleSearchShortcut);
             },
 
             methods: {
+                handleSearchShortcut(event) {
+                    if (! (event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'k') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    this.$refs.searchInput?.focus();
+
+                    if (this.searchTerm.length >= 2) {
+                        this.isDropdownOpen = true;
+                    }
+                },
+
                 search() {
                     if (this.searchTerm.length <= 1) {
                         this.searchedResults[this.activeTab] = [];
@@ -527,15 +639,15 @@
         <x-admin::dropdown position="bottom-{{ core()->getCurrentLocale()->direction === 'ltr' ? 'right' : 'left' }}">
             <!-- Notification Toggle -->
             <x-slot:toggle>
-                <span class="relative flex">
+                <span class="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300">
                     <span
-                        class="icon-notification text-red cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
+                        class="icon-notification cursor-pointer text-[21px] leading-none"
                         title="@lang('admin::app.components.layouts.header.notifications')"
                     >
                     </span>
                 
                     <span
-                        class="absolute -top-2 flex h-5 min-w-5 cursor-pointer items-center justify-center rounded-full bg-blue-600 p-1.5 text-[10px] font-semibold leading-[9px] text-white ltr:left-5 rtl:right-5"
+                        class="absolute -top-1.5 flex h-5 min-w-5 cursor-pointer items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-[9px] text-white ring-2 ring-white dark:ring-gray-900 ltr:right-0 rtl:left-0"
                         v-if="totalUnRead"
                     >
                         @{{ totalUnRead }}
@@ -712,7 +824,7 @@
     >
         <div class="flex">
             <span
-                class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
+                class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-[21px] leading-none text-slate-600 transition-all hover:bg-slate-100 hover:text-blue-600 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-blue-300"
                 :class="[isDarkMode ? 'icon-light' : 'icon-dark']"
                 @click="toggle"
             ></span>
