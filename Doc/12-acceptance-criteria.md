@@ -84,3 +84,19 @@ The affiliate MVP is acceptable when all of the following are true:
 17. Feature tests cover the full customer/admin/referral/commission/payout/report workflow.
 
 Current status: Phase 8 hardening tests cover the listed MVP workflow and exclusion requirements.
+
+## Client Security Handover Acceptance
+
+The client security hardening pass is acceptable when all of the following are true:
+
+1. Admin and customer logout invalidates the session and regenerates the CSRF token.
+2. Admin and customer protected pages redirect after logout or session expiry instead of rendering stale authenticated content.
+3. Protected admin, customer account, checkout, payment, webhook, and sensitive AJAX responses send no-store cache headers.
+4. Response cache excludes admin, customer account, checkout, cart, order, payment, webhook, and authenticated responses.
+5. Production deployment uses `.env.production.example` as the security baseline.
+6. Admin login, customer login, registration, password reset, checkout/order creation, cart mutation, review submission, address mutation, shipment tracking, affiliate actions, payment callbacks, and courier webhooks are rate limited.
+7. SSLCommerz and bKash callbacks remain server-verified and idempotent.
+8. Courier webhooks require configured shared-secret validation and never echo the configured secret.
+9. Review attachments enforce explicit extension, MIME type, and size allowlists.
+10. Security audit logs are written for authentication, password reset, payment callback, and courier webhook events.
+11. `Doc/20-security-qa-checklist.md` is completed before client delivery.

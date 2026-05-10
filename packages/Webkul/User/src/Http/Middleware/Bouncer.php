@@ -33,7 +33,7 @@ class Bouncer
          * logged out.
          */
         if (! (bool) auth()->guard($guard)->user()->status) {
-            auth()->guard($guard)->logout();
+            $this->flushAdminSession($request, $guard);
 
             return redirect()->route('admin.session.create');
         }
@@ -43,7 +43,7 @@ class Bouncer
          * auto logged out and need to contact the administrator again.
          */
         if ($this->isPermissionsEmpty()) {
-            auth()->guard('admin')->logout();
+            $this->flushAdminSession($request);
 
             session()->flash('error', trans('admin::app.error.403.message'));
 
@@ -132,5 +132,14 @@ class Bouncer
         }
 
         return redirect()->route('admin.two_factor.setup');
+    }
+
+    protected function flushAdminSession(Request $request, string $guard = 'admin'): void
+    {
+        auth()->guard($guard)->logout();
+
+        $request->session()->forget('two_factor_passed');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
     }
 }

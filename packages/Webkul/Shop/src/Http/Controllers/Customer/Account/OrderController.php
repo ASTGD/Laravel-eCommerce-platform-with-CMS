@@ -110,7 +110,7 @@ class OrderController extends Controller
             'comment' => 'required|string',
             'rating' => 'required|numeric|min:1|max:5',
             'attachments' => 'array',
-            'attachments.*' => 'file|mimetypes:image/*,video/*',
+            'attachments.*' => 'file|max:10240|extensions:jpg,jpeg,png,webp,mp4,webm,mov|mimetypes:image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime',
         ]);
 
         $productId = $this->reviewEligibilityService->reviewableProductId($item);

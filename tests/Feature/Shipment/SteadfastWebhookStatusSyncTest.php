@@ -335,7 +335,7 @@ function createSteadfastWebhookFixture(array $shipmentOverrides = []): array
     ]);
 
     $carrier = ShipmentCarrier::query()->create([
-        'code' => 'steadfast',
+        'code' => 'steadfast-'.uniqid(),
         'name' => 'Steadfast Courier',
         'integration_driver' => 'steadfast',
         'tracking_sync_enabled' => true,

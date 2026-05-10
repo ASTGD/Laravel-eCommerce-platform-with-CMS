@@ -1,10 +1,10 @@
 <?php
 
-use Spatie\ResponseCache\CacheProfiles\CacheAllSuccessfulGetRequests;
 use Spatie\ResponseCache\Replacers\CsrfTokenReplacer;
 use Spatie\ResponseCache\Serializers\DefaultSerializer;
 use Webkul\FPC\Hasher\DefaultHasher;
 use Webkul\FPC\Replacers\FlashMessagesReplacer;
+use Webkul\Shop\CacheProfiles\SafeStorefrontCacheProfile;
 
 return [
     /*
@@ -19,7 +19,7 @@ return [
      *  You can provide your own class given that it implements the
      *  CacheProfile interface.
      */
-    'cache_profile' => CacheAllSuccessfulGetRequests::class,
+    'cache_profile' => SafeStorefrontCacheProfile::class,
 
     /*
      *  Optionally, you can specify a header that will force a cache bypass.

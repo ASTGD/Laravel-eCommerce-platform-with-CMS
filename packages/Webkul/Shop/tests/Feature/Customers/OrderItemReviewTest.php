@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\UploadedFile;
 use Platform\CommerceCore\Models\ShipmentRecord;
 use Platform\CommerceCore\Models\ShipmentRecordItem;
 use Webkul\Core\Facades\SystemConfig as SystemConfigFacade;
@@ -134,6 +135,44 @@ it('rejects product review api submissions from customers without a qualifying d
         'customer_id' => $fixture['customer']->id,
         'product_id' => $fixture['product']->id,
     ]);
+});
+
+it('rejects executable or svg review attachments', function () {
+    $fixture = createOrderItemReviewFixture(delivered: true);
+
+    $this->loginAsCustomer($fixture['customer']);
+
+    post(route('shop.customers.account.reviews.order-item.store', [
+        $fixture['order']->id,
+        $fixture['item']->id,
+    ]), [
+        'rating' => 5,
+        'title' => 'Attachment review',
+        'comment' => 'This attachment should be rejected.',
+        'attachments' => [
+            UploadedFile::fake()->createWithContent('payload.svg', '<svg><script>alert(1)</script></svg>'),
+        ],
+    ])
+        ->assertSessionHasErrors('attachments.0');
+});
+
+it('rejects oversized review attachments', function () {
+    $fixture = createOrderItemReviewFixture(delivered: true);
+
+    $this->loginAsCustomer($fixture['customer']);
+
+    post(route('shop.customers.account.reviews.order-item.store', [
+        $fixture['order']->id,
+        $fixture['item']->id,
+    ]), [
+        'rating' => 5,
+        'title' => 'Oversized attachment review',
+        'comment' => 'This attachment should be rejected.',
+        'attachments' => [
+            UploadedFile::fake()->create('large-review.jpg', 10241, 'image/jpeg'),
+        ],
+    ])
+        ->assertSessionHasErrors('attachments.0');
 });
 
 function enableOrderItemReviewFlow(): void

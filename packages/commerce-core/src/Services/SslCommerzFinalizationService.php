@@ -8,6 +8,7 @@ use Platform\CommerceCore\Models\PaymentAttempt;
 use Platform\CommerceCore\Payment\AbstractSslCommerzPayment;
 use Platform\CommerceCore\Support\SslCommerzStatusMapper;
 use Platform\CommerceCore\Transformers\OrderResource;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Checkout\Repositories\CartRepository;
 use Webkul\Sales\Models\OrderTransaction;
@@ -24,6 +25,7 @@ class SslCommerzFinalizationService
         protected OrderTransactionRepository $orderTransactionRepository,
         protected SslCommerzAttemptService $attemptService,
         protected SslCommerzStatusMapper $statusMapper,
+        protected SecurityAuditLogger $securityAuditLogger,
     ) {}
 
     public function finalize(AbstractSslCommerzPayment $payment, array $payload, string $source)
@@ -31,11 +33,23 @@ class SslCommerzFinalizationService
         $attempt = $this->attemptService->resolveAttemptOrFail($payment, $payload);
         $event = $this->attemptService->logEvent($attempt, $source, $payload);
 
+        $this->securityAuditLogger->logForSubject('payment.callback.received', $attempt, payload: [
+            'provider' => SslCommerzAttemptService::PROVIDER,
+            'source' => $source,
+            'method_code' => $attempt->method_code,
+            'merchant_tran_id' => $attempt->merchant_tran_id,
+        ]);
+
         try {
             $validated = $payment->validateTransaction($payload);
         } catch (\Throwable $e) {
             $this->markAttemptAsInvalid($attempt, ['validation_error' => $e->getMessage()]);
             $this->attemptService->markEventProcessed($event, 'error', $e->getMessage());
+            $this->securityAuditLogger->logForSubject('payment.callback.failed', $attempt, payload: [
+                'provider' => SslCommerzAttemptService::PROVIDER,
+                'source' => $source,
+                'reason' => $e->getMessage(),
+            ]);
 
             throw $e;
         }
@@ -44,15 +58,32 @@ class SslCommerzFinalizationService
             $order = $this->finalizeValidatedAttempt($attempt, $validated, $source);
 
             $this->attemptService->markEventProcessed($event, 'processed');
+            $this->securityAuditLogger->logForSubject('payment.callback.finalized', $attempt->fresh(), payload: [
+                'provider' => SslCommerzAttemptService::PROVIDER,
+                'source' => $source,
+                'order_id' => $order->id,
+                'gateway_tran_id' => $this->attemptService->extractGatewayTransactionId($validated),
+            ]);
 
             return $order;
         } catch (SslCommerzVerificationException $e) {
             $this->markAttemptAsInvalid($attempt->fresh(), $e->validated(), $e->attemptStatus());
             $this->attemptService->markEventProcessed($event, 'rejected', $e->getMessage());
+            $this->securityAuditLogger->logForSubject('payment.callback.failed', $attempt->fresh(), payload: [
+                'provider' => SslCommerzAttemptService::PROVIDER,
+                'source' => $source,
+                'reason' => $e->getMessage(),
+                'status' => $e->attemptStatus(),
+            ]);
 
             throw $e;
         } catch (\Throwable $e) {
             $this->attemptService->markEventProcessed($event, 'error', $e->getMessage());
+            $this->securityAuditLogger->logForSubject('payment.callback.failed', $attempt->fresh(), payload: [
+                'provider' => SslCommerzAttemptService::PROVIDER,
+                'source' => $source,
+                'reason' => $e->getMessage(),
+            ]);
 
             throw $e;
         }

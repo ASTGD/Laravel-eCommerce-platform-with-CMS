@@ -26,7 +26,7 @@ class AuthenticateCustomer
             return redirect()->route('shop.customer.session.index');
         } else {
             if (! auth()->guard($guard)->user()->status) {
-                auth()->guard($guard)->logout();
+                $this->flushCustomerSession($request, $guard);
 
                 if ($request->expectsJson()) {
                     return response()->json([
@@ -41,5 +41,13 @@ class AuthenticateCustomer
         }
 
         return $next($request);
+    }
+
+    protected function flushCustomerSession(Request $request, string $guard = 'customer'): void
+    {
+        auth()->guard($guard)->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
     }
 }

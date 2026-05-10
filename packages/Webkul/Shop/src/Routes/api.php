@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 use Webkul\Shop\Http\Controllers\API\AddressController;
 use Webkul\Shop\Http\Controllers\API\CartController;
 use Webkul\Shop\Http\Controllers\API\CategoryController;
@@ -42,7 +43,7 @@ Route::group(['prefix' => 'api'], function () {
     Route::controller(ReviewController::class)->prefix('product/{id}')->group(function () {
         Route::get('reviews', 'index')->name('shop.api.products.reviews.index');
 
-        Route::post('review', 'store')->name('shop.api.products.reviews.store');
+        Route::post('review', 'store')->middleware(['throttle:review-submit', NoCacheMiddleware::class])->name('shop.api.products.reviews.store');
 
         Route::get('reviews/{review_id}/translate', 'translate')->name('shop.api.products.reviews.translate');
     });
@@ -57,68 +58,68 @@ Route::group(['prefix' => 'api'], function () {
         Route::delete('all', 'destroyAll')->name('shop.api.compare.destroy_all');
     });
 
-    Route::controller(CartController::class)->prefix('checkout/cart')->group(function () {
+    Route::controller(CartController::class)->prefix('checkout/cart')->middleware(NoCacheMiddleware::class)->group(function () {
         Route::get('', 'index')->name('shop.api.checkout.cart.index');
 
-        Route::post('', 'store')->name('shop.api.checkout.cart.store');
+        Route::post('', 'store')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.store');
 
-        Route::put('', 'update')->name('shop.api.checkout.cart.update');
+        Route::put('', 'update')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.update');
 
-        Route::delete('', 'destroy')->name('shop.api.checkout.cart.destroy');
+        Route::delete('', 'destroy')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.destroy');
 
-        Route::delete('selected', 'destroySelected')->name('shop.api.checkout.cart.destroy_selected');
+        Route::delete('selected', 'destroySelected')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.destroy_selected');
 
-        Route::post('move-to-wishlist', 'moveToWishlist')->name('shop.api.checkout.cart.move_to_wishlist');
+        Route::post('move-to-wishlist', 'moveToWishlist')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.move_to_wishlist');
 
-        Route::post('coupon', 'storeCoupon')->name('shop.api.checkout.cart.coupon.apply');
+        Route::post('coupon', 'storeCoupon')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.coupon.apply');
 
-        Route::post('estimate-shipping-methods', 'estimateShippingMethods')->name('shop.api.checkout.cart.estimate_shipping');
+        Route::post('estimate-shipping-methods', 'estimateShippingMethods')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.estimate_shipping');
 
-        Route::delete('coupon', 'destroyCoupon')->name('shop.api.checkout.cart.coupon.remove');
+        Route::delete('coupon', 'destroyCoupon')->middleware('throttle:cart-mutation')->name('shop.api.checkout.cart.coupon.remove');
 
         Route::get('cross-sell', 'crossSellProducts')->name('shop.api.checkout.cart.cross-sell.index');
     });
 
-    Route::controller(OnepageController::class)->prefix('checkout/onepage')->group(function () {
+    Route::controller(OnepageController::class)->prefix('checkout/onepage')->middleware(NoCacheMiddleware::class)->group(function () {
         Route::get('state', 'state')->name('shop.checkout.onepage.state');
 
         Route::get('summary', 'summary')->name('shop.checkout.onepage.summary');
 
-        Route::post('addresses', 'storeAddress')->name('shop.checkout.onepage.addresses.store');
+        Route::post('addresses', 'storeAddress')->middleware('throttle:cart-mutation')->name('shop.checkout.onepage.addresses.store');
 
-        Route::post('shipping-methods', 'storeShippingMethod')->name('shop.checkout.onepage.shipping_methods.store');
+        Route::post('shipping-methods', 'storeShippingMethod')->middleware('throttle:cart-mutation')->name('shop.checkout.onepage.shipping_methods.store');
 
-        Route::post('payment-methods', 'storePaymentMethod')->name('shop.checkout.onepage.payment_methods.store');
+        Route::post('payment-methods', 'storePaymentMethod')->middleware('throttle:cart-mutation')->name('shop.checkout.onepage.payment_methods.store');
 
-        Route::post('orders', 'storeOrder')->name('shop.checkout.onepage.orders.store');
+        Route::post('orders', 'storeOrder')->middleware('throttle:checkout-order')->name('shop.checkout.onepage.orders.store');
     });
 
     /**
      * Login routes.
      */
     Route::controller(CustomerController::class)->prefix('customer')->group(function () {
-        Route::post('login', 'login')->name('shop.api.customers.session.create');
+        Route::post('login', 'login')->middleware('throttle:customer-login')->name('shop.api.customers.session.create');
     });
 
-    Route::group(['middleware' => ['customer'], 'prefix' => 'customer'], function () {
+    Route::group(['middleware' => [NoCacheMiddleware::class, 'customer'], 'prefix' => 'customer'], function () {
         Route::controller(AddressController::class)->prefix('addresses')->group(function () {
             Route::get('', 'index')->name('shop.api.customers.account.addresses.index');
 
-            Route::post('', 'store')->name('shop.api.customers.account.addresses.store');
+            Route::post('', 'store')->middleware('throttle:customer-address')->name('shop.api.customers.account.addresses.store');
 
-            Route::put('edit/{id?}', 'update')->name('shop.api.customers.account.addresses.update');
+            Route::put('edit/{id?}', 'update')->middleware('throttle:customer-address')->name('shop.api.customers.account.addresses.update');
         });
 
         Route::controller(WishlistController::class)->prefix('wishlist')->group(function () {
             Route::get('', 'index')->name('shop.api.customers.account.wishlist.index');
 
-            Route::post('', 'store')->name('shop.api.customers.account.wishlist.store');
+            Route::post('', 'store')->middleware('throttle:cart-mutation')->name('shop.api.customers.account.wishlist.store');
 
-            Route::post('{id}/move-to-cart', 'moveToCart')->name('shop.api.customers.account.wishlist.move_to_cart');
+            Route::post('{id}/move-to-cart', 'moveToCart')->middleware('throttle:cart-mutation')->name('shop.api.customers.account.wishlist.move_to_cart');
 
-            Route::delete('all', 'destroyAll')->name('shop.api.customers.account.wishlist.destroy_all');
+            Route::delete('all', 'destroyAll')->middleware('throttle:cart-mutation')->name('shop.api.customers.account.wishlist.destroy_all');
 
-            Route::delete('{id}', 'destroy')->name('shop.api.customers.account.wishlist.destroy');
+            Route::delete('{id}', 'destroy')->middleware('throttle:cart-mutation')->name('shop.api.customers.account.wishlist.destroy');
         });
     });
 });

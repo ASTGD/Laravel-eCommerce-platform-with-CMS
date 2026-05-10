@@ -45,6 +45,8 @@ class DownloadableProductController extends Controller
             'customer_id' => auth()->guard('customer')->user()->id,
         ]);
 
+        abort_if(! $downloadableLinkPurchased, 404);
+
         if ($downloadableLinkPurchased->status == 'pending') {
             abort(403);
         }

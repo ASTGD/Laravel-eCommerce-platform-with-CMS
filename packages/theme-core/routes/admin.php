@@ -5,7 +5,7 @@ use Platform\ThemeCore\Http\Controllers\Admin\ThemePresetController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::group([
-    'middleware' => ['admin', NoCacheMiddleware::class],
+    'middleware' => [NoCacheMiddleware::class, 'admin'],
     'prefix' => config('app.admin_url'),
 ], function () {
     Route::prefix('theme/presets')

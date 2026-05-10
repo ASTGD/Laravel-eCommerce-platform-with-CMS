@@ -74,8 +74,7 @@ class CommerceCoreServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('commerce.shipping-mode', EnsureShippingModeAllowsFeature::class);
         $this->app['router']->pushMiddlewareToGroup('web', CaptureAffiliateReferral::class);
         $this->app['router']->pushMiddlewareToGroup('web', EnsureOptionalFeatureEnabled::class);
-        $this->app['router']->pushMiddlewareToGroup('admin', EnsureOptionalFeatureEnabled::class);
-        $this->app['router']->pushMiddlewareToGroup('admin', RedirectBasicShipmentBrowseRoutes::class);
+        $this->app['router']->pushMiddlewareToGroup('web', RedirectBasicShipmentBrowseRoutes::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

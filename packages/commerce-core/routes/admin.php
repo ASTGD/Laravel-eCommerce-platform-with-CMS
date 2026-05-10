@@ -20,7 +20,7 @@ use Platform\CommerceCore\Http\Controllers\Admin\ShipmentRecordController;
 use Webkul\Core\Http\Middleware\NoCacheMiddleware;
 
 Route::group([
-    'middleware' => ['admin', NoCacheMiddleware::class],
+    'middleware' => [NoCacheMiddleware::class, 'admin'],
     'prefix' => config('app.admin_url'),
 ], function () {
     Route::prefix('affiliates')

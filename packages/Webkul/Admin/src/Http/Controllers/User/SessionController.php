@@ -6,10 +6,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class SessionController extends Controller
 {
+    public function __construct(protected SecurityAuditLogger $securityAuditLogger) {}
+
     /**
      * Show the form for creating a new resource.
      *
@@ -47,18 +50,39 @@ class SessionController extends Controller
         $remember = request('remember');
 
         if (! auth()->guard('admin')->attempt(request(['email', 'password']), $remember)) {
+            $this->securityAuditLogger->log('admin.login.failed', payload: [
+                'email' => request('email'),
+                'ip' => request()->ip(),
+            ]);
+
             session()->flash('error', trans('admin::app.settings.users.login-error'));
 
             return redirect()->back();
         }
 
         if (! auth()->guard('admin')->user()->status) {
-            session()->flash('warning', trans('admin::app.settings.users.activate-warning'));
+            $admin = auth()->guard('admin')->user();
+
+            $this->securityAuditLogger->logForActor('admin.login.blocked_inactive', $admin, [
+                'email' => request('email'),
+                'ip' => request()->ip(),
+            ]);
 
             auth()->guard('admin')->logout();
 
+            session()->forget('two_factor_passed');
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+            session()->flash('warning', trans('admin::app.settings.users.activate-warning'));
+
             return redirect()->route('admin.session.create');
         }
+
+        request()->session()->regenerate();
+
+        $this->securityAuditLogger->logForActor('admin.login.success', auth()->guard('admin')->user(), [
+            'ip' => request()->ip(),
+        ]);
 
         if (! bouncer()->hasPermission('dashboard')) {
             return $this->redirectToFirstAccessibleRoute();
@@ -75,9 +99,17 @@ class SessionController extends Controller
      */
     public function destroy()
     {
+        $admin = auth()->guard('admin')->user();
+
         auth()->guard('admin')->logout();
 
         session()->forget('two_factor_passed');
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        $this->securityAuditLogger->logForActor('admin.logout', $admin, [
+            'ip' => request()->ip(),
+        ]);
 
         return redirect()->route('admin.session.create');
     }

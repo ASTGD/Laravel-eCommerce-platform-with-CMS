@@ -9,17 +9,26 @@
         <div class="flex max-w-[745px] items-center gap-5">
             <div class="w-full">
                 @php
-                    $logoUrl = core()->getConfigData('general.design.admin_logo.logo_image') 
-                                ? Storage::url(core()->getConfigData('general.design.admin_logo.logo_image')) 
-                                : bagisto_asset('images/logo.svg');
+                    $configuredLogo = core()->getConfigData('general.design.admin_logo.logo_image');
+                    $fallbackLogo = public_path('images/astgd-ecommerce-logo.webp');
+
+                    $logoUrl = $configuredLogo
+                        ? Storage::url($configuredLogo)
+                        : (file_exists($fallbackLogo) ? asset('images/astgd-ecommerce-logo.webp') : null);
                 @endphp
 
-                <img
-                    class="mb-6 h-10"
-                    src="{{ $logoUrl }}"
-                    id="logo-image"
-                    alt="{{ config('app.name') }}"
-                />
+                @if ($logoUrl)
+                    <img
+                        class="mb-6 h-10 object-contain"
+                        src="{{ $logoUrl }}"
+                        id="logo-image"
+                        alt="{{ config('app.name') }}"
+                    />
+                @else
+                    <div class="mb-6 text-xl font-semibold text-gray-800 dark:text-white">
+                        {{ config('app.name') }}
+                    </div>
+                @endif
 
 				<div class="text-[38px] font-bold text-gray-800 dark:text-white">
                     {{ $errorCode }}
