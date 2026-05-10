@@ -23,7 +23,7 @@
     </div>
 
     <!-- Customers Stats Vue Component -->
-    <div class="flex flex-1 flex-col gap-4 max-xl:flex-auto">
+    <div class="admin-reporting-page flex flex-1 flex-col gap-4 max-xl:flex-auto">
         <!-- Customers Section -->
         @include('admin::reporting.customers.total-customers')
 

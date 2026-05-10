@@ -23,7 +23,7 @@
     </div>
 
     <!-- Products Stats Vue Component -->
-    <div class="flex flex-1 flex-col gap-4 max-xl:flex-auto">
+    <div class="admin-reporting-page flex flex-1 flex-col gap-4 max-xl:flex-auto">
         <!-- Total Sold Quantities and Products Added to Wishlist Sections Container -->
         <div class="flex flex-col justify-between gap-4 flex-1 [&>*]:flex-1 md:flex-row">
             <!-- Total Sold Quantities Section -->

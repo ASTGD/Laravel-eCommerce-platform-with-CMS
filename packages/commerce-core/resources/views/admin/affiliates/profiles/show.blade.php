@@ -1271,9 +1271,9 @@
             }
 
             .dark .affiliate-profile-hero-card {
-                border-color: rgb(31 41 55);
-                background: rgb(17 24 39);
-                box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface);
+                box-shadow: var(--admin-dark-shadow);
             }
 
             .affiliate-profile-card-header {
@@ -1296,7 +1296,7 @@
             .dark .affiliate-profile-eyebrow,
             .dark .affiliate-profile-block-label,
             .dark .affiliate-profile-info-item p {
-                color: rgb(148 163 184);
+                color: var(--admin-dark-text-muted);
             }
 
             .affiliate-profile-identity-row {
@@ -1311,8 +1311,8 @@
             }
 
             .dark .affiliate-profile-identity-row {
-                border-color: rgb(31 41 55);
-                background: transparent;
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
             }
 
             .affiliate-profile-avatar {
@@ -1332,7 +1332,7 @@
 
             .dark .affiliate-profile-avatar {
                 border-color: rgb(0 164 239 / 0.4);
-                background: rgb(0 164 239 / 0.14);
+                background: var(--admin-accent-blue-soft);
                 color: rgb(141 220 255);
             }
 
@@ -1363,8 +1363,8 @@
             }
 
             .dark .affiliate-profile-info-item {
-                border-color: rgb(31 41 55);
-                background: rgb(3 7 18 / 0.3);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
             }
 
             .affiliate-profile-info-item strong {
@@ -1377,7 +1377,7 @@
             }
 
             .dark .affiliate-profile-info-item strong {
-                color: rgb(248 250 252);
+                color: var(--admin-dark-text-primary);
             }
 
             .affiliate-profile-referral-stack {
@@ -1399,8 +1399,8 @@
             }
 
             .dark .affiliate-profile-referral-block {
-                border-color: rgb(31 41 55);
-                background: transparent;
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
             }
 
             .affiliate-profile-code-block {
@@ -1409,8 +1409,8 @@
             }
 
             .dark .affiliate-profile-code-block {
-                border-color: rgb(0 164 239 / 0.32);
-                background: transparent;
+                border-color: color-mix(in srgb, var(--admin-accent-blue) 32%, var(--admin-dark-border));
+                background: var(--admin-dark-surface-soft);
             }
 
             .affiliate-profile-code-value {
@@ -1424,7 +1424,7 @@
             }
 
             .dark .affiliate-profile-code-value {
-                color: rgb(248 250 252);
+                color: var(--admin-dark-text-primary);
             }
 
             .affiliate-profile-link-value {
@@ -1437,7 +1437,7 @@
             }
 
             .dark .affiliate-profile-link-value {
-                color: rgb(226 232 240);
+                color: var(--admin-dark-text-secondary);
             }
 
             .affiliate-profile-utility-action {
@@ -1484,20 +1484,20 @@
             }
 
             .dark .affiliate-profile-utility-action {
-                border-color: rgb(51 65 85);
-                background: rgb(15 23 42 / 0.62);
-                color: rgb(226 232 240);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
+                color: var(--admin-dark-text-secondary);
             }
 
             .dark .affiliate-profile-utility-action:hover {
-                border-color: rgb(71 85 105);
-                background: rgb(30 41 59);
-                color: rgb(248 250 252);
+                border-color: color-mix(in srgb, var(--admin-accent-blue) 32%, var(--admin-dark-border));
+                background: var(--admin-dark-surface);
+                color: var(--admin-dark-text-primary);
             }
 
             .dark .affiliate-profile-utility-action.is-copied {
                 border-color: rgb(127 186 0 / 0.44);
-                background: rgb(127 186 0 / 0.16);
+                background: var(--admin-accent-green-soft);
                 color: rgb(183 229 106);
             }
 
@@ -1564,8 +1564,8 @@
             }
 
             .dark .affiliate-profile-filter-bar {
-                border-color: rgb(31 41 55);
-                background: rgb(17 24 39);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface);
             }
 
             .affiliate-profile-filter-grid {
@@ -1588,7 +1588,7 @@
             }
 
             .dark .affiliate-profile-filter-field span {
-                color: rgb(148 163 184);
+                color: var(--admin-dark-text-muted);
             }
 
             .affiliate-profile-filter-field input,
@@ -1605,9 +1605,9 @@
 
             .dark .affiliate-profile-filter-field input,
             .dark .affiliate-profile-filter-field select {
-                border-color: rgb(31 41 55);
-                background: rgb(15 23 42);
-                color: rgb(226 232 240);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
+                color: var(--admin-dark-text-primary);
             }
 
             .affiliate-profile-filter-actions {
@@ -1639,12 +1639,12 @@
             }
 
             .dark .affiliate-profile-filter-reset {
-                color: rgb(148 163 184);
+                color: var(--admin-dark-text-muted);
             }
 
             .dark .affiliate-profile-filter-reset:hover {
-                background: rgb(31 41 55);
-                color: rgb(248 250 252);
+                background: var(--admin-dark-surface-soft);
+                color: var(--admin-dark-text-primary);
             }
 
             .affiliate-profile-card {
@@ -1656,8 +1656,9 @@
             }
 
             .dark .affiliate-profile-card {
-                border-color: rgb(31 41 55);
-                background: rgb(17 24 39);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface);
+                box-shadow: var(--admin-dark-shadow);
             }
 
             .affiliate-profile-main-stack,
@@ -1700,8 +1701,8 @@
             }
 
             .dark .affiliate-profile-trend-chart {
-                border-color: rgb(31 41 55);
-                background: rgb(3 7 18);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
             }
 
             .affiliate-profile-performance-canvas {
@@ -1723,8 +1724,8 @@
             }
 
             .dark .affiliate-profile-traffic-chart {
-                border-color: rgb(31 41 55);
-                background: rgb(3 7 18);
+                border-color: var(--admin-dark-border);
+                background: var(--admin-dark-surface-soft);
             }
 
             .affiliate-profile-traffic-column {
@@ -1757,7 +1758,7 @@
             }
 
             .dark .affiliate-profile-chart-legend {
-                color: rgb(156 163 175);
+                color: var(--admin-dark-text-muted);
             }
 
             .affiliate-profile-chart-legend-item {
