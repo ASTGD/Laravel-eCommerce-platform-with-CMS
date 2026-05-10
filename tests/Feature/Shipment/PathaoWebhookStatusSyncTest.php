@@ -31,7 +31,7 @@ it('syncs a pathao webhook payload by consignment id', function () {
             'shipment_record_id' => $fixture['shipmentRecord']->id,
             'external_status' => 'Out for Delivery',
         ])
-        ->assertHeader('X-Pathao-Merchant-Webhook-Integration-Secret', 'pathao-hook-secret');
+        ->assertHeaderMissing('X-Pathao-Merchant-Webhook-Integration-Secret');
 
     $fixture['shipmentRecord']->refresh();
 
@@ -69,7 +69,7 @@ it('syncs a pathao webhook payload by invoice reference when consignment id is a
             'shipment_record_id' => $fixture['shipmentRecord']->id,
             'external_status' => 'delivered',
         ])
-        ->assertHeader('X-Pathao-Merchant-Webhook-Integration-Secret', 'pathao-hook-secret');
+        ->assertHeaderMissing('X-Pathao-Merchant-Webhook-Integration-Secret');
 
     $fixture['shipmentRecord']->refresh();
 
@@ -118,7 +118,7 @@ it('accepts unmapped pathao webhook statuses without changing shipment state', f
             'shipment_record_id' => $fixture['shipmentRecord']->id,
             'external_status' => 'handover_pending',
         ])
-        ->assertHeader('X-Pathao-Merchant-Webhook-Integration-Secret', 'pathao-hook-secret');
+        ->assertHeaderMissing('X-Pathao-Merchant-Webhook-Integration-Secret');
 
     $fixture['shipmentRecord']->refresh();
 
@@ -166,7 +166,7 @@ function createPathaoWebhookFixture(array $shipmentOverrides = []): array
     ]);
 
     $carrier = ShipmentCarrier::query()->create([
-        'code' => 'pathao',
+        'code' => 'pathao-'.uniqid(),
         'name' => 'Pathao Courier',
         'integration_driver' => 'pathao',
         'tracking_sync_enabled' => true,

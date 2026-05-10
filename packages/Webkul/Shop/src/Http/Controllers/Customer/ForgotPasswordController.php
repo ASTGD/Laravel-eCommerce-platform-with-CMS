@@ -6,12 +6,15 @@ use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use Illuminate\Support\Facades\Password;
 use Illuminate\View\View;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 use Webkul\Shop\Http\Controllers\Controller;
 use Webkul\Shop\Http\Requests\Customer\ForgotPasswordRequest;
 
 class ForgotPasswordController extends Controller
 {
     use SendsPasswordResetEmails;
+
+    public function __construct(protected SecurityAuditLogger $securityAuditLogger) {}
 
     /**
      * Show the form for creating a new resource.
@@ -34,6 +37,13 @@ class ForgotPasswordController extends Controller
 
         try {
             $response = $this->broker()->sendResetLink($request->only(['email']));
+
+            $this->securityAuditLogger->log('password_reset.requested', payload: [
+                'guard' => 'customer',
+                'email' => $request->input('email'),
+                'response' => $response,
+                'ip' => $request->ip(),
+            ]);
 
             if ($response == Password::RESET_LINK_SENT) {
                 session()->flash('success', trans('shop::app.customers.forgot-password.reset-link-sent'));

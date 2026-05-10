@@ -44,6 +44,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->replaceInGroup('web', BaseEncryptCookies::class, EncryptCookies::class);
 
         $middleware->validateCsrfTokens(except: [
+            // External payment providers post browser callbacks/IPNs without a Laravel CSRF token.
+            'payment/sslcommerz/*/success',
+            'payment/sslcommerz/*/fail',
+            'payment/sslcommerz/*/cancel',
+            'payment/sslcommerz/*/ipn',
+            'payment/bkash/*/callback',
             'stripe/*',
         ]);
 

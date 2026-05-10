@@ -12,11 +12,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class ResetPasswordController extends Controller
 {
     use ResetsPasswords;
+
+    public function __construct(protected SecurityAuditLogger $securityAuditLogger) {}
 
     /**
      * Display the password reset view for the given token.
@@ -55,8 +58,23 @@ class ResetPasswordController extends Controller
             );
 
             if ($response == Password::PASSWORD_RESET) {
+                request()->session()->regenerate();
+
+                $this->securityAuditLogger->logForActor('password_reset.completed', auth()->guard('admin')->user(), [
+                    'guard' => 'admin',
+                    'email' => request('email'),
+                    'ip' => request()->ip(),
+                ]);
+
                 return redirect()->route('admin.dashboard.index');
             }
+
+            $this->securityAuditLogger->log('password_reset.failed', payload: [
+                'guard' => 'admin',
+                'email' => request('email'),
+                'response' => $response,
+                'ip' => request()->ip(),
+            ]);
 
             return back()
                 ->withInput(request(['email']))

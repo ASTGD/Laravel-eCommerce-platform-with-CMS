@@ -13,11 +13,15 @@ class RedirectBasicShipmentBrowseRoutes
 
     public function handle($request, Closure $next)
     {
-        if (! $this->shippingMode->usesManualBasic()) {
+        $routeName = $request->route()?->getName();
+
+        if (str_starts_with((string) $routeName, 'admin.') && ! auth()->guard('admin')->check()) {
             return $next($request);
         }
 
-        $routeName = $request->route()?->getName();
+        if (! $this->shippingMode->usesManualBasic()) {
+            return $next($request);
+        }
 
         if (in_array($routeName, [
             'admin.sales.shipments.index',

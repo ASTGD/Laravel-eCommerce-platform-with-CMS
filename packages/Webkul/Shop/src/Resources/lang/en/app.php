@@ -1247,6 +1247,11 @@ return [
             'title' => '403 Forbidden',
         ],
 
+        '429' => [
+            'description' => 'Too many attempts were made in a short time. For security, this access is temporarily blocked. Please wait a minute and try again.',
+            'title' => '429 Too Many Requests',
+        ],
+
         '500' => [
             'description' => 'Oops! Something went wrong. It seems we\'re having trouble loading the page you\'re looking for.',
             'title' => '500 Internal Server Error',

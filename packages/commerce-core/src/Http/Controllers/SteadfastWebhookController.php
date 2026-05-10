@@ -6,10 +6,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Services\SteadfastWebhookService;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 
 class SteadfastWebhookController
 {
-    public function __construct(protected SteadfastWebhookService $steadfastWebhookService) {}
+    public function __construct(
+        protected SteadfastWebhookService $steadfastWebhookService,
+        protected SecurityAuditLogger $securityAuditLogger,
+    ) {}
 
     public function handle(Request $request, ShipmentCarrier $carrier): JsonResponse
     {
@@ -18,6 +22,12 @@ class SteadfastWebhookController
         $configuredSecret = trim((string) $carrier->webhook_secret);
 
         if ($configuredSecret === '') {
+            $this->securityAuditLogger->logForSubject('courier.webhook.rejected', $carrier, payload: [
+                'provider' => 'steadfast',
+                'reason' => 'missing_configured_secret',
+                'ip' => $request->ip(),
+            ]);
+
             return response()->json([
                 'status' => 'invalid',
                 'message' => 'Webhook secret is not configured for this carrier.',
@@ -25,6 +35,12 @@ class SteadfastWebhookController
         }
 
         if (! $this->hasValidSecret($request, $configuredSecret)) {
+            $this->securityAuditLogger->logForSubject('courier.webhook.rejected', $carrier, payload: [
+                'provider' => 'steadfast',
+                'reason' => 'invalid_token',
+                'ip' => $request->ip(),
+            ]);
+
             return response()->json([
                 'status' => 'unauthorized',
                 'message' => 'Invalid webhook authorization token.',
@@ -32,6 +48,19 @@ class SteadfastWebhookController
         }
 
         $result = $this->steadfastWebhookService->handle($carrier, $request->all());
+
+        $this->securityAuditLogger->logForSubject(
+            $result->httpStatus >= 400 ? 'courier.webhook.rejected' : 'courier.webhook.accepted',
+            $carrier,
+            payload: [
+                'provider' => 'steadfast',
+                'status' => $result->status,
+                'http_status' => $result->httpStatus,
+                'shipment_record_id' => $result->shipmentRecordId,
+                'external_status' => $result->externalStatus,
+                'ip' => $request->ip(),
+            ],
+        );
 
         return response()->json([
             'status' => $result->status,

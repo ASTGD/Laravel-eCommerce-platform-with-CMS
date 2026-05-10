@@ -6,10 +6,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Platform\CommerceCore\Models\ShipmentCarrier;
 use Platform\CommerceCore\Services\PathaoWebhookService;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 
 class PathaoWebhookController
 {
-    public function __construct(protected PathaoWebhookService $pathaoWebhookService) {}
+    public function __construct(
+        protected PathaoWebhookService $pathaoWebhookService,
+        protected SecurityAuditLogger $securityAuditLogger,
+    ) {}
 
     public function handle(Request $request, ShipmentCarrier $carrier): JsonResponse
     {
@@ -18,6 +22,12 @@ class PathaoWebhookController
         $configuredSecret = trim((string) $carrier->webhook_secret);
 
         if ($configuredSecret === '') {
+            $this->securityAuditLogger->logForSubject('courier.webhook.rejected', $carrier, payload: [
+                'provider' => 'pathao',
+                'reason' => 'missing_configured_secret',
+                'ip' => $request->ip(),
+            ]);
+
             return response()->json([
                 'status' => 'invalid',
                 'message' => 'Webhook secret is not configured for this carrier.',
@@ -25,6 +35,12 @@ class PathaoWebhookController
         }
 
         if (! $this->hasValidSecret($request, $configuredSecret)) {
+            $this->securityAuditLogger->logForSubject('courier.webhook.rejected', $carrier, payload: [
+                'provider' => 'pathao',
+                'reason' => 'invalid_token',
+                'ip' => $request->ip(),
+            ]);
+
             return response()->json([
                 'status' => 'unauthorized',
                 'message' => 'Invalid webhook authorization token.',
@@ -33,14 +49,25 @@ class PathaoWebhookController
 
         $result = $this->pathaoWebhookService->handle($carrier, $request->all());
 
-        return response()
-            ->json([
+        $this->securityAuditLogger->logForSubject(
+            $result->httpStatus >= 400 ? 'courier.webhook.rejected' : 'courier.webhook.accepted',
+            $carrier,
+            payload: [
+                'provider' => 'pathao',
                 'status' => $result->status,
-                'message' => $result->message,
+                'http_status' => $result->httpStatus,
                 'shipment_record_id' => $result->shipmentRecordId,
                 'external_status' => $result->externalStatus,
-            ], $result->httpStatus)
-            ->header('X-Pathao-Merchant-Webhook-Integration-Secret', $configuredSecret);
+                'ip' => $request->ip(),
+            ],
+        );
+
+        return response()->json([
+            'status' => $result->status,
+            'message' => $result->message,
+            'shipment_record_id' => $result->shipmentRecordId,
+            'external_status' => $result->externalStatus,
+        ], $result->httpStatus);
     }
 
     protected function hasValidSecret(Request $request, string $configuredSecret): bool

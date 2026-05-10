@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 use Webkul\Customer\Repositories\CustomerRepository;
 use Webkul\Shop\Http\Controllers\Controller;
 
@@ -24,7 +25,10 @@ class ResetPasswordController extends Controller
      *
      * @return void
      */
-    public function __construct(protected CustomerRepository $customerRepository) {}
+    public function __construct(
+        protected CustomerRepository $customerRepository,
+        protected SecurityAuditLogger $securityAuditLogger,
+    ) {}
 
     /**
      * Display the password reset view for the given token.
@@ -67,8 +71,21 @@ class ResetPasswordController extends Controller
 
                 Event::dispatch('customer.password.update.after', $customer);
 
+                $this->securityAuditLogger->logForActor('password_reset.completed', $customer, [
+                    'guard' => 'customer',
+                    'email' => request('email'),
+                    'ip' => request()->ip(),
+                ]);
+
                 return redirect()->route('shop.customers.account.profile.index');
             }
+
+            $this->securityAuditLogger->log('password_reset.failed', payload: [
+                'guard' => 'customer',
+                'email' => request('email'),
+                'response' => $response,
+                'ip' => request()->ip(),
+            ]);
 
             return back()
                 ->withInput(request(['email']))

@@ -26,6 +26,8 @@
 - storefront is reachable
 - CMS homepage renders
 - mail and media storage are configured
+- production values are based on `.env.production.example`, not local `.env.example`
+- the security handover checks in `Doc/20-security-qa-checklist.md` pass before enabling response cache or handing credentials to the client
 
 ## Bangladesh Payment Deployment Notes
 

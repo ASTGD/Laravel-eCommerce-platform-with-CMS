@@ -22,7 +22,7 @@ Route::prefix('customer')->group(function () {
     Route::controller(ForgotPasswordController::class)->prefix('forgot-password')->group(function () {
         Route::get('', 'create')->name('shop.customers.forgot_password.create');
 
-        Route::post('', 'store')->name('shop.customers.forgot_password.store');
+        Route::post('', 'store')->middleware('throttle:password-reset')->name('shop.customers.forgot_password.store');
     });
 
     /**
@@ -31,7 +31,7 @@ Route::prefix('customer')->group(function () {
     Route::controller(ResetPasswordController::class)->prefix('reset-password')->group(function () {
         Route::get('{token}', 'create')->name('shop.customers.reset_password.create');
 
-        Route::post('', 'store')->name('shop.customers.reset_password.store');
+        Route::post('', 'store')->middleware('throttle:password-reset')->name('shop.customers.reset_password.store');
     });
 
     /**
@@ -40,7 +40,7 @@ Route::prefix('customer')->group(function () {
     Route::controller(SessionController::class)->prefix('login')->group(function () {
         Route::get('', 'index')->name('shop.customer.session.index');
 
-        Route::post('', 'store')->name('shop.customer.session.create');
+        Route::post('', 'store')->middleware('throttle:customer-login')->name('shop.customer.session.create');
     });
 
     /**
@@ -50,7 +50,7 @@ Route::prefix('customer')->group(function () {
         Route::prefix('register')->group(function () {
             Route::get('', 'index')->name('shop.customers.register.index');
 
-            Route::post('', 'store')->name('shop.customers.register.store');
+            Route::post('', 'store')->middleware('throttle:customer-register')->name('shop.customers.register.store');
         });
 
         /**
@@ -58,14 +58,14 @@ Route::prefix('customer')->group(function () {
          */
         Route::get('verify-account/{token}', 'verifyAccount')->name('shop.customers.verify');
 
-        Route::get('resend/verification/{email}', 'resendVerificationEmail')->name('shop.customers.resend.verification_email');
+        Route::get('resend/verification/{email}', 'resendVerificationEmail')->middleware('throttle:password-reset')->name('shop.customers.resend.verification_email');
     });
 
     /**
      * Customer authenticated routes. All the below routes only be accessible
      * if customer is authenticated.
      */
-    Route::group(['middleware' => ['customer', NoCacheMiddleware::class]], function () {
+    Route::group(['middleware' => [NoCacheMiddleware::class, 'customer']], function () {
         /**
          * Datagrid routes.
          */
@@ -134,11 +134,11 @@ Route::prefix('customer')->group(function () {
 
                 Route::get('create', 'create')->name('shop.customers.account.addresses.create');
 
-                Route::post('create', 'store')->name('shop.customers.account.addresses.store');
+                Route::post('create', 'store')->middleware('throttle:customer-address')->name('shop.customers.account.addresses.store');
 
                 Route::get('edit/{id}', 'edit')->name('shop.customers.account.addresses.edit');
 
-                Route::put('edit/{id}', 'update')->name('shop.customers.account.addresses.update');
+                Route::put('edit/{id}', 'update')->middleware('throttle:customer-address')->name('shop.customers.account.addresses.update');
 
                 Route::patch('edit/{id}', 'makeDefault')->name('shop.customers.account.addresses.update.default');
 
@@ -155,7 +155,7 @@ Route::prefix('customer')->group(function () {
 
                 Route::get('view/{orderId}/items/{itemId}/review', 'createReview')->name('shop.customers.account.reviews.order-item.create');
 
-                Route::post('view/{orderId}/items/{itemId}/review', 'storeReview')->name('shop.customers.account.reviews.order-item.store');
+                Route::post('view/{orderId}/items/{itemId}/review', 'storeReview')->middleware('throttle:review-submit')->name('shop.customers.account.reviews.order-item.store');
 
                 Route::get('reorder/{id}', 'reorder')->name('shop.customers.account.orders.reorder');
 

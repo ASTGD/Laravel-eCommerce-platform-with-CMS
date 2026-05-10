@@ -5,10 +5,10 @@ namespace Platform\CommerceCore\Services;
 use Illuminate\Support\Facades\DB;
 use Platform\CommerceCore\Exceptions\BkashVerificationException;
 use Platform\CommerceCore\Models\PaymentAttempt;
-use Platform\CommerceCore\Models\PaymentGatewayEvent;
 use Platform\CommerceCore\Payment\AbstractBkashPayment;
 use Platform\CommerceCore\Support\BkashStatusMapper;
 use Platform\CommerceCore\Transformers\OrderResource;
+use Platform\PlatformSupport\Services\SecurityAuditLogger;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Checkout\Repositories\CartRepository;
 use Webkul\Sales\Models\OrderTransaction;
@@ -25,6 +25,7 @@ class BkashFinalizationService
         protected OrderTransactionRepository $orderTransactionRepository,
         protected BkashAttemptService $attemptService,
         protected BkashStatusMapper $statusMapper,
+        protected SecurityAuditLogger $securityAuditLogger,
     ) {}
 
     public function finalize(AbstractBkashPayment $payment, array $payload, string $source)
@@ -32,8 +33,21 @@ class BkashFinalizationService
         $attempt = $this->attemptService->resolveAttemptOrFail($payment, $payload);
         $event = $this->attemptService->logEvent($attempt, $source, $payload);
 
+        $this->securityAuditLogger->logForSubject('payment.callback.received', $attempt, payload: [
+            'provider' => BkashAttemptService::PROVIDER,
+            'source' => $source,
+            'method_code' => $attempt->method_code,
+            'merchant_tran_id' => $attempt->merchant_tran_id,
+        ]);
+
         if ($attempt->finalized_at && $attempt->order_id) {
             $this->attemptService->markEventProcessed($event, 'processed');
+            $this->securityAuditLogger->logForSubject('payment.callback.finalized', $attempt, payload: [
+                'provider' => BkashAttemptService::PROVIDER,
+                'source' => $source,
+                'order_id' => $attempt->order_id,
+                'idempotent' => true,
+            ]);
 
             return $attempt->order()->firstOrFail();
         }
@@ -43,15 +57,32 @@ class BkashFinalizationService
             $order = $this->finalizeValidatedAttempt($attempt, $validated, $source);
 
             $this->attemptService->markEventProcessed($event, 'processed');
+            $this->securityAuditLogger->logForSubject('payment.callback.finalized', $attempt->fresh(), payload: [
+                'provider' => BkashAttemptService::PROVIDER,
+                'source' => $source,
+                'order_id' => $order->id,
+                'gateway_tran_id' => $this->attemptService->extractGatewayTransactionId($validated),
+            ]);
 
             return $order;
         } catch (BkashVerificationException $e) {
             $this->markAttemptAsInvalid($attempt->fresh(), $e->validated(), $e->attemptStatus());
             $this->attemptService->markEventProcessed($event, 'rejected', $e->getMessage());
+            $this->securityAuditLogger->logForSubject('payment.callback.failed', $attempt->fresh(), payload: [
+                'provider' => BkashAttemptService::PROVIDER,
+                'source' => $source,
+                'reason' => $e->getMessage(),
+                'status' => $e->attemptStatus(),
+            ]);
 
             throw $e;
         } catch (\Throwable $e) {
             $this->attemptService->markEventProcessed($event, 'error', $e->getMessage());
+            $this->securityAuditLogger->logForSubject('payment.callback.failed', $attempt->fresh(), payload: [
+                'provider' => BkashAttemptService::PROVIDER,
+                'source' => $source,
+                'reason' => $e->getMessage(),
+            ]);
 
             throw $e;
         }
