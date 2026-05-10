@@ -13,7 +13,7 @@
             type="text/x-template"
             id="v-reporting-stats-table-template"
         >
-            <div>
+            <div class="admin-reporting-page">
                 <!-- Page Header -->
                 <div class="mb-5 flex items-center justify-between gap-4 max-sm:flex-wrap">
                     <!-- Title -->

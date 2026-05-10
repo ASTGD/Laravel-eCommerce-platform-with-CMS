@@ -24,7 +24,7 @@
     </div>
 
     <!-- Sales Stats Vue Component -->
-    <div class="flex flex-1 flex-col gap-4 max-xl:flex-auto">
+    <div class="admin-reporting-page flex flex-1 flex-col gap-4 max-xl:flex-auto">
         <!-- Sales Section -->
         @include('admin::reporting.sales.total-sales')
 

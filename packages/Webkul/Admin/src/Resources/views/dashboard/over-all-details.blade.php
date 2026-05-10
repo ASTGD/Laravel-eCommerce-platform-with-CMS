@@ -243,8 +243,10 @@
                 0 1px 2px rgb(15 23 42 / 0.04);
         }
 
-        .dark .dashboard-kpi-card {
-            border-color: color-mix(in srgb, var(--dashboard-kpi-color) 42%, rgb(31 41 55));
+        .dark .admin-main-surface .dashboard-kpi-card {
+            background-color: var(--admin-dark-surface-soft) !important;
+            border-color: color-mix(in srgb, var(--dashboard-kpi-color) 34%, var(--admin-dark-border)) !important;
+            box-shadow: var(--admin-dark-shadow) !important;
         }
 
         .dashboard-kpi-accent {

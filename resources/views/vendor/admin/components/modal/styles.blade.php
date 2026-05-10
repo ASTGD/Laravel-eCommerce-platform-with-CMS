@@ -119,44 +119,45 @@
         }
 
         html.dark .admin-modal-panel {
-            border-color: #374151;
-            background: #111827;
+            border-color: var(--admin-dark-border);
+            background: var(--admin-dark-surface);
+            box-shadow: var(--admin-dark-shadow);
             outline-color: rgba(255, 255, 255, 0.10);
         }
 
         html.dark .admin-modal-header {
-            border-color: #1f2937;
-            background: #111827;
+            border-color: var(--admin-dark-divider);
+            background: var(--admin-dark-surface);
         }
 
         html.dark .admin-modal-body {
-            color: #e5e7eb;
+            color: var(--admin-dark-text-secondary);
         }
 
         html.dark .admin-modal-footer {
-            border-color: #1f2937;
-            background: rgba(3, 7, 18, 0.50);
+            border-color: var(--admin-dark-divider);
+            background: var(--admin-dark-surface-soft);
         }
 
         html.dark .admin-modal-close {
-            border-color: #374151;
-            background: #111827;
-            color: #d1d5db;
+            border-color: var(--admin-dark-border);
+            background: var(--admin-dark-surface-soft);
+            color: var(--admin-dark-text-secondary);
         }
 
         html.dark .admin-modal-close:hover {
-            background: #1f2937;
-            color: #ffffff;
+            background: var(--admin-dark-surface);
+            color: var(--admin-dark-text-primary);
         }
 
         html.dark .admin-modal-close[class^="icon-"],
         html.dark .admin-modal-close[class*=" icon-"] {
-            color: #d1d5db;
+            color: var(--admin-dark-text-secondary);
         }
 
         html.dark .admin-modal-close[class^="icon-"]:hover,
         html.dark .admin-modal-close[class*=" icon-"]:hover {
-            color: #ffffff;
+            color: var(--admin-dark-text-primary);
         }
 
         @media (max-width: 767.98px) {

@@ -19,14 +19,42 @@
         @apply bg-gray-50;
     }
 
+    html.dark {
+        --admin-dark-bg: #0b1120;
+        --admin-dark-surface: #111827;
+        --admin-dark-surface-soft: #151f2e;
+        --admin-dark-border: #26364d;
+        --admin-dark-text-primary: #f8fafc;
+        --admin-dark-text-secondary: #cbd5e1;
+        --admin-dark-text-muted: #94a3b8;
+        --admin-dark-divider: #26364d;
+        --admin-dark-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+        --admin-accent-orange-red: #f25022;
+        --admin-accent-green: #7fba00;
+        --admin-accent-blue: #00a4ef;
+        --admin-accent-yellow: #ffb900;
+        --admin-accent-grey: #737373;
+        --admin-accent-blue-soft: rgba(0, 164, 239, 0.14);
+        --admin-accent-green-soft: rgba(127, 186, 0, 0.14);
+        --admin-accent-yellow-soft: rgba(255, 185, 0, 0.16);
+        --admin-accent-orange-red-soft: rgba(242, 80, 34, 0.14);
+        --admin-accent-grey-soft: rgba(115, 115, 115, 0.18);
+    }
+
+    :root {
+        --admin-motion-duration: 180ms;
+        --admin-motion-ease: cubic-bezier(0.2, 0, 0.2, 1);
+    }
+
     html.dark,
     html.dark body,
     html.dark #app {
-        @apply bg-slate-950 text-slate-100;
+        background-color: var(--admin-dark-bg) !important;
+        color: var(--admin-dark-text-primary);
     }
 
     html.dark .admin-main-surface {
-        @apply bg-slate-900;
+        background-color: var(--admin-dark-bg) !important;
     }
 
     /*
@@ -42,14 +70,14 @@
     html.dark #app[style*="background-color:#f5f5f5"],
     html.dark #app[style*="background-color: rgb(245, 245, 245)"],
     html.dark #app[style*="background-color:rgb(245, 245, 245)"] {
-        background-color: rgb(2 6 23) !important;
+        background-color: var(--admin-dark-bg) !important;
     }
 
     html.dark .admin-main-surface[style*="background-color: #f5f5f5"],
     html.dark .admin-main-surface[style*="background-color:#f5f5f5"],
     html.dark .admin-main-surface[style*="background-color: rgb(245, 245, 245)"],
     html.dark .admin-main-surface[style*="background-color:rgb(245, 245, 245)"] {
-        background-color: rgb(15 23 42) !important;
+        background-color: var(--admin-dark-bg) !important;
     }
 
     html.dark [style*="background-color: #f5f5f5"]:not(body):not(#app):not(.admin-main-surface),
@@ -107,15 +135,235 @@
         color: #d1d5db;
     }
     
+    .admin-card,
+    .admin-kpi-card,
+    .admin-panel,
+    .admin-card-soft,
+    .admin-card-border {
+        transition:
+            background-color 180ms ease-out,
+            border-color 180ms ease-out,
+            color 180ms ease-out,
+            box-shadow 180ms ease-out;
+    }
+
     .box-shadow {
         @apply border-[1px] dark:border-gray-800 shadow-[0px_0px_0px_0px_rgba(0,0,0,0.03),0px_1px_1px_0px_rgba(0,0,0,0.03),0px_3px_3px_0px_rgba(0,0,0,0.03),0px_6px_4px_0px_rgba(0,0,0,0.02),0px_11px_4px_0px_rgba(0,0,0,0.00),0px_17px_5px_0px_rgba(0,0,0,0.00)];
     }
 
+    body :where(
+        a,
+        button,
+        [role="button"],
+        input,
+        select,
+        textarea,
+        .admin-card,
+        .admin-kpi-card,
+        .admin-panel,
+        .box-shadow,
+        .table-responsive,
+        .admin-modal-panel
+    ) {
+        transition-duration: var(--admin-motion-duration);
+        transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+        transition-timing-function: var(--admin-motion-ease);
+    }
+
+    .admin-reporting-page .box-shadow.rounded,
+    .admin-reporting-page .table-responsive.rounded {
+        border-radius: 1.25rem !important;
+    }
+
+    .admin-dashboard-page :is(
+        .dashboard-kpi-card,
+        article[class*="rounded-[1.25rem]"][class*="bg-white"]
+    ) {
+        transform: translateY(0);
+        transition-duration: var(--admin-motion-duration);
+        transition-property: background-color, border-color, box-shadow, transform;
+        transition-timing-function: var(--admin-motion-ease);
+        will-change: transform;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        .admin-dashboard-page :is(
+            .dashboard-kpi-card,
+            article[class*="rounded-[1.25rem]"][class*="bg-white"]
+        ):hover {
+            transform: translateY(-0.125rem);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.10) !important;
+        }
+
+        html.dark .admin-dashboard-page :is(
+            .dashboard-kpi-card,
+            article[class*="rounded-[1.25rem]"][class*="bg-white"]
+        ):hover {
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32) !important;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        body :where(
+            a,
+            button,
+            [role="button"],
+            input,
+            select,
+            textarea,
+            .admin-card,
+            .admin-kpi-card,
+            .admin-panel,
+            .box-shadow,
+            .table-responsive,
+            .admin-modal-panel
+        ),
+        .admin-dashboard-page :is(
+            .dashboard-kpi-card,
+            article[class*="rounded-[1.25rem]"][class*="bg-white"]
+        ) {
+            transition-duration: 1ms !important;
+        }
+
+        .admin-dashboard-page :is(
+            .dashboard-kpi-card,
+            article[class*="rounded-[1.25rem]"][class*="bg-white"]
+        ):hover {
+            transform: none !important;
+        }
+    }
+
+    html.dark .admin-card,
+    html.dark .admin-kpi-card,
+    html.dark .admin-panel,
     html.dark .box-shadow,
-    html.dark .table-responsive {
-        background-color: rgb(31 41 55) !important;
-        border-color: rgb(55 65 81) !important;
-        color: rgb(229 231 235);
+    html.dark .table-responsive,
+    html.dark .admin-main-surface [class*="rounded-[1.25rem]"][class*="bg-white"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-[24px]"][class*="bg-white"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-[2rem]"][class*="bg-white"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-3xl"][class*="bg-white"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-2xl"][class*="bg-white"][class*="border"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-xl"][class*="bg-white"][class*="border"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-lg"][class*="bg-white"][class*="border"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-md"][class*="bg-white"][class*="box-shadow"]:not(a):not(button):not(input):not(select):not(textarea) {
+        background-color: var(--admin-dark-surface) !important;
+        border-color: var(--admin-dark-border) !important;
+        border-style: solid !important;
+        border-width: 1px !important;
+        color: var(--admin-dark-text-secondary);
+        box-shadow: var(--admin-dark-shadow) !important;
+    }
+
+    html.dark .admin-main-surface .dashboard-kpi-card,
+    html.dark .admin-main-surface .dashboard-kpi-card[class*="rounded-2xl"][class*="bg-white"][class*="border"] {
+        background-color: var(--admin-dark-surface-soft) !important;
+        border-color: var(--admin-dark-border) !important;
+        color: var(--admin-dark-text-secondary);
+        box-shadow: var(--admin-dark-shadow) !important;
+    }
+
+    html.dark .admin-main-surface [class*="rounded-xl"][class*="bg-white"][class*="border"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="rounded-lg"][class*="bg-white"][class*="border"]:not(a):not(button):not(input):not(select):not(textarea) {
+        box-shadow: none !important;
+    }
+
+    html.dark .admin-card-soft,
+    html.dark .admin-main-surface [class*="bg-gray-50"][class*="rounded"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="bg-slate-50"][class*="rounded"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="dark:bg-gray-700"][class*="rounded"]:not(a):not(button):not(input):not(select):not(textarea),
+    html.dark .admin-main-surface [class*="dark:bg-gray-950"][class*="rounded"]:not(a):not(button):not(input):not(select):not(textarea) {
+        background-color: var(--admin-dark-surface-soft) !important;
+        border-color: var(--admin-dark-border) !important;
+        color: var(--admin-dark-text-secondary);
+    }
+
+    html.dark .admin-card-border,
+    html.dark .admin-main-surface [class*="border-gray-"],
+    html.dark .admin-main-surface [class*="border-slate-"],
+    html.dark .table-responsive .row,
+    html.dark .admin-modal-panel,
+    html.dark .admin-modal-header,
+    html.dark .admin-modal-footer {
+        border-color: var(--admin-dark-border) !important;
+    }
+
+    html.dark .admin-card :is(.text-gray-900, .text-gray-950, .text-slate-900, .text-slate-950),
+    html.dark .admin-panel :is(.text-gray-900, .text-gray-950, .text-slate-900, .text-slate-950),
+    html.dark .box-shadow :is(.text-gray-900, .text-gray-950, .text-slate-900, .text-slate-950),
+    html.dark .dashboard-kpi-card :is(.text-gray-900, .text-gray-950, .text-slate-900, .text-slate-950),
+    html.dark .table-responsive :is(.text-gray-900, .text-gray-950, .text-slate-900, .text-slate-950),
+    html.dark .admin-main-surface :is(.text-gray-900, .text-gray-950, .text-slate-900, .text-slate-950) {
+        color: var(--admin-dark-text-primary) !important;
+    }
+
+    html.dark .admin-card :is(.text-gray-600, .text-gray-700, .text-slate-600, .text-slate-700),
+    html.dark .admin-panel :is(.text-gray-600, .text-gray-700, .text-slate-600, .text-slate-700),
+    html.dark .box-shadow :is(.text-gray-600, .text-gray-700, .text-slate-600, .text-slate-700),
+    html.dark .dashboard-kpi-card :is(.text-gray-600, .text-gray-700, .text-slate-600, .text-slate-700),
+    html.dark .table-responsive :is(.text-gray-600, .text-gray-700, .text-slate-600, .text-slate-700),
+    html.dark .admin-main-surface :is(.text-gray-600, .text-gray-700, .text-slate-600, .text-slate-700) {
+        color: var(--admin-dark-text-secondary) !important;
+    }
+
+    html.dark .admin-card :is(.text-gray-400, .text-gray-500, .text-slate-400, .text-slate-500),
+    html.dark .admin-panel :is(.text-gray-400, .text-gray-500, .text-slate-400, .text-slate-500),
+    html.dark .box-shadow :is(.text-gray-400, .text-gray-500, .text-slate-400, .text-slate-500),
+    html.dark .dashboard-kpi-card :is(.text-gray-400, .text-gray-500, .text-slate-400, .text-slate-500),
+    html.dark .table-responsive :is(.text-gray-400, .text-gray-500, .text-slate-400, .text-slate-500),
+    html.dark .admin-main-surface :is(.text-gray-400, .text-gray-500, .text-slate-400, .text-slate-500) {
+        color: var(--admin-dark-text-muted) !important;
+    }
+
+    html.dark .admin-main-surface :is(.divide-slate-200, .divide-gray-200) > :not([hidden]) ~ :not([hidden]) {
+        border-color: var(--admin-dark-divider) !important;
+    }
+
+    html.dark .admin-main-surface :is(thead, .row:first-child) {
+        background-color: var(--admin-dark-surface-soft) !important;
+        color: var(--admin-dark-text-secondary) !important;
+    }
+
+    html.dark .table-responsive .row[class*="bg-gray-50"],
+    html.dark .table-responsive .row[class*="bg-slate-50"],
+    html.dark .table-responsive .row:hover,
+    html.dark .admin-main-surface [class*="dark:hover:bg-gray-800"]:hover:not(a):not(button) {
+        background-color: var(--admin-dark-surface-soft) !important;
+    }
+
+    html.dark .admin-main-surface :is(
+        .affiliate-profile-hero-card,
+        .affiliate-profile-kpi-card,
+        .affiliate-profile-filter-bar,
+        .affiliate-profile-card,
+        .affiliate-profile-table-card,
+        .affiliate-report-kpi-card,
+        .affiliate-report-card
+    ) {
+        background-color: var(--admin-dark-surface) !important;
+        border-color: var(--admin-dark-border) !important;
+        color: var(--admin-dark-text-secondary) !important;
+        box-shadow: var(--admin-dark-shadow) !important;
+    }
+
+    html.dark .admin-main-surface :is(
+        .affiliate-profile-identity-row,
+        .affiliate-profile-info-item,
+        .affiliate-profile-referral-block,
+        .affiliate-profile-trend-chart,
+        .affiliate-profile-traffic-chart
+    ) {
+        background-color: var(--admin-dark-surface-soft) !important;
+        border-color: var(--admin-dark-border) !important;
+        color: var(--admin-dark-text-secondary) !important;
+    }
+
+    html.dark .admin-main-surface :is(
+        .affiliate-profile-code-block,
+        .affiliate-report-chart-legend,
+        .affiliate-profile-chart-legend
+    ) {
+        border-color: color-mix(in srgb, var(--admin-accent-blue) 30%, var(--admin-dark-border)) !important;
+        color: var(--admin-dark-text-muted) !important;
     }
 
     .admin-modal-backdrop {
@@ -137,6 +385,19 @@
     .admin-modal-panel {
         @apply relative z-[999] flex w-full max-w-[568px] flex-col overflow-hidden rounded-2xl border border-white/70 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.65),0_12px_32px_-18px_rgba(15,23,42,0.35)] ring-1 ring-slate-950/10 dark:border-gray-700 dark:bg-gray-800 dark:ring-white/10;
         max-height: calc(100vh - 2rem);
+    }
+
+    html.dark .admin-modal-panel,
+    html.dark .admin-modal-header {
+        background-color: var(--admin-dark-surface) !important;
+    }
+
+    html.dark .admin-modal-body,
+    html.dark .admin-modal-footer,
+    html.dark .admin-modal-close {
+        background-color: var(--admin-dark-surface-soft) !important;
+        border-color: var(--admin-dark-border) !important;
+        color: var(--admin-dark-text-secondary) !important;
     }
 
     .admin-modal-panel--confirm {
@@ -311,33 +572,33 @@
     }
 
     .dark .ast-sidebar-submenu-rail::before {
-        background: #374151;
+        background: var(--admin-dark-divider);
     }
 
     .dark .ast-sidebar-submenu-rail-link {
-        color: #cbd5e1;
+        color: var(--admin-dark-text-secondary);
     }
 
     .dark .ast-sidebar-submenu-rail-link::before {
-        border-color: #6b7280;
-        background: #111827;
+        border-color: var(--admin-dark-border);
+        background: var(--admin-dark-surface);
         box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.9);
     }
 
     .dark .ast-sidebar-submenu-rail-link:hover {
-        background: #1f2937;
-        color: #93c5fd;
+        background: var(--admin-dark-surface-soft);
+        color: #8ddcff;
     }
 
     .dark .ast-sidebar-submenu-rail-link.is-active {
-        background: rgba(30, 64, 175, 0.24);
-        color: #93c5fd;
+        background: var(--admin-accent-blue-soft);
+        color: #8ddcff;
     }
 
     .dark .ast-sidebar-submenu-rail-link:hover::before,
     .dark .ast-sidebar-submenu-rail-link.is-active::before {
-        border-color: #60a5fa;
-        background: #60a5fa;
+        border-color: var(--admin-accent-blue);
+        background: var(--admin-accent-blue);
     }
 
     .ast-sidebar-flyout {
@@ -470,38 +731,38 @@
     }
 
     .dark .ast-sidebar-flyout {
-        border-color: #374151;
-        background: #111827;
+        border-color: var(--admin-dark-border);
+        background: var(--admin-dark-surface);
         box-shadow:
             18px 18px 45px rgba(0, 0, 0, 0.36),
             8px 4px 14px rgba(0, 0, 0, 0.22);
     }
 
     html[dir="rtl"] .dark .ast-sidebar-flyout {
-        border-left-color: #374151;
+        border-left-color: var(--admin-dark-border);
     }
 
     .dark .ast-sidebar-flyout-heading {
-        border-color: #1f2937;
-        color: #f8fafc;
+        border-color: var(--admin-dark-divider);
+        color: var(--admin-dark-text-primary);
     }
 
     .dark .ast-sidebar-flyout-heading-icon {
-        color: #93c5fd !important;
+        color: #8ddcff !important;
     }
 
     .dark .ast-sidebar-flyout-link {
-        color: #cbd5e1;
+        color: var(--admin-dark-text-secondary);
     }
 
     .dark .ast-sidebar-flyout-link:hover {
-        background: #1f2937;
-        color: #93c5fd;
+        background: var(--admin-dark-surface-soft);
+        color: #8ddcff;
     }
 
     .dark .ast-sidebar-flyout-link.is-active {
-        background: rgba(30, 64, 175, 0.26);
-        color: #93c5fd;
+        background: var(--admin-accent-blue-soft);
+        color: #8ddcff;
     }
 
     .detail-three-column-grid {
@@ -849,13 +1110,21 @@
     html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
     html.dark textarea,
     html.dark select {
-        @apply border-gray-600 bg-gray-700 text-gray-100 placeholder-gray-400;
+        background-color: var(--admin-dark-surface-soft) !important;
+        border-color: var(--admin-dark-border) !important;
+        color: var(--admin-dark-text-primary) !important;
+    }
+
+    html.dark input::placeholder,
+    html.dark textarea::placeholder {
+        color: var(--admin-dark-text-muted) !important;
     }
 
     html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):focus,
     html.dark textarea:focus,
     html.dark select:focus {
-        @apply border-blue-700 ring-2 ring-blue-950;
+        border-color: color-mix(in srgb, var(--admin-accent-blue) 64%, var(--admin-dark-border)) !important;
+        box-shadow: 0 0 0 3px var(--admin-accent-blue-soft) !important;
     }
 
     .primary-button {
@@ -963,27 +1232,32 @@
 
     html.dark .label-pending,
     html.dark .label-pending_payment {
-        @apply bg-amber-950/40 text-amber-300;
+        background-color: var(--admin-accent-yellow-soft) !important;
+        color: #ffd766 !important;
     }
 
     html.dark .label-processing,
     html.dark .label-shipped,
     html.dark .label-closed {
-        @apply bg-blue-950/40 text-blue-300;
+        background-color: var(--admin-accent-blue-soft) !important;
+        color: #8ddcff !important;
     }
 
     html.dark .label-completed,
     html.dark .label-active {
-        @apply bg-emerald-950/40 text-emerald-300;
+        background-color: var(--admin-accent-green-soft) !important;
+        color: #b7e56a !important;
     }
 
     html.dark .label-canceled,
     html.dark .label-fraud {
-        @apply bg-red-950/40 text-red-300;
+        background-color: var(--admin-accent-orange-red-soft) !important;
+        color: #ffab92 !important;
     }
 
     html.dark .label-info {
-        @apply bg-gray-800 text-gray-300;
+        background-color: var(--admin-accent-grey-soft) !important;
+        color: #d4d4d4 !important;
     }
 
     html.dark .status-enable {
