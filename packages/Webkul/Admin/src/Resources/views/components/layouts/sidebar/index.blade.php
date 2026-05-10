@@ -1,15 +1,15 @@
 @php
     $menuItems = menu()->getItems('admin');
 
-    $menuButtonBase = 'ast-sidebar-menu-button peer flex h-11 w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-[15px] leading-6 tracking-normal transition-all duration-200 ease-out hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-gray-800 dark:hover:text-blue-300 group-[.sidebar-collapsed]/container:mx-auto group-[.sidebar-collapsed]/container:w-12 group-[.sidebar-collapsed]/container:justify-center group-[.sidebar-collapsed]/container:px-0';
+    $menuButtonBase = 'ast-sidebar-menu-button peer flex h-11 w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-[16px] leading-6 tracking-normal transition-all duration-200 ease-out hover:bg-slate-100 hover:text-blue-600 dark:hover:bg-gray-800 dark:hover:text-blue-300 group-[.sidebar-collapsed]/container:mx-auto group-[.sidebar-collapsed]/container:w-12 group-[.sidebar-collapsed]/container:justify-center group-[.sidebar-collapsed]/container:px-0';
     $menuButtonActive = 'bg-blue-50 font-semibold text-blue-600 shadow-[inset_3px_0_0_#2563eb] dark:bg-blue-950/40 dark:text-blue-300 dark:shadow-[inset_3px_0_0_#1d4ed8]';
     $menuButtonInactive = 'font-medium text-slate-700 dark:text-slate-300';
     $menuIconBase = 'ast-sidebar-menu-icon shrink-0 text-[20px] leading-none transition-colors duration-200';
-    $menuLabelBase = 'min-w-0 flex-1 truncate whitespace-nowrap text-[15px] leading-6 tracking-normal transition-colors duration-200 group-[.sidebar-collapsed]/container:hidden';
+    $menuLabelBase = 'min-w-0 flex-1 truncate whitespace-nowrap text-[16px] leading-6 tracking-normal transition-colors duration-200 group-[.sidebar-collapsed]/container:hidden';
 @endphp
 
 <aside
-    class="ast-admin-sidebar fixed bottom-0 top-[62px] z-[1000] flex w-[270px] flex-col overflow-visible border-r border-slate-200/70 bg-white font-inter antialiased shadow-none transition-all duration-300 ease-in-out group-[.sidebar-collapsed]/container:w-[74px] dark:border-gray-800 dark:bg-gray-900 max-lg:hidden"
+    class="ast-admin-sidebar fixed bottom-0 top-[62px] z-[1000] flex w-[270px] flex-col overflow-visible border border-slate-200/70 bg-white font-inter antialiased shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-all duration-300 ease-in-out group-[.sidebar-collapsed]/container:w-[74px] dark:top-[74px] dark:bottom-3 dark:ltr:left-3 dark:ltr:right-auto dark:rtl:right-3 dark:rtl:left-auto dark:rounded-[28px] dark:border dark:border-slate-800 dark:bg-slate-900/95 dark:shadow-[0_8px_24px_rgba(0,0,0,0.28)] dark:ring-1 dark:ring-white/5 dark:backdrop-blur-sm max-lg:hidden"
     data-admin-sidebar
 >
     <div class="ast-admin-sidebar-menu journal-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 group-[.sidebar-collapsed]/container:px-2">
