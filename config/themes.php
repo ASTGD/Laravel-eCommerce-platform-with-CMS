@@ -28,7 +28,19 @@ return [
         'gadget' => [
             'name' => 'Gadget',
             'assets_path' => 'public/themes/shop/gadget',
-            'views_path' => 'resources/themes/gadget/views',
+            'views_path' => 'resources/themes/clothing/views',
+
+            'vite' => [
+                'hot_file' => 'shop-default-vite.hot',
+                'build_directory' => 'themes/shop/default/build',
+                'package_assets_directory' => 'src/Resources/assets',
+            ],
+        ],
+
+        'clothing' => [
+            'name' => 'Clothing',
+            'assets_path' => 'public/themes/shop/gadget',
+            'views_path' => 'resources/themes/clothing/views',
 
             'vite' => [
                 'hot_file' => 'shop-default-vite.hot',
