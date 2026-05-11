@@ -70,8 +70,8 @@
 
     $quickActions = [
         [
-            'title' => 'Manage CMS',
-            'description' => 'Create and update storefront pages.',
+            'title' => 'CMS Studio',
+            'description' => 'Manage safe website content and layout areas.',
             'url' => $urls['cms'],
         ],
         [
@@ -85,9 +85,14 @@
             'url' => $urls['settings'],
         ],
         [
-            'title' => 'Header & Footer',
-            'description' => 'Manage storefront layout sections.',
-            'url' => $urls['header_footer'],
+            'title' => 'Header Builder',
+            'description' => 'Edit storefront logo, menu, and header controls.',
+            'url' => $urls['header'],
+        ],
+        [
+            'title' => 'Footer Builder',
+            'description' => 'Edit newsletter, contact, social, and copyright content.',
+            'url' => $urls['footer'],
         ],
     ];
 @endphp

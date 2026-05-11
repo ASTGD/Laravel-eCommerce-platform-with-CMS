@@ -4,6 +4,7 @@ namespace Platform\ThemeDefault\ViewModels;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Platform\ExperienceCms\Models\Page;
 use Throwable;
 use Webkul\Category\Models\Category;
 use Webkul\Product\Models\ProductFlat;
@@ -20,7 +21,40 @@ class StorefrontHomepageViewModel
                 : $this->products('featured', 4),
             'latestProducts' => $this->products('latest', 4),
             'categories' => $this->categories(4),
+            'heroSliderImages' => $this->heroSliderImages(),
         ];
+    }
+
+    protected function heroSliderImages(): array
+    {
+        try {
+            $page = Page::query()
+                ->where('slug', 'home')
+                ->where('status', Page::STATUS_PUBLISHED)
+                ->first();
+
+            if (! $page) {
+                return [];
+            }
+
+            $section = $page->sections()
+                ->where('is_active', true)
+                ->whereHas('sectionType', fn ($query) => $query->where('code', 'hero_slider'))
+                ->orderBy('sort_order')
+                ->first();
+
+            return collect($section?->settings_json['slides'] ?? [])
+                ->filter(fn ($slide): bool => ! empty($slide['image']))
+                ->map(fn ($slide): array => [
+                    'image' => $slide['image'],
+                    'link' => $slide['link'] ?? null,
+                    'title' => $slide['title'] ?? 'Hero slide',
+                ])
+                ->values()
+                ->all();
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     protected function products(string $mode, int $limit): Collection

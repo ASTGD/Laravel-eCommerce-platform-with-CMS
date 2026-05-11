@@ -17,9 +17,9 @@
     $toggleClass = 'h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-950';
     $secondaryButtonClass = 'inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300';
     $primaryButtonClass = 'inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700';
-    $navChipBaseClass = 'inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition';
+    $navChipBaseClass = 'flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition';
     $navChipActiveClass = 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300';
-    $navChipInactiveClass = 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300';
+    $navChipInactiveClass = 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-blue-300';
     $values = $editor['values'] ?? [];
 @endphp
 
@@ -30,6 +30,12 @@
         <style>
             .cms-studio-area-nav {
                 scrollbar-width: thin;
+            }
+
+            .cms-studio-shell {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                gap: 1.5rem;
             }
 
             .cms-studio-preview-viewport {
@@ -149,32 +155,47 @@
                         form="cms-studio-form"
                         class="{{ $primaryButtonClass }}"
                     >
-                        Save Draft
+                        {{ $editor['save_label'] ?? 'Save Draft' }}
                     </button>
                 @endif
             </div>
         </section>
 
-        <section class="{{ $navClass }}">
-            <div class="cms-studio-area-nav flex gap-4 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+        <section class="cms-studio-shell">
+            <aside class="{{ $navClass }}">
+                <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="font-sans text-base font-semibold text-slate-950 dark:text-white">
+                        My Website / CMS Studio
+                    </h2>
+
+                    <p class="text-xs font-medium text-slate-400 dark:text-gray-500">
+                        Safe website areas only
+                    </p>
+                </div>
+
+                <div class="cms-studio-area-nav overflow-x-auto pb-1">
                 @foreach ($navigationGroups as $group)
-                    <div class="min-w-max sm:min-w-0">
-                        <div class="flex flex-nowrap gap-2">
+                    <div>
+                        <div class="flex min-w-max flex-nowrap gap-2 sm:min-w-0 sm:flex-wrap">
                             @foreach ($group['items'] as $item)
                                 <a
                                     href="{{ $item['url'] }}"
                                     class="{{ $navChipBaseClass }} {{ $item['active'] ? $navChipActiveClass : $navChipInactiveClass }}"
                                 >
-                                    {{ $item['label'] }}
+                                    <span>{{ $item['label'] }}</span>
+
+                                    @if ($item['active'])
+                                        <span class="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-300"></span>
+                                    @endif
                                 </a>
                             @endforeach
                         </div>
                     </div>
                 @endforeach
-            </div>
-        </section>
+                </div>
+            </aside>
 
-        <section class="{{ $panelClass }}">
+            <section class="{{ $panelClass }} min-w-0">
             <div class="mb-6">
                 <h2 class="{{ $panelTitleClass }}">
                     {{ $editor['title'] }}
@@ -403,6 +424,716 @@
                         </noscript>
                     </div>
                 </form>
+            @elseif ($editor['type'] === 'navigation')
+                @php
+                    $navigationValues = [
+                        'id' => old('menu_id', $values['id'] ?? null),
+                        'name' => old('name', $values['name'] ?? ''),
+                        'location' => old('location', $values['location'] ?? 'header'),
+                        'is_active' => old('is_active', $values['is_active'] ?? true),
+                    ];
+                    $navigationItems = old('items', $values['items'] ?? []);
+
+                    if (empty($navigationItems)) {
+                        $navigationItems = [[
+                            'title' => '',
+                            'type' => 'url',
+                            'target' => '',
+                            'sort_order' => 1,
+                            'is_active' => true,
+                            'open_in_new_tab' => false,
+                        ]];
+                    }
+                @endphp
+
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+                    <aside class="{{ $headerSectionClass }} h-fit">
+                        <div class="flex items-center justify-between gap-3">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Menus
+                            </h3>
+
+                            <a
+                                href="{{ $editor['create_url'] }}"
+                                class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950"
+                            >
+                                New
+                            </a>
+                        </div>
+
+                        @if (! empty($editor['menus']))
+                            <div class="mt-4 space-y-2">
+                                @foreach ($editor['menus'] as $menu)
+                                    <a
+                                        href="{{ $menu['edit_url'] }}"
+                                        class="block rounded-xl border px-4 py-3 transition {{ (string) $navigationValues['id'] === (string) $menu['id'] ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300' : 'border-slate-200/70 text-slate-700 hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/30' }}"
+                                    >
+                                        <span class="block text-sm font-semibold">{{ $menu['name'] }}</span>
+                                        <span class="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-gray-400">
+                                            <span>{{ $menu['location_label'] }}</span>
+                                            <span>{{ $menu['items_count'] }} items</span>
+                                        </span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500 dark:bg-gray-950 dark:text-gray-400">
+                                No menus have been created yet.
+                            </p>
+                        @endif
+                    </aside>
+
+                    <form
+                        id="cms-studio-form"
+                        method="POST"
+                        action="{{ $editor['form_action'] }}"
+                        class="min-w-0 space-y-6"
+                    >
+                        @csrf
+
+                        <input type="hidden" name="menu_id" value="{{ $navigationValues['id'] }}">
+
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Menu Settings
+                            </h3>
+
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Create or edit a flat storefront menu used by header, footer, mobile, or utility navigation.
+                            </p>
+
+                            <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Menu name</span>
+                                    <input name="name" value="{{ $navigationValues['name'] }}" class="{{ $headerInputClass }}">
+                                    @error('name')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Usage context</span>
+                                    <select name="location" class="{{ $headerInputClass }}">
+                                        @foreach ($editor['locations'] as $location => $label)
+                                            <option value="{{ $location }}" @selected($navigationValues['location'] === $location)>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('location')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+                            </div>
+
+                            <input type="hidden" name="is_active" value="0">
+
+                            <label class="mt-5 {{ $headerToggleRowClass }}">
+                                <span>
+                                    <span class="block text-sm font-medium text-slate-700 dark:text-gray-300">Active menu</span>
+                                    <span class="{{ $headerHelperClass }}">Only active menus are available for storefront selection.</span>
+                                </span>
+
+                                <input
+                                    type="checkbox"
+                                    name="is_active"
+                                    value="1"
+                                    class="{{ $toggleClass }} shrink-0"
+                                    @checked((bool) $navigationValues['is_active'])
+                                >
+                            </label>
+                        </div>
+
+                        <div class="{{ $headerSectionClass }}" data-navigation-builder>
+                            <div class="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="{{ $headerSectionTitleClass }}">
+                                        Menu Items
+                                    </h3>
+
+                                    <p class="{{ $headerSectionDescriptionClass }}">
+                                        Add flat menu links, set their order, and disable links without deleting them.
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="{{ $secondaryButtonClass }}"
+                                    data-add-menu-item
+                                >
+                                    Add item
+                                </button>
+                            </div>
+
+                            @error('items')
+                                <span class="mt-3 block text-sm text-red-600">{{ $message }}</span>
+                            @enderror
+
+                            <div class="mt-5 space-y-4" data-menu-items>
+                                @foreach ($navigationItems as $index => $item)
+                                    <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-menu-item-row>
+                                        <div class="mb-4 flex items-center justify-between gap-3">
+                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                Item {{ $loop->iteration }}
+                                            </p>
+
+                                            <div class="flex flex-wrap items-center gap-4">
+                                                <input type="hidden" name="items[{{ $index }}][is_active]" value="0">
+                                                <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="items[{{ $index }}][is_active]"
+                                                        value="1"
+                                                        class="{{ $toggleClass }}"
+                                                        @checked((bool) ($item['is_active'] ?? false))
+                                                    >
+                                                    Active
+                                                </label>
+
+                                                <input type="hidden" name="items[{{ $index }}][open_in_new_tab]" value="0">
+                                                <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="items[{{ $index }}][open_in_new_tab]"
+                                                        value="1"
+                                                        class="{{ $toggleClass }}"
+                                                        @checked((bool) ($item['open_in_new_tab'] ?? false))
+                                                    >
+                                                    New tab
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_160px_minmax(0,1.3fr)_100px]">
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Label</span>
+                                                <input name="items[{{ $index }}][title]" value="{{ $item['title'] ?? '' }}" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Type</span>
+                                                <select name="items[{{ $index }}][type]" class="{{ $headerInputClass }}">
+                                                    @foreach ($editor['item_types'] as $type => $label)
+                                                        <option value="{{ $type }}" @selected(($item['type'] ?? 'url') === $type)>
+                                                            {{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">URL or path</span>
+                                                <input name="items[{{ $index }}][target]" value="{{ $item['target'] ?? '' }}" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Order</span>
+                                                <input type="number" min="0" name="items[{{ $index }}][sort_order]" value="{{ $item['sort_order'] ?? $loop->iteration }}" class="{{ $headerInputClass }}">
+                                            </label>
+                                        </div>
+
+                                        @error("items.$index.title")
+                                            <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
+                                        @enderror
+
+                                        @error("items.$index.target")
+                                            <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <template data-menu-item-template>
+                                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-menu-item-row>
+                                    <div class="mb-4 flex items-center justify-between gap-3">
+                                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                            Item __NUMBER__
+                                        </p>
+
+                                        <div class="flex flex-wrap items-center gap-4">
+                                            <input type="hidden" name="items[__INDEX__][is_active]" value="0">
+                                            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                <input type="checkbox" name="items[__INDEX__][is_active]" value="1" class="{{ $toggleClass }}" checked>
+                                                Active
+                                            </label>
+
+                                            <input type="hidden" name="items[__INDEX__][open_in_new_tab]" value="0">
+                                            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                <input type="checkbox" name="items[__INDEX__][open_in_new_tab]" value="1" class="{{ $toggleClass }}">
+                                                New tab
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_160px_minmax(0,1.3fr)_100px]">
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">Label</span>
+                                            <input name="items[__INDEX__][title]" class="{{ $headerInputClass }}">
+                                        </label>
+
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">Type</span>
+                                            <select name="items[__INDEX__][type]" class="{{ $headerInputClass }}">
+                                                @foreach ($editor['item_types'] as $type => $label)
+                                                    <option value="{{ $type }}">{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">URL or path</span>
+                                            <input name="items[__INDEX__][target]" class="{{ $headerInputClass }}">
+                                        </label>
+
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">Order</span>
+                                            <input type="number" min="0" name="items[__INDEX__][sort_order]" value="__NUMBER__" class="{{ $headerInputClass }}">
+                                        </label>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </form>
+                </div>
+            @elseif ($editor['type'] === 'homepage')
+                @php
+                    $homepagePage = $values['page'] ?? [];
+                    $homepageSectionTypes = collect($editor['section_types'] ?? []);
+                    $homepageSectionTypeLabels = $homepageSectionTypes->pluck('name', 'code')->all();
+                    $homepageSections = old('sections', $values['sections'] ?? []);
+
+                    $emptyHomepageSettings = [
+                        'eyebrow' => '',
+                        'headline' => '',
+                        'body' => '',
+                        'primary_cta_label' => '',
+                        'primary_cta_url' => '',
+                        'secondary_cta_label' => '',
+                        'secondary_cta_url' => '',
+                        'content' => '',
+                        'slides' => [],
+                    ];
+                @endphp
+
+                <form
+                    id="cms-studio-form"
+                    method="POST"
+                    enctype="multipart/form-data"
+                    action="{{ $editor['form_action'] }}"
+                    class="space-y-6"
+                    data-homepage-builder
+                >
+                    @csrf
+
+                    <div class="{{ $headerSectionClass }}">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="{{ $headerSectionTitleClass }}">
+                                    Homepage Status
+                                </h3>
+
+                                <p class="{{ $headerSectionDescriptionClass }}">
+                                    Manage predefined homepage content sections. Product, category, cart, checkout, and account pages stay outside CMS Studio.
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="rounded-full px-3 py-1 text-xs font-semibold {{ ($homepagePage['status'] ?? 'draft') === 'published' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300' }}">
+                                    {{ ucfirst((string) ($homepagePage['status'] ?? 'draft')) }}
+                                </span>
+
+                                @if (! empty($homepagePage['preview_url']))
+                                    <a
+                                        href="{{ $homepagePage['preview_url'] }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="{{ $secondaryButtonClass }}"
+                                    >
+                                        Signed Preview
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950">
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Page</p>
+                                <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ $homepagePage['title'] ?? 'Homepage' }}</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">/{{ $homepagePage['slug'] ?? 'home' }}</p>
+                            </div>
+
+                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950">
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Updated</p>
+                                <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ $homepagePage['updated_at'] ?? 'Not saved yet' }}</p>
+                            </div>
+
+                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950">
+                                <p class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Published</p>
+                                <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ $homepagePage['published_at'] ?? 'Not published yet' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="{{ $headerSectionClass }}">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="{{ $headerSectionTitleClass }}">
+                                    Homepage Sections
+                                </h3>
+
+                                <p class="{{ $headerSectionDescriptionClass }}">
+                                    Add, reorder, enable, or disable the safe section types supported in this Studio slice.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="{{ $secondaryButtonClass }}"
+                                data-add-homepage-section
+                            >
+                                Add section
+                            </button>
+                        </div>
+
+                        @error('sections')
+                            <span class="mt-3 block text-sm text-red-600">{{ $message }}</span>
+                        @enderror
+
+                        <div class="mt-5 space-y-4" data-homepage-sections>
+                            @forelse ($homepageSections as $index => $section)
+                                @php
+                                    $sectionCode = $section['section_code'] ?? '';
+                                    $sectionSettings = array_replace($emptyHomepageSettings, $section['settings'] ?? []);
+                                    $sectionIsExisting = filled($section['id'] ?? null);
+                                    $sectionIsEditable = (bool) ($section['is_editable'] ?? array_key_exists($sectionCode, $homepageSectionTypeLabels));
+                                    $sectionLabel = $section['section_label'] ?? ($homepageSectionTypeLabels[$sectionCode] ?? \Illuminate\Support\Str::headline($sectionCode ?: 'Section'));
+                                    $showHeroFields = $sectionCode === 'hero_banner';
+                                    $showHeroSliderFields = $sectionCode === 'hero_slider';
+                                    $showContentFields = in_array($sectionCode, ['promo_strip', 'rich_text'], true);
+                                @endphp
+
+                                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row>
+                                    <input type="hidden" name="sections[{{ $index }}][id]" value="{{ $section['id'] ?? '' }}">
+
+                                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                {{ $sectionLabel }}
+                                            </p>
+
+                                            <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
+                                                {{ $section['area_label'] ?? 'Homepage' }} section
+                                            </p>
+                                        </div>
+
+                                        <div class="flex flex-wrap items-center gap-4">
+                                            <input type="hidden" name="sections[{{ $index }}][is_active]" value="0">
+                                            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                <input
+                                                    type="checkbox"
+                                                    name="sections[{{ $index }}][is_active]"
+                                                    value="1"
+                                                    class="{{ $toggleClass }}"
+                                                    @checked((bool) ($section['is_active'] ?? false))
+                                                >
+                                                Enabled
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_160px_120px]">
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">Section title</span>
+                                            <input name="sections[{{ $index }}][title]" value="{{ $section['title'] ?? '' }}" class="{{ $headerInputClass }}">
+                                        </label>
+
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">Type</span>
+
+                                            @if ($sectionIsExisting)
+                                                <input type="hidden" name="sections[{{ $index }}][section_code]" value="{{ $sectionCode }}">
+                                                <input value="{{ $sectionLabel }}" class="{{ $headerInputClass }}" disabled>
+                                            @else
+                                                <select name="sections[{{ $index }}][section_code]" class="{{ $headerInputClass }}" data-homepage-section-code>
+                                                    <option value="">Choose section</option>
+                                                    @foreach ($homepageSectionTypes as $sectionType)
+                                                        <option value="{{ $sectionType['code'] }}" @selected($sectionCode === $sectionType['code'])>
+                                                            {{ $sectionType['name'] }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            @endif
+                                        </label>
+
+                                        <label class="block">
+                                            <span class="{{ $headerLabelClass }}">Order</span>
+                                            <input type="number" min="0" name="sections[{{ $index }}][sort_order]" value="{{ $section['sort_order'] ?? $loop->iteration }}" class="{{ $headerInputClass }}">
+                                        </label>
+                                    </div>
+
+                                    @error("sections.$index.section_code")
+                                        <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+
+                                    @if (! $sectionIsEditable)
+                                        <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+                                            This theme-managed section is preserved safely. Structured editing for this section type will be added in a later Studio slice.
+                                        </div>
+                                    @else
+                                        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 {{ $showHeroFields ? '' : 'hidden' }}" data-homepage-fields="hero_banner">
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Eyebrow</span>
+                                                <input name="sections[{{ $index }}][settings][eyebrow]" value="{{ $sectionSettings['eyebrow'] }}" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Headline</span>
+                                                <input name="sections[{{ $index }}][settings][headline]" value="{{ $sectionSettings['headline'] }}" class="{{ $headerInputClass }}">
+                                                @error("sections.$index.settings.headline")
+                                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                                @enderror
+                                            </label>
+
+                                            <label class="block md:col-span-2">
+                                                <span class="{{ $headerLabelClass }}">Body</span>
+                                                <textarea name="sections[{{ $index }}][settings][body]" rows="3" class="{{ $headerInputClass }}">{{ $sectionSettings['body'] }}</textarea>
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Primary CTA label</span>
+                                                <input name="sections[{{ $index }}][settings][primary_cta_label]" value="{{ $sectionSettings['primary_cta_label'] }}" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Primary CTA URL</span>
+                                                <input name="sections[{{ $index }}][settings][primary_cta_url]" value="{{ $sectionSettings['primary_cta_url'] }}" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Secondary CTA label</span>
+                                                <input name="sections[{{ $index }}][settings][secondary_cta_label]" value="{{ $sectionSettings['secondary_cta_label'] }}" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Secondary CTA URL</span>
+                                                <input name="sections[{{ $index }}][settings][secondary_cta_url]" value="{{ $sectionSettings['secondary_cta_url'] }}" class="{{ $headerInputClass }}">
+                                            </label>
+                                        </div>
+
+                                        <div class="mt-5 {{ $showHeroSliderFields ? '' : 'hidden' }}" data-homepage-fields="hero_slider">
+                                            <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+                                                Upload up to five hero images. The storefront uses the existing auto-sliding hero carousel behavior.
+                                            </div>
+
+                                            <div class="grid grid-cols-1 gap-4">
+                                                @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
+                                                    @php
+                                                        $slide = $sectionSettings['slides'][$slideIndex] ?? [];
+                                                    @endphp
+
+                                                    <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                                Slide {{ $slideIndex + 1 }}
+                                                            </p>
+
+                                                            @if (! empty($slide['image']))
+                                                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                                                    Image saved
+                                                                </span>
+                                                            @endif
+                                                        </div>
+
+                                                        @if (! empty($slide['image']))
+                                                            <img
+                                                                src="{{ asset($slide['image']) }}"
+                                                                alt=""
+                                                                class="mb-4 h-24 w-full rounded-xl border border-slate-200 object-cover dark:border-gray-700"
+                                                            >
+                                                        @endif
+
+                                                        <input type="hidden" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][current_image]" value="{{ $slide['image'] ?? '' }}">
+
+                                                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                                            <label class="block">
+                                                                <span class="{{ $headerLabelClass }}">Image</span>
+                                                                <input type="file" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][image_file]" accept="image/png,image/jpeg,image/jpg,image/webp" class="{{ $headerInputClass }}">
+                                                                @error("sections.$index.settings.slides.$slideIndex.image_file")
+                                                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                                                @enderror
+                                                            </label>
+
+                                                            <label class="block">
+                                                                <span class="{{ $headerLabelClass }}">Alt / title</span>
+                                                                <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][title]" value="{{ $slide['title'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                            </label>
+
+                                                            <label class="block">
+                                                                <span class="{{ $headerLabelClass }}">Click URL</span>
+                                                                <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][link]" value="{{ $slide['link'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                @endfor
+                                            </div>
+
+                                            @error("sections.$index.settings.slides")
+                                                <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+
+                                        <div class="mt-5 {{ $showContentFields ? '' : 'hidden' }}" data-homepage-fields="content">
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Content</span>
+                                                <textarea name="sections[{{ $index }}][settings][content]" rows="4" class="{{ $headerInputClass }}">{{ $sectionSettings['content'] }}</textarea>
+                                                @error("sections.$index.settings.content")
+                                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                                @enderror
+                                            </label>
+                                        </div>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-gray-700 dark:bg-gray-950">
+                                    <p class="text-sm font-medium text-slate-700 dark:text-gray-200">
+                                        No homepage sections yet.
+                                    </p>
+
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                                        Add a predefined section to start building the homepage.
+                                    </p>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <template data-homepage-section-template>
+                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row>
+                                <input type="hidden" name="sections[__INDEX__][id]" value="">
+
+                                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                            New Section
+                                        </p>
+
+                                        <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
+                                            Choose an approved homepage section type.
+                                        </p>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-4">
+                                        <input type="hidden" name="sections[__INDEX__][is_active]" value="0">
+                                        <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                            <input type="checkbox" name="sections[__INDEX__][is_active]" value="1" class="{{ $toggleClass }}" checked>
+                                            Enabled
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_160px_120px]">
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Section title</span>
+                                        <input name="sections[__INDEX__][title]" class="{{ $headerInputClass }}">
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Type</span>
+                                        <select name="sections[__INDEX__][section_code]" class="{{ $headerInputClass }}" data-homepage-section-code>
+                                            <option value="">Choose section</option>
+                                            @foreach ($homepageSectionTypes as $sectionType)
+                                                <option value="{{ $sectionType['code'] }}">{{ $sectionType['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Order</span>
+                                        <input type="number" min="0" name="sections[__INDEX__][sort_order]" value="__NUMBER__" class="{{ $headerInputClass }}">
+                                    </label>
+                                </div>
+
+                                <div class="mt-5 hidden grid grid-cols-1 gap-4 md:grid-cols-2" data-homepage-fields="hero_banner">
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Eyebrow</span>
+                                        <input name="sections[__INDEX__][settings][eyebrow]" class="{{ $headerInputClass }}">
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Headline</span>
+                                        <input name="sections[__INDEX__][settings][headline]" class="{{ $headerInputClass }}">
+                                    </label>
+
+                                    <label class="block md:col-span-2">
+                                        <span class="{{ $headerLabelClass }}">Body</span>
+                                        <textarea name="sections[__INDEX__][settings][body]" rows="3" class="{{ $headerInputClass }}"></textarea>
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Primary CTA label</span>
+                                        <input name="sections[__INDEX__][settings][primary_cta_label]" class="{{ $headerInputClass }}">
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Primary CTA URL</span>
+                                        <input name="sections[__INDEX__][settings][primary_cta_url]" class="{{ $headerInputClass }}">
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Secondary CTA label</span>
+                                        <input name="sections[__INDEX__][settings][secondary_cta_label]" class="{{ $headerInputClass }}">
+                                    </label>
+
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Secondary CTA URL</span>
+                                        <input name="sections[__INDEX__][settings][secondary_cta_url]" class="{{ $headerInputClass }}">
+                                    </label>
+                                </div>
+
+                                <div class="mt-5 hidden" data-homepage-fields="hero_slider">
+                                    <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+                                        Upload up to five hero images. The storefront uses the existing auto-sliding hero carousel behavior.
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-4">
+                                        @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
+                                            <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                                <p class="mb-4 text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                    Slide {{ $slideIndex + 1 }}
+                                                </p>
+
+                                                <input type="hidden" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][current_image]" value="">
+
+                                                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Image</span>
+                                                        <input type="file" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][image_file]" accept="image/png,image/jpeg,image/jpg,image/webp" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Alt / title</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][title]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Click URL</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][link]" class="{{ $headerInputClass }}">
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                <div class="mt-5 hidden" data-homepage-fields="content">
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">Content</span>
+                                        <textarea name="sections[__INDEX__][settings][content]" rows="4" class="{{ $headerInputClass }}"></textarea>
+                                    </label>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </form>
             @elseif ($editor['type'] === 'footer')
                 <form
                     id="cms-studio-form"
@@ -412,64 +1143,87 @@
                 >
                     @csrf
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Footer name</span>
-                            <input name="name" value="{{ old('name', $values['name'] ?? '') }}" class="{{ $inputClass }}">
-                            @error('name')
-                                <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                            @enderror
-                        </label>
+                    <div class="{{ $headerSectionClass }}">
+                        <h3 class="{{ $headerSectionTitleClass }}">
+                            Identity
+                        </h3>
 
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Footer variant</span>
-                            <select name="variant" class="{{ $inputClass }}">
-                                @foreach ($editor['variants'] as $variant => $label)
-                                    <option value="{{ $variant }}" @selected(old('variant', $values['variant'] ?? 'simple') === $variant)>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('variant')
-                                <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                            @enderror
-                        </label>
+                        <p class="{{ $headerSectionDescriptionClass }}">
+                            Set the footer name, logo, and theme-supported layout.
+                        </p>
+
+                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <label class="block">
+                                <span class="{{ $headerLabelClass }}">Footer name</span>
+                                <input name="name" value="{{ old('name', $values['name'] ?? '') }}" class="{{ $headerInputClass }}">
+                                @error('name')
+                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                @enderror
+                            </label>
+
+                            <label class="block">
+                                <span class="{{ $headerLabelClass }}">Footer variant</span>
+                                <select name="variant" class="{{ $headerInputClass }}">
+                                    @foreach ($editor['variants'] as $variant => $label)
+                                        <option value="{{ $variant }}" @selected(old('variant', $values['variant'] ?? 'simple') === $variant)>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('variant')
+                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                @enderror
+                            </label>
+
+                            <label class="block md:col-span-2">
+                                <span class="{{ $headerLabelClass }}">Footer logo URL</span>
+                                <input name="logo_url" value="{{ old('logo_url', $values['logo_url'] ?? '') }}" class="{{ $headerInputClass }}">
+                                <span class="{{ $headerHelperClass }}">Use an image URL for now. Media picker will be added later.</span>
+                                @error('logo_url')
+                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                @enderror
+                            </label>
+                        </div>
                     </div>
 
-                    <label class="block">
-                        <span class="{{ $labelClass }}">Footer logo URL</span>
-                        <input name="logo_url" value="{{ old('logo_url', $values['logo_url'] ?? '') }}" class="{{ $inputClass }}">
-                        @error('logo_url')
-                            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                        @enderror
-                    </label>
+                    <div class="{{ $headerSectionClass }}">
+                        <h3 class="{{ $headerSectionTitleClass }}">
+                            Newsletter
+                        </h3>
 
-                    <div class="rounded-2xl border border-slate-200/70 p-5 dark:border-gray-700">
+                        <p class="{{ $headerSectionDescriptionClass }}">
+                            Control the email signup message shown in the footer.
+                        </p>
+
                         <input type="hidden" name="newsletter_enabled" value="0">
 
-                        <label class="inline-flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-gray-300">
+                        <label class="mt-5 {{ $headerToggleRowClass }}">
+                            <span>
+                                <span class="block text-sm font-medium text-slate-700 dark:text-gray-300">Newsletter enabled</span>
+                                <span class="{{ $headerHelperClass }}">Display the newsletter signup area in the footer.</span>
+                            </span>
+
                             <input
                                 type="checkbox"
                                 name="newsletter_enabled"
                                 value="1"
-                                class="{{ $toggleClass }}"
+                                class="{{ $toggleClass }} shrink-0"
                                 @checked(old('newsletter_enabled', $values['newsletter_enabled'] ?? false))
                             >
-                            Newsletter enabled
                         </label>
 
                         <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                             <label class="block">
-                                <span class="{{ $labelClass }}">Newsletter heading</span>
-                                <input name="newsletter_heading" value="{{ old('newsletter_heading', $values['newsletter_heading'] ?? '') }}" class="{{ $inputClass }}">
+                                <span class="{{ $headerLabelClass }}">Newsletter heading</span>
+                                <input name="newsletter_heading" value="{{ old('newsletter_heading', $values['newsletter_heading'] ?? '') }}" class="{{ $headerInputClass }}">
                                 @error('newsletter_heading')
                                     <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
                                 @enderror
                             </label>
 
                             <label class="block">
-                                <span class="{{ $labelClass }}">Newsletter text</span>
-                                <input name="newsletter_text" value="{{ old('newsletter_text', $values['newsletter_text'] ?? '') }}" class="{{ $inputClass }}">
+                                <span class="{{ $headerLabelClass }}">Newsletter text</span>
+                                <input name="newsletter_text" value="{{ old('newsletter_text', $values['newsletter_text'] ?? '') }}" class="{{ $headerInputClass }}">
                                 @error('newsletter_text')
                                     <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
                                 @enderror
@@ -477,73 +1231,218 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Contact email</span>
-                            <input name="contact_email" value="{{ old('contact_email', $values['contact_email'] ?? '') }}" class="{{ $inputClass }}">
-                            @error('contact_email')
-                                <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                            @enderror
-                        </label>
+                    <div class="{{ $headerSectionClass }}">
+                        <h3 class="{{ $headerSectionTitleClass }}">
+                            Contact
+                        </h3>
 
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Contact phone</span>
-                            <input name="contact_phone" value="{{ old('contact_phone', $values['contact_phone'] ?? '') }}" class="{{ $inputClass }}">
-                            @error('contact_phone')
+                        <p class="{{ $headerSectionDescriptionClass }}">
+                            Store contact details shown in the footer.
+                        </p>
+
+                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <label class="block">
+                                <span class="{{ $headerLabelClass }}">Contact email</span>
+                                <input name="contact_email" value="{{ old('contact_email', $values['contact_email'] ?? '') }}" class="{{ $headerInputClass }}">
+                                @error('contact_email')
+                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                @enderror
+                            </label>
+
+                            <label class="block">
+                                <span class="{{ $headerLabelClass }}">Contact phone</span>
+                                <input name="contact_phone" value="{{ old('contact_phone', $values['contact_phone'] ?? '') }}" class="{{ $headerInputClass }}">
+                                @error('contact_phone')
+                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                @enderror
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="{{ $headerSectionClass }}">
+                        <h3 class="{{ $headerSectionTitleClass }}">
+                            Social Links
+                        </h3>
+
+                        <p class="{{ $headerSectionDescriptionClass }}">
+                            Add social profile URLs used by footer-capable themes.
+                        </p>
+
+                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+                            @foreach ([
+                                'social_facebook' => 'Facebook URL',
+                                'social_instagram' => 'Instagram URL',
+                                'social_x' => 'X URL',
+                                'social_youtube' => 'YouTube URL',
+                                'social_tiktok' => 'TikTok URL',
+                            ] as $field => $label)
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">{{ $label }}</span>
+                                    <input name="{{ $field }}" value="{{ old($field, $values[$field] ?? '') }}" class="{{ $headerInputClass }}">
+                                    @error($field)
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="{{ $headerSectionClass }}">
+                        <h3 class="{{ $headerSectionTitleClass }}">
+                            Legal Text
+                        </h3>
+
+                        <label class="mt-5 block">
+                            <span class="{{ $headerLabelClass }}">Copyright text</span>
+                            <input name="copyright_text" value="{{ old('copyright_text', $values['copyright_text'] ?? '') }}" class="{{ $headerInputClass }}">
+                            @error('copyright_text')
                                 <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
                             @enderror
                         </label>
                     </div>
-
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Social Facebook URL</span>
-                            <input name="social_facebook" value="{{ old('social_facebook', $values['social_facebook'] ?? '') }}" class="{{ $inputClass }}">
-                        </label>
-
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Social Instagram URL</span>
-                            <input name="social_instagram" value="{{ old('social_instagram', $values['social_instagram'] ?? '') }}" class="{{ $inputClass }}">
-                        </label>
-
-                        <label class="block">
-                            <span class="{{ $labelClass }}">Social X URL</span>
-                            <input name="social_x" value="{{ old('social_x', $values['social_x'] ?? '') }}" class="{{ $inputClass }}">
-                        </label>
-                    </div>
-
-                    <label class="block">
-                        <span class="{{ $labelClass }}">Copyright text</span>
-                        <input name="copyright_text" value="{{ old('copyright_text', $values['copyright_text'] ?? '') }}" class="{{ $inputClass }}">
-                        @error('copyright_text')
-                            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                        @enderror
-                    </label>
                 </form>
             @else
-                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-6 dark:border-gray-700 dark:bg-gray-950">
-                    <h3 class="{{ $panelTitleClass }}">
-                        {{ $editor['title'] }}
-                    </h3>
+                @php
+                    $meta = $editor['meta'] ?? [];
+                    $summary = $meta['summary'] ?? [];
+                    $summaryCounts = collect([
+                        'total' => 'Total',
+                        'active' => 'Active',
+                        'published' => 'Published',
+                        'draft' => 'Draft',
+                        'items' => 'Items',
+                    ])->filter(fn ($label, $key) => array_key_exists($key, $summary))->all();
+                @endphp
 
-                    <p class="mt-2 {{ $bodyTextClass }}">
-                        {{ $editor['description'] }}
-                    </p>
+                <div class="space-y-6">
+                    <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-6 dark:border-gray-700 dark:bg-gray-950">
+                        <h3 class="{{ $panelTitleClass }}">
+                            {{ $editor['title'] }}
+                        </h3>
 
-                    @if ($editor['title'] === 'Homepage Sections')
-                        <p class="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
-                            Sections are predefined by the active theme. Admins can add, reorder, enable, disable, preview, and publish theme-supported sections later.
+                        <p class="mt-2 {{ $bodyTextClass }}">
+                            {{ $editor['description'] }}
                         </p>
-                    @elseif (! empty($editor['note']))
-                        <p class="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
-                            {{ $editor['note'] }}
-                        </p>
+
+                        @if (! empty($editor['note']))
+                            <p class="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+                                {{ $editor['note'] }}
+                            </p>
+                        @endif
+                    </div>
+
+                    @if (! empty($summaryCounts))
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach ($summaryCounts as $key => $label)
+                                <div class="rounded-2xl border border-slate-200/70 p-4 dark:border-gray-700">
+                                    <p class="text-xs font-medium text-slate-500 dark:text-gray-400">{{ $label }}</p>
+                                    <p class="mt-2 font-sans text-2xl font-semibold text-slate-950 dark:text-white">{{ $summary[$key] }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if (! empty($summary['menus']))
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">Current Menus</h3>
+
+                            <div class="mt-4 divide-y divide-slate-200 dark:divide-gray-700">
+                                @foreach ($summary['menus'] as $menu)
+                                    <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                                        <div>
+                                            <p class="text-sm font-medium text-slate-800 dark:text-gray-100">{{ $menu['name'] }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-gray-400">{{ $menu['location'] ?: 'No location set' }}</p>
+                                        </div>
+
+                                        <span class="text-xs font-medium text-slate-500 dark:text-gray-400">{{ $menu['items_count'] }} items</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (! empty($meta['sections']['sections']))
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">Current Homepage Sections</h3>
+
+                            <div class="mt-4 space-y-3">
+                                @foreach ($meta['sections']['sections'] as $section)
+                                    <div class="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3 dark:bg-gray-950">
+                                        <div>
+                                            <p class="text-sm font-medium text-slate-800 dark:text-gray-100">{{ $section['title'] }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-gray-400">{{ $section['type'] }}</p>
+                                        </div>
+
+                                        <span class="rounded-full px-3 py-1 text-xs font-medium {{ $section['is_active'] ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300' }}">
+                                            {{ $section['is_active'] ? 'Enabled' : 'Disabled' }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (! empty($summary['pages']) || ! empty($summary['blocks']))
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                {{ ! empty($summary['pages']) ? 'Current Pages' : 'Current Blocks' }}
+                            </h3>
+
+                            <div class="mt-4 divide-y divide-slate-200 dark:divide-gray-700">
+                                @foreach (($summary['pages'] ?? $summary['blocks']) as $item)
+                                    <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                                        <div>
+                                            <p class="text-sm font-medium text-slate-800 dark:text-gray-100">{{ $item['title'] }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-gray-400">{{ $item['slug'] }} · {{ $item['type'] }}</p>
+                                        </div>
+
+                                        <span class="text-xs font-medium text-slate-500 dark:text-gray-400">{{ ucfirst((string) $item['status']) }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @foreach ([
+                        'supported_sections' => 'Theme-Supported Sections',
+                        'allowed_types' => 'Allowed Page Types',
+                        'recommended_types' => 'Recommended Block Types',
+                        'groups' => 'Setting Groups',
+                    ] as $metaKey => $heading)
+                        @if (! empty($meta[$metaKey]))
+                            <div class="{{ $headerSectionClass }}">
+                                <h3 class="{{ $headerSectionTitleClass }}">{{ $heading }}</h3>
+
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    @foreach ($meta[$metaKey] as $item)
+                                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-gray-700 dark:text-gray-300">
+                                            {{ is_array($item) ? ($item['name'] ?? $item['code'] ?? '') : $item }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+
+                    @if (! empty($meta['next_steps']))
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">Next Builder Steps</h3>
+
+                            <ul class="mt-4 space-y-2 text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                @foreach ($meta['next_steps'] as $step)
+                                    <li class="flex gap-2">
+                                        <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500"></span>
+                                        <span>{{ $step }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     @endif
                 </div>
             @endif
         </section>
 
-        <section class="{{ $panelClass }}" data-preview-shell>
+            <aside class="{{ $panelClass }} min-w-0" data-preview-shell>
             <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <h2 class="{{ $panelTitleClass }}">
                     {{ $preview['title'] }}
@@ -682,6 +1581,191 @@
                                 {{ $previewValues['copyright_text'] ?: 'Copyright Storefront. All rights reserved.' }}
                             </p>
                         </div>
+                    @elseif ($preview['type'] === 'navigation')
+                        @php
+                            $previewValues = $preview['values'] ?? [];
+                            $previewItems = collect($previewValues['items'] ?? [])
+                                ->filter(fn ($item) => ! empty($item['title']) && ! empty($item['target']));
+                        @endphp
+
+                        <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-gray-700">
+                                <div>
+                                    <p class="font-sans text-lg font-semibold text-slate-950 dark:text-white">
+                                        {{ $previewValues['name'] ?: 'New Menu' }}
+                                    </p>
+
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                                        {{ $editor['locations'][$previewValues['location'] ?? 'header'] ?? 'Header Navigation' }}
+                                    </p>
+                                </div>
+
+                                <span class="rounded-full px-3 py-1 text-xs font-semibold {{ ! empty($previewValues['is_active']) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300' }}">
+                                    {{ ! empty($previewValues['is_active']) ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+
+                            @if ($previewItems->isNotEmpty())
+                                <nav class="flex flex-wrap gap-3 p-6">
+                                    @foreach ($previewItems as $item)
+                                        <span class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                            {{ $item['title'] }}
+
+                                            @if (! empty($item['open_in_new_tab']))
+                                                <span class="text-xs text-slate-400 dark:text-gray-500">New tab</span>
+                                            @endif
+                                        </span>
+                                    @endforeach
+                                </nav>
+                            @else
+                                <p class="p-6 text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                    Add menu items to preview the storefront navigation.
+                                </p>
+                            @endif
+                        </div>
+                    @elseif ($preview['type'] === 'homepage')
+                        @php
+                            $homepagePreviewValues = $preview['values'] ?? [];
+                            $homepagePreviewSections = collect($homepagePreviewValues['sections'] ?? [])
+                                ->filter(fn ($section) => ! empty($section['is_active']))
+                                ->sortBy('sort_order')
+                                ->values();
+                        @endphp
+
+                        <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 dark:border-gray-700">
+                                <div>
+                                    <p class="font-sans text-lg font-semibold text-slate-950 dark:text-white">
+                                        {{ $homepagePreviewValues['page']['title'] ?? 'Homepage' }}
+                                    </p>
+
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
+                                        Saved section preview · {{ $homepagePreviewSections->count() }} active sections
+                                    </p>
+                                </div>
+
+                                @if (! empty($preview['preview_url']))
+                                    <a
+                                        href="{{ $preview['preview_url'] }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="{{ $secondaryButtonClass }}"
+                                    >
+                                        Open Signed Preview
+                                    </a>
+                                @endif
+                            </div>
+
+                            @if ($homepagePreviewSections->isNotEmpty())
+                                <div class="space-y-4 bg-slate-50 p-5 dark:bg-gray-950">
+                                    @foreach ($homepagePreviewSections as $section)
+                                        @php
+                                            $previewSectionSettings = array_replace($emptyHomepageSettings, $section['settings'] ?? []);
+                                        @endphp
+
+                                        @if (($section['section_code'] ?? '') === 'hero_banner')
+                                            <section class="rounded-[24px] bg-white p-6 dark:bg-gray-800">
+                                                @if (! empty($previewSectionSettings['eyebrow']))
+                                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
+                                                        {{ $previewSectionSettings['eyebrow'] }}
+                                                    </p>
+                                                @endif
+
+                                                <h3 class="mt-3 max-w-2xl font-sans text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
+                                                    {{ $previewSectionSettings['headline'] ?: ($section['title'] ?? 'Hero Banner') }}
+                                                </h3>
+
+                                                @if (! empty($previewSectionSettings['body']))
+                                                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                                        {{ $previewSectionSettings['body'] }}
+                                                    </p>
+                                                @endif
+
+                                                <div class="mt-5 flex flex-wrap gap-2">
+                                                    @if (! empty($previewSectionSettings['primary_cta_label']))
+                                                        <span class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+                                                            {{ $previewSectionSettings['primary_cta_label'] }}
+                                                        </span>
+                                                    @endif
+
+                                                    @if (! empty($previewSectionSettings['secondary_cta_label']))
+                                                        <span class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                                            {{ $previewSectionSettings['secondary_cta_label'] }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </section>
+                                        @elseif (($section['section_code'] ?? '') === 'hero_slider')
+                                            @php
+                                                $previewSlides = collect($previewSectionSettings['slides'] ?? [])
+                                                    ->filter(fn ($slide) => ! empty($slide['image']))
+                                                    ->values();
+                                            @endphp
+
+                                            <section class="overflow-hidden rounded-[24px] bg-white dark:bg-gray-800">
+                                                @if ($previewSlides->isNotEmpty())
+                                                    <div class="relative">
+                                                        <img
+                                                            src="{{ asset($previewSlides->first()['image']) }}"
+                                                            alt="{{ $previewSlides->first()['title'] ?? '' }}"
+                                                            class="aspect-[2.743/1] w-full object-cover"
+                                                        >
+
+                                                        <div class="absolute bottom-4 left-0 flex w-full justify-center gap-2">
+                                                            @foreach ($previewSlides as $previewSlide)
+                                                                <span class="h-2 w-2 rounded-full {{ $loop->first ? 'bg-blue-600' : 'bg-white/80' }}"></span>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                                                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                            {{ $section['title'] ?? 'Hero Slider' }}
+                                                        </p>
+
+                                                        <p class="text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                            {{ $previewSlides->count() }} auto-sliding images
+                                                        </p>
+                                                    </div>
+                                                @else
+                                                    <div class="p-6 text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                                        Upload at least one hero slider image.
+                                                    </div>
+                                                @endif
+                                            </section>
+                                        @elseif (($section['section_code'] ?? '') === 'promo_strip')
+                                            <section class="rounded-2xl bg-blue-600 px-5 py-4 text-sm font-semibold text-white">
+                                                {{ $previewSectionSettings['content'] ?: ($section['title'] ?? 'Promo Strip') }}
+                                            </section>
+                                        @elseif (($section['section_code'] ?? '') === 'rich_text')
+                                            <section class="rounded-[24px] bg-white p-6 dark:bg-gray-800">
+                                                <h3 class="font-sans text-lg font-semibold text-slate-950 dark:text-white">
+                                                    {{ $section['title'] ?? 'Rich Text' }}
+                                                </h3>
+
+                                                <p class="mt-3 whitespace-pre-line text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                                    {{ $previewSectionSettings['content'] }}
+                                                </p>
+                                            </section>
+                                        @else
+                                            <section class="rounded-[24px] border border-dashed border-slate-300 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+                                                <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                    {{ $section['title'] ?? $section['section_label'] ?? 'Theme Section' }}
+                                                </p>
+
+                                                <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                                    This saved theme-managed section is preserved and rendered by the storefront runtime.
+                                                </p>
+                                            </section>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="p-6 text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                    Enable homepage sections to preview the saved layout.
+                                </p>
+                            @endif
+                        </div>
                     @else
                         <div class="rounded-[24px] border border-slate-200 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-800">
                             <p class="{{ $bodyTextClass }}">
@@ -691,6 +1775,7 @@
                     @endif
                 </div>
             </div>
+            </aside>
         </section>
     </div>
 
@@ -699,6 +1784,12 @@
             (() => {
                 const initCmsStudioPreview = () => {
                     document.querySelectorAll('[data-preview-shell]').forEach((shell) => {
+                        if (shell.dataset.cmsStudioPreviewBound === '1') {
+                            return;
+                        }
+
+                        shell.dataset.cmsStudioPreviewBound = '1';
+
                         const viewport = shell.querySelector('[data-preview-viewport]');
                         const tabs = shell.querySelectorAll('[data-preview-mode]');
 
@@ -723,12 +1814,105 @@
                         });
                     });
 
+                    const navigationBuilder = document.querySelector('[data-navigation-builder]');
+
+                    if (navigationBuilder && navigationBuilder.dataset.cmsStudioNavigationBound !== '1') {
+                        navigationBuilder.dataset.cmsStudioNavigationBound = '1';
+
+                        const rows = navigationBuilder.querySelector('[data-menu-items]');
+                        const template = navigationBuilder.querySelector('[data-menu-item-template]');
+                        const addButton = navigationBuilder.querySelector('[data-add-menu-item]');
+
+                        addButton?.addEventListener('click', () => {
+                            if (! rows || ! template) {
+                                return;
+                            }
+
+                            const nextIndex = rows.querySelectorAll('[data-menu-item-row]').length;
+                            const nextNumber = nextIndex + 1;
+                            const wrapper = document.createElement('div');
+
+                            wrapper.innerHTML = template.innerHTML
+                                .replaceAll('__INDEX__', String(nextIndex))
+                                .replaceAll('__NUMBER__', String(nextNumber));
+
+                            const newRow = wrapper.firstElementChild;
+
+                            if (newRow) {
+                                rows.appendChild(newRow);
+                            }
+                        });
+                    }
+
+                    const homepageBuilder = document.querySelector('[data-homepage-builder]');
+
+                    if (homepageBuilder && homepageBuilder.dataset.cmsStudioHomepageBound !== '1') {
+                        homepageBuilder.dataset.cmsStudioHomepageBound = '1';
+
+                        const rows = homepageBuilder.querySelector('[data-homepage-sections]');
+                        const template = homepageBuilder.querySelector('[data-homepage-section-template]');
+                        const addButton = homepageBuilder.querySelector('[data-add-homepage-section]');
+
+                        const toggleHomepageFields = (row) => {
+                            const sectionCodeInput = row.querySelector('[data-homepage-section-code]');
+
+                            if (! sectionCodeInput) {
+                                return;
+                            }
+
+                            const selectedCode = sectionCodeInput.value ?? '';
+                            const heroFields = row.querySelector('[data-homepage-fields="hero_banner"]');
+                            const heroSliderFields = row.querySelector('[data-homepage-fields="hero_slider"]');
+                            const contentFields = row.querySelector('[data-homepage-fields="content"]');
+
+                            heroFields?.classList.toggle('hidden', selectedCode !== 'hero_banner');
+                            heroSliderFields?.classList.toggle('hidden', selectedCode !== 'hero_slider');
+                            contentFields?.classList.toggle('hidden', ! ['promo_strip', 'rich_text'].includes(selectedCode));
+                        };
+
+                        const bindHomepageRow = (row) => {
+                            const sectionCodeInput = row.querySelector('[data-homepage-section-code]');
+
+                            sectionCodeInput?.addEventListener('change', () => toggleHomepageFields(row));
+                            toggleHomepageFields(row);
+                        };
+
+                        rows?.querySelectorAll('[data-homepage-section-row]').forEach(bindHomepageRow);
+
+                        addButton?.addEventListener('click', () => {
+                            if (! rows || ! template) {
+                                return;
+                            }
+
+                            const nextIndex = rows.querySelectorAll('[data-homepage-section-row]').length;
+                            const nextNumber = nextIndex + 1;
+                            const wrapper = document.createElement('div');
+
+                            wrapper.innerHTML = template.innerHTML
+                                .replaceAll('__INDEX__', String(nextIndex))
+                                .replaceAll('__NUMBER__', String(nextNumber));
+
+                            const newRow = wrapper.firstElementChild;
+
+                            if (newRow) {
+                                rows.appendChild(newRow);
+                                bindHomepageRow(newRow);
+                                newRow.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'start',
+                                });
+                            }
+                        });
+                    }
+
                     const cmsStudioForm = document.querySelector('#cms-studio-form');
                     const headerPreview = document.querySelector('[data-header-preview]');
 
-                    if (! cmsStudioForm || ! headerPreview) {
+                    if (! cmsStudioForm || ! headerPreview || cmsStudioForm.dataset.cmsStudioPreviewBound === '1') {
                         return;
                     }
+
+                    cmsStudioForm.dataset.cmsStudioPreviewBound = '1';
 
                     const inputs = {
                         logoUrl: cmsStudioForm.querySelector('[data-preview-input="logo_url"]'),
@@ -859,9 +2043,24 @@
                     renderHeaderPreview();
                 };
 
-                window.addEventListener('load', () => {
+                const bootCmsStudioPreview = () => {
                     window.setTimeout(initCmsStudioPreview, 0);
-                });
+                };
+
+                if (! window.__cmsStudioPreviewBootstrapRegistered) {
+                    window.__cmsStudioPreviewBootstrapRegistered = true;
+
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', bootCmsStudioPreview, { once: true });
+                    } else {
+                        bootCmsStudioPreview();
+                    }
+
+                    window.addEventListener('load', bootCmsStudioPreview, { once: true });
+                    document.addEventListener('livewire:navigated', bootCmsStudioPreview);
+                } else {
+                    bootCmsStudioPreview();
+                }
             })();
         </script>
     @endPushOnce

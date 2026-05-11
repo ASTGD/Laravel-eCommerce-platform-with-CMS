@@ -30,7 +30,7 @@
                                 @{{ card.label }}
                             </h3>
 
-                            <div class="dashboard-kpi-value mt-3 text-gray-950 dark:text-white">
+                            <div class="dashboard-kpi-value mt-4 text-gray-950 dark:text-white">
                                 @{{ card.value }}
                             </div>
 

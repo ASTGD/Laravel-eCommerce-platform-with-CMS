@@ -1,37 +1,26 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Platform\ExperienceCms\Models\ComponentType;
-use Platform\ExperienceCms\Models\ContentEntry;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
 use Platform\ExperienceCms\Models\Page;
-use Platform\ExperienceCms\Models\PageAssignment;
 use Platform\ExperienceCms\Models\PageSection;
 use Platform\ExperienceCms\Models\SectionType;
-use Platform\ExperienceCms\Models\SiteSetting;
 use Platform\ExperienceCms\Models\Template;
-use Platform\ThemeCore\Models\ThemePreset;
+use Platform\ExperienceCms\Models\TemplateArea;
 use Webkul\Admin\Tests\AdminTestCase;
-use Webkul\Category\Models\Category;
-use Webkul\Faker\Helpers\Category as CategoryFaker;
 use Webkul\User\Models\Admin as AdminModel;
 use Webkul\User\Models\Role;
 
 uses(AdminTestCase::class);
 
-function cmsAdminCategory(): Category
-{
-    return Category::query()->whereNotNull('parent_id')->where('parent_id', '!=', 0)->first()
-        ?: (new CategoryFaker)->factory()->create();
-}
-
-function cmsAdminWithPermissions(array $permissions): AdminModel
+function cmsStudioAdminWithPermissions(array $permissions): AdminModel
 {
     $role = Role::query()->create([
-        'name' => 'CMS ACL '.uniqid(),
-        'description' => 'CMS ACL test role',
+        'name' => 'CMS Studio ACL '.uniqid(),
+        'description' => 'CMS Studio ACL test role',
         'permission_type' => 'custom',
         'permissions' => $permissions,
     ]);
@@ -41,427 +30,469 @@ function cmsAdminWithPermissions(array $permissions): AdminModel
     ]);
 }
 
-it('renders the CMS admin screens without fatal errors', function () {
+function cmsStudioMenu(): Menu
+{
+    $menu = Menu::query()->create([
+        'name' => 'CMS Studio Test Menu '.uniqid(),
+        'code' => 'cms_studio_test_menu_'.uniqid(),
+        'location' => 'header',
+        'is_active' => true,
+    ]);
+
+    $menu->items()->create([
+        'title' => 'Home',
+        'type' => 'url',
+        'target' => '/',
+        'sort_order' => 1,
+        'settings_json' => [],
+        'is_active' => true,
+    ]);
+
+    return $menu;
+}
+
+function cmsStudioHomepagePage(): Page
+{
+    foreach ([
+        ['code' => 'hero_banner', 'name' => 'Hero Banner', 'category' => 'hero'],
+        ['code' => 'hero_slider', 'name' => 'Hero Slider', 'category' => 'hero'],
+        ['code' => 'promo_strip', 'name' => 'Promo Strip', 'category' => 'merchandising'],
+        ['code' => 'rich_text', 'name' => 'Rich Text', 'category' => 'content'],
+        ['code' => 'featured_products', 'name' => 'Featured Products', 'category' => 'catalog'],
+    ] as $sectionType) {
+        SectionType::query()->updateOrCreate(
+            ['code' => $sectionType['code']],
+            [
+                ...$sectionType,
+                'config_schema_json' => [],
+                'supports_components' => false,
+                'allowed_data_sources_json' => [],
+                'is_active' => true,
+            ]
+        );
+    }
+
+    $template = Template::query()->updateOrCreate(
+        ['code' => 'homepage_default'],
+        [
+            'name' => 'Homepage Default',
+            'page_type' => 'homepage',
+            'schema_json' => [],
+            'is_active' => true,
+        ]
+    );
+
+    TemplateArea::query()->updateOrCreate(
+        ['template_id' => $template->id, 'code' => 'hero'],
+        ['name' => 'Hero', 'rules_json' => ['max_sections' => 1], 'sort_order' => 1]
+    );
+
+    TemplateArea::query()->updateOrCreate(
+        ['template_id' => $template->id, 'code' => 'content'],
+        ['name' => 'Content', 'rules_json' => ['max_sections' => 12], 'sort_order' => 2]
+    );
+
+    return Page::query()->updateOrCreate(
+        ['slug' => 'home'],
+        [
+            'title' => 'Homepage',
+            'type' => 'homepage',
+            'template_id' => $template->id,
+            'settings_json' => [],
+            'status' => Page::STATUS_PUBLISHED,
+            'published_at' => now(),
+        ]
+    );
+}
+
+it('renders the business friendly CMS Studio workspace', function () {
     $this->loginAsAdmin();
 
-    $page = Page::query()->where('slug', 'home')->firstOrFail();
-    $template = Template::query()->where('code', 'homepage_default')->firstOrFail();
-    $sectionType = SectionType::query()->where('code', 'hero_banner')->firstOrFail();
-    $componentType = ComponentType::query()->first() ?: ComponentType::query()->create([
-        'name' => 'Screen Smoke Component',
-        'code' => 'screen_smoke_component',
-        'config_schema_json' => ['content' => 'string'],
-        'renderer_class' => 'Platform\\ThemeDefault\\Components\\GenericComponent',
-        'is_active' => true,
-    ]);
-    $menu = Menu::query()->firstOrFail();
-    $header = HeaderConfig::query()->firstOrFail();
-    $footer = FooterConfig::query()->firstOrFail();
-    $preset = ThemePreset::query()->firstOrFail();
-    $contentEntry = ContentEntry::query()->first() ?: ContentEntry::query()->create([
-        'type' => 'marketing_copy',
-        'title' => 'Screen Smoke Entry',
-        'slug' => 'screen-smoke-entry',
-        'body_json' => ['content' => 'Screen smoke body'],
-        'status' => 'published',
-    ]);
-    $siteSetting = SiteSetting::query()->first() ?: SiteSetting::query()->create([
-        'key' => 'store.identity',
-        'group' => 'store',
-        'value_json' => ['brand_name' => 'Smoke'],
-    ]);
-    $category = cmsAdminCategory();
-    $assignment = PageAssignment::query()->first() ?: PageAssignment::query()->create([
-        'page_id' => Page::query()->where('type', 'category_page')->value('id'),
-        'page_type' => 'category_page',
-        'scope_type' => 'entity',
-        'entity_type' => 'category',
-        'entity_id' => $category->id,
-        'priority' => 10,
-        'is_active' => true,
-    ]);
+    $response = $this->get(route('admin.cms.index'));
 
-    foreach ([
-        ['admin.cms.pages.index', []],
-        ['admin.cms.pages.create', []],
-        ['admin.cms.pages.edit', $page],
-        ['admin.cms.templates.index', []],
-        ['admin.cms.templates.create', []],
-        ['admin.cms.templates.edit', $template],
-        ['admin.cms.section-types.index', []],
-        ['admin.cms.section-types.create', []],
-        ['admin.cms.section-types.edit', $sectionType],
-        ['admin.cms.component-types.index', []],
-        ['admin.cms.component-types.create', []],
-        ['admin.cms.component-types.edit', $componentType],
-        ['admin.cms.assignments.index', []],
-        ['admin.cms.assignments.create', []],
-        ['admin.cms.assignments.edit', $assignment],
-        ['admin.cms.menus.index', []],
-        ['admin.cms.menus.create', []],
-        ['admin.cms.menus.edit', $menu],
-        ['admin.cms.header-configs.index', []],
-        ['admin.cms.header-configs.create', []],
-        ['admin.cms.header-configs.edit', $header],
-        ['admin.cms.footer-configs.index', []],
-        ['admin.cms.footer-configs.create', []],
-        ['admin.cms.footer-configs.edit', $footer],
-        ['admin.cms.content-entries.index', []],
-        ['admin.cms.content-entries.create', []],
-        ['admin.cms.content-entries.edit', $contentEntry],
-        ['admin.cms.site-settings.index', []],
-        ['admin.cms.site-settings.create', []],
-        ['admin.cms.site-settings.edit', $siteSetting],
-        ['admin.theme.presets.index', []],
-        ['admin.theme.presets.create', []],
-        ['admin.theme.presets.edit', $preset],
-    ] as [$route, $parameters]) {
-        $url = route($route, $parameters);
-        $status = $this->get($url)->status();
-        $this->assertSame(200, $status, sprintf('%s returned %s [%s]', $route, $status, $url));
-    }
+    $response->assertOk()
+        ->assertSeeText('CMS Studio')
+        ->assertSeeText('My Website')
+        ->assertSeeText('Header')
+        ->assertSeeText('Footer')
+        ->assertSeeText('Navigation')
+        ->assertSeeText('Homepage')
+        ->assertSeeText('Pages')
+        ->assertSeeText('Reusable Blocks')
+        ->assertSeeText('Site Settings')
+        ->assertSeeText('Header Builder')
+        ->assertDontSee('settings_json')
+        ->assertDontSeeText('Section Types')
+        ->assertDontSeeText('Component Types')
+        ->assertDontSeeText('Page Assignments');
 });
 
-it('creates supporting CMS records from the admin forms', function () {
+it('renders every CMS Studio local section without exposing raw JSON editing', function (string $area, string $label) {
     $this->loginAsAdmin();
 
-    $templateResponse = $this->post(route('admin.cms.templates.store'), [
-        'name' => 'Admin Workflow Template',
-        'code' => 'admin_workflow_template',
-        'page_type' => 'homepage',
-        'schema_json' => json_encode([
-            'areas' => [
-                ['code' => 'hero', 'name' => 'Hero', 'sort_order' => 1],
-                ['code' => 'content', 'name' => 'Content', 'sort_order' => 2],
-            ],
-        ]),
-        'is_active' => 1,
+    $response = $this->get(route('admin.cms.index', ['area' => $area]));
+
+    $response->assertOk()
+        ->assertSeeText($label)
+        ->assertDontSee('settings_json')
+        ->assertDontSee('name="settings_json"', false)
+        ->assertDontSeeText('Raw JSON');
+})->with([
+    ['header', 'Header Builder'],
+    ['footer', 'Footer Builder'],
+    ['navigation', 'Navigation'],
+    ['homepage', 'Homepage Builder'],
+    ['pages', 'Pages'],
+    ['reusable-blocks', 'Reusable Blocks'],
+    ['settings', 'Site Settings'],
+]);
+
+it('saves structured header settings through CMS Studio', function () {
+    $this->loginAsAdmin();
+
+    HeaderConfig::query()->update(['is_default' => false]);
+
+    $header = HeaderConfig::query()->create([
+        'code' => 'cms_studio_test_header_'.uniqid(),
+        'settings_json' => [],
+        'is_default' => true,
     ]);
 
-    $template = Template::query()->where('code', 'admin_workflow_template')->first();
+    $menu = cmsStudioMenu();
 
-    $templateResponse->assertRedirect(route('admin.cms.templates.edit', $template));
-
-    $sectionTypeResponse = $this->post(route('admin.cms.section-types.store'), [
-        'name' => 'Admin Workflow Section',
-        'code' => 'admin_workflow_section',
-        'category' => 'content',
-        'config_schema_json' => json_encode(['headline' => 'string']),
-        'allowed_data_sources_json' => json_encode([]),
-        'renderer_class' => 'Platform\\ThemeDefault\\Sections\\GenericSection',
-        'is_active' => 1,
+    $response = $this->post(route('admin.cms.header.update'), [
+        'name' => 'Studio Header',
+        'logo_url' => 'https://example.com/logo.svg',
+        'announcement_enabled' => '1',
+        'announcement_text' => 'Free delivery this week',
+        'announcement_link' => 'https://example.com/sale',
+        'menu_id' => $menu->id,
+        'show_search' => '1',
+        'show_account' => '1',
+        'show_cart' => '1',
+        'sticky' => '1',
+        'variant' => 'centered',
     ]);
 
-    $sectionType = SectionType::query()->where('code', 'admin_workflow_section')->first();
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'header']));
 
-    $sectionTypeResponse->assertRedirect(route('admin.cms.section-types.edit', $sectionType));
+    $header->refresh();
 
-    $menuResponse = $this->post(route('admin.cms.menus.store'), [
-        'name' => 'Admin Workflow Menu',
-        'code' => 'admin_workflow_menu',
+    expect(data_get($header->settings_json, 'name'))->toBe('Studio Header')
+        ->and(data_get($header->settings_json, 'logo_url'))->toBe('https://example.com/logo.svg')
+        ->and(data_get($header->settings_json, 'announcement.enabled'))->toBeTrue()
+        ->and(data_get($header->settings_json, 'announcement.text'))->toBe('Free delivery this week')
+        ->and(data_get($header->settings_json, 'announcement.link'))->toBe('https://example.com/sale')
+        ->and(data_get($header->settings_json, 'navigation.menu_id'))->toBe($menu->id)
+        ->and(data_get($header->settings_json, 'features.show_search'))->toBeTrue()
+        ->and(data_get($header->settings_json, 'features.show_account'))->toBeTrue()
+        ->and(data_get($header->settings_json, 'features.show_cart'))->toBeTrue()
+        ->and(data_get($header->settings_json, 'features.sticky'))->toBeTrue()
+        ->and($header->settings_json['variant'])->toBe('centered');
+});
+
+it('saves structured footer settings through CMS Studio', function () {
+    $this->loginAsAdmin();
+
+    FooterConfig::query()->update(['is_default' => false]);
+
+    $footer = FooterConfig::query()->create([
+        'code' => 'cms_studio_test_footer_'.uniqid(),
+        'settings_json' => [],
+        'is_default' => true,
+    ]);
+
+    $response = $this->post(route('admin.cms.footer.update'), [
+        'name' => 'Studio Footer',
+        'logo_url' => 'https://example.com/footer-logo.svg',
+        'newsletter_enabled' => '1',
+        'newsletter_heading' => 'Join our list',
+        'newsletter_text' => 'Get new arrivals and offers.',
+        'contact_email' => 'hello@example.com',
+        'contact_phone' => '+1 555 0100',
+        'social_facebook' => 'https://facebook.com/example',
+        'social_instagram' => 'https://instagram.com/example',
+        'social_x' => 'https://x.com/example',
+        'social_youtube' => 'https://youtube.com/@example',
+        'social_tiktok' => 'https://tiktok.com/@example',
+        'copyright_text' => 'Copyright Storefront.',
+        'variant' => 'multi_column',
+    ]);
+
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'footer']));
+
+    $footer->refresh();
+
+    expect(data_get($footer->settings_json, 'name'))->toBe('Studio Footer')
+        ->and(data_get($footer->settings_json, 'logo_url'))->toBe('https://example.com/footer-logo.svg')
+        ->and(data_get($footer->settings_json, 'newsletter.enabled'))->toBeTrue()
+        ->and(data_get($footer->settings_json, 'newsletter.heading'))->toBe('Join our list')
+        ->and(data_get($footer->settings_json, 'newsletter.text'))->toBe('Get new arrivals and offers.')
+        ->and(data_get($footer->settings_json, 'contact.email'))->toBe('hello@example.com')
+        ->and(data_get($footer->settings_json, 'contact.phone'))->toBe('+1 555 0100')
+        ->and(data_get($footer->settings_json, 'social.facebook'))->toBe('https://facebook.com/example')
+        ->and(data_get($footer->settings_json, 'social.instagram'))->toBe('https://instagram.com/example')
+        ->and(data_get($footer->settings_json, 'social.x'))->toBe('https://x.com/example')
+        ->and(data_get($footer->settings_json, 'social.youtube'))->toBe('https://youtube.com/@example')
+        ->and(data_get($footer->settings_json, 'social.tiktok'))->toBe('https://tiktok.com/@example')
+        ->and($footer->settings_json['copyright_text'])->toBe('Copyright Storefront.')
+        ->and($footer->settings_json['variant'])->toBe('multi_column');
+});
+
+it('creates and edits flat navigation menus through CMS Studio', function () {
+    $this->loginAsAdmin();
+
+    $menuName = 'Studio Header Menu '.uniqid();
+    $updatedMenuName = 'Studio Footer Menu '.uniqid();
+
+    $response = $this->post(route('admin.cms.navigation.update'), [
+        'name' => $menuName,
         'location' => 'header',
-        'is_active' => 1,
+        'is_active' => '1',
         'items' => [
             [
-                'title' => 'Workflow Link',
+                'title' => 'Shop',
                 'type' => 'url',
-                'target' => '/workflow',
+                'target' => '/shop',
                 'sort_order' => 1,
-                'is_active' => 1,
-            ],
-        ],
-    ]);
-
-    $menu = Menu::query()->where('code', 'admin_workflow_menu')->first();
-
-    $menuResponse->assertRedirect(route('admin.cms.menus.edit', $menu));
-
-    $headerResponse = $this->post(route('admin.cms.header-configs.store'), [
-        'code' => 'admin_workflow_header',
-        'settings_json' => json_encode(['brand_name' => 'Workflow Header']),
-    ]);
-
-    $header = HeaderConfig::query()->where('code', 'admin_workflow_header')->first();
-
-    $headerResponse->assertRedirect(route('admin.cms.header-configs.edit', $header));
-
-    $footerResponse = $this->post(route('admin.cms.footer-configs.store'), [
-        'code' => 'admin_workflow_footer',
-        'settings_json' => json_encode(['headline' => 'Workflow Footer']),
-    ]);
-
-    $footer = FooterConfig::query()->where('code', 'admin_workflow_footer')->first();
-
-    $footerResponse->assertRedirect(route('admin.cms.footer-configs.edit', $footer));
-
-    $presetResponse = $this->post(route('admin.theme.presets.store'), [
-        'name' => 'Admin Workflow Preset',
-        'code' => 'admin_workflow_preset',
-        'tokens_json' => json_encode(['palette' => ['brand' => '#112233']]),
-        'settings_json' => json_encode(['button_variant' => 'solid']),
-        'is_active' => 1,
-    ]);
-
-    $preset = ThemePreset::query()->where('code', 'admin_workflow_preset')->first();
-
-    $presetResponse->assertRedirect(route('admin.theme.presets.edit', $preset));
-
-    $contentEntryResponse = $this->post(route('admin.cms.content-entries.store'), [
-        'type' => 'marketing_copy',
-        'title' => 'Admin Workflow Entry',
-        'slug' => 'admin-workflow-entry',
-        'body_json' => json_encode(['headline' => 'Workflow Entry', 'content' => 'Structured entry body']),
-        'status' => 'published',
-    ]);
-
-    $contentEntry = ContentEntry::query()->where('slug', 'admin-workflow-entry')->first();
-    $contentEntryResponse->assertRedirect(route('admin.cms.content-entries.edit', $contentEntry));
-
-    $siteSettingResponse = $this->post(route('admin.cms.site-settings.store'), [
-        'key' => 'store.product_page',
-        'group' => 'store',
-        'value_json' => json_encode(['shipping_note' => 'Workflow shipping note']),
-    ]);
-
-    $siteSetting = SiteSetting::query()->where('key', 'store.product_page')->first();
-    $siteSettingResponse->assertRedirect(route('admin.cms.site-settings.edit', $siteSetting));
-
-    expect($template)->not->toBeNull()
-        ->and($template->areas()->count())->toBe(2)
-        ->and($sectionType)->not->toBeNull()
-        ->and($menu)->not->toBeNull()
-        ->and($menu->items()->count())->toBe(1)
-        ->and($header)->not->toBeNull()
-        ->and($footer)->not->toBeNull()
-        ->and($preset)->not->toBeNull()
-        ->and($contentEntry)->not->toBeNull()
-        ->and($siteSetting)->not->toBeNull();
-});
-
-it('requires explicit page create permission for CMS authoring routes', function () {
-    $admin = cmsAdminWithPermissions(['cms.platform.pages']);
-
-    $this->loginAsAdmin($admin);
-
-    $template = Template::query()->where('code', 'homepage_default')->firstOrFail();
-    $area = $template->areas()->firstOrFail();
-    $sectionType = SectionType::query()->where('code', 'hero_banner')->firstOrFail();
-
-    $this->get(route('admin.cms.pages.create'))->assertStatus(401);
-
-    $this->post(route('admin.cms.pages.store'), [
-        'title' => 'ACL Blocked Homepage',
-        'slug' => 'acl-blocked-homepage',
-        'type' => 'homepage',
-        'template_id' => $template->id,
-        'sections' => [[
-            'template_area_id' => $area->id,
-            'section_type_id' => $sectionType->id,
-            'title' => 'Blocked Hero',
-            'sort_order' => 1,
-            'is_active' => 1,
-            'settings_json' => json_encode(['headline' => 'Blocked by ACL']),
-        ]],
-    ])->assertStatus(401);
-});
-
-it('requires explicit page publish permission for CMS state changes', function () {
-    $admin = cmsAdminWithPermissions(['cms.platform.pages', 'cms.platform.pages.edit']);
-
-    $this->loginAsAdmin($admin);
-
-    $page = Page::query()->where('slug', 'home')->firstOrFail();
-
-    $this->post(route('admin.cms.pages.publish', $page))->assertStatus(401);
-    $this->post(route('admin.cms.pages.unpublish', $page))->assertStatus(401);
-});
-
-it('requires explicit theme preset permission for theme admin routes', function () {
-    $admin = cmsAdminWithPermissions(['cms.platform.pages']);
-
-    $this->loginAsAdmin($admin);
-
-    $this->get(route('admin.theme.presets.index'))->assertStatus(401);
-    $this->get(route('admin.theme.presets.create'))->assertStatus(401);
-});
-
-it('creates a structured homepage draft from the admin screen', function () {
-    $this->loginAsAdmin();
-
-    $template = Template::query()->where('code', 'homepage_default')->firstOrFail();
-    $areas = $template->areas()->orderBy('sort_order')->get()->values();
-    $heroType = SectionType::query()->where('code', 'hero_banner')->firstOrFail();
-    $featuredType = SectionType::query()->where('code', 'featured_products')->firstOrFail();
-    $richTextType = SectionType::query()->where('code', 'rich_text')->firstOrFail();
-    $header = HeaderConfig::query()->firstOrFail();
-    $footer = FooterConfig::query()->firstOrFail();
-    $menu = Menu::query()->firstOrFail();
-    $preset = ThemePreset::query()->firstOrFail();
-
-    $response = $this->post(route('admin.cms.pages.store'), [
-        'title' => 'Admin Draft Homepage',
-        'slug' => 'admin-draft-homepage',
-        'type' => 'homepage',
-        'template_id' => $template->id,
-        'header_config_id' => $header->id,
-        'footer_config_id' => $footer->id,
-        'menu_id' => $menu->id,
-        'theme_preset_id' => $preset->id,
-        'seo' => [
-            'title' => 'Admin Draft SEO Title',
-            'description' => 'Admin draft SEO description',
-            'og_json' => json_encode(['title' => 'Admin Draft OG']),
-        ],
-        'sections' => [
-            [
-                'template_area_id' => $areas[0]->id,
-                'section_type_id' => $heroType->id,
-                'title' => 'Admin Hero',
-                'sort_order' => 1,
-                'is_active' => 1,
-                'settings_json' => json_encode([
-                    'headline' => 'Admin Draft Hero',
-                    'body' => 'Draft hero body',
-                ]),
-                'data_source_payload_json' => json_encode([]),
+                'is_active' => '1',
+                'open_in_new_tab' => '0',
             ],
             [
-                'template_area_id' => $areas[1]->id,
-                'section_type_id' => $featuredType->id,
-                'title' => 'Admin Featured',
+                'title' => 'Campaign',
+                'type' => 'url',
+                'target' => 'https://example.com/campaign',
                 'sort_order' => 2,
-                'is_active' => 1,
-                'settings_json' => json_encode([
-                    'eyebrow' => 'Featured',
-                    'limit' => 4,
-                ]),
-                'data_source_type' => 'featured_products',
-                'data_source_payload_json' => json_encode(['limit' => 4]),
-            ],
-            [
-                'template_area_id' => $areas[1]->id,
-                'section_type_id' => $richTextType->id,
-                'title' => 'Admin Rich Text',
-                'sort_order' => 3,
-                'is_active' => 1,
-                'settings_json' => json_encode([
-                    'content' => 'Structured CMS draft body.',
-                ]),
-                'data_source_payload_json' => json_encode([]),
+                'is_active' => '1',
+                'open_in_new_tab' => '1',
             ],
         ],
     ]);
 
-    $page = Page::query()->where('slug', 'admin-draft-homepage')->first();
+    $menu = Menu::query()->where('name', $menuName)->first();
 
-    $response->assertRedirect(route('admin.cms.pages.edit', $page));
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'navigation', 'menu' => $menu->id]));
 
-    expect($page)->not->toBeNull()
-        ->and($page->status)->toBe(Page::STATUS_DRAFT)
-        ->and($page->header_config_id)->toBe($header->id)
-        ->and($page->footer_config_id)->toBe($footer->id)
-        ->and($page->menu_id)->toBe($menu->id)
-        ->and($page->theme_preset_id)->toBe($preset->id)
-        ->and($page->seoMeta)->not->toBeNull()
-        ->and($page->sections()->count())->toBe(3);
+    expect($menu)->not->toBeNull()
+        ->and($menu->location)->toBe('header')
+        ->and($menu->is_active)->toBeTrue()
+        ->and($menu->items()->count())->toBe(2)
+        ->and(data_get($menu->items()->where('title', 'Campaign')->first()->settings_json, 'open_in_new_tab'))->toBeTrue();
+
+    $this->get(route('admin.cms.index', ['area' => 'header']))
+        ->assertOk()
+        ->assertSeeText($menuName);
+
+    $this->post(route('admin.cms.navigation.update'), [
+        'menu_id' => $menu->id,
+        'name' => $updatedMenuName,
+        'location' => 'footer',
+        'is_active' => '1',
+        'items' => [
+            [
+                'title' => 'Privacy',
+                'type' => 'page',
+                'target' => '/privacy-policy',
+                'sort_order' => 1,
+                'is_active' => '1',
+                'open_in_new_tab' => '0',
+            ],
+        ],
+    ])->assertRedirect(route('admin.cms.index', ['area' => 'navigation', 'menu' => $menu->id]));
+
+    $menu->refresh();
+
+    expect($menu->name)->toBe($updatedMenuName)
+        ->and($menu->location)->toBe('footer')
+        ->and($menu->items()->count())->toBe(1)
+        ->and($menu->items()->first()->title)->toBe('Privacy');
 });
 
-it('creates a category page assignment from the admin screen', function () {
+it('renders the structured homepage section builder without raw JSON editing', function () {
     $this->loginAsAdmin();
 
-    $page = Page::query()->where('type', 'category_page')->firstOrFail();
-    $category = cmsAdminCategory();
+    $page = cmsStudioHomepagePage();
+    $page->sections()->delete();
 
-    $response = $this->post(route('admin.cms.assignments.store'), [
+    PageSection::query()->create([
         'page_id' => $page->id,
-        'page_type' => 'category_page',
-        'scope_type' => 'entity',
-        'entity_id' => $category->id,
-        'priority' => 50,
-        'is_active' => 1,
-    ]);
-
-    $assignment = PageAssignment::query()
-        ->where('page_id', $page->id)
-        ->where('entity_id', $category->id)
-        ->first();
-
-    $response->assertRedirect(route('admin.cms.assignments.edit', $assignment));
-
-    expect($assignment)->not->toBeNull()
-        ->and($assignment->priority)->toBe(50);
-});
-
-it('redirects admin preview to a signed storefront preview URL and records publish transitions', function () {
-    if (! Route::has('admin.cms.pages.preview')) {
-        $this->markTestSkipped('CMS Studio page preview route is not registered in this runtime.');
-    }
-
-    $this->loginAsAdmin();
-
-    $page = Page::query()->create([
-        'title' => 'Workflow Preview Page',
-        'slug' => 'workflow-preview-page',
-        'type' => 'homepage',
-        'template_id' => Template::query()->where('code', 'homepage_default')->value('id'),
-        'status' => Page::STATUS_DRAFT,
+        'template_area_id' => $page->template->areas->firstWhere('code', 'hero')->id,
+        'section_type_id' => SectionType::query()->where('code', 'hero_banner')->value('id'),
+        'sort_order' => 1,
+        'title' => 'Hero Banner',
+        'settings_json' => ['headline' => 'Original hero'],
+        'is_active' => true,
     ]);
 
     PageSection::query()->create([
         'page_id' => $page->id,
-        'template_area_id' => Template::query()->where('code', 'homepage_default')->firstOrFail()->areas()->orderBy('sort_order')->value('id'),
-        'section_type_id' => SectionType::query()->where('code', 'hero_banner')->value('id'),
-        'sort_order' => 1,
-        'title' => 'Workflow Hero',
-        'settings_json' => ['headline' => 'Workflow Draft Hero'],
+        'template_area_id' => $page->template->areas->firstWhere('code', 'content')->id,
+        'section_type_id' => SectionType::query()->where('code', 'featured_products')->value('id'),
+        'sort_order' => 2,
+        'title' => 'Featured Products',
+        'settings_json' => ['limit' => 8],
+        'data_source_type' => 'featured_products',
+        'data_source_payload_json' => ['limit' => 8],
         'is_active' => true,
     ]);
 
-    $previewResponse = $this->get(route('admin.cms.pages.preview', $page));
-
-    $previewResponse->assertRedirect();
-
-    $previewUrl = $previewResponse->headers->get('Location');
-
-    expect($previewUrl)->toContain('signature=')
-        ->and($previewUrl)->toContain('/preview/pages/workflow-preview-page');
-
-    $this->get($previewUrl)
+    $this->get(route('admin.cms.index', ['area' => 'homepage']))
         ->assertOk()
-        ->assertSeeText('Workflow Draft Hero');
-
-    $this->post(route('admin.cms.pages.publish', $page))
-        ->assertRedirect();
-
-    $page->refresh();
-
-    expect($page->isPublished())->toBeTrue()
-        ->and($page->versions()->count())->toBe(1);
-
-    $this->post(route('admin.cms.pages.unpublish', $page))
-        ->assertRedirect();
-
-    $page->refresh();
-
-    expect($page->status)->toBe(Page::STATUS_DRAFT)
-        ->and($page->versions()->count())->toBe(2);
+        ->assertSeeText('Homepage Builder')
+        ->assertSeeText('Homepage Sections')
+        ->assertSeeText('Hero Banner')
+        ->assertSeeText('Hero Slider')
+        ->assertSeeText('Promo Strip')
+        ->assertSeeText('Rich Text')
+        ->assertSeeText('Featured Products')
+        ->assertSeeText('theme-managed section')
+        ->assertDontSee('settings_json')
+        ->assertDontSee('name="settings_json"', false)
+        ->assertDontSeeText('Raw JSON');
 });
 
-it('allows admins to manage component type records', function () {
+it('saves and reorders structured homepage sections through CMS Studio', function () {
     $this->loginAsAdmin();
 
-    $response = $this->post(route('admin.cms.component-types.store'), [
-        'name' => 'Admin CTA Group',
-        'code' => 'admin_cta_group',
-        'config_schema_json' => json_encode(['buttons' => 'array']),
-        'renderer_class' => 'Platform\\ThemeDefault\\Components\\CtaGroup',
-        'is_active' => 1,
+    $page = cmsStudioHomepagePage();
+    $page->sections()->delete();
+
+    $heroArea = $page->template->areas->firstWhere('code', 'hero');
+    $contentArea = $page->template->areas->firstWhere('code', 'content');
+
+    $hero = PageSection::query()->create([
+        'page_id' => $page->id,
+        'template_area_id' => $heroArea->id,
+        'section_type_id' => SectionType::query()->where('code', 'hero_banner')->value('id'),
+        'sort_order' => 1,
+        'title' => 'Hero Banner',
+        'settings_json' => ['headline' => 'Old headline'],
+        'is_active' => true,
     ]);
 
-    $componentType = ComponentType::query()->where('code', 'admin_cta_group')->first();
+    $featured = PageSection::query()->create([
+        'page_id' => $page->id,
+        'template_area_id' => $contentArea->id,
+        'section_type_id' => SectionType::query()->where('code', 'featured_products')->value('id'),
+        'sort_order' => 2,
+        'title' => 'Featured Products',
+        'settings_json' => ['limit' => 8],
+        'data_source_type' => 'featured_products',
+        'data_source_payload_json' => ['limit' => 8],
+        'is_active' => true,
+    ]);
 
-    $response->assertRedirect(route('admin.cms.component-types.edit', $componentType));
+    $response = $this->post(route('admin.cms.homepage.update'), [
+        'sections' => [
+            [
+                'id' => $hero->id,
+                'section_code' => 'hero_banner',
+                'title' => 'Launch Hero',
+                'sort_order' => 2,
+                'is_active' => '1',
+                'settings' => [
+                    'eyebrow' => 'Homepage',
+                    'headline' => 'Updated homepage hero',
+                    'body' => 'A safer structured homepage section.',
+                    'primary_cta_label' => 'Shop now',
+                    'primary_cta_url' => '/catalog',
+                    'secondary_cta_label' => 'Learn more',
+                    'secondary_cta_url' => '/about-us',
+                ],
+            ],
+            [
+                'id' => $featured->id,
+                'section_code' => 'featured_products',
+                'title' => 'Featured Products',
+                'sort_order' => 3,
+                'is_active' => '0',
+            ],
+            [
+                'section_code' => 'promo_strip',
+                'title' => 'Announcement Strip',
+                'sort_order' => 1,
+                'is_active' => '1',
+                'settings' => [
+                    'content' => 'Free delivery on selected orders',
+                ],
+            ],
+        ],
+    ]);
 
-    expect($componentType)->not->toBeNull()
-        ->and($componentType->name)->toBe('Admin CTA Group');
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'homepage']));
+
+    $hero->refresh();
+    $featured->refresh();
+    $promo = $page->sections()->where('title', 'Announcement Strip')->first();
+
+    expect($hero->title)->toBe('Launch Hero')
+        ->and($hero->sort_order)->toBe(2)
+        ->and(data_get($hero->settings_json, 'headline'))->toBe('Updated homepage hero')
+        ->and($featured->is_active)->toBeFalse()
+        ->and($featured->data_source_type)->toBe('featured_products')
+        ->and(data_get($featured->settings_json, 'limit'))->toBe(8)
+        ->and($promo)->not->toBeNull()
+        ->and($promo->sort_order)->toBe(1)
+        ->and($promo->is_active)->toBeTrue()
+        ->and(data_get($promo->settings_json, 'content'))->toBe('Free delivery on selected orders');
+});
+
+it('uploads hero slider images through the homepage builder', function () {
+    Storage::fake('public');
+
+    $this->loginAsAdmin();
+
+    $page = cmsStudioHomepagePage();
+    $page->sections()->delete();
+
+    $response = $this->post(route('admin.cms.homepage.update'), [
+        'sections' => [
+            [
+                'section_code' => 'hero_slider',
+                'title' => 'Homepage Slider',
+                'sort_order' => 1,
+                'is_active' => '1',
+                'settings' => [
+                    'slides' => [
+                        [
+                            'image_file' => UploadedFile::fake()->image('slide-one.jpg', 1920, 700),
+                            'title' => 'Launch sale slide',
+                            'link' => '/sale',
+                        ],
+                        [
+                            'image_file' => UploadedFile::fake()->image('slide-two.jpg', 1920, 700),
+                            'title' => 'New arrivals slide',
+                            'link' => '/new-arrivals',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'homepage']));
+
+    $slider = $page->sections()
+        ->whereHas('sectionType', fn ($query) => $query->where('code', 'hero_slider'))
+        ->first();
+
+    expect($slider)->not->toBeNull()
+        ->and($slider->title)->toBe('Homepage Slider')
+        ->and(data_get($slider->settings_json, 'slides'))->toHaveCount(2)
+        ->and(data_get($slider->settings_json, 'slides.0.title'))->toBe('Launch sale slide')
+        ->and(data_get($slider->settings_json, 'slides.0.link'))->toBe('/sale');
+
+    Storage::disk('public')->assertExists(str_replace('storage/', '', data_get($slider->settings_json, 'slides.0.image')));
+    Storage::disk('public')->assertExists(str_replace('storage/', '', data_get($slider->settings_json, 'slides.1.image')));
+});
+
+it('keeps header and footer saves behind explicit CMS Studio permissions', function () {
+    $admin = cmsStudioAdminWithPermissions(['dashboard']);
+
+    $this->loginAsAdmin($admin);
+
+    $this->post(route('admin.cms.header.update'), [])->assertStatus(401);
+    $this->post(route('admin.cms.footer.update'), [])->assertStatus(401);
+    $this->post(route('admin.cms.navigation.update'), [])->assertStatus(401);
+    $this->post(route('admin.cms.homepage.update'), [])->assertStatus(401);
 });

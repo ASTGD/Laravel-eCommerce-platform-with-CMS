@@ -23,11 +23,17 @@ Relevant admin areas now exposed:
 The `My Website` area groups storefront website management into one parent menu:
 
 - Overview
-- CMS
+- CMS Studio
 - Themes
-- Settings
+- Site Settings
 
-`My Website > Overview` opens the existing CMS dashboard route at `admin.cms.dashboard.index`. It now acts as the website management overview for storefront content, theme, layout, and website settings. `My Website > CMS` links to the existing structured CMS pages screen, `My Website > Themes` links to existing theme presets, and `My Website > Settings` links to existing CMS site settings.
+`My Website > Overview` opens the CMS dashboard route at `admin.cms.dashboard.index`. It acts as the website management overview for storefront content, theme, layout, and website settings.
+
+`My Website > CMS Studio` opens the central Studio workspace at `admin.cms.index`. CMS Studio is the main admin UX for safe website content areas: Header, Footer, Navigation, Homepage, Pages, Reusable Blocks, and Site Settings.
+
+`My Website > Themes` links to existing theme presets. `My Website > Site Settings` opens the Site Settings area inside CMS Studio.
+
+The old CMS entities and runtime services remain as backend foundation only. They support rendering, preview, validation, publishing, and future Studio workflows; they are not presented to normal store admins as standalone database-management screens.
 
 ## Optional Module Visibility
 
@@ -372,9 +378,9 @@ Studio areas:
 - Header
 - Footer
 - Navigation
-- Homepage Sections
+- Homepage
+- Pages
 - Reusable Blocks
-- Static Content
 - Site Settings
 
 The old standalone CMS admin CRUD screens have been removed from the admin UI:
@@ -398,7 +404,9 @@ Header Builder is implemented with structured fields and a preview panel. It sav
 
 Footer Builder is implemented with structured fields and a preview panel. It saves into existing footer JSON storage internally.
 
-Navigation, Homepage Sections, Reusable Blocks, Static Content, and Site Settings are Studio-native placeholder panels that describe the intended workflows without linking back to old CRUD pages.
+Navigation Builder is implemented as a Studio-native flat menu workflow. Admins can create and edit business-friendly menus, choose the usage context, enable or disable menus, add flat menu links, set item order, mark links active or inactive, and open links in a new tab. It saves into the existing `menus` and `menu_items` storage and does not expose raw JSON editing.
+
+Homepage, Pages, Reusable Blocks, and Site Settings are Studio-native panels that summarize current backend content and describe the next business-friendly workflow. They do not link normal admins back to old CRUD pages or expose raw JSON editing.
 
 ## Theme Area
 
@@ -426,26 +434,28 @@ CMS ACL entries now cover:
 - Header Builder
 - Footer Builder
 - Navigation
-- Homepage Sections
-- Static Content
+- Homepage
+- Pages
+- Reusable Blocks
 - Site Settings
 
 Theme ACL remains centered on preset management in the current slice.
 
-CMS Studio routes use explicit permission middleware for the root editor and for header/footer save actions.
+CMS Studio routes use explicit permission middleware for the root editor and for header, footer, navigation, and homepage save actions.
 
 Recommended role split before frontend work begins:
 
 - Super Admin: full access
-- Website Manager: CMS Studio, header/footer, navigation, homepage, reusable content, static content, and site settings
+- Website Manager: CMS Studio, header/footer, navigation, homepage, pages, reusable blocks, and site settings
 - Theme Manager: theme presets
 - Catalog Manager: Bagisto catalog ownership only
 - SEO Manager: SEO and metadata workflows when that surface is hardened further
 
 ## Current Limitations
 
-- Navigation, Homepage Sections, Reusable Blocks, Static Content, and Site Settings are Studio placeholders in this pass.
-- Header/Footer are the first implemented structured builders.
+- Header, Footer, Navigation, and Homepage are implemented structured builders.
+- Homepage editing currently covers the first safe section types: Hero Banner, Hero Slider, Promo Strip, and Rich Text. Hero Slider supports up to five uploaded images and uses the storefront carousel behavior. Existing unsupported homepage sections are preserved as theme-managed sections.
+- Pages, Reusable Blocks, and Site Settings are Studio summary/staging panels in this pass.
 - Customer portal pages are still outside CMS Studio editing.
 
 ## Sales Order Workflow
