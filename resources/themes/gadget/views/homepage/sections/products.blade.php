@@ -34,26 +34,29 @@
 
     .carousel-track {
         display: flex;
-        transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+        transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
         gap: 30px;
         padding: 0 15px;
-        width: fit-content;
+        width: 100%;
     }
 
     .carousel-item {
-        flex: 0 0 calc(25% - 22.5px);
-        min-width: calc(25% - 22.5px);
+        flex: 0 0 calc((100% / var(--items-per-view)) - (30px * (var(--items-per-view) - 1) / var(--items-per-view)));
+        min-width: calc((100% / var(--items-per-view)) - (30px * (var(--items-per-view) - 1) / var(--items-per-view)));
         transition: 0.4s;
     }
 
     @media (max-width: 1200px) {
-        .carousel-item { flex: 0 0 calc(33.333% - 20px); min-width: calc(33.333% - 20px); }
+        .carousel-track { --items-per-view: 3; }
+    }
+    @media (min-width: 1201px) {
+        .carousel-track { --items-per-view: 4; }
     }
     @media (max-width: 991px) {
-        .carousel-item { flex: 0 0 calc(50% - 15px); min-width: calc(50% - 15px); }
+        .carousel-track { --items-per-view: 2; }
     }
     @media (max-width: 600px) {
-        .carousel-item { flex: 0 0 100%; min-width: 100%; }
+        .carousel-track { --items-per-view: 1; }
     }
 
     .carousel-nav-btn {
@@ -142,7 +145,7 @@
                     </button>
 
                     <div class="carousel-track-wrap">
-                        <div class="carousel-track" :style="translateStyle">
+                        <div class="carousel-track" :style="[translateStyle, { '--items-per-view': itemsPerView }]">
                             @foreach ($displayProducts as $product)
                                 <div class="carousel-item">
                                     @include('shop::homepage.partials.product-card', ['product' => $product, 'showAction' => true])
@@ -180,8 +183,9 @@
                 return this.itemCount > this.itemsPerView;
             },
             translateStyle() {
+                // Shift by index * (itemWidth + gap)
                 return {
-                    transform: `translateX(calc(-${this.currentIndex} * ( (100% / ${this.itemCount}) + (30px * (${this.itemCount} - 1) / ${this.itemCount}) )))`
+                    transform: `translateX(calc(-${this.currentIndex} * (100% / ${this.itemsPerView} + (30px / ${this.itemsPerView} * (${this.itemsPerView} - 1)) )))`
                 };
             }
         },
@@ -212,6 +216,7 @@
         render() {
             return this.$slots.default({
                 currentIndex: this.currentIndex,
+                itemsPerView: this.itemsPerView,
                 maxIndex: this.maxIndex,
                 showNav: this.showNav,
                 translateStyle: this.translateStyle,

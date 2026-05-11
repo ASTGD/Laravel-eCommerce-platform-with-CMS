@@ -45,20 +45,39 @@
         transform: scale(1.15) rotate(2deg);
     }
 
-    .gadget-pill {
+    .gadget-badges {
         position: absolute;
         top: 15px;
         left: 15px;
-        background: #3b82f6;
-        color: #ffffff;
-        padding: 5px 14px;
-        border-radius: 10px;
-        font-size: 11px;
-        font-weight: 850;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        z-index: 20;
+        pointer-events: none;
     }
+
+    .gadget-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        white-space: nowrap;
+        position: relative !important; /* Ensure no absolute positioning */
+        top: auto !important;
+        left: auto !important;
+    }
+
+    .gadget-pill--sale { background: #ef4444; }
+    .gadget-pill--hot { background: linear-gradient(45deg, #f59e0b, #ef4444); }
+    .gadget-pill--new { background: #3b82f6; }
+    .gadget-pill--out { background: #64748b; }
 
     .gadget-product-card__body {
         flex: 1;
@@ -163,15 +182,31 @@
         background: #fee2e2;
         color: #ef4444;
     }
+
+    /* Out of stock card styling */
+    .gadget-product-card--out-of-stock {
+        opacity: 0.8;
+    }
+    .gadget-product-card--out-of-stock .gadget-product-card__media {
+        filter: grayscale(0.5);
+    }
 </style>
 @endpushOnce
 
-<article class="gadget-product-card">
-    <a href="{{ $product['url'] }}" class="gadget-product-card__media" aria-label="{{ $product['name'] }}">
-        @if (! empty($product['badge']))
-            <span class="gadget-pill">{{ $product['badge'] }}</span>
+<article class="gadget-product-card {{ ! $product['is_saleable'] ? 'gadget-product-card--out-of-stock' : '' }}">
+    <div class="gadget-badges">
+        @if (! $product['is_saleable'])
+            <span class="gadget-pill gadget-pill--out">Stock Out</span>
         @endif
 
+        @if (! empty($product['badge']))
+            <span class="gadget-pill gadget-pill--{{ strtolower($product['badge']) === 'hot' ? 'hot' : (strtolower($product['badge']) === 'sale' ? 'sale' : 'new') }}">
+                {{ $product['badge'] }}
+            </span>
+        @endif
+    </div>
+
+    <a href="{{ $product['url'] }}" class="gadget-product-card__media" aria-label="{{ $product['name'] }}">
         <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" loading="lazy">
     </a>
 
@@ -200,8 +235,12 @@
                     data-cart-url="{{ route('shop.checkout.cart.index') }}"
                     @disabled(! $product['is_saleable'])
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                    <span>Buy Now</span>
+                    @if ($product['is_saleable'])
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        <span>Buy Now</span>
+                    @else
+                        <span>Stock Out</span>
+                    @endif
                 </button>
                 <button type="button" class="btn-wish-aura">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
