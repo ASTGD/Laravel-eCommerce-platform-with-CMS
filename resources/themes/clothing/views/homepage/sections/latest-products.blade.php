@@ -38,7 +38,7 @@
         @endphp
 
         <div class="gadget-product-grid">
-            @foreach (array_slice($displayProducts, 0, 8) as $product)
+            @foreach (collect($displayProducts)->take(8)->values() as $product)
                 @include('shop::homepage.partials.product-card', ['product' => $product, 'mode' => 'latest', 'showAction' => true])
             @endforeach
         </div>

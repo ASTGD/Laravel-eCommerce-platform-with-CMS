@@ -692,7 +692,7 @@ return [
         'sort' => 1,
     ], [
         'key' => 'my-website.cms',
-        'name' => 'admin::app.acl.cms',
+        'name' => 'admin::app.acl.cms-studio',
         'route' => 'admin.cms.index',
         'sort' => 2,
     ], [
@@ -702,7 +702,7 @@ return [
         'sort' => 3,
     ], [
         'key' => 'my-website.settings',
-        'name' => 'admin::app.acl.settings',
+        'name' => 'admin::app.acl.site-settings',
         'route' => 'admin.cms.settings.index',
         'sort' => 4,
     ],

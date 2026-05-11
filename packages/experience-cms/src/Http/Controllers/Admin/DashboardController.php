@@ -87,7 +87,8 @@ class DashboardController extends Controller
             'cms' => $this->routeUrl('admin.cms.index', 'admin.cms.dashboard.index'),
             'themes' => $this->routeUrl('admin.theme.presets.index', 'admin.cms.dashboard.index'),
             'settings' => $this->routeUrl('admin.cms.settings.index', 'admin.cms.index'),
-            'header_footer' => $this->routeUrl('admin.cms.index', 'admin.cms.dashboard.index'),
+            'header' => Route::has('admin.cms.index') ? route('admin.cms.index', ['area' => 'header']) : $this->routeUrl('admin.cms.dashboard.index'),
+            'footer' => Route::has('admin.cms.index') ? route('admin.cms.index', ['area' => 'footer']) : $this->routeUrl('admin.cms.dashboard.index'),
         ];
 
         return view('experience-cms::admin.dashboard.index', [

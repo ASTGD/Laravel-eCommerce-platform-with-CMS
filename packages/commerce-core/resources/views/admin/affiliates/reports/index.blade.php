@@ -111,7 +111,6 @@
         [
             'label' => 'Total Clicks',
             'value' => number_format($kpis['total_clicks'] ?? 0),
-            'helper' => 'Tracked referral visits',
             'color' => '#00A4EF',
             'badge' => 'bg-[#00A4EF]/12 text-[#007db7] ring-[#00A4EF]/28 dark:bg-[#00A4EF]/18 dark:text-[#8ddcff] dark:ring-[#00A4EF]/40',
             'icon' => 'icon-report',
@@ -119,7 +118,6 @@
         [
             'label' => 'Unique Visitors',
             'value' => number_format($kpis['unique_visitors'] ?? 0),
-            'helper' => 'Distinct referral visitors',
             'color' => '#737373',
             'badge' => 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
             'icon' => 'icon-customer-2',
@@ -127,7 +125,6 @@
         [
             'label' => 'Referred Orders',
             'value' => number_format($kpis['referred_orders'] ?? 0),
-            'helper' => 'Orders attributed to affiliates',
             'color' => '#7FBA00',
             'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'icon-cart',
@@ -135,7 +132,6 @@
         [
             'label' => 'Conversion Rate',
             'value' => number_format($kpis['conversion_rate'] ?? 0, 2).'%',
-            'helper' => 'Orders divided by clicks',
             'color' => '#7FBA00',
             'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'icon-up-stat',
@@ -143,7 +139,6 @@
         [
             'label' => 'Commission Earned',
             'value' => $formatMoney($kpis['total_commission_earned'] ?? 0),
-            'helper' => 'Pending, approved, and paid',
             'color' => '#7FBA00',
             'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'icon-sales',
@@ -151,7 +146,6 @@
         [
             'label' => 'Available Balance',
             'value' => $formatMoney($kpis['available_balance'] ?? 0),
-            'helper' => 'Payable after paid and reserved payouts',
             'color' => '#7FBA00',
             'badge' => 'bg-[#7FBA00]/12 text-[#5f8c00] ring-[#7FBA00]/28 dark:bg-[#7FBA00]/18 dark:text-[#b7e56a] dark:ring-[#7FBA00]/40',
             'icon' => 'icon-done',
@@ -159,7 +153,6 @@
         [
             'label' => 'Paid Out',
             'value' => $formatMoney($kpis['paid_out'] ?? 0),
-            'helper' => 'Completed affiliate payouts',
             'color' => '#737373',
             'badge' => 'bg-[#737373]/10 text-[#5f5f5f] ring-[#737373]/24 dark:bg-[#737373]/20 dark:text-[#d4d4d4] dark:ring-[#737373]/40',
             'icon' => 'icon-admin-export',
@@ -167,7 +160,6 @@
         [
             'label' => 'Pending Requests',
             'value' => number_format($kpis['pending_payout_requests'] ?? 0),
-            'helper' => 'Withdrawal requests needing review',
             'color' => '#FFB900',
             'badge' => 'bg-[#FFB900]/14 text-[#8a6400] ring-[#FFB900]/32 dark:bg-[#FFB900]/20 dark:text-[#ffd766] dark:ring-[#FFB900]/45',
             'icon' => 'icon-information',
@@ -227,7 +219,7 @@
                     style="--affiliate-report-color: {{ $card['color'] }};"
                 >
                     <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0 space-y-1.5 pr-16">
+                        <div class="min-w-0 space-y-3 pr-16">
                             <h3 class="font-sans text-[13px] font-medium leading-5 tracking-normal text-slate-500 dark:text-slate-400">
                                 {{ $card['label'] }}
                             </h3>
@@ -243,10 +235,6 @@
                             <span class="affiliate-report-kpi-icon {{ $card['icon'] }} text-xl" aria-hidden="true"></span>
                         </span>
                     </div>
-
-                    <span class="absolute bottom-5 left-5 inline-flex max-w-[calc(100%-5.5rem)] shrink-0 truncate rounded-full bg-slate-100 px-3 py-1 text-[12px] font-semibold text-slate-600 dark:bg-gray-900 dark:text-slate-300">
-                        {{ $card['helper'] }}
-                    </span>
                 </div>
             @endforeach
         </div>

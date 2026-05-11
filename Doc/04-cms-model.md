@@ -110,7 +110,18 @@ Header and footer values are stored internally in the existing JSON storage on `
 
 Homepage sections are structured and theme-supported.
 
-Admins will be able to add, reorder, enable, disable, preview, and publish homepage sections only from predefined section types supported by the active theme. Admins cannot create arbitrary layouts from the CMS.
+CMS Studio now includes the first Homepage Builder slice. Admins can add, reorder, enable, disable, and preview homepage sections only from predefined section types supported by the active theme. Admins cannot create arbitrary layouts from the CMS.
+
+The current structured editor supports:
+
+- Hero Banner
+- Hero Slider
+- Promo Strip
+- Rich Text
+
+Hero Slider stores up to five uploaded images in the existing `page_sections.settings_json` structure and reuses the storefront carousel behavior for automatic sliding.
+
+Existing theme-managed homepage sections, such as catalog-aware sections, are preserved safely without exposing raw JSON editing. Additional section-specific forms can be added as future vertical slices.
 
 The section and component registries remain the authority for:
 
@@ -166,13 +177,14 @@ Rules:
 
 - normal admins should not edit raw JSON
 - header/footer settings are saved into JSON storage internally
-- future homepage section editing must validate against section definitions from the active theme
+- homepage section editing validates predefined structured fields and stores them in existing `page_sections` JSON storage internally
 - future reusable block editing must validate against component/content schemas
 - commerce-critical flows must not be edited through CMS Studio
 
 ## Current Limitations
 
-- Navigation, homepage sections, reusable blocks, static content, and site settings are Studio placeholders in this pass.
+- Navigation and homepage sections have structured Studio builders.
 - Header and footer have structured save actions and admin preview mocks.
-- Full homepage section add/reorder/enable/disable/publish workflow remains a future Studio workstream.
+- Reusable blocks, static content, and site settings are Studio staging panels in this pass.
+- Full draft/publish versioning for homepage section edits remains a future Studio hardening workstream.
 - Product/category/cart/checkout/customer pages remain outside CMS Studio editing.

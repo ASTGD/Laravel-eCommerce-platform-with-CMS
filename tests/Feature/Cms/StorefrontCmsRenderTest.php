@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
 use Platform\ExperienceCms\Models\Page;
+use Platform\ExperienceCms\Models\PageSection;
+use Platform\ExperienceCms\Models\SectionType;
 use Webkul\Category\Repositories\CategoryRepository;
 use Webkul\Faker\Helpers\Product as ProductFaker;
 use Webkul\Shop\Http\Controllers\HomeController;
@@ -76,6 +78,51 @@ it('renders published CMS homepage data through signed preview only', function (
     $response->assertOk()
         ->assertSeeText('Structured CMS. Repeatable installs. Clean theme variation.')
         ->assertSee(route('shop.product_or_category.index', $product->url_key), false);
+});
+
+it('renders CMS hero slider slides through the signed homepage preview', function () {
+    $homePage = Page::query()->where('slug', 'home')->firstOrFail();
+    $heroAreaId = $homePage->template?->areas()->where('code', 'hero')->value('id')
+        ?? $homePage->template?->areas()->orderBy('sort_order')->value('id');
+
+    $sectionType = SectionType::query()->updateOrCreate(
+        ['code' => 'hero_slider'],
+        [
+            'name' => 'Hero Slider',
+            'category' => 'hero',
+            'config_schema_json' => [],
+            'supports_components' => false,
+            'allowed_data_sources_json' => [],
+            'renderer_class' => null,
+            'is_active' => true,
+        ]
+    );
+
+    PageSection::query()->create([
+        'page_id' => $homePage->id,
+        'template_area_id' => $heroAreaId,
+        'section_type_id' => $sectionType->id,
+        'sort_order' => 0,
+        'title' => 'Homepage Slider',
+        'settings_json' => [
+            'slides' => [
+                [
+                    'image' => 'storage/cms/homepage/hero-slider/slide-one.jpg',
+                    'title' => 'CMS hero slide one',
+                    'link' => '/sale',
+                ],
+            ],
+        ],
+        'is_active' => true,
+    ]);
+
+    $signedPreviewUrl = URL::temporarySignedRoute('platform.storefront.home_preview', now()->addMinutes(30));
+
+    $this->get($signedPreviewUrl)
+        ->assertOk()
+        ->assertSee('slide-one.jpg', false)
+        ->assertSee('CMS hero slide one', false)
+        ->assertSee('<v-carousel', false);
 });
 
 it('resolves featured products from the commerce-core data source resolver', function () {

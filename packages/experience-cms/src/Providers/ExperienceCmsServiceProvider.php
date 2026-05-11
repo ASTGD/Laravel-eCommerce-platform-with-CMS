@@ -28,6 +28,7 @@ use Platform\ExperienceCms\SectionTypes\FaqBlockSectionType;
 use Platform\ExperienceCms\SectionTypes\FeaturedProductsSectionType;
 use Platform\ExperienceCms\SectionTypes\FlashSaleProductsSectionType;
 use Platform\ExperienceCms\SectionTypes\HeroBannerSectionType;
+use Platform\ExperienceCms\SectionTypes\HeroSliderSectionType;
 use Platform\ExperienceCms\SectionTypes\NewArrivalsSectionType;
 use Platform\ExperienceCms\SectionTypes\ProductDetailsSectionType;
 use Platform\ExperienceCms\SectionTypes\ProductGallerySectionType;
@@ -65,6 +66,7 @@ class ExperienceCmsServiceProvider extends ServiceProvider
         $this->app->singleton(SectionTypeRegistry::class, function () {
             return new SectionTypeRegistry([
                 new HeroBannerSectionType,
+                new HeroSliderSectionType,
                 new PromoStripSectionType,
                 new CategoryGridSectionType,
                 new FeaturedProductsSectionType,
