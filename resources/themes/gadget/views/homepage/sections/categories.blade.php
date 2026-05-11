@@ -148,6 +148,18 @@
         .gadget-order-image { justify-content: center; padding-right: 0; }
         .banner-product-img { max-width: 300px; }
     }
+    .image-glow-ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120%;
+        height: 120%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+        border-radius: 50%;
+        z-index: 4;
+        pointer-events: none;
+    }
 </style>
 @endpushOnce
 
@@ -186,10 +198,13 @@
             </div>
             
             <div class="gadget-order-image">
+                <div class="image-glow-ring"></div>
                 <img 
-                    src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?auto=format&fit=crop&q=80&w=800" 
-                    alt="Premium Smartphone" 
+                    src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=800" 
+                    alt="Premium Tech" 
                     class="banner-product-img"
+                    style="-webkit-mask-image: radial-gradient(circle, black 50%, transparent 95%); mask-image: radial-gradient(circle, black 50%, transparent 95%);"
+                    onerror="this.src='https://via.placeholder.com/800x800/0f172a/3b82f6?text=Premium+Tech'"
                 >
             </div>
         </div>
