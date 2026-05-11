@@ -21,71 +21,132 @@
     }
 
     .gadget-order-banner {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        border-radius: 32px;
-        padding: 60px;
+        background: #0f172a;
+        border-radius: 48px;
+        padding: 80px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         color: #ffffff;
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .gadget-order-banner::before {
-        content: "";
+    .banner-aura {
         position: absolute;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
-        top: -100px;
-        right: -100px;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .aura-blob {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: auraMove 15s infinite alternate ease-in-out;
+    }
+
+    .aura-1 { top: -20%; right: -10%; background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%); }
+    .aura-2 { bottom: -20%; left: -10%; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%); }
+
+    @keyframes auraMove {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(50px, 30px) scale(1.1); }
     }
 
     .gadget-order-card {
         position: relative;
-        z-index: 2;
-        max-width: 500px;
+        z-index: 5;
+        max-width: 550px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(25px);
+        padding: 60px;
+        border-radius: 36px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3);
+        transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .gadget-order-card:hover {
+        transform: translateY(-10px);
+        border-color: rgba(59, 130, 246, 0.3);
+        background: rgba(255, 255, 255, 0.05);
     }
 
     .gadget-order-card p {
         color: #3b82f6;
-        font-weight: 800;
+        font-weight: 900;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-size: 13px;
-        margin-bottom: 12px;
+        letter-spacing: 0.15em;
+        font-size: 14px;
+        margin-bottom: 20px;
     }
 
     .gadget-order-card h3 {
-        font-size: 36px;
-        font-weight: 900;
-        line-height: 1.2;
-        margin-bottom: 32px;
+        font-size: 48px;
+        font-weight: 950;
+        line-height: 1.1;
+        margin-bottom: 40px;
+        letter-spacing: -0.04em;
     }
 
     .btn-order-now {
         background: #3b82f6;
         color: #ffffff !important;
-        padding: 18px 40px;
-        border-radius: 14px;
-        font-weight: 700;
+        padding: 22px 50px;
+        border-radius: 18px;
+        font-weight: 800;
         text-decoration: none !important;
-        font-size: 16px;
-        display: inline-block;
-        transition: 0.3s;
+        font-size: 18px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        transition: 0.4s;
+        box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
     }
 
     .btn-order-now:hover {
-        background: #ffffff;
-        color: #0f172a !important;
-        transform: translateY(-4px);
+        background: #2563eb;
+        transform: scale(1.05);
+        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.6);
+    }
+
+    .gadget-order-image {
+        position: relative;
+        z-index: 5;
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+        padding-right: 20px;
+    }
+
+    .banner-product-img {
+        max-width: 450px;
+        filter: drop-shadow(0 40px 80px rgba(0,0,0,0.4));
+        animation: floatBanner 6s infinite ease-in-out;
+    }
+
+    @keyframes floatBanner {
+        0%, 100% { transform: translateY(0) rotate(-2deg); }
+        50% { transform: translateY(-20px) rotate(2deg); }
+    }
+
+    @media (max-width: 1200px) {
+        .gadget-order-banner { padding: 60px; }
+        .gadget-order-card h3 { font-size: 38px; }
+        .banner-product-img { max-width: 350px; }
     }
 
     @media (max-width: 991px) {
         .gadget-category-grid { grid-template-columns: repeat(2, 1fr); }
-        .gadget-order-banner { flex-direction: column; text-align: center; padding: 40px 20px; }
-        .gadget-order-card h3 { font-size: 28px; }
+        .gadget-order-banner { flex-direction: column; text-align: center; padding: 60px 30px; }
+        .gadget-order-card { margin-bottom: 50px; padding: 40px; }
+        .gadget-order-image { justify-content: center; padding-right: 0; }
+        .banner-product-img { max-width: 300px; }
     }
 </style>
 @endpushOnce
@@ -106,19 +167,30 @@
         </div>
 
         <div class="gadget-order-banner">
+            <!-- Animated Background Aura -->
+            <div class="banner-aura">
+                <div class="aura-blob aura-1"></div>
+                <div class="aura-blob aura-2"></div>
+            </div>
+
             <div class="gadget-order-card">
                 <p>Seamless Experience</p>
                 <h3>Order Premium Tech Without Any Hassle.</h3>
                 <a href="{{ route('shop.search.index') }}" class="btn-order-now">
-                    Shop Now
+                    <span>Shop Now</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                 </a>
             </div>
             
-            <div class="gadget-order-image" style="position: relative; z-index: 2;">
-                <!-- Modern Visual Placeholder -->
-                <div style="background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 20px;">
-                    <div style="width: 200px; height: 120px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px;">🛒</div>
-                </div>
+            <div class="gadget-order-image">
+                <img 
+                    src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?auto=format&fit=crop&q=80&w=800" 
+                    alt="Premium Smartphone" 
+                    class="banner-product-img"
+                >
             </div>
         </div>
     </div>
