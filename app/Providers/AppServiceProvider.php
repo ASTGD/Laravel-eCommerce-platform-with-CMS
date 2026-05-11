@@ -48,6 +48,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Schema::defaultStringLength(191);
+
         $this->registerSecurityRateLimiters();
 
         ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
