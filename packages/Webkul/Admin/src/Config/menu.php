@@ -184,7 +184,7 @@ return [
         'permission' => 'cms.platform',
     ], [
         'key' => 'my-website.cms',
-        'name' => 'admin::app.components.layouts.sidebar.cms',
+        'name' => 'admin::app.components.layouts.sidebar.cms-studio',
         'route' => 'admin.cms.index',
         'sort' => 2,
         'icon' => '',
@@ -198,7 +198,7 @@ return [
         'permission' => 'theme.presets',
     ], [
         'key' => 'my-website.settings',
-        'name' => 'admin::app.components.layouts.sidebar.settings',
+        'name' => 'admin::app.components.layouts.sidebar.site-settings',
         'route' => 'admin.cms.settings.index',
         'sort' => 4,
         'icon' => '',

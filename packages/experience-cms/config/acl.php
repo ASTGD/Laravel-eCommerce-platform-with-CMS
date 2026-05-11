@@ -23,18 +23,23 @@ return [
         'sort' => 3,
     ], [
         'key' => 'cms.platform.homepage',
-        'name' => 'Homepage Sections',
+        'name' => 'Homepage',
         'route' => 'admin.cms.index',
         'sort' => 4,
     ], [
         'key' => 'cms.platform.content',
-        'name' => 'Static Content',
+        'name' => 'Pages',
         'route' => 'admin.cms.index',
         'sort' => 5,
+    ], [
+        'key' => 'cms.platform.reusable_blocks',
+        'name' => 'Reusable Blocks',
+        'route' => 'admin.cms.index',
+        'sort' => 6,
     ], [
         'key' => 'cms.platform.settings',
         'name' => 'Site Settings',
         'route' => 'admin.cms.settings.index',
-        'sort' => 6,
+        'sort' => 7,
     ],
 ];

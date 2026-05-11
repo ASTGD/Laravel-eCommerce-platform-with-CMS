@@ -36,7 +36,7 @@ class MenuEditor
                     'type' => $itemData['type'],
                     'target' => $itemData['target'],
                     'sort_order' => $itemData['sort_order'],
-                    'settings_json' => [],
+                    'settings_json' => $itemData['settings_json'] ?? [],
                     'is_active' => $itemData['is_active'],
                     'parent_id' => null,
                 ])->save();

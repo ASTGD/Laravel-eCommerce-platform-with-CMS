@@ -3,16 +3,31 @@
 namespace Platform\ExperienceCms\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
+use Platform\ExperienceCms\Models\Page;
+use Platform\ExperienceCms\Models\PageSection;
+use Platform\ExperienceCms\Models\SectionType;
+use Platform\ExperienceCms\Models\SiteSetting;
+use Platform\ExperienceCms\Models\Template;
+use Platform\ExperienceCms\Services\HomepageSectionEditor;
+use Platform\ExperienceCms\Services\MenuEditor;
+use Platform\ExperienceCms\Services\SectionTypeRegistry;
 
 class CmsStudioController extends Controller
 {
@@ -20,17 +35,43 @@ class CmsStudioController extends Controller
         'header',
         'footer',
         'navigation',
-        'homepage-sections',
+        'homepage',
+        'pages',
         'reusable-blocks',
-        'static-content',
         'settings',
+    ];
+
+    private const AREA_ALIASES = [
+        'homepage-sections' => 'homepage',
+        'static-content' => 'pages',
+        'site-settings' => 'settings',
+    ];
+
+    private const HOMEPAGE_SECTION_CODES = [
+        'hero_banner',
+        'hero_slider',
+        'promo_strip',
+        'category_grid',
+        'featured_products',
+        'best_sellers',
+        'new_arrivals',
+        'rich_text',
+        'trust_badges',
+        'faq_block',
+    ];
+
+    private const EDITABLE_HOMEPAGE_SECTION_CODES = [
+        'hero_banner',
+        'hero_slider',
+        'promo_strip',
+        'rich_text',
     ];
 
     public function index(Request $request): View
     {
         $area = $this->selectedArea($request);
         $menus = $this->menuOptions();
-        $editor = $this->editorPayload($area, $menus);
+        $editor = $this->editorPayload($request, $area, $menus);
 
         return view('experience-cms::admin.cms.studio.index', [
             'area' => $area,
@@ -38,7 +79,7 @@ class CmsStudioController extends Controller
             'editor' => $editor,
             'preview' => $this->previewPayload($area, $editor, $menus),
             'previewStorefrontUrl' => $this->previewStorefrontUrl(),
-            'canSave' => in_array($area, ['header', 'footer'], true) && ($editor['storage_available'] ?? false),
+            'canSave' => in_array($area, ['header', 'footer', 'navigation', 'homepage'], true) && ($editor['storage_available'] ?? false),
         ]);
     }
 
@@ -53,12 +94,12 @@ class CmsStudioController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['nullable', 'string', 'max:255'],
-            'logo_url' => ['nullable', 'string', 'max:2048'],
+            'name' => ['required', 'string', 'max:255'],
+            'logo_url' => ['nullable', 'url', 'max:2048'],
             'announcement_enabled' => ['boolean'],
             'announcement_text' => ['nullable', 'string', 'max:255'],
-            'announcement_link' => ['nullable', 'string', 'max:2048'],
-            'menu_id' => ['nullable', 'integer'],
+            'announcement_link' => ['nullable', 'url', 'max:2048'],
+            'menu_id' => ['nullable', 'integer', Rule::exists('menus', 'id')->where('is_active', true)],
             'show_search' => ['boolean'],
             'show_account' => ['boolean'],
             'show_cart' => ['boolean'],
@@ -112,16 +153,18 @@ class CmsStudioController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['nullable', 'string', 'max:255'],
-            'logo_url' => ['nullable', 'string', 'max:2048'],
+            'name' => ['required', 'string', 'max:255'],
+            'logo_url' => ['nullable', 'url', 'max:2048'],
             'newsletter_enabled' => ['boolean'],
             'newsletter_heading' => ['nullable', 'string', 'max:255'],
             'newsletter_text' => ['nullable', 'string', 'max:500'],
-            'contact_email' => ['nullable', 'string', 'max:255'],
+            'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:100'],
-            'social_facebook' => ['nullable', 'string', 'max:2048'],
-            'social_instagram' => ['nullable', 'string', 'max:2048'],
-            'social_x' => ['nullable', 'string', 'max:2048'],
+            'social_facebook' => ['nullable', 'url', 'max:2048'],
+            'social_instagram' => ['nullable', 'url', 'max:2048'],
+            'social_x' => ['nullable', 'url', 'max:2048'],
+            'social_youtube' => ['nullable', 'url', 'max:2048'],
+            'social_tiktok' => ['nullable', 'url', 'max:2048'],
             'copyright_text' => ['nullable', 'string', 'max:255'],
             'variant' => ['required', Rule::in(['simple', 'multi_column', 'minimal'])],
         ]);
@@ -150,6 +193,8 @@ class CmsStudioController extends Controller
                 'facebook' => $validated['social_facebook'] ?? null,
                 'instagram' => $validated['social_instagram'] ?? null,
                 'x' => $validated['social_x'] ?? null,
+                'youtube' => $validated['social_youtube'] ?? null,
+                'tiktok' => $validated['social_tiktok'] ?? null,
             ],
             'copyright_text' => $validated['copyright_text'] ?? null,
             'variant' => $validated['variant'],
@@ -162,9 +207,207 @@ class CmsStudioController extends Controller
             ->with('success', 'Footer settings saved.');
     }
 
+    public function updateNavigation(Request $request, MenuEditor $menuEditor): RedirectResponse
+    {
+        if (! $this->modelTableExists(Menu::class)) {
+            return redirect()
+                ->route('admin.cms.index', ['area' => 'navigation'])
+                ->with('error', 'Navigation menu storage is not available.');
+        }
+
+        $validated = $request->validate([
+            'menu_id' => ['nullable', 'integer', Rule::exists('menus', 'id')],
+            'name' => ['required', 'string', 'max:255'],
+            'location' => ['required', Rule::in(array_keys($this->menuLocations()))],
+            'is_active' => ['boolean'],
+            'items' => ['nullable', 'array', 'max:30'],
+            'items.*.title' => ['nullable', 'string', 'max:255'],
+            'items.*.type' => ['nullable', Rule::in(array_keys($this->menuItemTypes()))],
+            'items.*.target' => ['nullable', 'string', 'max:2048'],
+            'items.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'items.*.is_active' => ['boolean'],
+            'items.*.open_in_new_tab' => ['boolean'],
+        ]);
+
+        $items = collect($validated['items'] ?? [])
+            ->map(fn (array $item): array => [
+                'title' => trim((string) ($item['title'] ?? '')),
+                'type' => $item['type'] ?? 'url',
+                'target' => trim((string) ($item['target'] ?? '')),
+                'sort_order' => (int) ($item['sort_order'] ?? 0),
+                'is_active' => (bool) ($item['is_active'] ?? false),
+                'open_in_new_tab' => (bool) ($item['open_in_new_tab'] ?? false),
+            ])
+            ->filter(fn (array $item): bool => $item['title'] !== '' || $item['target'] !== '')
+            ->values();
+
+        $items->each(function (array $item, int $index): void {
+            validator($item, [
+                'title' => ['required', 'string', 'max:255'],
+                'type' => ['required', Rule::in(array_keys($this->menuItemTypes()))],
+                'target' => ['required', 'string', 'max:2048'],
+                'sort_order' => ['integer', 'min:0', 'max:10000'],
+            ], [], [
+                'title' => 'item '.($index + 1).' label',
+                'target' => 'item '.($index + 1).' URL',
+            ])->validate();
+        });
+
+        $attributes = [
+            'name' => $validated['name'],
+            'location' => $validated['location'],
+            'is_active' => (bool) ($validated['is_active'] ?? false),
+        ];
+
+        $menuItems = $items
+            ->map(fn (array $item, int $index): array => [
+                'id' => null,
+                'title' => $item['title'],
+                'type' => $item['type'],
+                'target' => $item['target'],
+                'sort_order' => $item['sort_order'] ?: $index + 1,
+                'settings_json' => [
+                    'open_in_new_tab' => $item['open_in_new_tab'],
+                ],
+                'is_active' => $item['is_active'],
+            ])
+            ->all();
+
+        $menu = filled($validated['menu_id'] ?? null)
+            ? $menuEditor->update(Menu::query()->findOrFail($validated['menu_id']), $attributes, $menuItems)
+            : $menuEditor->create(['code' => $this->uniqueMenuCode($validated['name']), ...$attributes], $menuItems);
+
+        return redirect()
+            ->route('admin.cms.index', ['area' => 'navigation', 'menu' => $menu->getKey()])
+            ->with('success', 'Navigation menu saved.');
+    }
+
+    public function updateHomepage(Request $request, HomepageSectionEditor $homepageSections): RedirectResponse
+    {
+        $this->ensureHomepageSectionTypes();
+
+        $homepage = $this->homepagePageForEditing();
+
+        if (! $homepage) {
+            return redirect()
+                ->route('admin.cms.index', ['area' => 'homepage'])
+                ->with('error', 'Homepage section storage is not available.');
+        }
+
+        $validated = $request->validate([
+            'sections' => ['nullable', 'array', 'max:24'],
+            'sections.*.id' => ['nullable', 'integer'],
+            'sections.*.section_code' => ['nullable', 'string'],
+            'sections.*.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'sections.*.is_active' => ['boolean'],
+            'sections.*.settings' => ['nullable', 'array'],
+            'sections.*.settings.eyebrow' => ['nullable', 'string', 'max:120'],
+            'sections.*.settings.headline' => ['nullable', 'string', 'max:255'],
+            'sections.*.settings.body' => ['nullable', 'string', 'max:1000'],
+            'sections.*.settings.primary_cta_label' => ['nullable', 'string', 'max:80'],
+            'sections.*.settings.primary_cta_url' => ['nullable', 'string', 'max:2048'],
+            'sections.*.settings.secondary_cta_label' => ['nullable', 'string', 'max:80'],
+            'sections.*.settings.secondary_cta_url' => ['nullable', 'string', 'max:2048'],
+            'sections.*.settings.content' => ['nullable', 'string', 'max:5000'],
+            'sections.*.settings.slides' => ['nullable', 'array', 'max:5'],
+            'sections.*.settings.slides.*.current_image' => ['nullable', 'string', 'max:2048'],
+            'sections.*.settings.slides.*.image_file' => ['nullable', File::image()->max('4mb')],
+            'sections.*.settings.slides.*.title' => ['nullable', 'string', 'max:120'],
+            'sections.*.settings.slides.*.link' => ['nullable', 'string', 'max:2048'],
+        ]);
+
+        $existingSections = $homepage->sections()
+            ->with('sectionType')
+            ->get()
+            ->keyBy('id');
+
+        $submittedSectionIds = collect($validated['sections'] ?? [])
+            ->pluck('id')
+            ->filter(fn ($id): bool => filled($id))
+            ->map(fn ($id): int => (int) $id);
+
+        $unknownSectionIds = $submittedSectionIds
+            ->diff($existingSections->keys()->map(fn ($id): int => (int) $id))
+            ->values();
+
+        if ($unknownSectionIds->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'sections' => 'One or more submitted homepage sections do not belong to this homepage.',
+            ]);
+        }
+
+        $sections = collect($validated['sections'] ?? [])
+            ->map(function (array $section) use ($existingSections): ?array {
+                $existingSection = filled($section['id'] ?? null)
+                    ? $existingSections->get((int) $section['id'])
+                    : null;
+
+                $sectionCode = $section['section_code'] ?? $existingSection?->sectionType?->code;
+                $settings = $section['settings'] ?? [];
+                $hasContent = filled($section['title'] ?? null)
+                    || filled($sectionCode)
+                    || collect($settings)->filter(fn ($value): bool => filled($value))->isNotEmpty();
+
+                if (! $existingSection && ! $hasContent) {
+                    return null;
+                }
+
+                if (! $sectionCode) {
+                    return null;
+                }
+
+                $isEditable = in_array($sectionCode, self::EDITABLE_HOMEPAGE_SECTION_CODES, true);
+
+                return [
+                    'id' => $existingSection?->getKey(),
+                    'is_new' => ! $existingSection,
+                    'section_code' => $sectionCode,
+                    'title' => trim((string) ($section['title'] ?? $existingSection?->title ?? '')),
+                    'sort_order' => (int) ($section['sort_order'] ?? $existingSection?->sort_order ?? 0),
+                    'settings_json' => $isEditable
+                        ? $this->homepageSectionSettingsFromRequest($sectionCode, $settings)
+                        : ($existingSection?->settings_json ?? []),
+                    'visibility_rules_json' => $existingSection?->visibility_rules_json ?? [],
+                    'data_source_type' => $existingSection?->data_source_type,
+                    'data_source_payload_json' => $existingSection?->data_source_payload_json ?? [],
+                    'is_active' => (bool) ($section['is_active'] ?? false),
+                ];
+            })
+            ->filter()
+            ->sortBy('sort_order')
+            ->values();
+
+        $sections->each(function (array $section, int $index): void {
+            if (! in_array($section['section_code'], self::HOMEPAGE_SECTION_CODES, true)) {
+                throw ValidationException::withMessages([
+                    "sections.$index.section_code" => 'This section type is not supported on the homepage.',
+                ]);
+            }
+
+            if (($section['is_new'] ?? false) && ! in_array($section['section_code'], self::EDITABLE_HOMEPAGE_SECTION_CODES, true)) {
+                throw ValidationException::withMessages([
+                    "sections.$index.section_code" => 'This section type is preserved by the theme and cannot be added manually yet.',
+                ]);
+            }
+
+            validator($section['settings_json'], $this->homepageSectionValidationRules($section['section_code']), [], [
+                'headline' => 'section '.($index + 1).' headline',
+                'content' => 'section '.($index + 1).' content',
+            ])->validate();
+        });
+
+        $homepageSections->sync($homepage, $sections->all());
+
+        return redirect()
+            ->route('admin.cms.index', ['area' => 'homepage'])
+            ->with('success', 'Homepage sections saved.');
+    }
+
     private function selectedArea(Request $request): string
     {
         $area = $request->route('area') ?: $request->query('area', 'header');
+        $area = self::AREA_ALIASES[$area] ?? $area;
 
         return in_array($area, self::AREAS, true) ? $area : 'header';
     }
@@ -173,29 +416,14 @@ class CmsStudioController extends Controller
     {
         $groups = [
             [
-                'title' => 'Website Layout',
+                'title' => 'CMS Studio',
                 'items' => [
                     ['key' => 'header', 'label' => 'Header'],
                     ['key' => 'footer', 'label' => 'Footer'],
                     ['key' => 'navigation', 'label' => 'Navigation'],
-                ],
-            ],
-            [
-                'title' => 'Homepage',
-                'items' => [
-                    ['key' => 'homepage-sections', 'label' => 'Homepage Sections'],
+                    ['key' => 'homepage', 'label' => 'Homepage'],
+                    ['key' => 'pages', 'label' => 'Pages'],
                     ['key' => 'reusable-blocks', 'label' => 'Reusable Blocks'],
-                ],
-            ],
-            [
-                'title' => 'Content',
-                'items' => [
-                    ['key' => 'static-content', 'label' => 'Static Content'],
-                ],
-            ],
-            [
-                'title' => 'Configuration',
-                'items' => [
                     ['key' => 'settings', 'label' => 'Site Settings'],
                 ],
             ],
@@ -214,31 +442,39 @@ class CmsStudioController extends Controller
         }, $groups);
     }
 
-    private function editorPayload(string $area, array $menus): array
+    private function editorPayload(Request $request, string $area, array $menus): array
     {
         return match ($area) {
             'header' => $this->headerEditorPayload($menus),
             'footer' => $this->footerEditorPayload(),
-            'navigation' => $this->placeholderPayload(
-                'Navigation',
-                'Navigation editing will be managed inside CMS Studio. Menus will control header, footer, and mobile navigation.'
-            ),
-            'homepage-sections' => $this->placeholderPayload(
-                'Homepage Sections',
-                'Add, reorder, enable, disable, preview, and publish theme-supported homepage sections.',
-                'Sections are predefined by the active theme. Admins cannot create arbitrary layouts.'
-            ),
+            'navigation' => $this->navigationEditorPayload($request),
+            'homepage' => $this->homepageEditorPayload(),
             'reusable-blocks' => $this->placeholderPayload(
                 'Reusable Blocks',
-                'Manage reusable structured content blocks used by homepage sections, header, footer, and static content.'
+                'Manage reusable structured content blocks used by homepage sections, header, footer, and pages.',
+                null,
+                [
+                    'summary' => $this->contentEntrySummary(),
+                    'recommended_types' => ['FAQ block', 'Trust badges', 'Contact info block', 'Promo text block', 'Footer link group'],
+                ]
             ),
-            'static-content' => $this->placeholderPayload(
-                'Static Content',
-                'Manage landing, static, and policy content. Product, category, cart, checkout, and customer pages are not edited here.'
+            'pages' => $this->placeholderPayload(
+                'Pages',
+                'Manage safe static, landing, and policy pages. Product, category, cart, checkout, and customer pages are not edited here.',
+                null,
+                [
+                    'summary' => $this->pageSummary(),
+                    'allowed_types' => ['About Us', 'Contact', 'Privacy Policy', 'Terms & Conditions', 'Return Policy', 'Landing / Campaign Page'],
+                ]
             ),
             'settings' => $this->placeholderPayload(
                 'Site Settings',
-                'Manage global website identity, SEO defaults, contact details, trust badges, and shared storefront content.'
+                'Manage global website identity, SEO defaults, contact details, trust badges, and shared storefront content.',
+                null,
+                [
+                    'summary' => $this->siteSettingsSummary(),
+                    'groups' => ['Store Identity', 'Contact', 'Social Links', 'Trust / Footer Info', 'SEO Defaults'],
+                ]
             ),
             default => $this->headerEditorPayload($menus),
         };
@@ -308,13 +544,412 @@ class CmsStudioController extends Controller
                 'social_facebook' => data_get($settings, 'social.facebook'),
                 'social_instagram' => data_get($settings, 'social.instagram'),
                 'social_x' => data_get($settings, 'social.x'),
+                'social_youtube' => data_get($settings, 'social.youtube'),
+                'social_tiktok' => data_get($settings, 'social.tiktok'),
                 'copyright_text' => $settings['copyright_text'] ?? 'Copyright '.now()->year.' Storefront. All rights reserved.',
                 'variant' => $settings['variant'] ?? 'simple',
             ],
         ];
     }
 
-    private function placeholderPayload(string $title, string $text, ?string $note = null): array
+    private function navigationEditorPayload(Request $request): array
+    {
+        if (! $this->modelTableExists(Menu::class)) {
+            return [
+                'type' => 'navigation',
+                'title' => 'Navigation Builder',
+                'description' => 'Create and edit business-friendly menus used by the storefront header and footer.',
+                'form_action' => route('admin.cms.navigation.update'),
+                'storage_available' => false,
+                'storage_error' => 'Navigation menu storage is not available.',
+                'save_label' => 'Save Menu',
+                'menus' => [],
+                'locations' => $this->menuLocations(),
+                'item_types' => $this->menuItemTypes(),
+                'values' => $this->emptyMenuPayload(),
+            ];
+        }
+
+        $menus = Menu::query()
+            ->withCount('items')
+            ->orderByDesc('is_active')
+            ->orderBy('location')
+            ->orderBy('name')
+            ->get();
+
+        $selectedMenu = $this->selectedMenuForEditing($request, $menus);
+
+        return [
+            'type' => 'navigation',
+            'title' => 'Navigation Builder',
+            'description' => 'Create and edit business-friendly menus used by the storefront header and footer.',
+            'form_action' => route('admin.cms.navigation.update'),
+            'storage_available' => true,
+            'storage_error' => null,
+            'save_label' => 'Save Menu',
+            'menus' => $menus->map(fn (Menu $menu): array => [
+                'id' => $menu->getKey(),
+                'name' => $menu->name,
+                'location' => $menu->location,
+                'location_label' => $this->menuLocations()[$menu->location] ?? Str::headline((string) $menu->location),
+                'items_count' => $menu->items_count,
+                'is_active' => $menu->is_active,
+                'edit_url' => route('admin.cms.index', ['area' => 'navigation', 'menu' => $menu->getKey()]),
+            ])->all(),
+            'create_url' => route('admin.cms.index', ['area' => 'navigation', 'menu' => 'new']),
+            'locations' => $this->menuLocations(),
+            'item_types' => $this->menuItemTypes(),
+            'values' => $selectedMenu ? $this->menuPayload($selectedMenu) : $this->emptyMenuPayload(),
+        ];
+    }
+
+    private function selectedMenuForEditing(Request $request, EloquentCollection $menus): ?Menu
+    {
+        if ($request->query('menu') === 'new') {
+            return null;
+        }
+
+        if (filled($request->query('menu'))) {
+            return $menus->first(fn (Menu $menu): bool => (string) $menu->getKey() === (string) $request->query('menu'));
+        }
+
+        return $menus->first();
+    }
+
+    private function emptyMenuPayload(): array
+    {
+        return [
+            'id' => null,
+            'name' => '',
+            'location' => 'header',
+            'is_active' => true,
+            'items' => [
+                $this->emptyMenuItemPayload(1),
+            ],
+        ];
+    }
+
+    private function menuPayload(Menu $menu): array
+    {
+        $menu->loadMissing(['items' => fn ($query) => $query->whereNull('parent_id')->orderBy('sort_order')]);
+
+        $items = $menu->items
+            ->whereNull('parent_id')
+            ->sortBy('sort_order')
+            ->values()
+            ->map(fn ($item): array => [
+                'title' => $item->title,
+                'type' => $item->type,
+                'target' => $item->target,
+                'sort_order' => $item->sort_order,
+                'is_active' => $item->is_active,
+                'open_in_new_tab' => (bool) data_get($item->settings_json, 'open_in_new_tab', false),
+            ])
+            ->all();
+
+        return [
+            'id' => $menu->getKey(),
+            'name' => $menu->name,
+            'location' => $menu->location,
+            'is_active' => $menu->is_active,
+            'items' => $items ?: [$this->emptyMenuItemPayload(1)],
+        ];
+    }
+
+    private function emptyMenuItemPayload(int $sortOrder): array
+    {
+        return [
+            'title' => '',
+            'type' => 'url',
+            'target' => '',
+            'sort_order' => $sortOrder,
+            'is_active' => true,
+            'open_in_new_tab' => false,
+        ];
+    }
+
+    private function menuLocations(): array
+    {
+        return [
+            'header' => 'Header Navigation',
+            'footer' => 'Footer Links',
+            'mobile' => 'Mobile Navigation',
+            'utility' => 'Utility Links',
+        ];
+    }
+
+    private function menuItemTypes(): array
+    {
+        return [
+            'url' => 'Custom URL',
+            'page' => 'Page URL',
+            'category' => 'Category URL',
+        ];
+    }
+
+    private function uniqueMenuCode(string $name): string
+    {
+        $baseCode = Str::slug($name) ?: 'menu';
+        $code = $baseCode;
+        $suffix = 2;
+
+        while (Menu::query()->where('code', $code)->exists()) {
+            $code = $baseCode.'-'.$suffix;
+            $suffix++;
+        }
+
+        return $code;
+    }
+
+    private function homepageEditorPayload(): array
+    {
+        $this->ensureHomepageSectionTypes();
+
+        $homepage = $this->homepagePageForEditing();
+
+        if (! $homepage || ! $this->modelTableExists(PageSection::class) || ! $this->modelTableExists(SectionType::class)) {
+            return [
+                'type' => 'homepage',
+                'title' => 'Homepage Builder',
+                'description' => 'Add, reorder, enable, disable, and preview predefined homepage sections.',
+                'form_action' => route('admin.cms.homepage.update'),
+                'storage_available' => false,
+                'storage_error' => 'Homepage section storage is not available.',
+                'save_label' => 'Save Homepage',
+                'values' => [
+                    'page' => null,
+                    'sections' => [],
+                ],
+                'section_types' => [],
+            ];
+        }
+
+        $homepage->loadMissing(['sections.sectionType', 'sections.templateArea', 'versions']);
+
+        return [
+            'type' => 'homepage',
+            'title' => 'Homepage Builder',
+            'description' => 'Manage safe, theme-supported homepage sections without arbitrary layout editing.',
+            'form_action' => route('admin.cms.homepage.update'),
+            'storage_available' => true,
+            'storage_error' => null,
+            'save_label' => 'Save Homepage',
+            'preview_url' => $this->homepagePreviewUrl(),
+            'section_types' => $this->editableHomepageSectionTypes(),
+            'values' => [
+                'page' => [
+                    'title' => $homepage->title,
+                    'slug' => $homepage->slug,
+                    'status' => $homepage->status,
+                    'updated_at' => $homepage->updated_at?->diffForHumans(),
+                    'published_at' => $homepage->published_at?->diffForHumans(),
+                    'preview_url' => $this->homepagePreviewUrl(),
+                ],
+                'sections' => $homepage->sections
+                    ->sortBy('sort_order')
+                    ->values()
+                    ->map(fn (PageSection $section): array => $this->homepageSectionPayload($section))
+                    ->all(),
+            ],
+        ];
+    }
+
+    private function homepagePageForEditing(): ?Page
+    {
+        if (! $this->modelTableExists(Page::class) || ! $this->modelTableExists(Template::class)) {
+            return null;
+        }
+
+        $homepage = Page::query()->where('slug', 'home')->first()
+            ?? Page::query()->where('type', 'homepage')->orderBy('id')->first();
+
+        if ($homepage) {
+            return $homepage;
+        }
+
+        $template = Template::query()
+            ->where('code', 'homepage_default')
+            ->orWhere('page_type', 'homepage')
+            ->orderByDesc('is_active')
+            ->orderBy('id')
+            ->first();
+
+        if (! $template) {
+            return null;
+        }
+
+        return Page::query()->create([
+            'title' => 'Homepage',
+            'slug' => 'home',
+            'type' => 'homepage',
+            'template_id' => $template->getKey(),
+            'settings_json' => [],
+            'status' => Page::STATUS_DRAFT,
+            'created_by' => auth('admin')->id(),
+            'updated_by' => auth('admin')->id(),
+        ]);
+    }
+
+    private function ensureHomepageSectionTypes(): void
+    {
+        if (! $this->modelTableExists(SectionType::class)) {
+            return;
+        }
+
+        app(SectionTypeRegistry::class)
+            ->all()
+            ->filter(fn ($definition): bool => in_array($definition->code(), self::HOMEPAGE_SECTION_CODES, true))
+            ->each(fn ($definition): SectionType => SectionType::query()->updateOrCreate(
+                ['code' => $definition->code()],
+                $definition->toArray()
+            ));
+    }
+
+    private function homepageSectionPayload(PageSection $section): array
+    {
+        $sectionCode = (string) $section->sectionType?->code;
+        $settings = array_replace(
+            $this->homepageSectionDefaults($sectionCode),
+            is_array($section->settings_json) ? $section->settings_json : []
+        );
+
+        return [
+            'id' => $section->getKey(),
+            'section_code' => $sectionCode,
+            'section_label' => $section->sectionType?->name ?? Str::headline($sectionCode),
+            'area_label' => $section->templateArea?->name,
+            'is_editable' => in_array($sectionCode, self::EDITABLE_HOMEPAGE_SECTION_CODES, true),
+            'title' => $section->title ?: $section->sectionType?->name,
+            'sort_order' => $section->sort_order,
+            'is_active' => $section->is_active,
+            'settings' => $settings,
+        ];
+    }
+
+    private function editableHomepageSectionTypes(): array
+    {
+        if (! $this->modelTableExists(SectionType::class)) {
+            return [];
+        }
+
+        return collect(self::EDITABLE_HOMEPAGE_SECTION_CODES)
+            ->map(fn (string $code): ?SectionType => SectionType::query()
+                ->where('code', $code)
+                ->where('is_active', true)
+                ->first())
+            ->filter()
+            ->map(fn (SectionType $sectionType): array => [
+                'code' => $sectionType->code,
+                'name' => $sectionType->name,
+                'category' => $sectionType->category,
+                'defaults' => $this->homepageSectionDefaults($sectionType->code),
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function homepageSectionDefaults(string $sectionCode): array
+    {
+        return match ($sectionCode) {
+            'hero_banner' => [
+                'eyebrow' => '',
+                'headline' => '',
+                'body' => '',
+                'primary_cta_label' => '',
+                'primary_cta_url' => '',
+                'secondary_cta_label' => '',
+                'secondary_cta_url' => '',
+            ],
+            'hero_slider' => [
+                'slides' => [],
+            ],
+            'promo_strip', 'rich_text' => [
+                'content' => '',
+            ],
+            default => [],
+        };
+    }
+
+    private function homepageSectionSettingsFromRequest(string $sectionCode, array $settings): array
+    {
+        return match ($sectionCode) {
+            'hero_banner' => [
+                'eyebrow' => trim((string) ($settings['eyebrow'] ?? '')),
+                'headline' => trim((string) ($settings['headline'] ?? '')),
+                'body' => trim((string) ($settings['body'] ?? '')),
+                'primary_cta_label' => trim((string) ($settings['primary_cta_label'] ?? '')),
+                'primary_cta_url' => trim((string) ($settings['primary_cta_url'] ?? '')),
+                'secondary_cta_label' => trim((string) ($settings['secondary_cta_label'] ?? '')),
+                'secondary_cta_url' => trim((string) ($settings['secondary_cta_url'] ?? '')),
+            ],
+            'hero_slider' => [
+                'slides' => $this->heroSliderSlidesFromRequest($settings['slides'] ?? []),
+            ],
+            'promo_strip', 'rich_text' => [
+                'content' => trim((string) ($settings['content'] ?? '')),
+            ],
+            default => [],
+        };
+    }
+
+    private function homepageSectionValidationRules(string $sectionCode): array
+    {
+        return match ($sectionCode) {
+            'hero_banner' => [
+                'eyebrow' => ['nullable', 'string', 'max:120'],
+                'headline' => ['required', 'string', 'max:255'],
+                'body' => ['nullable', 'string', 'max:1000'],
+                'primary_cta_label' => ['nullable', 'string', 'max:80'],
+                'primary_cta_url' => ['nullable', 'string', 'max:2048'],
+                'secondary_cta_label' => ['nullable', 'string', 'max:80'],
+                'secondary_cta_url' => ['nullable', 'string', 'max:2048'],
+            ],
+            'hero_slider' => [
+                'slides' => ['required', 'array', 'min:1', 'max:5'],
+                'slides.*.image' => ['required', 'string', 'max:2048'],
+                'slides.*.title' => ['nullable', 'string', 'max:120'],
+                'slides.*.link' => ['nullable', 'string', 'max:2048'],
+            ],
+            'promo_strip', 'rich_text' => [
+                'content' => ['required', 'string', 'max:5000'],
+            ],
+            default => [],
+        };
+    }
+
+    private function heroSliderSlidesFromRequest(array $slides): array
+    {
+        return collect($slides)
+            ->take(5)
+            ->map(function (array $slide): array {
+                $image = trim((string) ($slide['current_image'] ?? ''));
+                $uploadedImage = $slide['image_file'] ?? null;
+
+                if ($uploadedImage instanceof UploadedFile && $uploadedImage->isValid()) {
+                    $image = 'storage/'.$uploadedImage->store('cms/homepage/hero-slider', 'public');
+                }
+
+                return [
+                    'image' => $image,
+                    'title' => trim((string) ($slide['title'] ?? '')),
+                    'link' => trim((string) ($slide['link'] ?? '')),
+                ];
+            })
+            ->filter(fn (array $slide): bool => filled($slide['image']) || filled($slide['title']) || filled($slide['link']))
+            ->values()
+            ->all();
+    }
+
+    private function homepagePreviewUrl(): ?string
+    {
+        if (! Route::has('platform.storefront.home_preview')) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute('platform.storefront.home_preview', now()->addMinutes(30));
+    }
+
+    private function placeholderPayload(string $title, string $text, ?string $note = null, array $meta = []): array
     {
         return [
             'type' => 'placeholder',
@@ -322,6 +957,7 @@ class CmsStudioController extends Controller
             'description' => $text,
             'note' => $note,
             'storage_available' => false,
+            'meta' => $meta,
         ];
     }
 
@@ -340,6 +976,17 @@ class CmsStudioController extends Controller
                 'type' => 'footer',
                 'title' => 'Footer Preview',
                 'values' => $values,
+            ],
+            'navigation' => [
+                'type' => 'navigation',
+                'title' => 'Navigation Preview',
+                'values' => $editor['values'] ?? [],
+            ],
+            'homepage' => [
+                'type' => 'homepage',
+                'title' => 'Homepage Preview',
+                'values' => $values,
+                'preview_url' => $editor['preview_url'] ?? null,
             ],
             default => [
                 'type' => 'placeholder',
@@ -479,6 +1126,181 @@ class CmsStudioController extends Controller
                     ->all(),
             ])
             ->all();
+    }
+
+    private function menuSummary(): array
+    {
+        if (! $this->modelTableExists(Menu::class)) {
+            return ['total' => 0, 'active' => 0, 'items' => 0, 'menus' => []];
+        }
+
+        $menus = Menu::query()
+            ->withCount('items')
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->limit(5)
+            ->get();
+
+        return [
+            'total' => $this->countModel(Menu::class),
+            'active' => $this->countModel(Menu::class, fn ($query) => $query->where('is_active', true)),
+            'items' => (int) Menu::query()->withCount('items')->get()->sum('items_count'),
+            'menus' => $menus->map(fn (Menu $menu): array => [
+                'name' => $menu->name,
+                'location' => $menu->location,
+                'items_count' => $menu->items_count,
+                'is_active' => $menu->is_active,
+            ])->all(),
+        ];
+    }
+
+    private function homepageSectionSummary(): array
+    {
+        $homepage = $this->firstModel(Page::class, fn ($query) => $query->where('slug', 'home'));
+
+        if (! $homepage) {
+            return ['page' => null, 'sections' => []];
+        }
+
+        return [
+            'page' => [
+                'title' => $homepage->title,
+                'status' => $homepage->status,
+            ],
+            'sections' => $homepage->sections()
+                ->with('sectionType')
+                ->orderBy('sort_order')
+                ->get()
+                ->map(fn (PageSection $section): array => [
+                    'title' => $section->title ?: $section->sectionType?->name,
+                    'type' => $section->sectionType?->name,
+                    'is_active' => $section->is_active,
+                    'sort_order' => $section->sort_order,
+                ])
+                ->all(),
+        ];
+    }
+
+    private function supportedHomepageSections(): array
+    {
+        if (! $this->modelTableExists(SectionType::class)) {
+            return [];
+        }
+
+        return SectionType::query()
+            ->whereIn('code', self::HOMEPAGE_SECTION_CODES)
+            ->where('is_active', true)
+            ->orderBy('category')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (SectionType $sectionType): array => [
+                'name' => $sectionType->name,
+                'code' => $sectionType->code,
+                'category' => $sectionType->category,
+            ])
+            ->all();
+    }
+
+    private function pageSummary(): array
+    {
+        if (! $this->modelTableExists(Page::class)) {
+            return ['total' => 0, 'published' => 0, 'draft' => 0, 'pages' => []];
+        }
+
+        $safePageQuery = fn ($query) => $query->whereNotIn('type', ['product_page', 'category_page']);
+
+        return [
+            'total' => $this->countModel(Page::class, $safePageQuery),
+            'published' => $this->countModel(Page::class, fn ($query) => $safePageQuery($query)->where('status', Page::STATUS_PUBLISHED)),
+            'draft' => $this->countModel(Page::class, fn ($query) => $safePageQuery($query)->where('status', Page::STATUS_DRAFT)),
+            'pages' => Page::query()
+                ->whereNotIn('type', ['product_page', 'category_page'])
+                ->orderBy('title')
+                ->limit(6)
+                ->get(['title', 'slug', 'type', 'status'])
+                ->map(fn (Page $page): array => [
+                    'title' => $page->title,
+                    'slug' => $page->slug,
+                    'type' => $page->type,
+                    'status' => $page->status,
+                ])
+                ->all(),
+        ];
+    }
+
+    private function contentEntrySummary(): array
+    {
+        if (! $this->modelTableExists(ContentEntry::class)) {
+            return ['total' => 0, 'published' => 0, 'draft' => 0, 'blocks' => []];
+        }
+
+        return [
+            'total' => $this->countModel(ContentEntry::class),
+            'published' => $this->countModel(ContentEntry::class, fn ($query) => $query->where('status', ContentEntry::STATUS_PUBLISHED)),
+            'draft' => $this->countModel(ContentEntry::class, fn ($query) => $query->where('status', ContentEntry::STATUS_DRAFT)),
+            'blocks' => ContentEntry::query()
+                ->orderBy('title')
+                ->limit(6)
+                ->get(['title', 'slug', 'type', 'status'])
+                ->map(fn (ContentEntry $entry): array => [
+                    'title' => $entry->title,
+                    'slug' => $entry->slug,
+                    'type' => $entry->type,
+                    'status' => $entry->status,
+                ])
+                ->all(),
+        ];
+    }
+
+    private function siteSettingsSummary(): array
+    {
+        if (! $this->modelTableExists(SiteSetting::class)) {
+            return ['total' => 0, 'groups' => []];
+        }
+
+        return [
+            'total' => $this->countModel(SiteSetting::class),
+            'groups' => SiteSetting::query()
+                ->orderBy('group')
+                ->get(['group'])
+                ->groupBy(fn (SiteSetting $setting): string => $setting->group ?: 'Ungrouped')
+                ->map(fn ($settings, string $group): array => [
+                    'name' => $group,
+                    'count' => $settings->count(),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    private function countModel(string $modelClass, ?callable $queryCallback = null): int
+    {
+        if (! $this->modelTableExists($modelClass)) {
+            return 0;
+        }
+
+        $query = $modelClass::query();
+
+        if ($queryCallback) {
+            $queryCallback($query);
+        }
+
+        return $query->count();
+    }
+
+    private function firstModel(string $modelClass, ?callable $queryCallback = null): ?Model
+    {
+        if (! $this->modelTableExists($modelClass)) {
+            return null;
+        }
+
+        $query = $modelClass::query();
+
+        if ($queryCallback) {
+            $queryCallback($query);
+        }
+
+        return $query->first();
     }
 
     private function navigationLabels(mixed $menuId, array $menus): array

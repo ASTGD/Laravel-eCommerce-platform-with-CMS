@@ -174,6 +174,28 @@ class ThemeCoreSeeder extends Seeder
                     'product_card_variant' => 'gadget',
                 ],
             ],
+            [
+                'name' => 'Clothing',
+                'code' => 'clothing',
+                'tokens_json' => [
+                    'code' => 'clothing',
+                    'name' => 'Clothing',
+                    'colors' => [
+                        'background' => '#ffffff',
+                        'surface' => '#f5f7f2',
+                        'primary' => '#0400ffff',
+                        'accent' => '#00ff37ff',
+                        'text' => '#111111',
+                        'muted' => '#5f6368',
+                    ],
+                ],
+                'settings_json' => [
+                    'shop_theme_code' => 'clothing',
+                    'header_variant' => 'clothing',
+                    'footer_variant' => 'clothing',
+                    'product_card_variant' => 'clothing',
+                ],
+            ],
         ];
     }
 }
