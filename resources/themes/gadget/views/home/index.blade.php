@@ -29,14 +29,7 @@
     @include('shop::partials.gadget-header')
 
     <div class="gadget-home">
-        @if (! empty($homepage['heroSliderImages']))
-            <x-shop::carousel
-                :options="['images' => $homepage['heroSliderImages']]"
-                aria-label="Hero slider"
-            />
-        @else
-            @include('shop::homepage.sections.hero', ['products' => $homepage['latestProducts']])
-        @endif
+        @include('shop::homepage.sections.hero', ['products' => $homepage['latestProducts'], 'hero' => $homepage['hero'] ?? null])
 
         @include('shop::homepage.sections.promo-strip')
         @include('shop::homepage.sections.limited-sale')

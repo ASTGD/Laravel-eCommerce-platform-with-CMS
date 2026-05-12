@@ -54,6 +54,7 @@ function cmsStudioMenu(): Menu
 function cmsStudioHomepagePage(): Page
 {
     foreach ([
+        ['code' => 'hero', 'name' => 'Hero', 'category' => 'hero'],
         ['code' => 'hero_banner', 'name' => 'Hero Banner', 'category' => 'hero'],
         ['code' => 'hero_slider', 'name' => 'Hero Slider', 'category' => 'hero'],
         ['code' => 'promo_strip', 'name' => 'Promo Strip', 'category' => 'merchandising'],
@@ -339,13 +340,19 @@ it('renders the structured homepage section builder without raw JSON editing', f
     $this->get(route('admin.cms.index', ['area' => 'homepage']))
         ->assertOk()
         ->assertSeeText('Homepage Builder')
-        ->assertSeeText('Homepage Sections')
-        ->assertSeeText('Hero Banner')
-        ->assertSeeText('Hero Slider')
-        ->assertSeeText('Promo Strip')
-        ->assertSeeText('Rich Text')
-        ->assertSeeText('Featured Products')
-        ->assertSeeText('theme-managed section')
+        ->assertSeeText('Homepage Hero')
+        ->assertSeeText('Open Storefront')
+        ->assertSeeText('Hero')
+        ->assertSeeText('Homepage content below the Hero is rendered by the active theme.')
+        ->assertDontSeeText('Homepage Status')
+        ->assertDontSeeText('Open Signed Preview')
+        ->assertDontSeeText('Signed Preview')
+        ->assertDontSee('>Hero Banner</option>', false)
+        ->assertDontSee('>Hero Slider</option>', false)
+        ->assertDontSeeText('Promo Strip')
+        ->assertDontSeeText('Rich Text')
+        ->assertDontSeeText('Featured Products')
+        ->assertDontSeeText('theme-managed section')
         ->assertDontSee('settings_json')
         ->assertDontSee('name="settings_json"', false)
         ->assertDontSeeText('Raw JSON');
@@ -386,34 +393,24 @@ it('saves and reorders structured homepage sections through CMS Studio', functio
         'sections' => [
             [
                 'id' => $hero->id,
-                'section_code' => 'hero_banner',
+                'section_code' => 'hero',
                 'title' => 'Launch Hero',
                 'sort_order' => 2,
                 'is_active' => '1',
                 'settings' => [
-                    'eyebrow' => 'Homepage',
-                    'headline' => 'Updated homepage hero',
-                    'body' => 'A safer structured homepage section.',
-                    'primary_cta_label' => 'Shop now',
-                    'primary_cta_url' => '/catalog',
-                    'secondary_cta_label' => 'Learn more',
-                    'secondary_cta_url' => '/about-us',
-                ],
-            ],
-            [
-                'id' => $featured->id,
-                'section_code' => 'featured_products',
-                'title' => 'Featured Products',
-                'sort_order' => 3,
-                'is_active' => '0',
-            ],
-            [
-                'section_code' => 'promo_strip',
-                'title' => 'Announcement Strip',
-                'sort_order' => 1,
-                'is_active' => '1',
-                'settings' => [
-                    'content' => 'Free delivery on selected orders',
+                    'mode' => 'static',
+                    'slides' => [
+                        [
+                            'current_image' => 'storage/cms/homepage/hero/static.jpg',
+                            'title' => 'Launch hero image',
+                            'headline' => 'Updated homepage hero',
+                            'body' => 'A safer structured homepage section.',
+                            'primary_cta_label' => 'Shop now',
+                            'primary_cta_url' => '/catalog',
+                            'secondary_cta_label' => 'Learn more',
+                            'secondary_cta_url' => '/about-us',
+                        ],
+                    ],
                 ],
             ],
         ],
@@ -423,18 +420,16 @@ it('saves and reorders structured homepage sections through CMS Studio', functio
 
     $hero->refresh();
     $featured->refresh();
-    $promo = $page->sections()->where('title', 'Announcement Strip')->first();
 
     expect($hero->title)->toBe('Launch Hero')
         ->and($hero->sort_order)->toBe(2)
-        ->and(data_get($hero->settings_json, 'headline'))->toBe('Updated homepage hero')
-        ->and($featured->is_active)->toBeFalse()
+        ->and($hero->sectionType?->code)->toBe('hero')
+        ->and(data_get($hero->settings_json, 'mode'))->toBe('static')
+        ->and(data_get($hero->settings_json, 'slides.0.headline'))->toBe('Updated homepage hero')
+        ->and($featured->is_active)->toBeTrue()
         ->and($featured->data_source_type)->toBe('featured_products')
         ->and(data_get($featured->settings_json, 'limit'))->toBe(8)
-        ->and($promo)->not->toBeNull()
-        ->and($promo->sort_order)->toBe(1)
-        ->and($promo->is_active)->toBeTrue()
-        ->and(data_get($promo->settings_json, 'content'))->toBe('Free delivery on selected orders');
+        ->and($page->sections()->where('title', 'Announcement Strip')->exists())->toBeFalse();
 });
 
 it('uploads hero slider images through the homepage builder', function () {
@@ -448,21 +443,26 @@ it('uploads hero slider images through the homepage builder', function () {
     $response = $this->post(route('admin.cms.homepage.update'), [
         'sections' => [
             [
-                'section_code' => 'hero_slider',
-                'title' => 'Homepage Slider',
+                'section_code' => 'hero',
+                'title' => 'Homepage Hero',
                 'sort_order' => 1,
                 'is_active' => '1',
                 'settings' => [
+                    'mode' => 'slider',
                     'slides' => [
                         [
                             'image_file' => UploadedFile::fake()->image('slide-one.jpg', 1920, 700),
                             'title' => 'Launch sale slide',
-                            'link' => '/sale',
+                            'headline' => 'Launch sale',
+                            'primary_cta_label' => 'Shop sale',
+                            'primary_cta_url' => '/sale',
                         ],
                         [
                             'image_file' => UploadedFile::fake()->image('slide-two.jpg', 1920, 700),
                             'title' => 'New arrivals slide',
-                            'link' => '/new-arrivals',
+                            'headline' => 'New arrivals',
+                            'primary_cta_label' => 'Shop arrivals',
+                            'primary_cta_url' => '/new-arrivals',
                         ],
                     ],
                 ],
@@ -473,17 +473,94 @@ it('uploads hero slider images through the homepage builder', function () {
     $response->assertRedirect(route('admin.cms.index', ['area' => 'homepage']));
 
     $slider = $page->sections()
-        ->whereHas('sectionType', fn ($query) => $query->where('code', 'hero_slider'))
+        ->whereHas('sectionType', fn ($query) => $query->where('code', 'hero'))
         ->first();
 
     expect($slider)->not->toBeNull()
-        ->and($slider->title)->toBe('Homepage Slider')
+        ->and($slider->title)->toBe('Homepage Hero')
+        ->and(data_get($slider->settings_json, 'mode'))->toBe('slider')
         ->and(data_get($slider->settings_json, 'slides'))->toHaveCount(2)
         ->and(data_get($slider->settings_json, 'slides.0.title'))->toBe('Launch sale slide')
-        ->and(data_get($slider->settings_json, 'slides.0.link'))->toBe('/sale');
+        ->and(data_get($slider->settings_json, 'slides.0.primary_cta_url'))->toBe('/sale');
 
     Storage::disk('public')->assertExists(str_replace('storage/', '', data_get($slider->settings_json, 'slides.0.image')));
     Storage::disk('public')->assertExists(str_replace('storage/', '', data_get($slider->settings_json, 'slides.1.image')));
+});
+
+it('uploads a static hero image through the homepage builder', function () {
+    Storage::fake('public');
+
+    $this->loginAsAdmin();
+
+    $page = cmsStudioHomepagePage();
+    $page->sections()->delete();
+
+    $response = $this->post(route('admin.cms.homepage.update'), [
+        'sections' => [
+            [
+                'section_code' => 'hero',
+                'title' => 'Homepage Hero',
+                'sort_order' => 1,
+                'is_active' => '1',
+                'settings' => [
+                    'mode' => 'static',
+                    'slides' => [
+                        [
+                            'enabled' => '1',
+                            'image_file' => UploadedFile::fake()->image('static-hero.jpg', 1920, 700),
+                            'title' => 'Static hero image',
+                            'headline' => 'Static launch hero',
+                            'primary_cta_label' => 'Shop now',
+                            'primary_cta_url' => '/shop',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'homepage']));
+
+    $hero = $page->sections()
+        ->whereHas('sectionType', fn ($query) => $query->where('code', 'hero'))
+        ->first();
+
+    expect($hero)->not->toBeNull()
+        ->and(data_get($hero->settings_json, 'mode'))->toBe('static')
+        ->and(data_get($hero->settings_json, 'slides'))->toHaveCount(1)
+        ->and(data_get($hero->settings_json, 'slides.0.title'))->toBe('Static hero image')
+        ->and(data_get($hero->settings_json, 'slides.0.image'))->toStartWith('storage/cms/homepage/hero/');
+
+    Storage::disk('public')->assertExists(str_replace('storage/', '', data_get($hero->settings_json, 'slides.0.image')));
+});
+
+it('rejects hero slider slides without images', function () {
+    $this->loginAsAdmin();
+
+    cmsStudioHomepagePage()->sections()->delete();
+
+    $this->from(route('admin.cms.index', ['area' => 'homepage']))
+        ->post(route('admin.cms.homepage.update'), [
+            'sections' => [
+                [
+                    'section_code' => 'hero',
+                    'title' => 'Homepage Hero',
+                    'sort_order' => 1,
+                    'is_active' => '1',
+                    'settings' => [
+                        'mode' => 'slider',
+                        'slides' => [
+                            [
+                                'title' => 'Missing image slide',
+                                'headline' => 'Missing image',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ])
+        ->assertRedirect(route('admin.cms.index', ['area' => 'homepage']))
+        ->assertSessionHasErrors('slides.0.image');
 });
 
 it('keeps header and footer saves behind explicit CMS Studio permissions', function () {

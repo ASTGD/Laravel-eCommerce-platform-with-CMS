@@ -87,7 +87,7 @@ class HomepageSectionEditor
             return null;
         }
 
-        $preferredAreaCode = $sectionCode === 'hero_banner' ? 'hero' : 'content';
+        $preferredAreaCode = in_array($sectionCode, ['hero', 'hero_banner', 'hero_slider'], true) ? 'hero' : 'content';
 
         return $template->areas->firstWhere('code', $preferredAreaCode)?->getKey()
             ?? $template->areas->sortBy('sort_order')->first()?->getKey();

@@ -110,18 +110,17 @@ Header and footer values are stored internally in the existing JSON storage on `
 
 Homepage sections are structured and theme-supported.
 
-CMS Studio now includes the first Homepage Builder slice. Admins can add, reorder, enable, disable, and preview homepage sections only from predefined section types supported by the active theme. Admins cannot create arbitrary layouts from the CMS.
+CMS Studio now includes a Hero-only Homepage Builder slice. Admins can configure, preview, and save the homepage Hero. Everything below the Hero is rendered by the active storefront theme so the CMS does not expose unfinished or misleading homepage section controls.
 
 The current structured editor supports:
 
-- Hero Banner
-- Hero Slider
-- Promo Strip
-- Rich Text
+- Hero
 
-Hero Slider stores up to five uploaded images in the existing `page_sections.settings_json` structure and reuses the storefront carousel behavior for automatic sliding.
+Hero is a business-friendly content contract rather than a theme layout. It stores `mode` (`static` or `slider`) and up to five slides in the existing `page_sections.settings_json` structure. Each slide can include an image, alt/title, headline, body, primary CTA, and optional secondary CTA. Legacy `hero_banner` and `hero_slider` records remain readable and are normalized into the Hero shape for the Studio and storefront runtime.
 
-Existing theme-managed homepage sections, such as catalog-aware sections, are preserved safely without exposing raw JSON editing. Additional section-specific forms can be added as future vertical slices.
+The active storefront theme owns presentation. Gadget renders the Hero through the Gadget hero design, Clothing renders the same content through the Clothing hero design, and the default package renderer provides a simple safe fallback.
+
+Existing non-Hero homepage section records, such as catalog-aware sections, are preserved safely in storage but hidden from normal admin editing. Additional section-specific forms can be added only as future vertical slices when they are product-ready.
 
 The section and component registries remain the authority for:
 
