@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
+use Platform\ExperienceCms\Models\HeaderConfig;
+use Platform\ExperienceCms\Models\Menu;
+use Platform\ExperienceCms\Models\MenuItem;
 use Platform\ExperienceCms\Models\Page;
 use Platform\ExperienceCms\Models\PageSection;
 use Platform\ExperienceCms\Models\SectionType;
@@ -178,6 +181,72 @@ it('renders the CMS hero through the active storefront theme', function (string 
 })->with([
     ['gadget', 'Future Tech 2026'],
     ['clothing', 'New season drop'],
+]);
+
+it('renders CMS header builder settings through active storefront themes', function (string $theme) {
+    $channel = core()->getCurrentChannel();
+    $channel->update(['theme' => $theme]);
+    core()->setCurrentChannel($channel->fresh());
+
+    $menu = Menu::query()->updateOrCreate(
+        ['code' => 'cms-header-builder-test-'.$theme],
+        ['name' => 'CMS Header Builder Test', 'location' => 'header', 'is_active' => true]
+    );
+
+    $menu->items()->delete();
+
+    MenuItem::query()->create([
+        'menu_id' => $menu->id,
+        'title' => 'CMS Header Link',
+        'type' => 'url',
+        'target' => '/cms-header-link',
+        'sort_order' => 1,
+        'settings_json' => ['open_in_new_tab' => true],
+        'is_active' => true,
+    ]);
+
+    HeaderConfig::query()->update(['is_default' => false]);
+    HeaderConfig::query()->updateOrCreate(
+        ['code' => 'cms_header_builder_render_test'],
+        [
+            'settings_json' => [
+                'name' => 'CMS Header Builder Render Test',
+                'logo_url' => 'https://example.test/cms-logo.svg',
+                'announcement' => [
+                    'enabled' => true,
+                    'text' => 'CMS builder announcement',
+                    'link' => 'https://example.test/announcement',
+                ],
+                'navigation' => [
+                    'menu_id' => $menu->id,
+                ],
+                'features' => [
+                    'show_search' => false,
+                    'show_account' => false,
+                    'show_cart' => false,
+                    'sticky' => false,
+                ],
+                'variant' => 'classic',
+            ],
+            'is_default' => true,
+        ]
+    );
+
+    $this->get(route('shop.home.index'))
+        ->assertOk()
+        ->assertSee('CMS builder announcement', false)
+        ->assertSee('https://example.test/announcement', false)
+        ->assertSee('https://example.test/cms-logo.svg', false)
+        ->assertSee('CMS Header Link', false)
+        ->assertSee('/cms-header-link', false)
+        ->assertSee('target="_blank"', false)
+        ->assertSee('gadget-header--static', false)
+        ->assertDontSee('aria-label="Account"', false)
+        ->assertDontSee('aria-label="Cart"', false)
+        ->assertDontSee('name="query"', false);
+})->with([
+    ['gadget'],
+    ['clothing'],
 ]);
 
 it('resolves featured products from the commerce-core data source resolver', function () {

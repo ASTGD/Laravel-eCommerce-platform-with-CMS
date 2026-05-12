@@ -192,6 +192,54 @@ it('saves structured header settings through CMS Studio', function () {
         ->and($header->settings_json['variant'])->toBe('centered');
 });
 
+it('shows header logo upload controls without inactive brand and style cards', function () {
+    $this->loginAsAdmin();
+
+    $response = $this->get(route('admin.cms.index', ['area' => 'header']));
+
+    $response->assertOk()
+        ->assertSeeText('Logo')
+        ->assertSee('name="logo_file"', false)
+        ->assertDontSeeText('Brand')
+        ->assertDontSeeText('Choose a theme-supported header layout style.');
+});
+
+it('uploads a header logo through CMS Studio', function () {
+    Storage::fake('public');
+
+    $this->loginAsAdmin();
+
+    HeaderConfig::query()->update(['is_default' => false]);
+
+    $header = HeaderConfig::query()->create([
+        'code' => 'cms_studio_logo_header_'.uniqid(),
+        'settings_json' => [
+            'logo_url' => 'https://example.com/old-logo.svg',
+        ],
+        'is_default' => true,
+    ]);
+
+    $response = $this->post(route('admin.cms.header.update'), [
+        'name' => 'Studio Header',
+        'logo_url' => 'https://example.com/old-logo.svg',
+        'logo_file' => UploadedFile::fake()->image('cms-logo.png', 640, 240),
+        'announcement_enabled' => '0',
+        'show_search' => '1',
+        'show_account' => '1',
+        'show_cart' => '1',
+        'sticky' => '0',
+        'variant' => 'classic',
+    ]);
+
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'header']));
+
+    $header->refresh();
+
+    expect(data_get($header->settings_json, 'logo_url'))->toStartWith('/storage/cms/header/');
+
+    Storage::disk('public')->assertExists(str_replace('/storage/', '', data_get($header->settings_json, 'logo_url')));
+});
+
 it('saves structured footer settings through CMS Studio', function () {
     $this->loginAsAdmin();
 

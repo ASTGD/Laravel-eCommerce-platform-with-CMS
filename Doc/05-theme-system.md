@@ -135,13 +135,13 @@ Current nested component views include:
 
 Bagisto-native public pages use their native header, footer, menu, and component behavior unless a theme view override changes the markup.
 
-CMS preview views continue to use dedicated services for structured global areas:
+CMS preview and CMS-aware theme views use dedicated services for structured global areas:
 
 - `MenuResolver`
 - `HeaderResolver`
 - `FooterResolver`
 
-Gadget homepage v1 has its own theme-local header/footer partials that keep Bagisto links, search, cart, account, and channel data functional.
+CMS-aware homepage theme partials build storefront header payloads through `StorefrontHeaderViewModel`. Gadget and Clothing keep their own visual header markup, but consume the same Header Builder values for uploaded logo path/URL, announcement bar, selected navigation menu, search/account/cart visibility, and sticky behavior. If CMS settings are missing, themes fall back to safe Bagisto/channel defaults.
 
 ## Asset Loading Rule
 

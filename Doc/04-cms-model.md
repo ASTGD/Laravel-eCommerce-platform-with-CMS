@@ -79,8 +79,8 @@ Header and footer editing is now form-driven and structured.
 
 Header Builder fields:
 
-- header name
-- logo URL
+- logo upload
+- existing logo path/URL stored internally
 - announcement enabled
 - announcement text
 - announcement link
@@ -89,7 +89,6 @@ Header Builder fields:
 - show account icon
 - show cart icon
 - sticky header
-- header variant
 
 Footer Builder fields:
 

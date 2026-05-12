@@ -36,6 +36,29 @@
         backdrop-filter: blur(16px);
     }
 
+    .gadget-header--static {
+        position: relative;
+    }
+
+    .gadget-header__announcement {
+        background: var(--gadget-ink);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.35;
+        padding: 10px 20px;
+        text-align: center;
+    }
+
+    .gadget-header__announcement a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .gadget-header__announcement a:hover {
+        color: var(--gadget-yellow);
+    }
+
     .gadget-header__inner {
         display: flex;
         min-height: 96px;
@@ -57,8 +80,8 @@
     }
 
     .gadget-header__brand img {
-        max-height: 42px;
-        max-width: 132px;
+        max-height: 56px;
+        max-width: 180px;
         object-fit: contain;
     }
 
@@ -1160,8 +1183,8 @@
         }
 
         .gadget-header__brand img {
-            max-height: 35px;
-            max-width: 104px;
+            max-height: 40px;
+            max-width: 140px;
         }
 
         .gadget-hero__grid {

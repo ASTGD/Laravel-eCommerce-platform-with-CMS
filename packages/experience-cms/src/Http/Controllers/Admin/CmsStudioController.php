@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -93,7 +94,8 @@ class CmsStudioController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'logo_url' => ['nullable', 'url', 'max:2048'],
+            'logo_url' => ['nullable', 'string', 'max:2048'],
+            'logo_file' => ['nullable', File::image()->max('2mb')],
             'announcement_enabled' => ['boolean'],
             'announcement_text' => ['nullable', 'string', 'max:255'],
             'announcement_link' => ['nullable', 'url', 'max:2048'],
@@ -113,9 +115,11 @@ class CmsStudioController extends Controller
                 ->with('error', 'Header settings storage is not available.');
         }
 
+        $logoUrl = $this->storedCmsLogoUrl($request->file('logo_file'), $validated['logo_url'] ?? null);
+
         $settings = [
             'name' => $validated['name'] ?? 'Default Header',
-            'logo_url' => $validated['logo_url'] ?? null,
+            'logo_url' => $logoUrl,
             'announcement' => [
                 'enabled' => $request->boolean('announcement_enabled'),
                 'text' => $validated['announcement_text'] ?? null,
@@ -138,6 +142,15 @@ class CmsStudioController extends Controller
         return redirect()
             ->route('admin.cms.index', ['area' => 'header'])
             ->with('success', 'Header settings saved.');
+    }
+
+    private function storedCmsLogoUrl(mixed $uploadedLogo, ?string $existingLogoUrl): ?string
+    {
+        if ($uploadedLogo instanceof UploadedFile && $uploadedLogo->isValid()) {
+            return Storage::disk('public')->url($uploadedLogo->store('cms/header', 'public'));
+        }
+
+        return filled($existingLogoUrl) ? trim($existingLogoUrl) : null;
     }
 
     public function updateFooter(Request $request): RedirectResponse

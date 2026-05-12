@@ -214,33 +214,53 @@
                 <form
                     id="cms-studio-form"
                     method="POST"
+                    enctype="multipart/form-data"
                     action="{{ $editor['form_action'] }}"
                     class="space-y-6"
                 >
                     @csrf
+                    <input type="hidden" name="name" value="{{ old('name', $values['name'] ?? 'Default Header') }}">
+                    <input type="hidden" name="variant" value="{{ old('variant', $values['variant'] ?? 'classic') }}">
+                    <input type="hidden" name="logo_url" value="{{ old('logo_url', $values['logo_url'] ?? '') }}" data-preview-input="logo_url" data-logo-url-input>
 
+                    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
                     <div class="{{ $headerSectionClass }}">
                         <h3 class="{{ $headerSectionTitleClass }}">
-                            Brand
+                            Logo
                         </h3>
 
                         <p class="{{ $headerSectionDescriptionClass }}">
-                            Set the storefront header identity.
+                            Upload the logo used by the active storefront header.
                         </p>
 
-                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Header name</span>
-                                <input name="name" value="{{ old('name', $values['name'] ?? '') }}" class="{{ $headerInputClass }}">
-                                @error('name')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
+                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[220px_minmax(0,1fr)]">
+                            <div class="flex min-h-[128px] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 dark:border-gray-700 dark:bg-gray-950">
+                                <img
+                                    src="{{ old('logo_url', $values['logo_url'] ?? '') }}"
+                                    alt=""
+                                    class="{{ old('logo_url', $values['logo_url'] ?? '') ? '' : 'hidden' }} max-h-20 max-w-full object-contain"
+                                    data-logo-upload-preview
+                                    onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
+                                >
+
+                                <span class="{{ old('logo_url', $values['logo_url'] ?? '') ? 'hidden' : '' }} text-center text-sm font-medium text-slate-500 dark:text-gray-400" data-logo-upload-empty>
+                                    No logo uploaded
+                                </span>
+                            </div>
 
                             <label class="block">
-                                <span class="{{ $headerLabelClass }}">Logo URL</span>
-                                <input name="logo_url" value="{{ old('logo_url', $values['logo_url'] ?? '') }}" class="{{ $headerInputClass }}" data-preview-input="logo_url">
-                                <span class="{{ $headerHelperClass }}">Use an image URL for now. Media picker will be added later.</span>
+                                <span class="{{ $headerLabelClass }}">Upload logo image</span>
+                                <input
+                                    type="file"
+                                    name="logo_file"
+                                    accept="image/*"
+                                    class="{{ $headerInputClass }} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950/40 dark:file:text-blue-300"
+                                    data-logo-file-input
+                                >
+                                <span class="{{ $headerHelperClass }}">PNG, JPG, SVG, GIF, or WebP up to 2 MB. Uploading a new logo replaces the current logo.</span>
+                                @error('logo_file')
+                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                @enderror
                                 @error('logo_url')
                                     <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
                                 @enderror
@@ -276,7 +296,7 @@
                         </label>
 
                         <div
-                            class="mt-5 grid grid-cols-1 gap-5 transition md:grid-cols-2 {{ old('announcement_enabled', $values['announcement_enabled'] ?? false) ? '' : 'opacity-60' }}"
+                            class="mt-5 grid grid-cols-1 gap-5 transition md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 {{ old('announcement_enabled', $values['announcement_enabled'] ?? false) ? '' : 'opacity-60' }}"
                             data-announcement-fields
                         >
                             <label class="block">
@@ -342,7 +362,7 @@
                             Control common storefront header features.
                         </p>
 
-                        <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                             @foreach ([
                                 'show_search' => ['label' => 'Show search', 'description' => 'Display storefront search in the header.'],
                                 'show_account' => ['label' => 'Show account icon', 'description' => 'Display customer account access in the header.'],
@@ -369,60 +389,8 @@
                             @endforeach
                         </div>
                     </div>
-
-                    <div class="{{ $headerSectionClass }}">
-                        <h3 class="{{ $headerSectionTitleClass }}">
-                            Style
-                        </h3>
-
-                        <p class="{{ $headerSectionDescriptionClass }}">
-                            Choose a theme-supported header layout style.
-                        </p>
-
-                        <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-                            @foreach ($editor['variants'] as $variant => $label)
-                                <label class="cms-header-variant-card cursor-pointer rounded-xl border border-slate-200/70 bg-slate-50 p-4 transition dark:border-gray-700 dark:bg-gray-950">
-                                    <input
-                                        type="radio"
-                                        name="variant"
-                                        value="{{ $variant }}"
-                                        class="sr-only"
-                                        data-preview-input="variant"
-                                        data-preview-label="{{ $label }}"
-                                        @checked(old('variant', $values['variant'] ?? 'classic') === $variant)
-                                    >
-
-                                    <span class="block text-sm font-medium text-slate-700 dark:text-gray-300">{{ $label }}</span>
-                                    <span class="{{ $headerHelperClass }}">
-                                        @if ($variant === 'classic')
-                                            Logo left, navigation visible, actions right.
-                                        @elseif ($variant === 'centered')
-                                            Navigation left, logo centered, actions right.
-                                        @else
-                                            Logo and actions only with reduced navigation.
-                                        @endif
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-
-                        @error('variant')
-                            <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
-                        @enderror
-
-                        <noscript>
-                            <label class="mt-5 block max-w-xl">
-                                <span class="{{ $headerLabelClass }}">Header variant</span>
-                                <select name="variant" class="{{ $headerInputClass }}">
-                                    @foreach ($editor['variants'] as $variant => $label)
-                                        <option value="{{ $variant }}" @selected(old('variant', $values['variant'] ?? 'classic') === $variant)>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </label>
-                        </noscript>
                     </div>
+
                 </form>
             @elseif ($editor['type'] === 'navigation')
                 @php
@@ -1528,7 +1496,6 @@
                             </div>
 
                             <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3 text-xs text-slate-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
-                                <span data-header-variant-label>{{ $editor['variants'][$previewValues['variant']] ?? 'Classic' }}</span>
                                 <span data-header-menu-label>{{ $selectedMenuLabel }}</span>
                             </div>
                         </div>
@@ -2134,6 +2101,7 @@
 
                     const inputs = {
                         logoUrl: cmsStudioForm.querySelector('[data-preview-input="logo_url"]'),
+                        logoFile: cmsStudioForm.querySelector('[data-logo-file-input]'),
                         announcementEnabled: cmsStudioForm.querySelector('[data-preview-input="announcement_enabled"]'),
                         announcementText: cmsStudioForm.querySelector('[data-preview-input="announcement_text"]'),
                         menuId: cmsStudioForm.querySelector('[data-preview-input="menu_id"]'),
@@ -2145,6 +2113,8 @@
                     };
 
                     const nodes = {
+                        logoUploadPreview: cmsStudioForm.querySelector('[data-logo-upload-preview]'),
+                        logoUploadEmpty: cmsStudioForm.querySelector('[data-logo-upload-empty]'),
                         announcementFields: cmsStudioForm.querySelector('[data-announcement-fields]'),
                         announcement: headerPreview.querySelector('[data-header-announcement]'),
                         announcementText: headerPreview.querySelector('[data-header-announcement-text]'),
@@ -2157,7 +2127,6 @@
                         account: headerPreview.querySelector('[data-header-account]'),
                         cart: headerPreview.querySelector('[data-header-cart]'),
                         sticky: headerPreview.querySelector('[data-header-sticky]'),
-                        variant: headerPreview.querySelector('[data-header-variant-label]'),
                     };
 
                     const setHidden = (node, hidden) => {
@@ -2171,6 +2140,18 @@
                             value: checked?.value ?? 'classic',
                             label: checked?.dataset.previewLabel ?? 'Classic',
                         };
+                    };
+
+                    const setLogoPreview = (logoUrl) => {
+                        setHidden(nodes.logoImage, ! logoUrl);
+                        setHidden(nodes.logoText, !! logoUrl);
+                        setHidden(nodes.logoUploadPreview, ! logoUrl);
+                        setHidden(nodes.logoUploadEmpty, !! logoUrl);
+
+                        if (logoUrl) {
+                            nodes.logoImage?.setAttribute('src', logoUrl);
+                            nodes.logoUploadPreview?.setAttribute('src', logoUrl);
+                        }
                     };
 
                     const selectedMenuLabels = () => {
@@ -2214,8 +2195,7 @@
 
                         setHidden(nodes.announcement, ! announcementEnabled);
                         nodes.announcementFields?.classList.toggle('opacity-60', ! announcementEnabled);
-                        setHidden(nodes.logoImage, ! logoUrl);
-                        setHidden(nodes.logoText, !! logoUrl);
+                        setLogoPreview(logoUrl);
                         setHidden(nodes.search, ! (inputs.showSearch?.checked ?? false));
                         setHidden(nodes.account, ! (inputs.showAccount?.checked ?? false));
                         setHidden(nodes.cart, ! (inputs.showCart?.checked ?? false));
@@ -2226,22 +2206,25 @@
                             nodes.announcementText.textContent = inputs.announcementText?.value.trim() || 'Announcement text';
                         }
 
-                        if (nodes.logoImage && logoUrl) {
-                            nodes.logoImage.classList.remove('hidden');
-                            nodes.logoText?.classList.add('hidden');
-                            nodes.logoImage.setAttribute('src', logoUrl);
-                        }
-
                         if (nodes.menuLabel) {
                             nodes.menuLabel.textContent = selectedMenu?.value ? selectedMenu.textContent.trim() : 'No menu selected';
                         }
 
-                        if (nodes.variant) {
-                            nodes.variant.textContent = variant.label;
-                        }
-
                         renderNavigation();
                     };
+
+                    inputs.logoFile?.addEventListener('change', () => {
+                        const file = inputs.logoFile.files?.[0];
+
+                        if (! file) {
+                            renderHeaderPreview();
+
+                            return;
+                        }
+
+                        const previewUrl = URL.createObjectURL(file);
+                        setLogoPreview(previewUrl);
+                    });
 
                     [
                         inputs.logoUrl,
