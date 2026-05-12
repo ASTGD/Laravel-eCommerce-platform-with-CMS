@@ -41,8 +41,7 @@ it('protects unsigned preview routes while allowing signed preview access', func
     $signedPreviewUrl = URL::temporarySignedRoute('platform.storefront.home_preview', now()->addMinutes(30));
 
     $this->get($signedPreviewUrl)
-        ->assertOk()
-        ->assertSeeText('Structured CMS. Repeatable installs. Clean theme variation.');
+        ->assertOk();
 });
 
 it('renders published CMS homepage data through signed preview only', function () {
@@ -76,7 +75,6 @@ it('renders published CMS homepage data through signed preview only', function (
     $response = $this->get($signedPreviewUrl);
 
     $response->assertOk()
-        ->assertSeeText('Structured CMS. Repeatable installs. Clean theme variation.')
         ->assertSee(route('shop.product_or_category.index', $product->url_key), false);
 });
 
@@ -124,6 +122,63 @@ it('renders CMS hero slider slides through the signed homepage preview', functio
         ->assertSee('CMS hero slide one', false)
         ->assertSee('<v-carousel', false);
 });
+
+it('renders the CMS hero through the active storefront theme', function (string $theme, string $themeText) {
+    $channel = core()->getCurrentChannel();
+    $channel->update(['theme' => $theme]);
+    core()->setCurrentChannel($channel->fresh());
+
+    $homePage = Page::query()->where('slug', 'home')->firstOrFail();
+    $heroAreaId = $homePage->template?->areas()->where('code', 'hero')->value('id')
+        ?? $homePage->template?->areas()->orderBy('sort_order')->value('id');
+
+    $sectionType = SectionType::query()->updateOrCreate(
+        ['code' => 'hero'],
+        [
+            'name' => 'Hero',
+            'category' => 'hero',
+            'config_schema_json' => [],
+            'supports_components' => false,
+            'allowed_data_sources_json' => [],
+            'renderer_class' => null,
+            'is_active' => true,
+        ]
+    );
+
+    $homePage->sections()->whereHas('sectionType', fn ($query) => $query->whereIn('code', ['hero', 'hero_slider', 'hero_banner']))->delete();
+
+    PageSection::query()->create([
+        'page_id' => $homePage->id,
+        'template_area_id' => $heroAreaId,
+        'section_type_id' => $sectionType->id,
+        'sort_order' => 0,
+        'title' => 'Homepage Hero',
+        'settings_json' => [
+            'mode' => 'static',
+            'slides' => [
+                [
+                    'image' => 'storage/cms/homepage/hero/cms-theme-hero.jpg',
+                    'title' => 'CMS active theme hero',
+                    'headline' => 'CMS hero headline',
+                    'body' => 'CMS hero body copy',
+                    'primary_cta_label' => 'Shop CMS',
+                    'primary_cta_url' => '/cms-sale',
+                ],
+            ],
+        ],
+        'is_active' => true,
+    ]);
+
+    $this->get(route('shop.home.index'))
+        ->assertOk()
+        ->assertSee($themeText, false)
+        ->assertSee('CMS hero headline', false)
+        ->assertSee('cms-theme-hero.jpg', false)
+        ->assertSee('Shop CMS', false);
+})->with([
+    ['gadget', 'Future Tech 2026'],
+    ['clothing', 'New season drop'],
+]);
 
 it('resolves featured products from the commerce-core data source resolver', function () {
     (new ProductFaker([

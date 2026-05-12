@@ -245,22 +245,28 @@ class ExperienceCmsSeeder extends Seeder
         PageSection::query()->create([
             'page_id' => $page->id,
             'template_area_id' => $heroArea->id,
-            'section_type_id' => SectionType::query()->where('code', 'hero_banner')->value('id'),
+            'section_type_id' => SectionType::query()->where('code', 'hero')->value('id'),
             'sort_order' => 1,
-            'title' => 'Hero Banner',
+            'title' => 'Hero',
             'settings_json' => [
-                'eyebrow' => 'Reusable E-Commerce Product',
-                'headline' => 'Structured CMS. Repeatable installs. Clean theme variation.',
-                'body' => 'This homepage slice proves the product architecture without creating a one-off storefront codebase.',
-                'primary_cta_label' => 'Browse Catalog',
-                'primary_cta_url' => '/',
-                'secondary_cta_label' => 'Read Docs',
-                'secondary_cta_url' => '/contact-us',
+                'mode' => 'static',
+                'slides' => [
+                    [
+                        'image' => 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1400',
+                        'title' => 'Structured CMS hero',
+                        'headline' => 'Structured CMS. Repeatable installs. Clean theme variation.',
+                        'body' => 'This homepage slice proves the product architecture without creating a one-off storefront codebase.',
+                        'primary_cta_label' => 'Browse Catalog',
+                        'primary_cta_url' => '/',
+                        'secondary_cta_label' => 'Read Docs',
+                        'secondary_cta_url' => '/contact-us',
+                    ],
+                ],
             ],
             'is_active' => true,
         ]);
 
-        $heroSection = $page->sections()->where('title', 'Hero Banner')->first();
+        $heroSection = $page->sections()->where('title', 'Hero')->first();
 
         if ($heroSection) {
             $heroSection->components()->delete();

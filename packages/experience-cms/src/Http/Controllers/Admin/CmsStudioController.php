@@ -48,6 +48,7 @@ class CmsStudioController extends Controller
     ];
 
     private const HOMEPAGE_SECTION_CODES = [
+        'hero',
         'hero_banner',
         'hero_slider',
         'promo_strip',
@@ -61,10 +62,7 @@ class CmsStudioController extends Controller
     ];
 
     private const EDITABLE_HOMEPAGE_SECTION_CODES = [
-        'hero_banner',
-        'hero_slider',
-        'promo_strip',
-        'rich_text',
+        'hero',
     ];
 
     public function index(Request $request): View
@@ -302,6 +300,7 @@ class CmsStudioController extends Controller
             'sections.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:10000'],
             'sections.*.is_active' => ['boolean'],
             'sections.*.settings' => ['nullable', 'array'],
+            'sections.*.settings.mode' => ['nullable', Rule::in(['static', 'slider'])],
             'sections.*.settings.eyebrow' => ['nullable', 'string', 'max:120'],
             'sections.*.settings.headline' => ['nullable', 'string', 'max:255'],
             'sections.*.settings.body' => ['nullable', 'string', 'max:1000'],
@@ -311,9 +310,16 @@ class CmsStudioController extends Controller
             'sections.*.settings.secondary_cta_url' => ['nullable', 'string', 'max:2048'],
             'sections.*.settings.content' => ['nullable', 'string', 'max:5000'],
             'sections.*.settings.slides' => ['nullable', 'array', 'max:5'],
+            'sections.*.settings.slides.*.enabled' => ['nullable', 'boolean'],
             'sections.*.settings.slides.*.current_image' => ['nullable', 'string', 'max:2048'],
             'sections.*.settings.slides.*.image_file' => ['nullable', File::image()->max('4mb')],
             'sections.*.settings.slides.*.title' => ['nullable', 'string', 'max:120'],
+            'sections.*.settings.slides.*.headline' => ['nullable', 'string', 'max:255'],
+            'sections.*.settings.slides.*.body' => ['nullable', 'string', 'max:1000'],
+            'sections.*.settings.slides.*.primary_cta_label' => ['nullable', 'string', 'max:80'],
+            'sections.*.settings.slides.*.primary_cta_url' => ['nullable', 'string', 'max:2048'],
+            'sections.*.settings.slides.*.secondary_cta_label' => ['nullable', 'string', 'max:80'],
+            'sections.*.settings.slides.*.secondary_cta_url' => ['nullable', 'string', 'max:2048'],
             'sections.*.settings.slides.*.link' => ['nullable', 'string', 'max:2048'],
         ]);
 
@@ -343,7 +349,7 @@ class CmsStudioController extends Controller
                     ? $existingSections->get((int) $section['id'])
                     : null;
 
-                $sectionCode = $section['section_code'] ?? $existingSection?->sectionType?->code;
+                $sectionCode = $this->normalizedHomepageSectionCode($section['section_code'] ?? $existingSection?->sectionType?->code);
                 $settings = $section['settings'] ?? [];
                 $hasContent = filled($section['title'] ?? null)
                     || filled($sectionCode)
@@ -711,7 +717,7 @@ class CmsStudioController extends Controller
             return [
                 'type' => 'homepage',
                 'title' => 'Homepage Builder',
-                'description' => 'Add, reorder, enable, disable, and preview predefined homepage sections.',
+                'description' => 'Configure the homepage Hero while the active theme owns below-Hero content.',
                 'form_action' => route('admin.cms.homepage.update'),
                 'storage_available' => false,
                 'storage_error' => 'Homepage section storage is not available.',
@@ -729,7 +735,7 @@ class CmsStudioController extends Controller
         return [
             'type' => 'homepage',
             'title' => 'Homepage Builder',
-            'description' => 'Manage safe, theme-supported homepage sections without arbitrary layout editing.',
+            'description' => 'Configure the homepage Hero while the active theme owns below-Hero content.',
             'form_action' => route('admin.cms.homepage.update'),
             'storage_available' => true,
             'storage_error' => null,
@@ -749,6 +755,9 @@ class CmsStudioController extends Controller
                     ->sortBy('sort_order')
                     ->values()
                     ->map(fn (PageSection $section): array => $this->homepageSectionPayload($section))
+                    ->filter(fn (array $section): bool => ($section['section_code'] ?? null) === 'hero')
+                    ->take(1)
+                    ->values()
                     ->all(),
             ],
         ];
@@ -807,16 +816,17 @@ class CmsStudioController extends Controller
 
     private function homepageSectionPayload(PageSection $section): array
     {
-        $sectionCode = (string) $section->sectionType?->code;
+        $storedSectionCode = (string) $section->sectionType?->code;
+        $sectionCode = $this->normalizedHomepageSectionCode($storedSectionCode);
         $settings = array_replace(
             $this->homepageSectionDefaults($sectionCode),
-            is_array($section->settings_json) ? $section->settings_json : []
+            $this->normalizeHomepageSectionSettings($storedSectionCode, is_array($section->settings_json) ? $section->settings_json : [])
         );
 
         return [
             'id' => $section->getKey(),
             'section_code' => $sectionCode,
-            'section_label' => $section->sectionType?->name ?? Str::headline($sectionCode),
+            'section_label' => $sectionCode === 'hero' ? 'Hero' : ($section->sectionType?->name ?? Str::headline($sectionCode)),
             'area_label' => $section->templateArea?->name,
             'is_editable' => in_array($sectionCode, self::EDITABLE_HOMEPAGE_SECTION_CODES, true),
             'title' => $section->title ?: $section->sectionType?->name,
@@ -851,6 +861,10 @@ class CmsStudioController extends Controller
     private function homepageSectionDefaults(string $sectionCode): array
     {
         return match ($sectionCode) {
+            'hero' => [
+                'mode' => 'static',
+                'slides' => [],
+            ],
             'hero_banner' => [
                 'eyebrow' => '',
                 'headline' => '',
@@ -873,6 +887,10 @@ class CmsStudioController extends Controller
     private function homepageSectionSettingsFromRequest(string $sectionCode, array $settings): array
     {
         return match ($sectionCode) {
+            'hero' => [
+                'mode' => in_array($settings['mode'] ?? 'static', ['static', 'slider'], true) ? $settings['mode'] : 'static',
+                'slides' => $this->heroSlidesFromRequest($settings['slides'] ?? [], (string) ($settings['mode'] ?? 'static')),
+            ],
             'hero_banner' => [
                 'eyebrow' => trim((string) ($settings['eyebrow'] ?? '')),
                 'headline' => trim((string) ($settings['headline'] ?? '')),
@@ -895,6 +913,19 @@ class CmsStudioController extends Controller
     private function homepageSectionValidationRules(string $sectionCode): array
     {
         return match ($sectionCode) {
+            'hero' => [
+                'mode' => ['required', Rule::in(['static', 'slider'])],
+                'slides' => ['required', 'array', 'min:1', 'max:5'],
+                'slides.*.image' => ['required', 'string', 'max:2048'],
+                'slides.*.enabled' => ['nullable', 'boolean'],
+                'slides.*.title' => ['nullable', 'string', 'max:120'],
+                'slides.*.headline' => ['nullable', 'string', 'max:255'],
+                'slides.*.body' => ['nullable', 'string', 'max:1000'],
+                'slides.*.primary_cta_label' => ['nullable', 'string', 'max:80'],
+                'slides.*.primary_cta_url' => ['nullable', 'string', 'max:2048'],
+                'slides.*.secondary_cta_label' => ['nullable', 'string', 'max:80'],
+                'slides.*.secondary_cta_url' => ['nullable', 'string', 'max:2048'],
+            ],
             'hero_banner' => [
                 'eyebrow' => ['nullable', 'string', 'max:120'],
                 'headline' => ['required', 'string', 'max:255'],
@@ -915,6 +946,86 @@ class CmsStudioController extends Controller
             ],
             default => [],
         };
+    }
+
+    private function normalizedHomepageSectionCode(?string $sectionCode): string
+    {
+        return in_array($sectionCode, ['hero_banner', 'hero_slider'], true) ? 'hero' : (string) $sectionCode;
+    }
+
+    private function normalizeHomepageSectionSettings(string $sectionCode, array $settings): array
+    {
+        return match ($sectionCode) {
+            'hero' => [
+                'mode' => in_array($settings['mode'] ?? 'static', ['static', 'slider'], true) ? $settings['mode'] : 'static',
+                'slides' => $this->normalizeHeroSlides($settings['slides'] ?? []),
+            ],
+            'hero_banner' => [
+                'mode' => 'static',
+                'slides' => [[
+                    'image' => trim((string) ($settings['image'] ?? '')),
+                    'title' => trim((string) ($settings['title'] ?? $settings['headline'] ?? '')),
+                    'headline' => trim((string) ($settings['headline'] ?? '')),
+                    'body' => trim((string) ($settings['body'] ?? '')),
+                    'primary_cta_label' => trim((string) ($settings['primary_cta_label'] ?? '')),
+                    'primary_cta_url' => trim((string) ($settings['primary_cta_url'] ?? '')),
+                    'secondary_cta_label' => trim((string) ($settings['secondary_cta_label'] ?? '')),
+                    'secondary_cta_url' => trim((string) ($settings['secondary_cta_url'] ?? '')),
+                ]],
+            ],
+            'hero_slider' => [
+                'mode' => 'slider',
+                'slides' => $this->normalizeHeroSlides($settings['slides'] ?? []),
+            ],
+            default => $settings,
+        };
+    }
+
+    private function normalizeHeroSlides(array $slides): array
+    {
+        return collect($slides)
+            ->take(5)
+            ->map(fn (array $slide): array => [
+                'image' => trim((string) ($slide['image'] ?? '')),
+                'title' => trim((string) ($slide['title'] ?? '')),
+                'headline' => trim((string) ($slide['headline'] ?? $slide['title'] ?? '')),
+                'body' => trim((string) ($slide['body'] ?? '')),
+                'primary_cta_label' => trim((string) ($slide['primary_cta_label'] ?? '')),
+                'primary_cta_url' => trim((string) ($slide['primary_cta_url'] ?? $slide['link'] ?? '')),
+                'secondary_cta_label' => trim((string) ($slide['secondary_cta_label'] ?? '')),
+                'secondary_cta_url' => trim((string) ($slide['secondary_cta_url'] ?? '')),
+            ])
+            ->filter(fn (array $slide): bool => collect($slide)->filter(fn ($value): bool => filled($value))->isNotEmpty())
+            ->values()
+            ->all();
+    }
+
+    private function heroSlidesFromRequest(array $slides, string $mode = 'static'): array
+    {
+        return collect($slides)
+            ->take($mode === 'static' ? 1 : 5)
+            ->map(function (array $slide): array {
+                $image = trim((string) ($slide['current_image'] ?? ''));
+                $uploadedImage = $slide['image_file'] ?? null;
+
+                if ($uploadedImage instanceof UploadedFile && $uploadedImage->isValid()) {
+                    $image = 'storage/'.$uploadedImage->store('cms/homepage/hero', 'public');
+                }
+
+                return [
+                    'image' => $image,
+                    'title' => trim((string) ($slide['title'] ?? '')),
+                    'headline' => trim((string) ($slide['headline'] ?? '')),
+                    'body' => trim((string) ($slide['body'] ?? '')),
+                    'primary_cta_label' => trim((string) ($slide['primary_cta_label'] ?? '')),
+                    'primary_cta_url' => trim((string) ($slide['primary_cta_url'] ?? '')),
+                    'secondary_cta_label' => trim((string) ($slide['secondary_cta_label'] ?? '')),
+                    'secondary_cta_url' => trim((string) ($slide['secondary_cta_url'] ?? '')),
+                ];
+            })
+            ->filter(fn (array $slide): bool => collect($slide)->filter(fn ($value): bool => filled($value))->isNotEmpty())
+            ->values()
+            ->all();
     }
 
     private function heroSliderSlidesFromRequest(array $slides): array
@@ -1188,7 +1299,7 @@ class CmsStudioController extends Controller
         }
 
         return SectionType::query()
-            ->whereIn('code', self::HOMEPAGE_SECTION_CODES)
+            ->where('code', 'hero')
             ->where('is_active', true)
             ->orderBy('category')
             ->orderBy('name')

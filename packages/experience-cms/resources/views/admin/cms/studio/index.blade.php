@@ -697,20 +697,21 @@
                 </div>
             @elseif ($editor['type'] === 'homepage')
                 @php
-                    $homepagePage = $values['page'] ?? [];
-                    $homepageSectionTypes = collect($editor['section_types'] ?? []);
-                    $homepageSectionTypeLabels = $homepageSectionTypes->pluck('name', 'code')->all();
-                    $homepageSections = old('sections', $values['sections'] ?? []);
+                    $homepageHasSectionErrors = collect($errors->getMessages())
+                        ->keys()
+                        ->contains(fn ($key) => \Illuminate\Support\Str::startsWith((string) $key, 'sections'));
+                    $homepageSections = collect($homepageHasSectionErrors ? old('sections', $values['sections'] ?? []) : ($values['sections'] ?? []))
+                        ->filter(fn ($section) => ($section['section_code'] ?? null) === 'hero')
+                        ->take(1)
+                        ->values()
+                        ->all();
+                    $hasHomepageHero = ! empty($homepageSections);
+                    $addHeroButtonClass = $hasHomepageHero
+                        ? 'inline-flex cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500'
+                        : $secondaryButtonClass;
 
                     $emptyHomepageSettings = [
-                        'eyebrow' => '',
-                        'headline' => '',
-                        'body' => '',
-                        'primary_cta_label' => '',
-                        'primary_cta_url' => '',
-                        'secondary_cta_label' => '',
-                        'secondary_cta_url' => '',
-                        'content' => '',
+                        'mode' => 'static',
                         'slides' => [],
                     ];
                 @endphp
@@ -729,69 +730,22 @@
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <h3 class="{{ $headerSectionTitleClass }}">
-                                    Homepage Status
+                                    Homepage Hero
                                 </h3>
 
                                 <p class="{{ $headerSectionDescriptionClass }}">
-                                    Manage predefined homepage content sections. Product, category, cart, checkout, and account pages stay outside CMS Studio.
-                                </p>
-                            </div>
-
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="rounded-full px-3 py-1 text-xs font-semibold {{ ($homepagePage['status'] ?? 'draft') === 'published' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300' }}">
-                                    {{ ucfirst((string) ($homepagePage['status'] ?? 'draft')) }}
-                                </span>
-
-                                @if (! empty($homepagePage['preview_url']))
-                                    <a
-                                        href="{{ $homepagePage['preview_url'] }}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="{{ $secondaryButtonClass }}"
-                                    >
-                                        Signed Preview
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950">
-                                <p class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Page</p>
-                                <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ $homepagePage['title'] ?? 'Homepage' }}</p>
-                                <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">/{{ $homepagePage['slug'] ?? 'home' }}</p>
-                            </div>
-
-                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950">
-                                <p class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Updated</p>
-                                <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ $homepagePage['updated_at'] ?? 'Not saved yet' }}</p>
-                            </div>
-
-                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950">
-                                <p class="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500">Published</p>
-                                <p class="mt-2 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ $homepagePage['published_at'] ?? 'Not published yet' }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="{{ $headerSectionClass }}">
-                        <div class="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <h3 class="{{ $headerSectionTitleClass }}">
-                                    Homepage Sections
-                                </h3>
-
-                                <p class="{{ $headerSectionDescriptionClass }}">
-                                    Add, reorder, enable, or disable the safe section types supported in this Studio slice.
+                                    Configure one theme-neutral Hero. The active storefront theme controls how it is rendered.
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                class="{{ $secondaryButtonClass }}"
+                                class="{{ $addHeroButtonClass }}"
                                 data-add-homepage-section
+                                onclick="window.cmsHomepageHeroAdd?.(this)"
+                                @disabled($hasHomepageHero)
                             >
-                                Add section
+                                {{ $hasHomepageHero ? 'Hero already added' : 'Add Hero' }}
                             </button>
                         </div>
 
@@ -799,30 +753,25 @@
                             <span class="mt-3 block text-sm text-red-600">{{ $message }}</span>
                         @enderror
 
-                        <div class="mt-5 space-y-4" data-homepage-sections>
+                        <div class="mt-5 grid grid-cols-1 gap-4" data-homepage-sections>
                             @forelse ($homepageSections as $index => $section)
                                 @php
-                                    $sectionCode = $section['section_code'] ?? '';
                                     $sectionSettings = array_replace($emptyHomepageSettings, $section['settings'] ?? []);
-                                    $sectionIsExisting = filled($section['id'] ?? null);
-                                    $sectionIsEditable = (bool) ($section['is_editable'] ?? array_key_exists($sectionCode, $homepageSectionTypeLabels));
-                                    $sectionLabel = $section['section_label'] ?? ($homepageSectionTypeLabels[$sectionCode] ?? \Illuminate\Support\Str::headline($sectionCode ?: 'Section'));
-                                    $showHeroFields = $sectionCode === 'hero_banner';
-                                    $showHeroSliderFields = $sectionCode === 'hero_slider';
-                                    $showContentFields = in_array($sectionCode, ['promo_strip', 'rich_text'], true);
+                                    $heroMode = in_array($sectionSettings['mode'] ?? 'static', ['static', 'slider'], true) ? $sectionSettings['mode'] : 'static';
                                 @endphp
 
-                                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row>
+                                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row data-homepage-active-slide="0">
                                     <input type="hidden" name="sections[{{ $index }}][id]" value="{{ $section['id'] ?? '' }}">
+                                    <input type="hidden" name="sections[{{ $index }}][section_code]" value="hero" data-homepage-section-code>
 
                                     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                                         <div>
                                             <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
-                                                {{ $sectionLabel }}
+                                                Hero
                                             </p>
 
                                             <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
-                                                {{ $section['area_label'] ?? 'Homepage' }} section
+                                                Static image or auto slider for the homepage opening area.
                                             </p>
                                         </div>
 
@@ -841,28 +790,10 @@
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_160px_120px]">
+                                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
                                         <label class="block">
                                             <span class="{{ $headerLabelClass }}">Section title</span>
-                                            <input name="sections[{{ $index }}][title]" value="{{ $section['title'] ?? '' }}" class="{{ $headerInputClass }}">
-                                        </label>
-
-                                        <label class="block">
-                                            <span class="{{ $headerLabelClass }}">Type</span>
-
-                                            @if ($sectionIsExisting)
-                                                <input type="hidden" name="sections[{{ $index }}][section_code]" value="{{ $sectionCode }}">
-                                                <input value="{{ $sectionLabel }}" class="{{ $headerInputClass }}" disabled>
-                                            @else
-                                                <select name="sections[{{ $index }}][section_code]" class="{{ $headerInputClass }}" data-homepage-section-code>
-                                                    <option value="">Choose section</option>
-                                                    @foreach ($homepageSectionTypes as $sectionType)
-                                                        <option value="{{ $sectionType['code'] }}" @selected($sectionCode === $sectionType['code'])>
-                                                            {{ $sectionType['name'] }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            @endif
+                                            <input name="sections[{{ $index }}][title]" value="{{ $section['title'] ?? '' }}" class="{{ $headerInputClass }}" data-homepage-section-title>
                                         </label>
 
                                         <label class="block">
@@ -875,149 +806,189 @@
                                         <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
                                     @enderror
 
-                                    @if (! $sectionIsEditable)
-                                        <div class="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
-                                            This theme-managed section is preserved safely. Structured editing for this section type will be added in a later Studio slice.
-                                        </div>
-                                    @else
-                                        <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 {{ $showHeroFields ? '' : 'hidden' }}" data-homepage-fields="hero_banner">
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Eyebrow</span>
-                                                <input name="sections[{{ $index }}][settings][eyebrow]" value="{{ $sectionSettings['eyebrow'] }}" class="{{ $headerInputClass }}">
+                                    <div class="mt-5" data-homepage-fields="hero">
+                                        <input type="hidden" name="sections[{{ $index }}][settings][mode]" value="{{ $heroMode }}" data-homepage-hero-mode-value>
+
+                                        <div class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="sections[{{ $index }}][settings][mode_toggle]" value="static" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" @checked($heroMode === 'static')>
+                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                                    Static image
+                                                </span>
                                             </label>
 
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Headline</span>
-                                                <input name="sections[{{ $index }}][settings][headline]" value="{{ $sectionSettings['headline'] }}" class="{{ $headerInputClass }}">
-                                                @error("sections.$index.settings.headline")
-                                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                                @enderror
-                                            </label>
-
-                                            <label class="block md:col-span-2">
-                                                <span class="{{ $headerLabelClass }}">Body</span>
-                                                <textarea name="sections[{{ $index }}][settings][body]" rows="3" class="{{ $headerInputClass }}">{{ $sectionSettings['body'] }}</textarea>
-                                            </label>
-
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Primary CTA label</span>
-                                                <input name="sections[{{ $index }}][settings][primary_cta_label]" value="{{ $sectionSettings['primary_cta_label'] }}" class="{{ $headerInputClass }}">
-                                            </label>
-
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Primary CTA URL</span>
-                                                <input name="sections[{{ $index }}][settings][primary_cta_url]" value="{{ $sectionSettings['primary_cta_url'] }}" class="{{ $headerInputClass }}">
-                                            </label>
-
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Secondary CTA label</span>
-                                                <input name="sections[{{ $index }}][settings][secondary_cta_label]" value="{{ $sectionSettings['secondary_cta_label'] }}" class="{{ $headerInputClass }}">
-                                            </label>
-
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Secondary CTA URL</span>
-                                                <input name="sections[{{ $index }}][settings][secondary_cta_url]" value="{{ $sectionSettings['secondary_cta_url'] }}" class="{{ $headerInputClass }}">
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="sections[{{ $index }}][settings][mode_toggle]" value="slider" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" @checked($heroMode === 'slider')>
+                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                                    Auto slider
+                                                </span>
                                             </label>
                                         </div>
 
-                                        <div class="mt-5 {{ $showHeroSliderFields ? '' : 'hidden' }}" data-homepage-fields="hero_slider">
-                                            <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
-                                                Upload up to five hero images. The storefront uses the existing auto-sliding hero carousel behavior.
-                                            </div>
-
-                                            <div class="grid grid-cols-1 gap-4">
+                                        <div class="{{ $heroMode === 'slider' ? '' : 'hidden' }} mb-4 rounded-2xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800" data-homepage-hero-slide-tabs>
+                                            <div class="flex flex-wrap items-center gap-2">
                                                 @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
                                                     @php
                                                         $slide = $sectionSettings['slides'][$slideIndex] ?? [];
+                                                        $slideImage = (string) ($slide['image'] ?? '');
+                                                        $slideImageUrl = $slideImage !== '' ? (\Illuminate\Support\Str::startsWith($slideImage, ['http://', 'https://', '/']) ? $slideImage : asset($slideImage)) : null;
+                                                        $slideHasContent = collect($slide)->filter(fn ($value) => filled($value))->isNotEmpty();
+                                                        $slideEnabled = $slideIndex === 0 || ($heroMode === 'slider' && $slideHasContent);
                                                     @endphp
 
-                                                    <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                                                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
-                                                                Slide {{ $slideIndex + 1 }}
-                                                            </p>
-
-                                                            @if (! empty($slide['image']))
-                                                                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                                                                    Image saved
-                                                                </span>
-                                                            @endif
-                                                        </div>
-
-                                                        @if (! empty($slide['image']))
-                                                            <img
-                                                                src="{{ asset($slide['image']) }}"
-                                                                alt=""
-                                                                class="mb-4 h-24 w-full rounded-xl border border-slate-200 object-cover dark:border-gray-700"
-                                                            >
+                                                    <button
+                                                        type="button"
+                                                        class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300' : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-blue-200 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400 dark:hover:border-blue-900 dark:hover:text-blue-300' }} {{ $heroMode !== 'slider' ? 'hidden' : '' }}"
+                                                        data-homepage-hero-slide-tab
+                                                        data-slide-index="{{ $slideIndex }}"
+                                                        onclick="window.cmsHomepageHeroSelectSlide?.(this)"
+                                                    >
+                                                        @if ($slideImageUrl)
+                                                            <img src="{{ $slideImageUrl }}" alt="" class="h-8 w-10 rounded-lg object-cover">
+                                                        @else
+                                                            <span class="flex h-8 w-10 items-center justify-center rounded-lg bg-white text-xs text-slate-400 dark:bg-gray-900 dark:text-gray-500">
+                                                                {{ $slideIndex + 1 }}
+                                                            </span>
                                                         @endif
-
-                                                        <input type="hidden" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][current_image]" value="{{ $slide['image'] ?? '' }}">
-
-                                                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                                            <label class="block">
-                                                                <span class="{{ $headerLabelClass }}">Image</span>
-                                                                <input type="file" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][image_file]" accept="image/png,image/jpeg,image/jpg,image/webp" class="{{ $headerInputClass }}">
-                                                                @error("sections.$index.settings.slides.$slideIndex.image_file")
-                                                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                                                @enderror
-                                                            </label>
-
-                                                            <label class="block">
-                                                                <span class="{{ $headerLabelClass }}">Alt / title</span>
-                                                                <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][title]" value="{{ $slide['title'] ?? '' }}" class="{{ $headerInputClass }}">
-                                                            </label>
-
-                                                            <label class="block">
-                                                                <span class="{{ $headerLabelClass }}">Click URL</span>
-                                                                <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][link]" value="{{ $slide['link'] ?? '' }}" class="{{ $headerInputClass }}">
-                                                            </label>
-                                                        </div>
-                                                    </div>
+                                                        Slide {{ $slideIndex + 1 }}
+                                                    </button>
                                                 @endfor
                                             </div>
-
-                                            @error("sections.$index.settings.slides")
-                                                <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
-                                            @enderror
                                         </div>
 
-                                        <div class="mt-5 {{ $showContentFields ? '' : 'hidden' }}" data-homepage-fields="content">
-                                            <label class="block">
-                                                <span class="{{ $headerLabelClass }}">Content</span>
-                                                <textarea name="sections[{{ $index }}][settings][content]" rows="4" class="{{ $headerInputClass }}">{{ $sectionSettings['content'] }}</textarea>
-                                                @error("sections.$index.settings.content")
-                                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                                @enderror
-                                            </label>
+                                        <div>
+                                            @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
+                                                @php
+                                                    $slide = $sectionSettings['slides'][$slideIndex] ?? [];
+                                                    $slideImage = (string) ($slide['image'] ?? '');
+                                                    $slideImageUrl = $slideImage !== '' ? (\Illuminate\Support\Str::startsWith($slideImage, ['http://', 'https://', '/']) ? $slideImage : asset($slideImage)) : null;
+                                                    $slideHasContent = collect($slide)->filter(fn ($value) => filled($value))->isNotEmpty();
+                                                    $slideEnabled = $slideIndex === 0 || ($heroMode === 'slider' && $slideHasContent);
+                                                    $slidePanelVisible = $slideIndex === 0;
+                                                @endphp
+
+                                                <div
+                                                    class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 {{ ! $slidePanelVisible ? 'hidden' : '' }}"
+                                                    data-homepage-hero-slide-panel
+                                                    data-slide-index="{{ $slideIndex }}"
+                                                >
+                                                    <input type="hidden" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][enabled]" value="{{ $slideEnabled ? 1 : 0 }}" data-homepage-hero-slide-enabled>
+
+                                                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                                        <div>
+                                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                                {{ $slideIndex === 0 ? 'Primary hero slide' : 'Slide '.($slideIndex + 1) }}
+                                                            </p>
+
+                                                            <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
+                                                                {{ $slideIndex === 0 ? 'Used by static mode and as the first slider frame.' : 'Only used when Auto slider is selected.' }}
+                                                            </p>
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            class="{{ $slideIndex === 0 ? 'hidden' : '' }} text-xs font-semibold text-red-500 transition hover:text-red-600"
+                                                            data-homepage-remove-hero-slide
+                                                            onclick="window.cmsHomepageHeroRemoveSlide?.(this)"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+
+                                                    @if ($slideImageUrl)
+                                                        <img
+                                                            src="{{ $slideImageUrl }}"
+                                                            alt="{{ $slide['title'] ?? '' }}"
+                                                            class="mb-4 h-40 w-full rounded-xl border border-slate-200 object-cover dark:border-gray-700"
+                                                        >
+                                                    @endif
+
+                                                    <input type="hidden" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][current_image]" value="{{ $slideImage }}" data-homepage-hero-current-image>
+
+                                                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Image</span>
+                                                            <input type="file" name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][image_file]" accept="image/png,image/jpeg,image/jpg,image/webp" class="{{ $headerInputClass }}">
+                                                            @error("sections.$index.settings.slides.$slideIndex.image_file")
+                                                                <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                                            @enderror
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Alt / title</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][title]" value="{{ $slide['title'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Headline</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][headline]" value="{{ $slide['headline'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Primary CTA label</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][primary_cta_label]" value="{{ $slide['primary_cta_label'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block lg:col-span-2">
+                                                            <span class="{{ $headerLabelClass }}">Body</span>
+                                                            <textarea name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][body]" rows="3" class="{{ $headerInputClass }}">{{ $slide['body'] ?? '' }}</textarea>
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Primary CTA URL</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][primary_cta_url]" value="{{ $slide['primary_cta_url'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Secondary CTA label</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][secondary_cta_label]" value="{{ $slide['secondary_cta_label'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Secondary CTA URL</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][secondary_cta_url]" value="{{ $slide['secondary_cta_url'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endfor
                                         </div>
-                                    @endif
+
+                                        @error("sections.$index.settings.slides")
+                                            <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
                             @empty
-                                <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-gray-700 dark:bg-gray-950">
+                                <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center dark:border-gray-700 dark:bg-gray-950" data-homepage-empty-state>
                                     <p class="text-sm font-medium text-slate-700 dark:text-gray-200">
-                                        No homepage sections yet.
+                                        No homepage Hero yet.
                                     </p>
 
                                     <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                                        Add a predefined section to start building the homepage.
+                                        Add Hero to configure the static image or auto slider shown by the active theme.
                                     </p>
                                 </div>
                             @endforelse
                         </div>
 
+                        <div class="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300">
+                            Homepage content below the Hero is rendered by the active theme.
+                        </div>
+
                         <template data-homepage-section-template>
-                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row>
+                            <fieldset disabled class="contents" data-homepage-section-template-fields>
+                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row data-homepage-active-slide="0">
                                 <input type="hidden" name="sections[__INDEX__][id]" value="">
+                                <input type="hidden" name="sections[__INDEX__][section_code]" value="hero" data-homepage-section-code>
 
                                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
-                                            New Section
+                                            Hero
                                         </p>
 
                                         <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
-                                            Choose an approved homepage section type.
+                                            Static image or auto slider for the homepage opening area.
                                         </p>
                                     </div>
 
@@ -1030,20 +1001,10 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_160px_120px]">
+                                <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_140px]">
                                     <label class="block">
                                         <span class="{{ $headerLabelClass }}">Section title</span>
-                                        <input name="sections[__INDEX__][title]" class="{{ $headerInputClass }}">
-                                    </label>
-
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Type</span>
-                                        <select name="sections[__INDEX__][section_code]" class="{{ $headerInputClass }}" data-homepage-section-code>
-                                            <option value="">Choose section</option>
-                                            @foreach ($homepageSectionTypes as $sectionType)
-                                                <option value="{{ $sectionType['code'] }}">{{ $sectionType['name'] }}</option>
-                                            @endforeach
-                                        </select>
+                                        <input name="sections[__INDEX__][title]" value="Hero" class="{{ $headerInputClass }}" data-homepage-section-title>
                                     </label>
 
                                     <label class="block">
@@ -1052,58 +1013,77 @@
                                     </label>
                                 </div>
 
-                                <div class="mt-5 hidden grid grid-cols-1 gap-4 md:grid-cols-2" data-homepage-fields="hero_banner">
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Eyebrow</span>
-                                        <input name="sections[__INDEX__][settings][eyebrow]" class="{{ $headerInputClass }}">
-                                    </label>
+                                <div class="mt-5" data-homepage-fields="hero">
+                                    <input type="hidden" name="sections[__INDEX__][settings][mode]" value="static" data-homepage-hero-mode-value>
 
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Headline</span>
-                                        <input name="sections[__INDEX__][settings][headline]" class="{{ $headerInputClass }}">
-                                    </label>
+                                    <div class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="sections[__INDEX__][settings][mode_toggle]" value="static" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" checked>
+                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                                Static image
+                                            </span>
+                                        </label>
 
-                                    <label class="block md:col-span-2">
-                                        <span class="{{ $headerLabelClass }}">Body</span>
-                                        <textarea name="sections[__INDEX__][settings][body]" rows="3" class="{{ $headerInputClass }}"></textarea>
-                                    </label>
-
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Primary CTA label</span>
-                                        <input name="sections[__INDEX__][settings][primary_cta_label]" class="{{ $headerInputClass }}">
-                                    </label>
-
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Primary CTA URL</span>
-                                        <input name="sections[__INDEX__][settings][primary_cta_url]" class="{{ $headerInputClass }}">
-                                    </label>
-
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Secondary CTA label</span>
-                                        <input name="sections[__INDEX__][settings][secondary_cta_label]" class="{{ $headerInputClass }}">
-                                    </label>
-
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Secondary CTA URL</span>
-                                        <input name="sections[__INDEX__][settings][secondary_cta_url]" class="{{ $headerInputClass }}">
-                                    </label>
-                                </div>
-
-                                <div class="mt-5 hidden" data-homepage-fields="hero_slider">
-                                    <div class="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
-                                        Upload up to five hero images. The storefront uses the existing auto-sliding hero carousel behavior.
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="sections[__INDEX__][settings][mode_toggle]" value="slider" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)">
+                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                                Auto slider
+                                            </span>
+                                        </label>
                                     </div>
 
-                                    <div class="grid grid-cols-1 gap-4">
-                                        @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
-                                            <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-                                                <p class="mb-4 text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                    <div class="mb-4 hidden rounded-2xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800" data-homepage-hero-slide-tabs>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300' : 'hidden border-slate-200 bg-slate-50 text-slate-500 hover:border-blue-200 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400 dark:hover:border-blue-900 dark:hover:text-blue-300' }}"
+                                                    data-homepage-hero-slide-tab
+                                                    data-slide-index="{{ $slideIndex }}"
+                                                    onclick="window.cmsHomepageHeroSelectSlide?.(this)"
+                                                >
+                                                    <span class="flex h-8 w-10 items-center justify-center rounded-lg bg-white text-xs text-slate-400 dark:bg-gray-900 dark:text-gray-500">
+                                                        {{ $slideIndex + 1 }}
+                                                    </span>
                                                     Slide {{ $slideIndex + 1 }}
-                                                </p>
+                                                </button>
+                                            @endfor
+                                        </div>
+                                    </div>
 
-                                                <input type="hidden" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][current_image]" value="">
+                                    <div>
+                                        @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
+                                            @php
+                                                $isExtraSlide = $slideIndex > 0;
+                                            @endphp
 
-                                                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 {{ $isExtraSlide ? 'hidden' : '' }}" data-homepage-hero-slide-panel data-slide-index="{{ $slideIndex }}">
+                                                <input type="hidden" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][enabled]" value="{{ $slideIndex === 0 ? 1 : 0 }}" data-homepage-hero-slide-enabled>
+
+                                                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                                    <div>
+                                                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                                            {{ $slideIndex === 0 ? 'Primary hero slide' : 'Slide '.($slideIndex + 1) }}
+                                                        </p>
+
+                                                        <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
+                                                            {{ $slideIndex === 0 ? 'Used by static mode and as the first slider frame.' : 'Only used when Auto slider is selected.' }}
+                                                        </p>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        class="{{ $slideIndex === 0 ? 'hidden' : '' }} text-xs font-semibold text-red-500 transition hover:text-red-600"
+                                                        data-homepage-remove-hero-slide
+                                                        onclick="window.cmsHomepageHeroRemoveSlide?.(this)"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+
+                                                <input type="hidden" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][current_image]" value="" data-homepage-hero-current-image>
+
+                                                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                                     <label class="block">
                                                         <span class="{{ $headerLabelClass }}">Image</span>
                                                         <input type="file" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][image_file]" accept="image/png,image/jpeg,image/jpg,image/webp" class="{{ $headerInputClass }}">
@@ -1115,22 +1095,41 @@
                                                     </label>
 
                                                     <label class="block">
-                                                        <span class="{{ $headerLabelClass }}">Click URL</span>
-                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][link]" class="{{ $headerInputClass }}">
+                                                        <span class="{{ $headerLabelClass }}">Headline</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][headline]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Primary CTA label</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][primary_cta_label]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block lg:col-span-2">
+                                                        <span class="{{ $headerLabelClass }}">Body</span>
+                                                        <textarea name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][body]" rows="3" class="{{ $headerInputClass }}"></textarea>
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Primary CTA URL</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][primary_cta_url]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Secondary CTA label</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][secondary_cta_label]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Secondary CTA URL</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][secondary_cta_url]" class="{{ $headerInputClass }}">
                                                     </label>
                                                 </div>
                                             </div>
                                         @endfor
                                     </div>
                                 </div>
-
-                                <div class="mt-5 hidden" data-homepage-fields="content">
-                                    <label class="block">
-                                        <span class="{{ $headerLabelClass }}">Content</span>
-                                        <textarea name="sections[__INDEX__][settings][content]" rows="4" class="{{ $headerInputClass }}"></textarea>
-                                    </label>
-                                </div>
                             </div>
+                            </fieldset>
                         </template>
                     </div>
                 </form>
@@ -1627,7 +1626,7 @@
                         @php
                             $homepagePreviewValues = $preview['values'] ?? [];
                             $homepagePreviewSections = collect($homepagePreviewValues['sections'] ?? [])
-                                ->filter(fn ($section) => ! empty($section['is_active']))
+                                ->filter(fn ($section) => ! empty($section['is_active']) && ($section['section_code'] ?? null) === 'hero')
                                 ->sortBy('sort_order')
                                 ->values();
                         @endphp
@@ -1640,20 +1639,18 @@
                                     </p>
 
                                     <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                                        Saved section preview · {{ $homepagePreviewSections->count() }} active sections
+                                        Saved Hero preview · below-Hero content comes from the active theme
                                     </p>
                                 </div>
 
-                                @if (! empty($preview['preview_url']))
-                                    <a
-                                        href="{{ $preview['preview_url'] }}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="{{ $secondaryButtonClass }}"
-                                    >
-                                        Open Signed Preview
-                                    </a>
-                                @endif
+                                <a
+                                    href="{{ $previewStorefrontUrl }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="{{ $secondaryButtonClass }}"
+                                >
+                                    Open Storefront
+                                </a>
                             </div>
 
                             @if ($homepagePreviewSections->isNotEmpty())
@@ -1663,39 +1660,7 @@
                                             $previewSectionSettings = array_replace($emptyHomepageSettings, $section['settings'] ?? []);
                                         @endphp
 
-                                        @if (($section['section_code'] ?? '') === 'hero_banner')
-                                            <section class="rounded-[24px] bg-white p-6 dark:bg-gray-800">
-                                                @if (! empty($previewSectionSettings['eyebrow']))
-                                                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
-                                                        {{ $previewSectionSettings['eyebrow'] }}
-                                                    </p>
-                                                @endif
-
-                                                <h3 class="mt-3 max-w-2xl font-sans text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
-                                                    {{ $previewSectionSettings['headline'] ?: ($section['title'] ?? 'Hero Banner') }}
-                                                </h3>
-
-                                                @if (! empty($previewSectionSettings['body']))
-                                                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500 dark:text-gray-400">
-                                                        {{ $previewSectionSettings['body'] }}
-                                                    </p>
-                                                @endif
-
-                                                <div class="mt-5 flex flex-wrap gap-2">
-                                                    @if (! empty($previewSectionSettings['primary_cta_label']))
-                                                        <span class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white">
-                                                            {{ $previewSectionSettings['primary_cta_label'] }}
-                                                        </span>
-                                                    @endif
-
-                                                    @if (! empty($previewSectionSettings['secondary_cta_label']))
-                                                        <span class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                                                            {{ $previewSectionSettings['secondary_cta_label'] }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </section>
-                                        @elseif (($section['section_code'] ?? '') === 'hero_slider')
+                                        @if (($section['section_code'] ?? '') === 'hero')
                                             @php
                                                 $previewSlides = collect($previewSectionSettings['slides'] ?? [])
                                                     ->filter(fn ($slide) => ! empty($slide['image']))
@@ -1704,32 +1669,66 @@
 
                                             <section class="overflow-hidden rounded-[24px] bg-white dark:bg-gray-800">
                                                 @if ($previewSlides->isNotEmpty())
-                                                    <div class="relative">
-                                                        <img
-                                                            src="{{ asset($previewSlides->first()['image']) }}"
-                                                            alt="{{ $previewSlides->first()['title'] ?? '' }}"
-                                                            class="aspect-[2.743/1] w-full object-cover"
-                                                        >
+                                                    <div class="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                                                        <div class="flex flex-col justify-center">
+                                                            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
+                                                                {{ ($previewSectionSettings['mode'] ?? 'static') === 'slider' ? 'Auto Slider' : 'Static Hero' }}
+                                                            </p>
 
-                                                        <div class="absolute bottom-4 left-0 flex w-full justify-center gap-2">
-                                                            @foreach ($previewSlides as $previewSlide)
-                                                                <span class="h-2 w-2 rounded-full {{ $loop->first ? 'bg-blue-600' : 'bg-white/80' }}"></span>
-                                                            @endforeach
+                                                            <h3 class="mt-3 max-w-2xl font-sans text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
+                                                                {{ $previewSlides->first()['headline'] ?: ($previewSlides->first()['title'] ?? ($section['title'] ?? 'Hero')) }}
+                                                            </h3>
+
+                                                            @if (! empty($previewSlides->first()['body']))
+                                                                <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                                                    {{ $previewSlides->first()['body'] }}
+                                                                </p>
+                                                            @endif
+
+                                                            <div class="mt-5 flex flex-wrap gap-2">
+                                                                @if (! empty($previewSlides->first()['primary_cta_label']))
+                                                                    <span class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+                                                                        {{ $previewSlides->first()['primary_cta_label'] }}
+                                                                    </span>
+                                                                @endif
+
+                                                                @if (! empty($previewSlides->first()['secondary_cta_label']))
+                                                                    <span class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                                                        {{ $previewSlides->first()['secondary_cta_label'] }}
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="relative overflow-hidden rounded-2xl">
+                                                            <img
+                                                                src="{{ \Illuminate\Support\Str::startsWith($previewSlides->first()['image'], ['http://', 'https://', '/']) ? $previewSlides->first()['image'] : asset($previewSlides->first()['image']) }}"
+                                                                alt="{{ $previewSlides->first()['title'] ?? '' }}"
+                                                                class="aspect-[16/9] w-full object-cover"
+                                                            >
+
+                                                            @if ($previewSlides->count() > 1)
+                                                                <div class="absolute bottom-4 left-0 flex w-full justify-center gap-2">
+                                                                    @foreach ($previewSlides as $previewSlide)
+                                                                        <span class="h-2 w-2 rounded-full {{ $loop->first ? 'bg-blue-600' : 'bg-white/80' }}"></span>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
                                                         </div>
                                                     </div>
 
                                                     <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                                                         <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
-                                                            {{ $section['title'] ?? 'Hero Slider' }}
+                                                            {{ $section['title'] ?? 'Hero' }}
                                                         </p>
 
                                                         <p class="text-xs font-medium text-slate-500 dark:text-gray-400">
-                                                            {{ $previewSlides->count() }} auto-sliding images
+                                                            {{ $previewSlides->count() }} {{ \Illuminate\Support\Str::plural('slide', $previewSlides->count()) }}
                                                         </p>
                                                     </div>
                                                 @else
                                                     <div class="p-6 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                                                        Upload at least one hero slider image.
+                                                        Upload at least one hero image.
                                                     </div>
                                                 @endif
                                             </section>
@@ -1853,38 +1852,191 @@
                         const template = homepageBuilder.querySelector('[data-homepage-section-template]');
                         const addButton = homepageBuilder.querySelector('[data-add-homepage-section]');
 
-                        const toggleHomepageFields = (row) => {
-                            const sectionCodeInput = row.querySelector('[data-homepage-section-code]');
+                        const activeTabClasses = [
+                            'border-blue-200',
+                            'bg-blue-50',
+                            'text-blue-700',
+                            'dark:border-blue-900',
+                            'dark:bg-blue-950/40',
+                            'dark:text-blue-300',
+                        ];
+                        const inactiveTabClasses = [
+                            'border-slate-200',
+                            'bg-slate-50',
+                            'text-slate-500',
+                            'hover:border-blue-200',
+                            'hover:text-blue-600',
+                            'dark:border-gray-700',
+                            'dark:bg-gray-950',
+                            'dark:text-gray-400',
+                            'dark:hover:border-blue-900',
+                            'dark:hover:text-blue-300',
+                        ];
 
-                            if (! sectionCodeInput) {
+                        const getHeroRows = () => Array.from(rows?.querySelectorAll('[data-homepage-section-row]') ?? []);
+                        const getHeroMode = (row) => row.querySelector('[data-homepage-hero-mode-value]')?.value
+                            ?? row.querySelector('[data-homepage-hero-mode]:checked')?.value
+                            ?? 'static';
+                        const getSlidePanels = (row) => Array.from(row.querySelectorAll('[data-homepage-hero-slide-panel]'));
+                        const getSlideTabs = (row) => Array.from(row.querySelectorAll('[data-homepage-hero-slide-tab]'));
+                        const isSlideEnabled = (panel, index) => index === 0 || panel.querySelector('[data-homepage-hero-slide-enabled]')?.value === '1';
+
+                        const setSlideEnabled = (panel, enabled) => {
+                            const enabledInput = panel.querySelector('[data-homepage-hero-slide-enabled]');
+
+                            if (enabledInput) {
+                                enabledInput.value = enabled ? '1' : '0';
+                            }
+                        };
+
+                        const clearSlidePanel = (panel) => {
+                            panel.querySelectorAll('input, textarea').forEach((input) => {
+                                if (input.matches('[data-homepage-hero-slide-enabled]')) {
+                                    return;
+                                }
+
+                                if (input.type === 'file') {
+                                    input.value = '';
+
+                                    return;
+                                }
+
+                                if (input.matches('[data-homepage-hero-current-image]') || input.type !== 'hidden') {
+                                    input.value = '';
+                                }
+                            });
+
+                            panel.querySelector('img')?.remove();
+                        };
+
+                        const setActiveHeroSlide = (row, slideIndex) => {
+                            row.dataset.homepageActiveSlide = String(slideIndex);
+                            syncHeroRow(row);
+                        };
+
+                        const syncHeroRow = (row) => {
+                            const mode = getHeroMode(row);
+                            const panels = getSlidePanels(row);
+                            const tabs = getSlideTabs(row);
+                            const tabsWrapper = row.querySelector('[data-homepage-hero-slide-tabs]');
+
+                            if (! panels.length) {
                                 return;
                             }
 
-                            const selectedCode = sectionCodeInput.value ?? '';
-                            const heroFields = row.querySelector('[data-homepage-fields="hero_banner"]');
-                            const heroSliderFields = row.querySelector('[data-homepage-fields="hero_slider"]');
-                            const contentFields = row.querySelector('[data-homepage-fields="content"]');
+                            setSlideEnabled(panels[0], true);
 
-                            heroFields?.classList.toggle('hidden', selectedCode !== 'hero_banner');
-                            heroSliderFields?.classList.toggle('hidden', selectedCode !== 'hero_slider');
-                            contentFields?.classList.toggle('hidden', ! ['promo_strip', 'rich_text'].includes(selectedCode));
+                            if (mode === 'static') {
+                                row.dataset.homepageActiveSlide = '0';
+                            }
+
+                            const currentIndex = Number(row.dataset.homepageActiveSlide ?? '0');
+                            const activeIndex = mode === 'slider' && currentIndex >= 0 && currentIndex < panels.length
+                                ? currentIndex
+                                : 0;
+
+                            row.dataset.homepageActiveSlide = String(activeIndex);
+                            tabsWrapper?.classList.toggle('hidden', mode !== 'slider');
+
+                            panels.forEach((panel, index) => {
+                                const visible = mode === 'static'
+                                    ? index === 0
+                                    : index === activeIndex;
+                                const removeButton = panel.querySelector('[data-homepage-remove-hero-slide]');
+
+                                panel.classList.toggle('hidden', ! visible);
+                                removeButton?.classList.toggle('hidden', mode !== 'slider' || index === 0);
+                            });
+
+                            tabs.forEach((tab, index) => {
+                                const active = index === activeIndex;
+
+                                tab.classList.toggle('hidden', mode !== 'slider');
+                                tab.classList.remove(...activeTabClasses, ...inactiveTabClasses);
+                                tab.classList.add(...(active ? activeTabClasses : inactiveTabClasses));
+                            });
+                        };
+
+                        const refreshAddButton = () => {
+                            if (! addButton) {
+                                return;
+                            }
+
+                            const hasHero = getHeroRows().length > 0;
+
+                            addButton.disabled = hasHero;
+                            addButton.textContent = hasHero ? 'Hero already added' : 'Add Hero';
+                            addButton.classList.toggle('cursor-not-allowed', hasHero);
+                            addButton.classList.toggle('opacity-60', hasHero);
                         };
 
                         const bindHomepageRow = (row) => {
-                            const sectionCodeInput = row.querySelector('[data-homepage-section-code]');
+                            if (! row.dataset.homepageActiveSlide) {
+                                row.dataset.homepageActiveSlide = '0';
+                            }
 
-                            sectionCodeInput?.addEventListener('change', () => toggleHomepageFields(row));
-                            toggleHomepageFields(row);
+                            syncHeroRow(row);
                         };
 
-                        rows?.querySelectorAll('[data-homepage-section-row]').forEach(bindHomepageRow);
+                        window.cmsHomepageHeroModeChanged = (input) => {
+                            const row = input?.closest('[data-homepage-section-row]');
 
-                        addButton?.addEventListener('click', () => {
-                            if (! rows || ! template) {
+                            if (! row) {
                                 return;
                             }
 
-                            const nextIndex = rows.querySelectorAll('[data-homepage-section-row]').length;
+                            row.querySelectorAll('[data-homepage-hero-mode]').forEach((modeInput) => {
+                                const isSelected = modeInput === input;
+
+                                modeInput.checked = isSelected;
+                                modeInput.toggleAttribute('checked', isSelected);
+                            });
+
+                            const modeValue = row.querySelector('[data-homepage-hero-mode-value]');
+
+                            if (modeValue) {
+                                modeValue.value = input.value;
+                            }
+
+                            row.dataset.homepageActiveSlide = '0';
+                            syncHeroRow(row);
+                        };
+
+                        window.cmsHomepageHeroSelectSlide = (button) => {
+                            const row = button?.closest('[data-homepage-section-row]');
+                            const panel = row?.querySelector(`[data-homepage-hero-slide-panel][data-slide-index="${button?.dataset.slideIndex ?? '0'}"]`);
+
+                            if (! row) {
+                                return;
+                            }
+
+                            if (panel) {
+                                setSlideEnabled(panel, true);
+                            }
+
+                            setActiveHeroSlide(row, Number(button?.dataset.slideIndex ?? '0'));
+                        };
+
+                        window.cmsHomepageHeroRemoveSlide = (button) => {
+                            const panel = button?.closest('[data-homepage-hero-slide-panel]');
+                            const row = button?.closest('[data-homepage-section-row]');
+                            const slideIndex = Number(panel?.dataset.slideIndex ?? '0');
+
+                            if (! panel || ! row || slideIndex === 0) {
+                                return;
+                            }
+
+                            clearSlidePanel(panel);
+                            setSlideEnabled(panel, false);
+                            setActiveHeroSlide(row, 0);
+                        };
+
+                        window.cmsHomepageHeroAdd = (button) => {
+                            if (! rows || ! template || getHeroRows().length > 0) {
+                                return;
+                            }
+
+                            const nextIndex = getHeroRows().length;
                             const nextNumber = nextIndex + 1;
                             const wrapper = document.createElement('div');
 
@@ -1892,17 +2044,83 @@
                                 .replaceAll('__INDEX__', String(nextIndex))
                                 .replaceAll('__NUMBER__', String(nextNumber));
 
-                            const newRow = wrapper.firstElementChild;
+                            const newRow = wrapper.querySelector('[data-homepage-section-row]');
 
-                            if (newRow) {
-                                rows.appendChild(newRow);
-                                bindHomepageRow(newRow);
-                                newRow.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'start',
-                                });
+                            if (! newRow) {
+                                return;
+                            }
+
+                            rows.querySelector('[data-homepage-empty-state]')?.remove();
+                            rows.appendChild(newRow);
+                            bindHomepageRow(newRow);
+                            refreshAddButton();
+                            newRow.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start',
+                            });
+                        };
+
+                        rows?.querySelectorAll('[data-homepage-section-row]').forEach(bindHomepageRow);
+
+                        addButton?.addEventListener('click', () => {
+                            window.cmsHomepageHeroAdd(addButton);
+                        });
+
+                        homepageBuilder.addEventListener('change', (event) => {
+                            if (event.target.matches('[data-homepage-hero-mode]')) {
+                                window.cmsHomepageHeroModeChanged(event.target);
+
+                                return;
+                            }
+
+                            const panel = event.target.closest('[data-homepage-hero-slide-panel]');
+                            const row = event.target.closest('[data-homepage-section-row]');
+
+                            if (panel && row && ! event.target.matches('[data-homepage-hero-current-image]')) {
+                                setSlideEnabled(panel, true);
+                                syncHeroRow(row);
                             }
                         });
+
+                        homepageBuilder.addEventListener('input', (event) => {
+                            const panel = event.target.closest('[data-homepage-hero-slide-panel]');
+                            const row = event.target.closest('[data-homepage-section-row]');
+
+                            if (panel && row && ! event.target.matches('[data-homepage-hero-current-image]')) {
+                                setSlideEnabled(panel, true);
+                                syncHeroRow(row);
+                            }
+                        });
+
+                        homepageBuilder.addEventListener('click', (event) => {
+                            const tab = event.target.closest('[data-homepage-hero-slide-tab]');
+
+                            if (tab) {
+                                const row = tab.closest('[data-homepage-section-row]');
+
+                                if (row) {
+                                    setActiveHeroSlide(row, Number(tab.dataset.slideIndex ?? '0'));
+                                }
+
+                                return;
+                            }
+
+                            const removeSlideButton = event.target.closest('[data-homepage-remove-hero-slide]');
+
+                            if (removeSlideButton) {
+                                const panel = removeSlideButton.closest('[data-homepage-hero-slide-panel]');
+                                const row = removeSlideButton.closest('[data-homepage-section-row]');
+                                const slideIndex = Number(panel?.dataset.slideIndex ?? '0');
+
+                                if (panel && row && slideIndex > 0) {
+                                    clearSlidePanel(panel);
+                                    setSlideEnabled(panel, false);
+                                    setActiveHeroSlide(row, 0);
+                                }
+                            }
+                        });
+
+                        refreshAddButton();
                     }
 
                     const cmsStudioForm = document.querySelector('#cms-studio-form');

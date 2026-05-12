@@ -1,5 +1,10 @@
 @php
     $heroProducts = collect($products)->take(5)->values();
+    $cmsHeroSlides = collect(data_get($hero ?? null, 'slides', []))
+        ->filter(fn ($slide) => ! empty($slide['image']))
+        ->take(5)
+        ->values();
+    $heroImageUrl = fn ($path) => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/']) ? $path : asset($path);
     $placeholderImages = [
         'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1400',
         'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1400',
@@ -14,14 +19,31 @@
         ]);
     }
 
-    $heroData = $heroProducts->map(function($product, $index) use ($placeholderImages) {
-        return [
-            'name' => $product['name'] ?? 'Color Pop Collection',
-            'image' => $placeholderImages[$index % count($placeholderImages)],
-            'url' => $product['url'] ?? route('shop.search.index'),
-            'price' => $product['final_price'] ?? ($product['formatted_price'] ?? 'Shop Now'),
-        ];
-    })->values();
+    $heroData = $cmsHeroSlides->isNotEmpty()
+        ? $cmsHeroSlides->map(function ($slide) use ($heroImageUrl) {
+            return [
+                'cms' => true,
+                'name' => $slide['title'] ?: ($slide['headline'] ?: 'Hero slide'),
+                'image' => $heroImageUrl($slide['image']),
+                'url' => $slide['primary_cta_url'] ?: route('shop.search.index'),
+                'price' => $slide['primary_cta_label'] ?: 'Shop Now',
+                'headline' => $slide['headline'] ?: ($slide['title'] ?: 'Color Pop Collection'),
+                'body' => $slide['body'] ?: '',
+                'primary_label' => $slide['primary_cta_label'] ?: 'Shop the Look',
+                'primary_url' => $slide['primary_cta_url'] ?: route('shop.search.index'),
+                'secondary_label' => $slide['secondary_cta_label'] ?: '',
+                'secondary_url' => $slide['secondary_cta_url'] ?: route('shop.search.index'),
+            ];
+        })
+        : $heroProducts->map(function($product, $index) use ($placeholderImages) {
+            return [
+                'cms' => false,
+                'name' => $product['name'] ?? 'Color Pop Collection',
+                'image' => $placeholderImages[$index % count($placeholderImages)],
+                'url' => $product['url'] ?? route('shop.search.index'),
+                'price' => $product['final_price'] ?? ($product['formatted_price'] ?? 'Shop Now'),
+            ];
+        })->values();
 @endphp
 
 @pushOnce('styles')
@@ -195,11 +217,12 @@
                     <div class="hero-inner-grid">
                         <div class="hero-text-content">
                             <span class="hero-tag">New season drop</span>
-                            <h1 class="hero-main-title">Wear the<br><span class="highlight-text">bright side.</span></h1>
-                            <p class="hero-description">Build a wardrobe that feels fresh, expressive, and easy to wear. Start with @{{ p.name }} and make every day look styled.</p>
+                            <h1 v-if="p.cms" class="hero-main-title">@{{ p.headline }}</h1>
+                            <h1 v-else class="hero-main-title">Wear the<br><span class="highlight-text">bright side.</span></h1>
+                            <p class="hero-description">@{{ p.body || `Build a wardrobe that feels fresh, expressive, and easy to wear. Start with ${p.name} and make every day look styled.` }}</p>
                             <div class="hero-cta-row">
-                                <a :href="p.url" class="fashion-button fashion-button--color">Shop the Look</a>
-                                <a href="{{ route('shop.search.index') }}" class="btn-glass-light">Browse Collection</a>
+                                <a :href="p.primary_url || p.url" class="fashion-button fashion-button--color">@{{ p.primary_label || 'Shop the Look' }}</a>
+                                <a :href="p.secondary_url || '{{ route('shop.search.index') }}'" class="btn-glass-light">@{{ p.secondary_label || 'Browse Collection' }}</a>
                             </div>
                         </div>
                         <div class="hero-image-content">

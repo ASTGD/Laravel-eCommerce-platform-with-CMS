@@ -139,7 +139,7 @@
     @include('shop::partials.gadget-header')
 
     <div class="gadget-home fashion-home">
-        @include('shop::homepage.sections.hero', ['products' => $homepage['latestProducts']])
+        @include('shop::homepage.sections.hero', ['products' => $homepage['latestProducts'], 'hero' => $homepage['hero'] ?? null])
         @include('shop::homepage.sections.promo-strip')
         @include('shop::homepage.sections.limited-sale')
         @include('shop::homepage.sections.products', ['products' => $homepage['saleProducts']])

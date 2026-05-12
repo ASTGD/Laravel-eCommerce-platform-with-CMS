@@ -454,7 +454,7 @@ Recommended role split before frontend work begins:
 ## Current Limitations
 
 - Header, Footer, Navigation, and Homepage are implemented structured builders.
-- Homepage editing currently covers the first safe section types: Hero Banner, Hero Slider, Promo Strip, and Rich Text. Hero Slider supports up to five uploaded images and uses the storefront carousel behavior. Existing unsupported homepage sections are preserved as theme-managed sections.
+- Homepage editing currently exposes one business-friendly Hero section only. Hero supports either one static image or an auto slider with up to five images; active themes render that same content through their own hero design. Below-Hero homepage content remains theme-owned. Legacy `hero_banner` and `hero_slider` storage remains readable but is no longer exposed as separate add choices.
 - Pages, Reusable Blocks, and Site Settings are Studio summary/staging panels in this pass.
 - Customer portal pages are still outside CMS Studio editing.
 

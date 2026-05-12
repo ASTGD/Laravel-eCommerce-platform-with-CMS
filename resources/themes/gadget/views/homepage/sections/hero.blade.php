@@ -1,5 +1,10 @@
 @php
     $heroProducts = collect($products)->take(5)->values();
+    $cmsHeroSlides = collect(data_get($hero ?? null, 'slides', []))
+        ->filter(fn ($slide) => ! empty($slide['image']))
+        ->take(5)
+        ->values();
+    $heroImageUrl = fn ($path) => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/']) ? $path : asset($path);
     
     // Premium Light-Themed Gadget Images from Unsplash
     $placeholderImages = [
@@ -10,14 +15,30 @@
         'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&q=80&w=1200', // Laptop
     ];
 
-    $heroData = $heroProducts->map(function($product, $index) use ($placeholderImages) {
-        return [
-            'name' => $product['name'] ?? 'Next-Gen Gadget',
-            'image' => $placeholderImages[$index % count($placeholderImages)],
-            'url_key' => $product['url_key'] ?? '#',
-            'formatted_price' => $product['formatted_price'] ?? '$199.00',
-        ];
-    });
+    $heroData = $cmsHeroSlides->isNotEmpty()
+        ? $cmsHeroSlides->map(function ($slide) use ($heroImageUrl) {
+            return [
+                'cms' => true,
+                'name' => $slide['title'] ?: ($slide['headline'] ?: 'Hero slide'),
+                'image' => $heroImageUrl($slide['image']),
+                'url' => $slide['primary_cta_url'] ?: '#',
+                'headline' => $slide['headline'] ?: ($slide['title'] ?: 'Featured collection'),
+                'body' => $slide['body'] ?: '',
+                'primary_label' => $slide['primary_cta_label'] ?: 'Explore Now',
+                'primary_url' => $slide['primary_cta_url'] ?: '#',
+                'secondary_label' => $slide['secondary_cta_label'] ?: '',
+                'secondary_url' => $slide['secondary_cta_url'] ?: '#',
+            ];
+        })
+        : $heroProducts->map(function($product, $index) use ($placeholderImages) {
+            return [
+                'cms' => false,
+                'name' => $product['name'] ?? 'Next-Gen Gadget',
+                'image' => $placeholderImages[$index % count($placeholderImages)],
+                'url_key' => $product['url_key'] ?? '#',
+                'formatted_price' => $product['formatted_price'] ?? '$199.00',
+            ];
+        });
 @endphp
 
 @push('styles')
@@ -274,7 +295,7 @@
 </style>
 @endpush
 
-<v-gadget-hero :products="{{ json_encode($heroData) }}">
+<v-gadget-hero :products='@json($heroData)'>
     <div class="hero-ssr-placeholder">
         <div class="gadget-container">
             <h1 style="color: #1e293b; font-size: 60px; font-weight: 900; opacity: 0.5; text-align: center; width: 100%;">Innovating...</h1>
@@ -297,17 +318,20 @@
                     <div class="hero-inner-grid">
                         <div class="hero-text-content">
                             <div class="hero-tag-wrap"><span class="hero-tag">Future Tech 2026</span></div>
-                            <h1 class="hero-main-title">
+                            <h1 v-if="p.cms" class="hero-main-title">
+                                <span class="gradient-title">@{{ p.headline }}</span>
+                            </h1>
+                            <h1 v-else class="hero-main-title">
                                 <span class="gradient-title">Limitless</span><br/>
                                 <span class="highlight-text">Innovation.</span>
                             </h1>
-                            <p class="hero-description">The future is here with @{{ p.name }}. Designed for those who demand excellence, precision, and unparalleled style.</p>
+                            <p class="hero-description">@{{ p.body || `The future is here with ${p.name}. Designed for those who demand excellence, precision, and unparalleled style.` }}</p>
                             <div class="hero-cta-row">
-                                <a :href="'{{ url('/') }}/products/' + p.url_key" class="btn-aura">
-                                    Explore Now
+                                <a :href="p.primary_url || ('{{ url('/') }}/products/' + p.url_key)" class="btn-aura">
+                                    @{{ p.primary_label || 'Explore Now' }}
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                                 </a>
-                                <a href="{{ route('shop.search.index') }}" class="btn-glass-light">View Catalog</a>
+                                <a :href="p.secondary_url || '{{ route('shop.search.index') }}'" class="btn-glass-light">@{{ p.secondary_label || 'View Catalog' }}</a>
                             </div>
                         </div>
                         <div class="hero-image-content">

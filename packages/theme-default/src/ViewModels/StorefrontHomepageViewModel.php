@@ -15,17 +15,20 @@ class StorefrontHomepageViewModel
     {
         $saleProducts = $this->products('sale', 4);
 
+        $hero = $this->heroSection();
+
         return [
             'saleProducts' => $saleProducts->isNotEmpty()
                 ? $saleProducts
                 : $this->products('featured', 4),
             'latestProducts' => $this->products('latest', 4),
             'categories' => $this->categories(4),
-            'heroSliderImages' => $this->heroSliderImages(),
+            'hero' => $hero,
+            'heroSliderImages' => $this->heroSliderImages($hero),
         ];
     }
 
-    protected function heroSliderImages(): array
+    protected function heroSection(): ?array
     {
         try {
             $page = Page::query()
@@ -34,27 +37,99 @@ class StorefrontHomepageViewModel
                 ->first();
 
             if (! $page) {
-                return [];
+                return null;
             }
 
             $section = $page->sections()
                 ->where('is_active', true)
-                ->whereHas('sectionType', fn ($query) => $query->where('code', 'hero_slider'))
+                ->whereHas('sectionType', fn ($query) => $query->whereIn('code', ['hero', 'hero_slider', 'hero_banner']))
+                ->with('sectionType')
                 ->orderBy('sort_order')
                 ->first();
 
-            return collect($section?->settings_json['slides'] ?? [])
-                ->filter(fn ($slide): bool => ! empty($slide['image']))
-                ->map(fn ($slide): array => [
-                    'image' => $slide['image'],
-                    'link' => $slide['link'] ?? null,
-                    'title' => $slide['title'] ?? 'Hero slide',
-                ])
-                ->values()
-                ->all();
+            if (! $section) {
+                return null;
+            }
+
+            $settings = is_array($section->settings_json) ? $section->settings_json : [];
+
+            return $this->normalizeHeroSection((string) $section->sectionType?->code, $settings);
         } catch (Throwable) {
+            return null;
+        }
+    }
+
+    protected function heroSliderImages(?array $hero = null): array
+    {
+        if (! $hero) {
             return [];
         }
+
+        return collect($hero['slides'] ?? [])
+            ->filter(fn ($slide): bool => ! empty($slide['image']))
+            ->map(fn ($slide): array => [
+                'image' => $slide['image'],
+                'link' => $slide['primary_cta_url'] ?? null,
+                'title' => $slide['title'] ?? $slide['headline'] ?? 'Hero slide',
+            ])
+            ->values()
+            ->all();
+    }
+
+    protected function normalizeHeroSection(string $sectionCode, array $settings): ?array
+    {
+        $hero = match ($sectionCode) {
+            'hero' => [
+                'mode' => in_array($settings['mode'] ?? 'static', ['static', 'slider'], true) ? $settings['mode'] : 'static',
+                'slides' => $settings['slides'] ?? [],
+            ],
+            'hero_slider' => [
+                'mode' => 'slider',
+                'slides' => $settings['slides'] ?? [],
+            ],
+            'hero_banner' => [
+                'mode' => 'static',
+                'slides' => [[
+                    'image' => $settings['image'] ?? '',
+                    'title' => $settings['title'] ?? $settings['headline'] ?? '',
+                    'headline' => $settings['headline'] ?? '',
+                    'body' => $settings['body'] ?? '',
+                    'primary_cta_label' => $settings['primary_cta_label'] ?? '',
+                    'primary_cta_url' => $settings['primary_cta_url'] ?? '',
+                    'secondary_cta_label' => $settings['secondary_cta_label'] ?? '',
+                    'secondary_cta_url' => $settings['secondary_cta_url'] ?? '',
+                ]],
+            ],
+            default => null,
+        };
+
+        if (! $hero) {
+            return null;
+        }
+
+        $slides = collect($hero['slides'] ?? [])
+            ->take(5)
+            ->map(fn (array $slide): array => [
+                'image' => trim((string) ($slide['image'] ?? '')),
+                'title' => trim((string) ($slide['title'] ?? '')),
+                'headline' => trim((string) ($slide['headline'] ?? $slide['title'] ?? '')),
+                'body' => trim((string) ($slide['body'] ?? '')),
+                'primary_cta_label' => trim((string) ($slide['primary_cta_label'] ?? '')),
+                'primary_cta_url' => trim((string) ($slide['primary_cta_url'] ?? $slide['link'] ?? '')),
+                'secondary_cta_label' => trim((string) ($slide['secondary_cta_label'] ?? '')),
+                'secondary_cta_url' => trim((string) ($slide['secondary_cta_url'] ?? '')),
+            ])
+            ->filter(fn (array $slide): bool => collect($slide)->filter(fn ($value): bool => filled($value))->isNotEmpty())
+            ->values();
+
+        if ($slides->isEmpty()) {
+            return null;
+        }
+
+        return [
+            'mode' => $hero['mode'] === 'slider' && $slides->count() > 1 ? 'slider' : 'static',
+            'slides' => $slides->all(),
+        ];
     }
 
     protected function products(string $mode, int $limit): Collection
