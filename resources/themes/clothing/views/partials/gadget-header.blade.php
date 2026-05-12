@@ -1,16 +1,16 @@
 @php
-    $channel = core()->getCurrentChannel();
-    $brandName = $channel?->name ?? config('app.name');
-    $logoUrl = $channel?->logo_url ?: asset('images/astgd-ecommerce-logo.webp');
-    $accountUrl = auth()->guard('customer')->check()
-        ? route('shop.customers.account.index')
-        : route('shop.customer.session.index');
-    $primaryLinks = [
+    $headerView = app(\Platform\ThemeDefault\ViewModels\StorefrontHeaderViewModel::class)->build([
         ['label' => 'New In', 'url' => route('shop.search.index')],
         ['label' => 'Dresses', 'url' => route('shop.search.index', ['query' => 'dress'])],
         ['label' => 'Collections', 'url' => route('shop.search.index')],
         ['label' => 'Contact', 'url' => route('shop.home.contact_us')],
-    ];
+    ]);
+
+    $brandName = $headerView['brandName'];
+    $logoUrl = $headerView['logoUrl'];
+    $primaryLinks = $headerView['links'];
+    $features = $headerView['features'];
+    $announcement = $headerView['announcement'];
 @endphp
 
 @pushOnce('styles')
@@ -23,6 +23,25 @@
         backdrop-filter: blur(18px);
         border-bottom: 1px solid rgba(23, 17, 20, .08);
     }
+
+    .gadget-header--static { position: relative; }
+
+    .gadget-header__announcement {
+        background: #171114;
+        color: #fffdfb;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.35;
+        padding: 10px 20px;
+        text-align: center;
+    }
+
+    .gadget-header__announcement a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .gadget-header__announcement a:hover { color: #ffb7c4; }
 
     .gadget-header__inner {
         width: min(1220px, calc(100% - 40px));
@@ -45,7 +64,7 @@
         font-size: 23px;
     }
 
-    .gadget-header__brand img { width: 44px; height: 44px; object-fit: contain; border-radius: 14px; }
+    .gadget-header__brand img { max-width: 180px; max-height: 56px; object-fit: contain; }
     .gadget-header__brand span::after { content: ' atelier'; color: #ff4f70; font-weight: 700; margin-left: 4px; }
 
     .gadget-header__nav {
@@ -120,6 +139,7 @@
 
     @media (max-width: 980px) {
         .gadget-header__inner { grid-template-columns: 1fr auto; min-height: 72px; width: min(100% - 28px, 1220px); }
+        .gadget-header__brand img { max-width: 140px; max-height: 40px; }
         .gadget-header__nav, .gadget-header__tools { display: none; }
         .gadget-header__mobile { display: block; position: relative; }
         .gadget-header__mobile summary { list-style: none; width: 46px; height: 46px; border-radius: 50%; background: #171114; display: grid; place-content: center; gap: 5px; cursor: pointer; }
@@ -133,40 +153,81 @@
 </style>
 @endPushOnce
 
-<header class="gadget-header">
+<header class="gadget-header {{ $features['sticky'] ? '' : 'gadget-header--static' }}">
+    @if ($announcement['enabled'] && filled($announcement['text']))
+        <div class="gadget-header__announcement">
+            @if (filled($announcement['link']))
+                <a href="{{ $announcement['link'] }}">{{ $announcement['text'] }}</a>
+            @else
+                <span>{{ $announcement['text'] }}</span>
+            @endif
+        </div>
+    @endif
+
     <div class="gadget-header__inner">
-        <a href="{{ route('shop.home.index') }}" class="gadget-header__brand" aria-label="{{ $brandName }}">
-            <img src="{{ $logoUrl }}" alt="" onerror="this.remove()">
-            <span>{{ $brandName }}</span>
+        <a href="{{ $headerView['homeUrl'] }}" class="gadget-header__brand" aria-label="{{ $brandName }}">
+            @if (filled($logoUrl))
+                <img src="{{ $logoUrl }}" alt="" onerror="this.remove()">
+            @else
+                <span>{{ $brandName }}</span>
+            @endif
         </a>
 
         <nav class="gadget-header__nav" aria-label="Primary navigation">
             @foreach ($primaryLinks as $link)
-                <a href="{{ $link['url'] }}">{{ $link['label'] }}</a>
+                <a
+                    href="{{ $link['url'] }}"
+                    @if ($link['open_in_new_tab']) target="_blank" rel="noopener noreferrer" @endif
+                >
+                    {{ $link['label'] }}
+                </a>
             @endforeach
         </nav>
 
-        <div class="gadget-header__tools">
-            <form action="{{ route('shop.search.index') }}" method="GET" class="gadget-header__search">
-                <input type="search" name="query" value="{{ request('query') }}" aria-label="Search products" placeholder="Search outfits">
-                <button type="submit" aria-label="Search products"><span></span></button>
-            </form>
+        @if ($features['show_search'] || $features['show_account'] || $features['show_cart'])
+            <div class="gadget-header__tools">
+                @if ($features['show_search'])
+                    <form action="{{ $headerView['searchUrl'] }}" method="GET" class="gadget-header__search">
+                        <input type="search" name="query" value="{{ request('query') }}" aria-label="Search products" placeholder="Search outfits">
+                        <button type="submit" aria-label="Search products"><span></span></button>
+                    </form>
+                @endif
 
-            <a href="{{ $accountUrl }}" class="gadget-header__icon-link" aria-label="Account"><span class="gadget-icon gadget-icon--account"></span></a>
-            <a href="{{ route('shop.checkout.cart.index') }}" class="gadget-header__cart" aria-label="Cart"><span class="gadget-icon gadget-icon--cart"></span></a>
-        </div>
+                @if ($features['show_account'])
+                    <a href="{{ $headerView['accountUrl'] }}" class="gadget-header__icon-link" aria-label="Account"><span class="gadget-icon gadget-icon--account"></span></a>
+                @endif
+
+                @if ($features['show_cart'])
+                    <a href="{{ $headerView['cartUrl'] }}" class="gadget-header__cart" aria-label="Cart"><span class="gadget-icon gadget-icon--cart"></span></a>
+                @endif
+            </div>
+        @endif
 
         <details class="gadget-header__mobile">
             <summary aria-label="Open navigation"><span></span><span></span><span></span></summary>
             <div>
                 @foreach ($primaryLinks as $link)
-                    <a href="{{ $link['url'] }}">{{ $link['label'] }}</a>
+                    <a
+                        href="{{ $link['url'] }}"
+                        @if ($link['open_in_new_tab']) target="_blank" rel="noopener noreferrer" @endif
+                    >
+                        {{ $link['label'] }}
+                    </a>
                 @endforeach
-                <a href="{{ $accountUrl }}">Account</a>
-                <a href="{{ route('shop.checkout.cart.index') }}">Cart</a>
-                <form action="{{ route('shop.search.index') }}" method="GET">
-                    <input type="search" name="query" value="{{ request('query') }}" aria-label="Search products" placeholder="Search outfits">
-                </form>
+
+                @if ($features['show_account'])
+                    <a href="{{ $headerView['accountUrl'] }}">Account</a>
+                @endif
+
+                @if ($features['show_cart'])
+                    <a href="{{ $headerView['cartUrl'] }}">Cart</a>
+                @endif
+
+                @if ($features['show_search'])
+                    <form action="{{ $headerView['searchUrl'] }}" method="GET">
+                        <input type="search" name="query" value="{{ request('query') }}" aria-label="Search products" placeholder="Search outfits">
+                    </form>
+                @endif
             </div>
         </details>
     </div>
