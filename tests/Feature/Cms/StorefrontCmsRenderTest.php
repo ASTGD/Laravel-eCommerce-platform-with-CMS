@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Platform\CommerceCore\Contracts\DataSourceResolverContract;
+use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
 use Platform\ExperienceCms\Models\MenuItem;
@@ -244,6 +245,133 @@ it('renders CMS header builder settings through active storefront themes', funct
         ->assertDontSee('aria-label="Account"', false)
         ->assertDontSee('aria-label="Cart"', false)
         ->assertDontSee('name="query"', false);
+})->with([
+    ['gadget'],
+    ['clothing'],
+]);
+
+it('renders CMS footer builder settings through active storefront themes', function (string $theme) {
+    $channel = core()->getCurrentChannel();
+    $channel->update(['theme' => $theme]);
+    core()->setCurrentChannel($channel->fresh());
+
+    $fallbackMenu = Menu::query()->updateOrCreate(
+        ['code' => 'cms-footer-fallback-test-'.$theme],
+        ['name' => 'Fallback Footer Menu', 'location' => 'footer', 'is_active' => true]
+    );
+
+    $companyMenu = Menu::query()->updateOrCreate(
+        ['code' => 'cms-footer-company-test-'.$theme],
+        ['name' => 'Selected Company Menu', 'location' => 'utility', 'is_active' => true]
+    );
+
+    $supportMenu = Menu::query()->updateOrCreate(
+        ['code' => 'cms-footer-support-test-'.$theme],
+        ['name' => 'Selected Support Menu', 'location' => 'header', 'is_active' => true]
+    );
+
+    $fallbackMenu->items()->delete();
+    $companyMenu->items()->delete();
+    $supportMenu->items()->delete();
+
+    MenuItem::query()->create([
+        'menu_id' => $fallbackMenu->id,
+        'title' => 'Fallback Footer Link',
+        'type' => 'url',
+        'target' => '/fallback-footer-link',
+        'sort_order' => 1,
+        'settings_json' => [],
+        'is_active' => true,
+    ]);
+
+    MenuItem::query()->create([
+        'menu_id' => $companyMenu->id,
+        'title' => 'Selected Company Link',
+        'type' => 'url',
+        'target' => '/selected-company-link',
+        'sort_order' => 1,
+        'settings_json' => ['open_in_new_tab' => true],
+        'is_active' => true,
+    ]);
+
+    MenuItem::query()->create([
+        'menu_id' => $supportMenu->id,
+        'title' => 'Selected Support Link',
+        'type' => 'url',
+        'target' => '/selected-support-link',
+        'sort_order' => 1,
+        'settings_json' => [],
+        'is_active' => true,
+    ]);
+
+    FooterConfig::query()->update(['is_default' => false]);
+    FooterConfig::query()->updateOrCreate(
+        ['code' => 'cms_footer_builder_render_test'],
+        [
+            'settings_json' => [
+                'name' => 'CMS Footer Builder Render Test',
+                'logo_url' => 'https://example.test/cms-footer-logo.svg',
+                'description' => 'CMS managed footer description.',
+                'newsletter' => [
+                    'enabled' => true,
+                    'heading' => 'CMS footer newsletter',
+                    'text' => 'CMS footer newsletter text',
+                ],
+                'contact' => [
+                    'email' => 'footer@example.test',
+                    'phone' => '+880 123 456',
+                ],
+                'social' => [
+                    'facebook' => 'https://facebook.com/cms-footer',
+                    'instagram' => 'https://instagram.com/cms-footer',
+                ],
+                'navigation' => [
+                    'menu_id' => $companyMenu->id,
+                    'columns' => [
+                        [
+                            'title' => 'Company',
+                            'menu_id' => $companyMenu->id,
+                            'enabled' => true,
+                            'sort_order' => 1,
+                        ],
+                        [
+                            'title' => 'Support',
+                            'menu_id' => $supportMenu->id,
+                            'enabled' => true,
+                            'sort_order' => 2,
+                        ],
+                    ],
+                ],
+                'copyright_text' => 'CMS footer copyright.',
+                'variant' => 'simple',
+            ],
+            'is_default' => true,
+        ]
+    );
+
+    $this->get(route('shop.home.index'))
+        ->assertOk()
+        ->assertSee('https://example.test/cms-footer-logo.svg', false)
+        ->assertSee('CMS managed footer description.', false)
+        ->assertSee('CMS footer newsletter', false)
+        ->assertSee('CMS footer newsletter text', false)
+        ->assertSee(route('shop.subscription.store'), false)
+        ->assertSee('name="email"', false)
+        ->assertSee('footer@example.test', false)
+        ->assertSee('+880 123 456', false)
+        ->assertSee('https://facebook.com/cms-footer', false)
+        ->assertSee('https://instagram.com/cms-footer', false)
+        ->assertSee('gadget-footer__social-icon', false)
+        ->assertSee('Company', false)
+        ->assertSee('Selected Company Link', false)
+        ->assertSee('/selected-company-link', false)
+        ->assertSee('Support', false)
+        ->assertSee('Selected Support Link', false)
+        ->assertSee('/selected-support-link', false)
+        ->assertSee('target="_blank"', false)
+        ->assertDontSee('Fallback Footer Link', false)
+        ->assertDontSee('/fallback-footer-link', false)
+        ->assertSee('CMS footer copyright.', false);
 })->with([
     ['gadget'],
     ['clothing'],

@@ -115,7 +115,7 @@ class CmsStudioController extends Controller
                 ->with('error', 'Header settings storage is not available.');
         }
 
-        $logoUrl = $this->storedCmsLogoUrl($request->file('logo_file'), $validated['logo_url'] ?? null);
+        $logoUrl = $this->storedCmsLogoUrl($request->file('logo_file'), $validated['logo_url'] ?? null, 'cms/header');
 
         $settings = [
             'name' => $validated['name'] ?? 'Default Header',
@@ -144,13 +144,59 @@ class CmsStudioController extends Controller
             ->with('success', 'Header settings saved.');
     }
 
-    private function storedCmsLogoUrl(mixed $uploadedLogo, ?string $existingLogoUrl): ?string
+    private function storedCmsLogoUrl(mixed $uploadedLogo, ?string $existingLogoUrl, string $directory): ?string
     {
         if ($uploadedLogo instanceof UploadedFile && $uploadedLogo->isValid()) {
-            return Storage::disk('public')->url($uploadedLogo->store('cms/header', 'public'));
+            return Storage::disk('public')->url($uploadedLogo->store($directory, 'public'));
         }
 
         return filled($existingLogoUrl) ? trim($existingLogoUrl) : null;
+    }
+
+    private function footerColumnsFromRequest(array $columns): array
+    {
+        $menuIds = collect($columns)
+            ->pluck('menu_id')
+            ->filter()
+            ->map(fn (mixed $menuId): int => (int) $menuId)
+            ->unique()
+            ->values();
+
+        if ($menuIds->isEmpty()) {
+            return [];
+        }
+
+        $menus = Menu::query()
+            ->whereIn('id', $menuIds)
+            ->where('is_active', true)
+            ->pluck('name', 'id');
+
+        return collect($columns)
+            ->take(4)
+            ->map(function (array $column, int $index) use ($menus): ?array {
+                if (! filter_var($column['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    return null;
+                }
+
+                $menuId = (int) ($column['menu_id'] ?? 0);
+
+                if ($menuId <= 0 || ! $menus->has($menuId)) {
+                    return null;
+                }
+
+                $title = trim((string) ($column['title'] ?? ''));
+
+                return [
+                    'title' => $title !== '' ? $title : $menus->get($menuId),
+                    'menu_id' => $menuId,
+                    'enabled' => true,
+                    'sort_order' => (int) ($column['sort_order'] ?? $index + 1),
+                ];
+            })
+            ->filter()
+            ->sortBy('sort_order')
+            ->values()
+            ->all();
     }
 
     public function updateFooter(Request $request): RedirectResponse
@@ -165,7 +211,15 @@ class CmsStudioController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'logo_url' => ['nullable', 'url', 'max:2048'],
+            'logo_url' => ['nullable', 'string', 'max:2048'],
+            'logo_file' => ['nullable', File::image()->max('2mb')],
+            'footer_description' => ['nullable', 'string', 'max:500'],
+            'menu_id' => ['nullable', 'integer', Rule::exists('menus', 'id')->where('is_active', true)],
+            'footer_columns' => ['nullable', 'array', 'max:4'],
+            'footer_columns.*.enabled' => ['boolean'],
+            'footer_columns.*.title' => ['nullable', 'string', 'max:80'],
+            'footer_columns.*.menu_id' => ['nullable', 'integer', Rule::exists('menus', 'id')->where('is_active', true)],
+            'footer_columns.*.sort_order' => ['nullable', 'integer', 'min:1', 'max:4'],
             'newsletter_enabled' => ['boolean'],
             'newsletter_heading' => ['nullable', 'string', 'max:255'],
             'newsletter_text' => ['nullable', 'string', 'max:500'],
@@ -188,9 +242,19 @@ class CmsStudioController extends Controller
                 ->with('error', 'Footer settings storage is not available.');
         }
 
+        $logoUrl = $this->storedCmsLogoUrl($request->file('logo_file'), $validated['logo_url'] ?? null, 'cms/footer');
+        $footerColumns = $this->footerColumnsFromRequest($validated['footer_columns'] ?? []);
+        $legacyMenuId = data_get($footerColumns, '0.menu_id')
+            ?? (! empty($validated['menu_id']) ? (int) $validated['menu_id'] : null);
+
         $settings = [
             'name' => $validated['name'] ?? 'Default Footer',
-            'logo_url' => $validated['logo_url'] ?? null,
+            'logo_url' => $logoUrl,
+            'description' => $validated['footer_description'] ?? null,
+            'navigation' => [
+                'menu_id' => $legacyMenuId,
+                'columns' => $footerColumns,
+            ],
             'newsletter' => [
                 'enabled' => $request->boolean('newsletter_enabled'),
                 'heading' => $validated['newsletter_heading'] ?? null,
@@ -465,7 +529,7 @@ class CmsStudioController extends Controller
     {
         return match ($area) {
             'header' => $this->headerEditorPayload($menus),
-            'footer' => $this->footerEditorPayload(),
+            'footer' => $this->footerEditorPayload($menus),
             'navigation' => $this->navigationEditorPayload($request),
             'homepage' => $this->homepageEditorPayload(),
             'reusable-blocks' => $this->placeholderPayload(
@@ -534,11 +598,12 @@ class CmsStudioController extends Controller
         ];
     }
 
-    private function footerEditorPayload(): array
+    private function footerEditorPayload(array $menus): array
     {
         $config = $this->defaultFooterConfig();
         $storageColumn = $this->settingsStorageColumn(FooterConfig::class);
         $settings = $this->settingsFromConfig($config, $storageColumn);
+        $fallbackDescription = $this->siteSettingValue('store.contact', 'description');
 
         return [
             'type' => 'footer',
@@ -547,6 +612,7 @@ class CmsStudioController extends Controller
             'form_action' => route('admin.cms.footer.update'),
             'storage_available' => (bool) $storageColumn,
             'storage_error' => $storageColumn ? null : 'Footer settings storage is not available.',
+            'menus' => $menus,
             'variants' => [
                 'simple' => 'Simple',
                 'multi_column' => 'Multi Column',
@@ -555,6 +621,9 @@ class CmsStudioController extends Controller
             'values' => [
                 'name' => $settings['name'] ?? 'Default Footer',
                 'logo_url' => $settings['logo_url'] ?? null,
+                'footer_description' => $settings['description'] ?? $fallbackDescription,
+                'menu_id' => data_get($settings, 'navigation.menu_id'),
+                'footer_columns' => $this->footerColumnValues($settings, $menus),
                 'newsletter_enabled' => (bool) data_get($settings, 'newsletter.enabled', false),
                 'newsletter_heading' => data_get($settings, 'newsletter.heading'),
                 'newsletter_text' => data_get($settings, 'newsletter.text'),
@@ -1242,6 +1311,8 @@ class CmsStudioController extends Controller
             ->map(fn (Menu $menu): array => [
                 'id' => $menu->getKey(),
                 'name' => $menu->name,
+                'location' => $menu->location,
+                'location_label' => $this->menuLocations()[$menu->location] ?? Str::headline((string) $menu->location),
                 'items' => $menu->items
                     ->where('is_active', true)
                     ->sortBy('sort_order')
@@ -1250,6 +1321,67 @@ class CmsStudioController extends Controller
                     ->all(),
             ])
             ->all();
+    }
+
+    private function footerColumnValues(array $settings, array $menus): array
+    {
+        $menuLookup = collect($menus)->keyBy(fn (array $menu): int => (int) $menu['id']);
+        $columns = collect(data_get($settings, 'navigation.columns', []))
+            ->map(function (mixed $column, int $index) use ($menuLookup): ?array {
+                $menuId = (int) data_get($column, 'menu_id');
+
+                if ($menuId <= 0 || ! $menuLookup->has($menuId)) {
+                    return null;
+                }
+
+                $menu = $menuLookup->get($menuId);
+                $title = trim((string) data_get($column, 'title', ''));
+
+                return [
+                    'enabled' => (bool) data_get($column, 'enabled', true),
+                    'title' => $title !== '' ? $title : $menu['name'],
+                    'menu_id' => $menuId,
+                    'sort_order' => (int) data_get($column, 'sort_order', $index + 1),
+                ];
+            })
+            ->filter()
+            ->sortBy('sort_order')
+            ->values();
+
+        if ($columns->isEmpty()) {
+            $legacyMenuId = (int) data_get($settings, 'navigation.menu_id');
+
+            if ($legacyMenuId > 0 && $menuLookup->has($legacyMenuId)) {
+                $menu = $menuLookup->get($legacyMenuId);
+                $columns->push([
+                    'enabled' => true,
+                    'title' => $menu['name'],
+                    'menu_id' => $legacyMenuId,
+                    'sort_order' => 1,
+                ]);
+            }
+        }
+
+        return $this->padFooterColumnValues($columns->all());
+    }
+
+    private function padFooterColumnValues(array $columns): array
+    {
+        $columns = collect($columns)
+            ->take(4)
+            ->values()
+            ->all();
+
+        for ($index = count($columns); $index < 4; $index++) {
+            $columns[] = [
+                'enabled' => false,
+                'title' => '',
+                'menu_id' => null,
+                'sort_order' => $index + 1,
+            ];
+        }
+
+        return $columns;
     }
 
     private function menuSummary(): array
@@ -1395,6 +1527,23 @@ class CmsStudioController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+    private function siteSettingValue(string $key, ?string $path = null): mixed
+    {
+        if (! $this->modelTableExists(SiteSetting::class)) {
+            return null;
+        }
+
+        $value = SiteSetting::query()
+            ->where('key', $key)
+            ->value('value_json');
+
+        if (! is_array($value)) {
+            return null;
+        }
+
+        return $path ? data_get($value, $path) : $value;
     }
 
     private function countModel(string $modelClass, ?callable $queryCallback = null): int

@@ -1105,167 +1105,296 @@
                 <form
                     id="cms-studio-form"
                     method="POST"
+                    enctype="multipart/form-data"
                     action="{{ $editor['form_action'] }}"
                     class="space-y-6"
                 >
-                    @csrf
+	                    @csrf
+	                    <input type="hidden" name="name" value="{{ old('name', $values['name'] ?? 'Default Footer') }}">
+	                    <input type="hidden" name="variant" value="{{ old('variant', $values['variant'] ?? 'simple') }}">
+	                    <input type="hidden" name="logo_url" value="{{ old('logo_url', $values['logo_url'] ?? '') }}" data-footer-logo-url-input>
+	                    @php
+	                        $footerColumnValues = old('footer_columns', $values['footer_columns'] ?? []);
+	                    @endphp
 
-                    <div class="{{ $headerSectionClass }}">
-                        <h3 class="{{ $headerSectionTitleClass }}">
-                            Identity
-                        </h3>
+	                    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Logo
+                            </h3>
 
-                        <p class="{{ $headerSectionDescriptionClass }}">
-                            Set the footer name, logo, and theme-supported layout.
-                        </p>
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Upload the logo used by the active storefront footer.
+                            </p>
 
-                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Footer name</span>
-                                <input name="name" value="{{ old('name', $values['name'] ?? '') }}" class="{{ $headerInputClass }}">
-                                @error('name')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
+                            <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[220px_minmax(0,1fr)]">
+                                <div class="flex min-h-[128px] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 dark:border-gray-700 dark:bg-gray-950">
+                                    <img
+                                        src="{{ old('logo_url', $values['logo_url'] ?? '') }}"
+                                        alt=""
+                                        class="{{ old('logo_url', $values['logo_url'] ?? '') ? '' : 'hidden' }} max-h-20 max-w-full object-contain"
+                                        data-footer-logo-upload-preview
+                                        onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
+                                    >
 
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Footer variant</span>
-                                <select name="variant" class="{{ $headerInputClass }}">
-                                    @foreach ($editor['variants'] as $variant => $label)
-                                        <option value="{{ $variant }}" @selected(old('variant', $values['variant'] ?? 'simple') === $variant)>
-                                            {{ $label }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('variant')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
+                                    <span class="{{ old('logo_url', $values['logo_url'] ?? '') ? 'hidden' : '' }} text-center text-sm font-medium text-slate-500 dark:text-gray-400" data-footer-logo-upload-empty>
+                                        No logo uploaded
+                                    </span>
+                                </div>
 
-                            <label class="block md:col-span-2">
-                                <span class="{{ $headerLabelClass }}">Footer logo URL</span>
-                                <input name="logo_url" value="{{ old('logo_url', $values['logo_url'] ?? '') }}" class="{{ $headerInputClass }}">
-                                <span class="{{ $headerHelperClass }}">Use an image URL for now. Media picker will be added later.</span>
-                                @error('logo_url')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="{{ $headerSectionClass }}">
-                        <h3 class="{{ $headerSectionTitleClass }}">
-                            Newsletter
-                        </h3>
-
-                        <p class="{{ $headerSectionDescriptionClass }}">
-                            Control the email signup message shown in the footer.
-                        </p>
-
-                        <input type="hidden" name="newsletter_enabled" value="0">
-
-                        <label class="mt-5 {{ $headerToggleRowClass }}">
-                            <span>
-                                <span class="block text-sm font-medium text-slate-700 dark:text-gray-300">Newsletter enabled</span>
-                                <span class="{{ $headerHelperClass }}">Display the newsletter signup area in the footer.</span>
-                            </span>
-
-                            <input
-                                type="checkbox"
-                                name="newsletter_enabled"
-                                value="1"
-                                class="{{ $toggleClass }} shrink-0"
-                                @checked(old('newsletter_enabled', $values['newsletter_enabled'] ?? false))
-                            >
-                        </label>
-
-                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Newsletter heading</span>
-                                <input name="newsletter_heading" value="{{ old('newsletter_heading', $values['newsletter_heading'] ?? '') }}" class="{{ $headerInputClass }}">
-                                @error('newsletter_heading')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
-
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Newsletter text</span>
-                                <input name="newsletter_text" value="{{ old('newsletter_text', $values['newsletter_text'] ?? '') }}" class="{{ $headerInputClass }}">
-                                @error('newsletter_text')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="{{ $headerSectionClass }}">
-                        <h3 class="{{ $headerSectionTitleClass }}">
-                            Contact
-                        </h3>
-
-                        <p class="{{ $headerSectionDescriptionClass }}">
-                            Store contact details shown in the footer.
-                        </p>
-
-                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Contact email</span>
-                                <input name="contact_email" value="{{ old('contact_email', $values['contact_email'] ?? '') }}" class="{{ $headerInputClass }}">
-                                @error('contact_email')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
-
-                            <label class="block">
-                                <span class="{{ $headerLabelClass }}">Contact phone</span>
-                                <input name="contact_phone" value="{{ old('contact_phone', $values['contact_phone'] ?? '') }}" class="{{ $headerInputClass }}">
-                                @error('contact_phone')
-                                    <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                                @enderror
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="{{ $headerSectionClass }}">
-                        <h3 class="{{ $headerSectionTitleClass }}">
-                            Social Links
-                        </h3>
-
-                        <p class="{{ $headerSectionDescriptionClass }}">
-                            Add social profile URLs used by footer-capable themes.
-                        </p>
-
-                        <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                            @foreach ([
-                                'social_facebook' => 'Facebook URL',
-                                'social_instagram' => 'Instagram URL',
-                                'social_x' => 'X URL',
-                                'social_youtube' => 'YouTube URL',
-                                'social_tiktok' => 'TikTok URL',
-                            ] as $field => $label)
                                 <label class="block">
-                                    <span class="{{ $headerLabelClass }}">{{ $label }}</span>
-                                    <input name="{{ $field }}" value="{{ old($field, $values[$field] ?? '') }}" class="{{ $headerInputClass }}">
-                                    @error($field)
+                                    <span class="{{ $headerLabelClass }}">Upload logo image</span>
+                                    <input
+                                        type="file"
+                                        name="logo_file"
+                                        accept="image/*"
+                                        class="{{ $headerInputClass }} file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950/40 dark:file:text-blue-300"
+                                        data-footer-logo-file-input
+                                    >
+                                    <span class="{{ $headerHelperClass }}">PNG, JPG, SVG, GIF, or WebP up to 2 MB. Uploading a new logo replaces the current logo.</span>
+                                    @error('logo_file')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                    @error('logo_url')
                                         <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
                                     @enderror
                                 </label>
-                            @endforeach
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="{{ $headerSectionClass }}">
-                        <h3 class="{{ $headerSectionTitleClass }}">
-                            Legal Text
-                        </h3>
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Footer Description
+                            </h3>
 
-                        <label class="mt-5 block">
-                            <span class="{{ $headerLabelClass }}">Copyright text</span>
-                            <input name="copyright_text" value="{{ old('copyright_text', $values['copyright_text'] ?? '') }}" class="{{ $headerInputClass }}">
-                            @error('copyright_text')
-                                <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
-                            @enderror
-                        </label>
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Manage the short text shown under the footer logo.
+                            </p>
+
+                            <div class="mt-5">
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Description text</span>
+                                    <textarea
+                                        name="footer_description"
+                                        rows="4"
+                                        class="{{ $headerInputClass }} resize-none"
+                                    >{{ old('footer_description', $values['footer_description'] ?? '') }}</textarea>
+                                    <span class="{{ $headerHelperClass }}">Keep this short so the footer remains clean.</span>
+                                    @error('footer_description')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+                            </div>
+                        </div>
+
+	                        <div class="{{ $headerSectionClass }} xl:col-span-2">
+	                            <h3 class="{{ $headerSectionTitleClass }}">
+	                                Footer Menu Columns
+	                            </h3>
+
+	                            <p class="{{ $headerSectionDescriptionClass }}">
+	                                Choose up to four saved navigation menus to render as footer columns.
+	                            </p>
+
+	                            @if (! empty($editor['menus']))
+	                                <div class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2" data-footer-menu-columns>
+	                                    @for ($columnIndex = 0; $columnIndex < 4; $columnIndex++)
+	                                        @php
+	                                            $column = $footerColumnValues[$columnIndex] ?? [];
+	                                        @endphp
+
+	                                        <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-gray-700 dark:bg-gray-900" data-footer-column-row>
+	                                            <input type="hidden" name="footer_columns[{{ $columnIndex }}][enabled]" value="0">
+	                                            <input type="hidden" name="footer_columns[{{ $columnIndex }}][sort_order]" value="{{ $columnIndex + 1 }}">
+
+	                                            <label class="{{ $headerToggleRowClass }}">
+	                                                <span>
+	                                                    <span class="block text-sm font-medium text-slate-700 dark:text-gray-300">Column {{ $columnIndex + 1 }}</span>
+	                                                    <span class="{{ $headerHelperClass }}">Enable this column and select a menu.</span>
+	                                                </span>
+
+	                                                <input
+	                                                    type="checkbox"
+	                                                    name="footer_columns[{{ $columnIndex }}][enabled]"
+	                                                    value="1"
+	                                                    class="{{ $toggleClass }} shrink-0"
+	                                                    data-footer-column-enabled
+	                                                    @checked((bool) data_get($column, 'enabled', false))
+	                                                >
+	                                            </label>
+
+	                                            <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+	                                                <label class="block">
+	                                                    <span class="{{ $headerLabelClass }}">Column title</span>
+	                                                    <input
+	                                                        name="footer_columns[{{ $columnIndex }}][title]"
+	                                                        value="{{ data_get($column, 'title') }}"
+	                                                        class="{{ $headerInputClass }}"
+	                                                        placeholder="Company"
+	                                                        data-footer-column-title
+	                                                    >
+	                                                    @error("footer_columns.{$columnIndex}.title")
+	                                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+	                                                    @enderror
+	                                                </label>
+
+	                                                <label class="block">
+	                                                    <span class="{{ $headerLabelClass }}">Menu</span>
+	                                                    <select
+	                                                        name="footer_columns[{{ $columnIndex }}][menu_id]"
+	                                                        class="{{ $headerInputClass }}"
+	                                                        data-footer-column-menu
+	                                                    >
+	                                                        <option value="">Select a menu</option>
+
+	                                                        @foreach ($editor['menus'] as $menu)
+	                                                            <option
+	                                                                value="{{ $menu['id'] }}"
+	                                                                data-items="{{ base64_encode(json_encode($menu['items'])) }}"
+	                                                                data-menu-name="{{ $menu['name'] }}"
+	                                                                @selected((string) data_get($column, 'menu_id') === (string) $menu['id'])
+	                                                            >
+	                                                                {{ $menu['name'] }} · {{ $menu['location_label'] ?? 'Menu' }}
+	                                                            </option>
+	                                                        @endforeach
+	                                                    </select>
+	                                                    @error("footer_columns.{$columnIndex}.menu_id")
+	                                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+	                                                    @enderror
+	                                                </label>
+	                                            </div>
+	                                        </div>
+	                                    @endfor
+	                                </div>
+
+	                                <span class="{{ $headerHelperClass }} mt-4 block">Create and edit menus in the Navigation section, then select them here. Leave all columns disabled to use the active theme fallback footer links.</span>
+	                            @else
+	                                <p class="mt-5 rounded-xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
+	                                    No navigation menus available yet. Create menus in the Navigation section first.
+                                </p>
+                            @endif
+                        </div>
+
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Newsletter
+                            </h3>
+
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Control the email signup message shown in the footer.
+                            </p>
+
+                            <input type="hidden" name="newsletter_enabled" value="0">
+
+                            <label class="mt-5 {{ $headerToggleRowClass }}">
+                                <span>
+                                    <span class="block text-sm font-medium text-slate-700 dark:text-gray-300">Newsletter enabled</span>
+                                    <span class="{{ $headerHelperClass }}">Display the newsletter signup area in the footer.</span>
+                                </span>
+
+                                <input
+                                    type="checkbox"
+                                    name="newsletter_enabled"
+                                    value="1"
+                                    class="{{ $toggleClass }} shrink-0"
+                                    @checked(old('newsletter_enabled', $values['newsletter_enabled'] ?? false))
+                                >
+                            </label>
+
+                            <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Newsletter heading</span>
+                                    <input name="newsletter_heading" value="{{ old('newsletter_heading', $values['newsletter_heading'] ?? '') }}" class="{{ $headerInputClass }}">
+                                    @error('newsletter_heading')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Newsletter text</span>
+                                    <input name="newsletter_text" value="{{ old('newsletter_text', $values['newsletter_text'] ?? '') }}" class="{{ $headerInputClass }}">
+                                    @error('newsletter_text')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Contact
+                            </h3>
+
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Store contact details shown in the footer.
+                            </p>
+
+                            <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Contact email</span>
+                                    <input name="contact_email" value="{{ old('contact_email', $values['contact_email'] ?? '') }}" class="{{ $headerInputClass }}">
+                                    @error('contact_email')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Contact phone</span>
+                                    <input name="contact_phone" value="{{ old('contact_phone', $values['contact_phone'] ?? '') }}" class="{{ $headerInputClass }}">
+                                    @error('contact_phone')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Social Links
+                            </h3>
+
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Add social profile URLs used by footer-capable themes.
+                            </p>
+
+                            <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                                @foreach ([
+                                    'social_facebook' => 'Facebook URL',
+                                    'social_instagram' => 'Instagram URL',
+                                    'social_x' => 'X URL',
+                                    'social_youtube' => 'YouTube URL',
+                                    'social_tiktok' => 'TikTok URL',
+                                ] as $field => $label)
+                                    <label class="block">
+                                        <span class="{{ $headerLabelClass }}">{{ $label }}</span>
+                                        <input name="{{ $field }}" value="{{ old($field, $values[$field] ?? '') }}" class="{{ $headerInputClass }}">
+                                        @error($field)
+                                            <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                        @enderror
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="{{ $headerSectionClass }}">
+                            <h3 class="{{ $headerSectionTitleClass }}">
+                                Legal Text
+                            </h3>
+
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Set the small copyright line shown at the bottom of the storefront footer.
+                            </p>
+
+                            <div class="mt-5">
+                                <label class="block">
+                                    <span class="{{ $headerLabelClass }}">Copyright text</span>
+                                    <input name="copyright_text" value="{{ old('copyright_text', $values['copyright_text'] ?? '') }}" class="{{ $headerInputClass }}">
+                                    @error('copyright_text')
+                                        <span class="mt-1 block text-sm text-red-600">{{ $message }}</span>
+                                    @enderror
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </form>
             @else
@@ -1508,36 +1637,96 @@
                             $previewValues['contact_email'] = old('contact_email', $previewValues['contact_email'] ?? null);
                             $previewValues['contact_phone'] = old('contact_phone', $previewValues['contact_phone'] ?? null);
                             $previewValues['copyright_text'] = old('copyright_text', $previewValues['copyright_text'] ?? null);
-                        @endphp
+	                            $previewValues['logo_url'] = old('logo_url', $previewValues['logo_url'] ?? null);
+	                            $previewValues['footer_description'] = old('footer_description', $previewValues['footer_description'] ?? null);
+	                            $previewValues['footer_columns'] = old('footer_columns', $previewValues['footer_columns'] ?? []);
+	                            $footerMenuLookup = collect($editor['menus'] ?? [])->keyBy(fn ($menu) => (string) ($menu['id'] ?? ''));
+	                            $footerPreviewColumns = collect($previewValues['footer_columns'])
+	                                ->filter(fn ($column) => (bool) data_get($column, 'enabled', false) && filled(data_get($column, 'menu_id')))
+	                                ->map(function ($column) use ($footerMenuLookup) {
+	                                    $menu = $footerMenuLookup->get((string) data_get($column, 'menu_id'));
+
+	                                    if (! $menu) {
+	                                        return null;
+	                                    }
+
+	                                    $labels = collect($menu['items'] ?? [])
+	                                        ->map(fn ($item) => is_array($item) ? ($item['title'] ?? $item['label'] ?? null) : $item)
+	                                        ->filter()
+	                                        ->values()
+	                                        ->all();
+
+	                                    return [
+	                                        'title' => filled(data_get($column, 'title')) ? data_get($column, 'title') : $menu['name'],
+	                                        'labels' => $labels ?: ['About Us', 'Products', 'Contact'],
+	                                    ];
+	                                })
+	                                ->filter()
+	                                ->values()
+	                                ->all();
+
+	                            if (empty($footerPreviewColumns)) {
+	                                $footerPreviewColumns = [[
+	                                    'title' => 'Theme Fallback',
+	                                    'labels' => ['About Us', 'Products', 'Contact'],
+	                                ]];
+	                            }
+	                        @endphp
 
                         <div class="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
                             <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
                                 <div>
-                                    <p class="font-sans text-lg font-semibold text-slate-950 dark:text-white">Storefront</p>
+                                    <div class="flex min-h-12 items-center">
+                                        <img
+                                            src="{{ $previewValues['logo_url'] ?? '' }}"
+                                            alt=""
+                                            class="{{ filled($previewValues['logo_url'] ?? null) ? '' : 'hidden' }} max-h-12 max-w-[160px] object-contain"
+                                            data-footer-preview-logo
+                                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
+                                        >
+
+                                        <p class="{{ filled($previewValues['logo_url'] ?? null) ? 'hidden' : '' }} font-sans text-lg font-semibold text-slate-950 dark:text-white" data-footer-preview-text>
+                                            Storefront
+                                        </p>
+                                    </div>
+
+                                    @if (filled($previewValues['footer_description'] ?? null))
+                                        <p class="mt-4 max-w-md text-sm leading-6 text-slate-500 dark:text-gray-400">
+                                            {{ $previewValues['footer_description'] }}
+                                        </p>
+                                    @endif
+
                                     <div class="mt-4 space-y-2 text-sm text-slate-500 dark:text-gray-400">
                                         <p>{{ $previewValues['contact_email'] ?: 'hello@example.com' }}</p>
                                         <p>{{ $previewValues['contact_phone'] ?: '+1 555 0100' }}</p>
                                     </div>
 
-                                    <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-                                        @for ($column = 0; $column < 3; $column++)
-                                            <div class="space-y-3">
-                                                <div class="h-3 w-20 rounded-full bg-slate-300 dark:bg-gray-700"></div>
-                                                <div class="h-2 rounded-full bg-slate-200 dark:bg-gray-800"></div>
-                                                <div class="h-2 w-4/5 rounded-full bg-slate-200 dark:bg-gray-800"></div>
-                                                <div class="h-2 w-2/3 rounded-full bg-slate-200 dark:bg-gray-800"></div>
-                                            </div>
-                                        @endfor
-                                    </div>
-                                </div>
+	                                    <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2" data-footer-menu-preview-columns>
+	                                        @foreach ($footerPreviewColumns as $column)
+	                                            <div>
+	                                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400">
+	                                                    {{ $column['title'] }}
+	                                                </p>
+
+	                                                <div class="mt-4 grid gap-3">
+	                                                    @foreach ($column['labels'] as $label)
+	                                                        <span class="text-sm font-medium text-slate-700 dark:text-gray-300">
+	                                                            {{ $label }}
+	                                                        </span>
+	                                                    @endforeach
+	                                                </div>
+	                                            </div>
+	                                        @endforeach
+	                                        </div>
+	                                    </div>
 
                                 @if ($previewValues['newsletter_enabled'])
                                     <div class="rounded-2xl bg-slate-50 p-5 dark:bg-gray-950">
                                         <p class="font-medium text-slate-900 dark:text-white">{{ $previewValues['newsletter_heading'] ?: 'Join our newsletter' }}</p>
                                         <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-gray-400">{{ $previewValues['newsletter_text'] ?: 'Get updates and offers from the store.' }}</p>
                                         <div class="mt-5 flex overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                                            <div class="h-11 flex-1"></div>
-                                            <div class="w-28 bg-blue-600"></div>
+                                            <span class="flex h-11 flex-1 items-center px-4 text-sm text-slate-400 dark:text-gray-500">email@example.com</span>
+                                            <span class="flex h-11 w-28 items-center justify-center bg-blue-600 text-sm font-semibold text-white">Subscribe</span>
                                         </div>
                                     </div>
                                 @endif
@@ -2091,6 +2280,120 @@
                     }
 
                     const cmsStudioForm = document.querySelector('#cms-studio-form');
+                    const footerLogoInput = cmsStudioForm?.querySelector('[data-footer-logo-file-input]');
+
+                    if (footerLogoInput && cmsStudioForm.dataset.footerLogoUploadBound !== '1') {
+                        cmsStudioForm.dataset.footerLogoUploadBound = '1';
+
+                        const footerLogoPreview = cmsStudioForm.querySelector('[data-footer-logo-upload-preview]');
+                        const footerLogoEmpty = cmsStudioForm.querySelector('[data-footer-logo-upload-empty]');
+                        const footerPreviewLogo = document.querySelector('[data-footer-preview-logo]');
+                        const footerPreviewText = document.querySelector('[data-footer-preview-text]');
+
+                        footerLogoInput.addEventListener('change', () => {
+                            const file = footerLogoInput.files?.[0];
+
+                            if (! file) {
+                                return;
+                            }
+
+                            const previewUrl = URL.createObjectURL(file);
+
+                            footerLogoPreview?.classList.remove('hidden');
+                            footerLogoEmpty?.classList.add('hidden');
+                            footerLogoPreview?.setAttribute('src', previewUrl);
+                            footerPreviewLogo?.classList.remove('hidden');
+                            footerPreviewText?.classList.add('hidden');
+                            footerPreviewLogo?.setAttribute('src', previewUrl);
+                        });
+                    }
+
+	                    const footerMenuColumns = cmsStudioForm?.querySelector('[data-footer-menu-columns]');
+	                    const footerMenuPreviewColumns = document.querySelector('[data-footer-menu-preview-columns]');
+
+	                    if (
+	                        footerMenuColumns
+	                        && footerMenuPreviewColumns
+	                        && cmsStudioForm.dataset.footerMenuPreviewBound !== '1'
+	                    ) {
+	                        cmsStudioForm.dataset.footerMenuPreviewBound = '1';
+
+	                        const fallbackFooterColumns = () => ([
+	                            {
+	                                title: 'Theme Fallback',
+	                                labels: ['About Us', 'Products', 'Contact'],
+	                            },
+	                        ]);
+
+	                        const footerMenuLabels = (select) => {
+	                            const selected = select?.selectedOptions?.[0];
+
+	                            if (! selected?.value) {
+	                                return ['About Us', 'Products', 'Contact'];
+                            }
+
+                            try {
+                                const labels = JSON.parse(window.atob(selected.dataset.items ?? ''));
+
+                                return Array.isArray(labels) && labels.length
+                                    ? labels
+                                    : ['About Us', 'Products', 'Contact'];
+                            } catch (error) {
+                                return ['About Us', 'Products', 'Contact'];
+	                            }
+	                        };
+
+	                        const selectedFooterColumns = () => {
+	                            const columns = [...footerMenuColumns.querySelectorAll('[data-footer-column-row]')]
+	                                .map((row) => {
+	                                    const enabled = row.querySelector('[data-footer-column-enabled]')?.checked ?? false;
+	                                    const titleInput = row.querySelector('[data-footer-column-title]');
+	                                    const menuSelect = row.querySelector('[data-footer-column-menu]');
+	                                    const selected = menuSelect?.selectedOptions?.[0];
+
+	                                    if (! enabled || ! selected?.value) {
+	                                        return null;
+	                                    }
+
+	                                    return {
+	                                        title: titleInput?.value.trim() || selected.dataset.menuName || selected.textContent.trim(),
+	                                        labels: footerMenuLabels(menuSelect),
+	                                    };
+	                                })
+	                                .filter(Boolean);
+
+	                            return columns.length ? columns : fallbackFooterColumns();
+	                        };
+
+	                        const renderFooterMenuPreview = () => {
+	                            footerMenuPreviewColumns.replaceChildren();
+
+	                            selectedFooterColumns().forEach((column) => {
+	                                const columnNode = document.createElement('div');
+	                                const title = document.createElement('p');
+	                                const list = document.createElement('div');
+
+	                                title.className = 'text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-gray-400';
+	                                title.textContent = column.title;
+	                                list.className = 'mt-4 grid gap-3';
+
+	                                column.labels.forEach((label) => {
+	                                    const item = document.createElement('span');
+	                                    item.className = 'text-sm font-medium text-slate-700 dark:text-gray-300';
+	                                    item.textContent = label;
+	                                    list.appendChild(item);
+	                                });
+
+	                                columnNode.append(title, list);
+	                                footerMenuPreviewColumns.appendChild(columnNode);
+	                            });
+	                        };
+
+	                        footerMenuColumns.addEventListener('input', renderFooterMenuPreview);
+	                        footerMenuColumns.addEventListener('change', renderFooterMenuPreview);
+	                        renderFooterMenuPreview();
+	                    }
+
                     const headerPreview = document.querySelector('[data-header-preview]');
 
                     if (! cmsStudioForm || ! headerPreview || cmsStudioForm.dataset.cmsStudioPreviewBound === '1') {
