@@ -371,6 +371,19 @@ it('saves structured footer settings through CMS Studio', function () {
 it('creates and edits flat navigation menus through CMS Studio', function () {
     $this->loginAsAdmin();
 
+    $this->get(route('admin.cms.index', ['area' => 'navigation', 'menu' => 'new']))
+        ->assertOk()
+        ->assertSeeText('Create New Menu')
+        ->assertSeeText('Create Menu')
+        ->assertSeeText('Add Menu Item')
+        ->assertSee('data-navigation-builder', false)
+        ->assertSee('data-menu-item-template', false)
+        ->assertSee('data-remove-menu-item', false)
+        ->assertSee('name="items[0][title]"', false)
+        ->assertSee('type="button"', false)
+        ->assertSee('window.cmsNavigationAddItem', false)
+        ->assertSee('window.__cmsNavigationBuilderEventsBound', false);
+
     $menuName = 'Studio Header Menu '.uniqid();
     $updatedMenuName = 'Studio Footer Menu '.uniqid();
 
