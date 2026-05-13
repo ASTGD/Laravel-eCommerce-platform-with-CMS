@@ -1,48 +1,48 @@
 @php
-    $heroSlides = [
-        [
-            'theme'      => 'dark',
-            'tag'        => 'Future Tech 2026',
-            'headline'   => 'See Beyond',
-            'highlight'  => 'Reality.',
-            'sub'        => 'Immerse yourself in next-generation VR. Experience worlds crafted for the bold and the visionary.',
-            'cta_label'  => 'Explore Now',
-            'cta2_label' => 'View Catalog',
-            'badge'      => '🏆 Editor\'s Choice',
-            'image'      => 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?auto=format&fit=crop&q=90&w=900',
-            'bg_from'    => '#0d0221',
-            'bg_to'      => '#1a0533',
-            'accent'     => '#a855f7',
-        ],
-        [
-            'theme'      => 'light',
-            'tag'        => 'Sonic Excellence',
-            'headline'   => 'Hear Every',
-            'highlight'  => 'Detail.',
-            'sub'        => 'Studio-grade audio meets everyday comfort. The pro headphones that redefine what music feels like.',
-            'cta_label'  => 'Shop Now',
-            'cta2_label' => 'Compare Models',
-            'badge'      => '⭐ #1 Bestseller',
-            'image'      => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=90&w=900',
-            'bg_from'    => '#f0f9ff',
-            'bg_to'      => '#dbeafe',
-            'accent'     => '#0ea5e9',
-        ],
-        [
-            'theme'      => 'dark',
-            'tag'        => 'Precision Wearables',
-            'headline'   => 'Time, Elevated',
-            'highlight'  => 'Differently.',
-            'sub'        => 'Track performance, monitor health, and stay connected — all from the most intelligent device on your wrist.',
-            'cta_label'  => 'Discover More',
-            'cta2_label' => 'See Features',
-            'badge'      => '💎 Premium Pick',
-            'image'      => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=90&w=900',
-            'bg_from'    => '#0f172a',
-            'bg_to'      => '#1e293b',
-            'accent'     => '#38bdf8',
-        ],
-    ];
+$heroSlides = [
+[
+'theme' => 'dark',
+'tag' => 'Future Tech 2026',
+'headline' => 'See Beyond',
+'highlight' => 'Reality.',
+'sub' => 'Immerse yourself in next-generation VR. Experience worlds crafted for the bold and the visionary.',
+'cta_label' => 'Explore Now',
+'cta2_label' => 'View Catalog',
+'badge' => '🏆 Editor\'s Choice',
+'image' => 'images/1.png',
+'bg_from' => '#0d0221',
+'bg_to' => '#1a0533',
+'accent' => '#a855f7',
+],
+[
+'theme' => 'light',
+'tag' => 'Sonic Excellence',
+'headline' => 'Hear Every',
+'highlight' => 'Detail.',
+'sub' => 'Studio-grade audio meets everyday comfort. The pro headphones that redefine what music feels like.',
+'cta_label' => 'Shop Now',
+'cta2_label' => 'Compare Models',
+'badge' => '⭐ #1 Bestseller',
+'image' => 'images/2.png',
+'bg_from' => '#f0f9ff',
+'bg_to' => '#dbeafe',
+'accent' => '#0ea5e9',
+],
+[
+'theme' => 'dark',
+'tag' => 'Precision Wearables',
+'headline' => 'Time, Elevated',
+'highlight' => 'Differently.',
+'sub' => 'Track performance, monitor health, and stay connected — all from the most intelligent device on your wrist.',
+'cta_label' => 'Discover More',
+'cta2_label' => 'See Features',
+'badge' => '💎 Premium Pick',
+'image' => 'images/3.png',
+'bg_from' => '#0f172a',
+'bg_to' => '#1e293b',
+'accent' => '#38bdf8',
+],
+];
 @endphp
 
 @push('styles')
@@ -54,7 +54,7 @@
         overflow: hidden;
         display: flex;
         align-items: center;
-        transition: background 0.9s cubic-bezier(0.4,0,0.2,1);
+        transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1);
         font-family: 'Inter', system-ui, sans-serif;
     }
 
@@ -69,7 +69,14 @@
     }
 
     /* ── GRADIENT ORBS ── */
-    .gh-orbs { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .gh-orbs {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
     .gh-orb {
         position: absolute;
         border-radius: 50%;
@@ -78,17 +85,43 @@
         transition: opacity 0.9s ease, background 0.9s ease;
         animation: orbDrift 20s infinite alternate ease-in-out;
     }
-    .gh-orb-1 { width: 600px; height: 600px; top: -15%; right: -5%; }
-    .gh-orb-2 { width: 400px; height: 400px; bottom: -10%; left: -5%; animation-delay: -8s; }
-    .gh-orbs.active .gh-orb { opacity: 1; }
+
+    .gh-orb-1 {
+        width: 600px;
+        height: 600px;
+        top: -15%;
+        right: -5%;
+    }
+
+    .gh-orb-2 {
+        width: 400px;
+        height: 400px;
+        bottom: -10%;
+        left: -5%;
+        animation-delay: -8s;
+    }
+
+    .gh-orbs.active .gh-orb {
+        opacity: 1;
+    }
 
     @keyframes orbDrift {
-        0%   { transform: translate(0,0) scale(1); }
-        100% { transform: translate(40px, 30px) scale(1.15); }
+        0% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        100% {
+            transform: translate(40px, 30px) scale(1.15);
+        }
     }
 
     /* ── SLIDE CONTAINER ── */
-    .gh-slider { position: relative; z-index: 10; width: 100%; }
+    .gh-slider {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+    }
+
     .gh-slides-track {
         position: relative;
         min-height: 600px;
@@ -99,7 +132,8 @@
     /* ── INDIVIDUAL SLIDE ── */
     .gh-slide {
         position: absolute;
-        top: 0; left: 0;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         display: flex;
@@ -108,6 +142,7 @@
         pointer-events: none;
         transition: opacity 0s;
     }
+
     .gh-slide.is-active {
         opacity: 1;
         position: relative;
@@ -128,14 +163,31 @@
     }
 
     @media (max-width: 991px) {
-        .gh-wrapper { min-height: auto; }
-        .gh-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; padding: 60px 24px; }
-        .gh-img-col { order: -1; }
-        .gh-cta-row { justify-content: center; }
+        .gh-wrapper {
+            min-height: auto;
+        }
+
+        .gh-grid {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 40px;
+            padding: 60px 24px;
+        }
+
+        .gh-img-col {
+            order: -1;
+        }
+
+        .gh-cta-row {
+            justify-content: center;
+        }
     }
 
     /* ── TEXT COLUMN ANIMATIONS ── */
-    .gh-tag-wrap { margin-bottom: 20px; }
+    .gh-tag-wrap {
+        margin-bottom: 20px;
+    }
+
     .gh-tag {
         display: inline-block;
         padding: 6px 18px;
@@ -149,7 +201,11 @@
         transform: translateY(20px);
         transition: opacity 0.5s 0.1s ease, transform 0.5s 0.1s ease;
     }
-    .gh-slide.is-active .gh-tag { opacity: 1; transform: translateY(0); }
+
+    .gh-slide.is-active .gh-tag {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
     .gh-headline {
         font-size: clamp(48px, 6vw, 88px);
@@ -161,7 +217,11 @@
         transform: translateY(30px);
         transition: opacity 0.55s 0.2s ease, transform 0.55s 0.2s ease;
     }
-    .gh-slide.is-active .gh-headline { opacity: 1; transform: translateY(0); }
+
+    .gh-slide.is-active .gh-headline {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
     .gh-highlight {
         display: block;
@@ -169,7 +229,11 @@
         transform: translateY(30px);
         transition: opacity 0.55s 0.3s ease, transform 0.55s 0.3s ease;
     }
-    .gh-slide.is-active .gh-highlight { opacity: 1; transform: translateY(0); }
+
+    .gh-slide.is-active .gh-highlight {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
     .gh-sub {
         font-size: 18px;
@@ -181,7 +245,11 @@
         transform: translateY(20px);
         transition: opacity 0.55s 0.4s ease, transform 0.55s 0.4s ease;
     }
-    .gh-slide.is-active .gh-sub { opacity: 1; transform: translateY(0); }
+
+    .gh-slide.is-active .gh-sub {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
     /* ── CTA ROW ── */
     .gh-cta-row {
@@ -192,7 +260,11 @@
         transform: translateY(20px);
         transition: opacity 0.55s 0.5s ease, transform 0.55s 0.5s ease;
     }
-    .gh-slide.is-active .gh-cta-row { opacity: 1; transform: translateY(0); }
+
+    .gh-slide.is-active .gh-cta-row {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
     /* PRIMARY BUTTON */
     .gh-btn-primary {
@@ -209,18 +281,20 @@
         border: none;
         cursor: pointer;
         color: #fff !important;
-        transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease;
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s ease;
         z-index: 1;
     }
+
     .gh-btn-primary::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
         z-index: 2;
         opacity: 0;
         transition: opacity 0.3s;
     }
+
     .gh-btn-primary::after {
         content: '';
         position: absolute;
@@ -232,15 +306,28 @@
         z-index: -1;
         transition: opacity 0.4s ease;
     }
-    .gh-btn-primary:hover { transform: translateY(-4px); }
-    .gh-btn-primary:hover::before { opacity: 1; }
-    .gh-btn-primary:hover::after { opacity: 0.5; }
+
+    .gh-btn-primary:hover {
+        transform: translateY(-4px);
+    }
+
+    .gh-btn-primary:hover::before {
+        opacity: 1;
+    }
+
+    .gh-btn-primary:hover::after {
+        opacity: 0.5;
+    }
+
     .gh-btn-arrow {
         display: inline-flex;
         align-items: center;
-        transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .gh-btn-primary:hover .gh-btn-arrow { transform: translateX(6px); }
+
+    .gh-btn-primary:hover .gh-btn-arrow {
+        transform: translateX(6px);
+    }
 
     /* SECONDARY BUTTON */
     .gh-btn-secondary {
@@ -255,10 +342,19 @@
         border: 1.5px solid currentColor;
         transition: transform 0.3s ease, background 0.3s ease;
     }
-    .gh-btn-secondary:hover { transform: translateY(-3px); }
+
+    .gh-btn-secondary:hover {
+        transform: translateY(-3px);
+    }
 
     /* ── IMAGE COLUMN ── */
-    .gh-img-col { position: relative; display: flex; justify-content: center; align-items: center; }
+    .gh-img-col {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
     .gh-img-stage {
         position: relative;
         width: 100%;
@@ -280,11 +376,24 @@
         transition: opacity 0.7s 0.3s ease, transform 0.7s 0.3s ease;
         animation: ringPulse 6s infinite ease-in-out;
     }
-    .gh-slide.is-active .gh-img-ring { opacity: 1; transform: scale(1); }
+
+    .gh-slide.is-active .gh-img-ring {
+        opacity: 1;
+        transform: scale(1);
+    }
 
     @keyframes ringPulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50%       { transform: scale(1.12); opacity: 0.9; }
+
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 0.5;
+        }
+
+        50% {
+            transform: scale(1.12);
+            opacity: 0.9;
+        }
     }
 
     /* The product image */
@@ -296,14 +405,25 @@
         z-index: 3;
         opacity: 0;
         transform: translateX(60px) scale(0.9);
-        transition: opacity 0.65s 0.25s cubic-bezier(0.23,1,0.32,1), transform 0.65s 0.25s cubic-bezier(0.23,1,0.32,1);
+        transition: opacity 0.65s 0.25s cubic-bezier(0.23, 1, 0.32, 1), transform 0.65s 0.25s cubic-bezier(0.23, 1, 0.32, 1);
         animation: imgFloat 8s infinite ease-in-out;
     }
-    .gh-slide.is-active .gh-img { opacity: 1; transform: translateX(0) scale(1); }
+
+    .gh-slide.is-active .gh-img {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
 
     @keyframes imgFloat {
-        0%, 100% { transform: translateY(0) rotate(0deg); }
-        50%       { transform: translateY(-24px) rotate(2deg); }
+
+        0%,
+        100% {
+            transform: translateY(0) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-24px) rotate(2deg);
+        }
     }
 
     /* Badge floating card */
@@ -323,11 +443,22 @@
         transition: opacity 0.5s 0.6s ease, transform 0.5s 0.6s ease;
         animation: badgeFloat 7s 1s infinite ease-in-out;
     }
-    .gh-slide.is-active .gh-badge { opacity: 1; transform: translateX(0); }
+
+    .gh-slide.is-active .gh-badge {
+        opacity: 1;
+        transform: translateX(0);
+    }
 
     @keyframes badgeFloat {
-        0%, 100% { transform: translateY(0); }
-        50%       { transform: translateY(-10px); }
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
     }
 
     /* ── PROGRESS/DOTS ── */
@@ -341,17 +472,21 @@
         gap: 12px;
         z-index: 50;
     }
+
     .gh-dot {
         width: 10px;
         height: 10px;
         border-radius: 5px;
-        background: rgba(255,255,255,0.3);
+        background: rgba(255, 255, 255, 0.3);
         border: none;
         cursor: pointer;
         padding: 0;
         transition: width 0.4s ease, background 0.4s ease;
     }
-    .gh-dot.is-active { width: 36px; }
+
+    .gh-dot.is-active {
+        width: 36px;
+    }
 
     /* ── PREV / NEXT ARROWS ── */
     .gh-arrow {
@@ -370,11 +505,24 @@
         backdrop-filter: blur(16px);
         transition: transform 0.3s ease, background 0.3s ease;
     }
-    .gh-arrow:hover { transform: translateY(-50%) scale(1.1); }
-    .gh-arrow-prev { left: 24px; }
-    .gh-arrow-next { right: 24px; }
 
-    @media (max-width: 768px) { .gh-arrow { display: none; } }
+    .gh-arrow:hover {
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .gh-arrow-prev {
+        left: 24px;
+    }
+
+    .gh-arrow-next {
+        right: 24px;
+    }
+
+    @media (max-width: 768px) {
+        .gh-arrow {
+            display: none;
+        }
+    }
 
     /* ── PROGRESS BAR ── */
     .gh-progress-bar {
@@ -386,13 +534,20 @@
         z-index: 50;
         transition: none;
     }
+
     .gh-progress-bar.animating {
         width: 100%;
-        transition: width 7s linear;
+        transition: width 4s linear;
     }
 
     /* SSR placeholder */
-    .gh-ssr { min-height: 90vh; display: flex; align-items: center; justify-content: center; background: #0f172a; }
+    .gh-ssr {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f172a;
+    }
 </style>
 @endpush
 
@@ -514,116 +669,146 @@
 </script>
 
 <script type="module">
-app.component('v-gadget-hero', {
-    template: '#v-gadget-hero-template',
-    props: {
-        slides: { type: Array, required: true },
-        searchUrl: { type: String, default: '#' }
-    },
-    data() {
-        return {
-            current: 0,
-            timer: null,
-            progressing: false,
-            ready: false,
-            trackHeight: 600,
-        };
-    },
-    computed: {
-        currentSlide() { return this.slides[this.current]; },
-        wrapperStyle() {
-            const s = this.currentSlide;
+    app.component('v-gadget-hero', {
+        template: '#v-gadget-hero-template',
+        props: {
+            slides: {
+                type: Array,
+                required: true
+            },
+            searchUrl: {
+                type: String,
+                default: '#'
+            }
+        },
+        data() {
             return {
-                background: `linear-gradient(135deg, ${s.bg_from} 0%, ${s.bg_to} 100%)`,
+                current: 0,
+                timer: null,
+                progressing: false,
+                ready: false,
+                trackHeight: 600,
             };
         },
-        arrowStyle() {
-            const s = this.currentSlide;
-            const isDark = s.theme === 'dark';
-            return {
-                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                color: isDark ? '#fff' : '#0f172a',
-                boxShadow: `0 4px 24px ${s.accent}22`,
-            };
+        computed: {
+            currentSlide() {
+                return this.slides[this.current];
+            },
+            wrapperStyle() {
+                const s = this.currentSlide;
+                return {
+                    background: `linear-gradient(135deg, ${s.bg_from} 0%, ${s.bg_to} 100%)`,
+                };
+            },
+            arrowStyle() {
+                const s = this.currentSlide;
+                const isDark = s.theme === 'dark';
+                return {
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    color: isDark ? '#fff' : '#0f172a',
+                    boxShadow: `0 4px 24px ${s.accent}22`,
+                };
+            },
         },
-    },
-    methods: {
-        textColor(slide) { return slide.theme === 'dark' ? '#ffffff' : '#0f172a'; },
-        subColor(slide)  { return slide.theme === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(15,23,42,0.65)'; },
-        tagStyle(slide) {
-            const isDark = slide.theme === 'dark';
-            return {
-                color: slide.accent,
-                borderColor: slide.accent + '55',
-                background: slide.accent + '15',
-            };
+        methods: {
+            textColor(slide) {
+                return slide.theme === 'dark' ? '#ffffff' : '#0f172a';
+            },
+            subColor(slide) {
+                return slide.theme === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(15,23,42,0.65)';
+            },
+            tagStyle(slide) {
+                const isDark = slide.theme === 'dark';
+                return {
+                    color: slide.accent,
+                    borderColor: slide.accent + '55',
+                    background: slide.accent + '15',
+                };
+            },
+            primaryBtnStyle(slide) {
+                return {
+                    background: `linear-gradient(135deg, ${slide.accent}, ${slide.accent}cc)`,
+                    boxShadow: `0 12px 40px -8px ${slide.accent}66`,
+                };
+            },
+            secondaryBtnStyle(slide) {
+                const isDark = slide.theme === 'dark';
+                return {
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.85)',
+                    borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)',
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                };
+            },
+            ringStyle(slide) {
+                return {
+                    background: `radial-gradient(circle, ${slide.accent}40 0%, ${slide.accent}00 70%)`,
+                    filter: 'blur(40px)',
+                };
+            },
+            imgBlend(slide) {
+                return {
+                    filter: `drop-shadow(0 40px 80px ${slide.accent}55)`,
+                    mixBlendMode: slide.theme === 'light' ? 'multiply' : 'normal',
+                };
+            },
+            badgeStyle(slide) {
+                const isDark = slide.theme === 'dark';
+                return {
+                    background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.85)',
+                    color: isDark ? '#fff' : '#0f172a',
+                    border: `1px solid ${slide.accent}33`,
+                    boxShadow: `0 8px 32px ${slide.accent}22`,
+                };
+            },
+            dotStyle(i) {
+                const s = this.currentSlide;
+                const isDark = s.theme === 'dark';
+                return {
+                    background: i === this.current ?
+                        s.accent : isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
+                };
+            },
+            goTo(i) {
+                this.current = i;
+                this.resetProgress();
+            },
+            next() {
+                this.current = (this.current + 1) % this.slides.length;
+                this.resetProgress();
+            },
+            prev() {
+                this.current = (this.current - 1 + this.slides.length) % this.slides.length;
+                this.resetProgress();
+            },
+            resetProgress() {
+                this.progressing = false;
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        this.progressing = true;
+                    }, 50);
+                });
+            },
+            start() {
+                this.resetProgress();
+                this.timer = setInterval(() => {
+                    this.next();
+                }, 3000);
+            },
+            pause() {
+                clearInterval(this.timer);
+                this.progressing = false;
+            },
+            resume() {
+                this.start();
+            },
         },
-        primaryBtnStyle(slide) {
-            return {
-                background: `linear-gradient(135deg, ${slide.accent}, ${slide.accent}cc)`,
-                boxShadow: `0 12px 40px -8px ${slide.accent}66`,
-            };
+        mounted() {
+            this.ready = true;
+            this.start();
         },
-        secondaryBtnStyle(slide) {
-            const isDark = slide.theme === 'dark';
-            return {
-                color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.85)',
-                borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)',
-                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            };
-        },
-        ringStyle(slide) {
-            return {
-                background: `radial-gradient(circle, ${slide.accent}40 0%, ${slide.accent}00 70%)`,
-                filter: 'blur(40px)',
-            };
-        },
-        imgBlend(slide) {
-            return {
-                filter: `drop-shadow(0 40px 80px ${slide.accent}55)`,
-                mixBlendMode: slide.theme === 'light' ? 'multiply' : 'normal',
-            };
-        },
-        badgeStyle(slide) {
-            const isDark = slide.theme === 'dark';
-            return {
-                background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.85)',
-                color: isDark ? '#fff' : '#0f172a',
-                border: `1px solid ${slide.accent}33`,
-                boxShadow: `0 8px 32px ${slide.accent}22`,
-            };
-        },
-        dotStyle(i) {
-            const s = this.currentSlide;
-            const isDark = s.theme === 'dark';
-            return {
-                background: i === this.current
-                    ? s.accent
-                    : isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
-            };
-        },
-        goTo(i) {
-            this.current = i;
-            this.resetProgress();
-        },
-        next() { this.current = (this.current + 1) % this.slides.length; this.resetProgress(); },
-        prev() { this.current = (this.current - 1 + this.slides.length) % this.slides.length; this.resetProgress(); },
-        resetProgress() {
-            this.progressing = false;
-            this.$nextTick(() => { setTimeout(() => { this.progressing = true; }, 50); });
-        },
-        start() {
-            this.resetProgress();
-            this.timer = setInterval(() => { this.next(); }, 7000);
-        },
-        pause() { clearInterval(this.timer); this.progressing = false; },
-        resume() { this.start(); },
-    },
-    mounted() {
-        this.ready = true;
-        this.start();
-    },
-    beforeUnmount() { clearInterval(this.timer); }
-});
+        beforeUnmount() {
+            clearInterval(this.timer);
+        }
+    });
 </script>
 @endpushOnce
