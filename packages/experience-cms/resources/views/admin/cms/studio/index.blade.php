@@ -414,32 +414,41 @@
                     }
                 @endphp
 
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+                <div class="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
                     <aside class="{{ $headerSectionClass }} h-fit">
-                        <div class="flex items-center justify-between gap-3">
+                        <div>
                             <h3 class="{{ $headerSectionTitleClass }}">
                                 Menus
                             </h3>
 
-                            <a
-                                href="{{ $editor['create_url'] }}"
-                                class="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950"
-                            >
-                                New
-                            </a>
+                            <p class="{{ $headerSectionDescriptionClass }}">
+                                Choose an existing menu or start a new one. The editor opens on the right.
+                            </p>
                         </div>
+
+                        <a
+                            href="{{ $editor['create_url'] }}"
+                            class="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                        >
+                            Create New Menu
+                        </a>
 
                         @if (! empty($editor['menus']))
                             <div class="mt-4 space-y-2">
                                 @foreach ($editor['menus'] as $menu)
                                     <a
                                         href="{{ $menu['edit_url'] }}"
-                                        class="block rounded-xl border px-4 py-3 transition {{ (string) $navigationValues['id'] === (string) $menu['id'] ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300' : 'border-slate-200/70 text-slate-700 hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/30' }}"
+                                        class="block rounded-2xl border px-4 py-3 transition {{ (string) $navigationValues['id'] === (string) $menu['id'] ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-300' : 'border-slate-200/70 text-slate-700 hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-900 dark:hover:bg-blue-950/30' }}"
                                     >
-                                        <span class="block text-sm font-semibold">{{ $menu['name'] }}</span>
-                                        <span class="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-gray-400">
+                                        <span class="flex items-start justify-between gap-3">
+                                            <span class="block text-sm font-semibold">{{ $menu['name'] }}</span>
+                                            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $menu['is_active'] ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300' }}">
+                                                {{ $menu['is_active'] ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </span>
+                                        <span class="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-gray-400">
                                             <span>{{ $menu['location_label'] }}</span>
-                                            <span>{{ $menu['items_count'] }} items</span>
+                                            <span>{{ $menu['items_count'] }} {{ \Illuminate\Support\Str::plural('item', $menu['items_count']) }}</span>
                                         </span>
                                     </a>
                                 @endforeach
@@ -462,13 +471,21 @@
                         <input type="hidden" name="menu_id" value="{{ $navigationValues['id'] }}">
 
                         <div class="{{ $headerSectionClass }}">
-                            <h3 class="{{ $headerSectionTitleClass }}">
-                                Menu Settings
-                            </h3>
+                            <div class="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="{{ $headerSectionTitleClass }}">
+                                        {{ $navigationValues['id'] ? 'Edit Menu' : 'Create Menu' }}
+                                    </h3>
 
-                            <p class="{{ $headerSectionDescriptionClass }}">
-                                Create or edit a flat storefront menu used by header, footer, mobile, or utility navigation.
-                            </p>
+                                    <p class="{{ $headerSectionDescriptionClass }}">
+                                        Give the menu a clear name and choose where it can be used in the storefront.
+                                    </p>
+                                </div>
+
+                                <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $navigationValues['id'] ? 'bg-slate-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' }}">
+                                    {{ $navigationValues['id'] ? 'Existing menu' : 'New menu' }}
+                                </span>
+                            </div>
 
                             <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                                 <label class="block">
@@ -520,16 +537,16 @@
                                     </h3>
 
                                     <p class="{{ $headerSectionDescriptionClass }}">
-                                        Add flat menu links, set their order, and disable links without deleting them.
+                                        Add the storefront links in display order. Use normal paths like <span class="font-mono text-xs">/contact</span> or full URLs for external links.
                                     </p>
                                 </div>
 
                                 <button
                                     type="button"
-                                    class="{{ $secondaryButtonClass }}"
+                                    class="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-gray-200"
                                     data-add-menu-item
                                 >
-                                    Add item
+                                    Add Menu Item
                                 </button>
                             </div>
 
@@ -539,9 +556,9 @@
 
                             <div class="mt-5 space-y-4" data-menu-items>
                                 @foreach ($navigationItems as $index => $item)
-                                    <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-menu-item-row>
-                                        <div class="mb-4 flex items-center justify-between gap-3">
-                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
+                                    <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 transition dark:border-gray-700 dark:bg-gray-950" data-menu-item-row>
+                                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100" data-menu-item-number>
                                                 Item {{ $loop->iteration }}
                                             </p>
 
@@ -569,13 +586,21 @@
                                                     >
                                                     New tab
                                                 </label>
+
+                                                <button
+                                                    type="button"
+                                                    class="text-xs font-semibold text-red-500 transition hover:text-red-600 disabled:pointer-events-none disabled:opacity-40 dark:text-red-400 dark:hover:text-red-300"
+                                                    data-remove-menu-item
+                                                >
+                                                    Remove
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_160px_minmax(0,1.3fr)_100px]">
+                                        <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.05fr)_150px_minmax(0,1.3fr)_110px]">
                                             <label class="block">
                                                 <span class="{{ $headerLabelClass }}">Label</span>
-                                                <input name="items[{{ $index }}][title]" value="{{ $item['title'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                <input name="items[{{ $index }}][title]" value="{{ $item['title'] ?? '' }}" placeholder="Home" class="{{ $headerInputClass }}">
                                             </label>
 
                                             <label class="block">
@@ -591,7 +616,7 @@
 
                                             <label class="block">
                                                 <span class="{{ $headerLabelClass }}">URL or path</span>
-                                                <input name="items[{{ $index }}][target]" value="{{ $item['target'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                <input name="items[{{ $index }}][target]" value="{{ $item['target'] ?? '' }}" placeholder="/products" class="{{ $headerInputClass }}">
                                             </label>
 
                                             <label class="block">
@@ -611,55 +636,65 @@
                                 @endforeach
                             </div>
 
-                            <template data-menu-item-template>
-                                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-menu-item-row>
-                                    <div class="mb-4 flex items-center justify-between gap-3">
-                                        <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
-                                            Item __NUMBER__
-                                        </p>
+                            <div hidden data-menu-item-template>
+                                <fieldset disabled class="contents" data-menu-item-template-fields>
+                                    <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 transition dark:border-gray-700 dark:bg-gray-950" data-menu-item-row>
+                                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                            <p class="text-sm font-semibold text-slate-800 dark:text-gray-100" data-menu-item-number>
+                                                Item __NUMBER__
+                                            </p>
 
-                                        <div class="flex flex-wrap items-center gap-4">
-                                            <input type="hidden" name="items[__INDEX__][is_active]" value="0">
-                                            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
-                                                <input type="checkbox" name="items[__INDEX__][is_active]" value="1" class="{{ $toggleClass }}" checked>
-                                                Active
+                                            <div class="flex flex-wrap items-center gap-4">
+                                                <input type="hidden" name="items[__INDEX__][is_active]" value="0">
+                                                <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                    <input type="checkbox" name="items[__INDEX__][is_active]" value="1" class="{{ $toggleClass }}" checked>
+                                                    Active
+                                                </label>
+
+                                                <input type="hidden" name="items[__INDEX__][open_in_new_tab]" value="0">
+                                                <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
+                                                    <input type="checkbox" name="items[__INDEX__][open_in_new_tab]" value="1" class="{{ $toggleClass }}">
+                                                    New tab
+                                                </label>
+
+                                                <button
+                                                    type="button"
+                                                    class="text-xs font-semibold text-red-500 transition hover:text-red-600 disabled:pointer-events-none disabled:opacity-40 dark:text-red-400 dark:hover:text-red-300"
+                                                    data-remove-menu-item
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.05fr)_150px_minmax(0,1.3fr)_110px]">
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Label</span>
+                                                <input name="items[__INDEX__][title]" placeholder="Home" class="{{ $headerInputClass }}">
                                             </label>
 
-                                            <input type="hidden" name="items[__INDEX__][open_in_new_tab]" value="0">
-                                            <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-gray-400">
-                                                <input type="checkbox" name="items[__INDEX__][open_in_new_tab]" value="1" class="{{ $toggleClass }}">
-                                                New tab
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Type</span>
+                                                <select name="items[__INDEX__][type]" class="{{ $headerInputClass }}">
+                                                    @foreach ($editor['item_types'] as $type => $label)
+                                                        <option value="{{ $type }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">URL or path</span>
+                                                <input name="items[__INDEX__][target]" placeholder="/products" class="{{ $headerInputClass }}">
+                                            </label>
+
+                                            <label class="block">
+                                                <span class="{{ $headerLabelClass }}">Order</span>
+                                                <input type="number" min="0" name="items[__INDEX__][sort_order]" value="__NUMBER__" class="{{ $headerInputClass }}">
                                             </label>
                                         </div>
                                     </div>
-
-                                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_160px_minmax(0,1.3fr)_100px]">
-                                        <label class="block">
-                                            <span class="{{ $headerLabelClass }}">Label</span>
-                                            <input name="items[__INDEX__][title]" class="{{ $headerInputClass }}">
-                                        </label>
-
-                                        <label class="block">
-                                            <span class="{{ $headerLabelClass }}">Type</span>
-                                            <select name="items[__INDEX__][type]" class="{{ $headerInputClass }}">
-                                                @foreach ($editor['item_types'] as $type => $label)
-                                                    <option value="{{ $type }}">{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </label>
-
-                                        <label class="block">
-                                            <span class="{{ $headerLabelClass }}">URL or path</span>
-                                            <input name="items[__INDEX__][target]" class="{{ $headerInputClass }}">
-                                        </label>
-
-                                        <label class="block">
-                                            <span class="{{ $headerLabelClass }}">Order</span>
-                                            <input type="number" min="0" name="items[__INDEX__][sort_order]" value="__NUMBER__" class="{{ $headerInputClass }}">
-                                        </label>
-                                    </div>
-                                </div>
-                            </template>
+                                </fieldset>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -1937,6 +1972,139 @@
     @pushOnce('scripts')
         <script>
             (() => {
+                const navigationRows = (navigationBuilder) => {
+                    const rows = navigationBuilder?.querySelector('[data-menu-items]');
+
+                    return rows ? [...rows.querySelectorAll('[data-menu-item-row]')] : [];
+                };
+
+                const normalizeNavigationRows = (navigationBuilder) => {
+                    navigationRows(navigationBuilder).forEach((row, index, currentRows) => {
+                        row.querySelector('[data-menu-item-number]')?.replaceChildren(`Item ${index + 1}`);
+
+                        row.querySelectorAll('input, select, textarea').forEach((field) => {
+                            if (! field.name) {
+                                return;
+                            }
+
+                            field.name = field.name.replace(/items\[(?:\d+|__INDEX__)\]/, `items[${index}]`);
+                        });
+
+                        const removeButton = row.querySelector('[data-remove-menu-item]');
+
+                        if (removeButton) {
+                            removeButton.disabled = currentRows.length === 1;
+                        }
+                    });
+                };
+
+                window.cmsNavigationAddItem = (button) => {
+                    const navigationBuilder = button?.closest('[data-navigation-builder]');
+                    const rows = navigationBuilder?.querySelector('[data-menu-items]');
+                    const template = navigationBuilder?.querySelector('[data-menu-item-template]');
+
+                    if (! navigationBuilder || ! rows || ! template) {
+                        return;
+                    }
+
+                    if (button.dataset.cmsNavigationAdding === '1') {
+                        return;
+                    }
+
+                    button.dataset.cmsNavigationAdding = '1';
+
+                    const nextIndex = navigationRows(navigationBuilder).length;
+                    const nextNumber = nextIndex + 1;
+                    const templateMarkup = (template.querySelector('[data-menu-item-template-fields]')?.innerHTML ?? '')
+                        .replaceAll('__INDEX__', String(nextIndex))
+                        .replaceAll('__NUMBER__', String(nextNumber))
+                        .trim();
+                    const wrapper = document.createElement('div');
+
+                    wrapper.innerHTML = templateMarkup;
+
+                    const newRow = wrapper.querySelector('[data-menu-item-row]');
+
+                    if (! newRow) {
+                        button.dataset.cmsNavigationAdding = '0';
+
+                        return;
+                    }
+
+                    rows.appendChild(newRow);
+                    normalizeNavigationRows(navigationBuilder);
+
+                    newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    newRow.querySelector('input[name$="[title]"]')?.focus();
+
+                    window.setTimeout(() => {
+                        button.dataset.cmsNavigationAdding = '0';
+                    }, 250);
+                };
+
+                window.cmsNavigationRemoveItem = (button) => {
+                    const navigationBuilder = button?.closest('[data-navigation-builder]');
+                    const row = button?.closest('[data-menu-item-row]');
+
+                    if (! navigationBuilder || ! row) {
+                        return;
+                    }
+
+                    if (navigationRows(navigationBuilder).length === 1) {
+                        row.querySelectorAll('input[type="text"], input:not([type]), input[type="url"], input[type="number"], textarea').forEach((field) => {
+                            field.value = field.type === 'number' ? '1' : '';
+                        });
+
+                        row.querySelectorAll('select').forEach((field) => {
+                            field.selectedIndex = 0;
+                        });
+
+                        normalizeNavigationRows(navigationBuilder);
+
+                        return;
+                    }
+
+                    row.remove();
+                    normalizeNavigationRows(navigationBuilder);
+                };
+
+                const bootNavigationBuilder = () => {
+                    document.querySelectorAll('[data-navigation-builder]').forEach((navigationBuilder) => {
+                        normalizeNavigationRows(navigationBuilder);
+                    });
+                };
+
+                if (! window.__cmsNavigationBuilderEventsBound) {
+                    window.__cmsNavigationBuilderEventsBound = true;
+
+                    document.addEventListener('click', (event) => {
+                        const target = event.target instanceof Element ? event.target : null;
+                        const addButton = target?.closest('[data-add-menu-item]');
+
+                        if (addButton) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            window.cmsNavigationAddItem(addButton);
+
+                            return;
+                        }
+
+                        const removeButton = target?.closest('[data-remove-menu-item]');
+
+                        if (removeButton) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            window.cmsNavigationRemoveItem(removeButton);
+                        }
+                    }, true);
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', bootNavigationBuilder, { once: true });
+                } else {
+                    bootNavigationBuilder();
+                }
+
                 const initCmsStudioPreview = () => {
                     document.querySelectorAll('[data-preview-shell]').forEach((shell) => {
                         if (shell.dataset.cmsStudioPreviewBound === '1') {
@@ -1968,36 +2136,6 @@
                             });
                         });
                     });
-
-                    const navigationBuilder = document.querySelector('[data-navigation-builder]');
-
-                    if (navigationBuilder && navigationBuilder.dataset.cmsStudioNavigationBound !== '1') {
-                        navigationBuilder.dataset.cmsStudioNavigationBound = '1';
-
-                        const rows = navigationBuilder.querySelector('[data-menu-items]');
-                        const template = navigationBuilder.querySelector('[data-menu-item-template]');
-                        const addButton = navigationBuilder.querySelector('[data-add-menu-item]');
-
-                        addButton?.addEventListener('click', () => {
-                            if (! rows || ! template) {
-                                return;
-                            }
-
-                            const nextIndex = rows.querySelectorAll('[data-menu-item-row]').length;
-                            const nextNumber = nextIndex + 1;
-                            const wrapper = document.createElement('div');
-
-                            wrapper.innerHTML = template.innerHTML
-                                .replaceAll('__INDEX__', String(nextIndex))
-                                .replaceAll('__NUMBER__', String(nextNumber));
-
-                            const newRow = wrapper.firstElementChild;
-
-                            if (newRow) {
-                                rows.appendChild(newRow);
-                            }
-                        });
-                    }
 
                     const homepageBuilder = document.querySelector('[data-homepage-builder]');
 
