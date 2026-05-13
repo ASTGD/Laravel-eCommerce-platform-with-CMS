@@ -1,178 +1,310 @@
-@push('styles')
+@pushOnce('styles')
 <style>
     .gadget-sale {
-        padding: 140px 0;
-        background: #0f172a;
+        padding: 100px 0;
+        background: #ffffff;
         position: relative;
-        overflow: hidden;
-        color: #ffffff;
+        width: 100%;
     }
 
-    .sale-aura {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
-    }
-
-    .sale-blob {
-        position: absolute;
-        width: 800px;
-        height: 800px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-        border-radius: 50%;
-        filter: blur(100px);
-        animation: saleAuraMove 25s infinite alternate ease-in-out;
-    }
-
-    .sale-blob-1 { top: -20%; right: -10%; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%); }
-    .sale-blob-2 { bottom: -20%; left: -10%; }
-
-    @keyframes saleAuraMove {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(60px, 40px) scale(1.1); }
-    }
-
-    .gadget-sale__panel {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 100px 80px;
-        border-radius: 60px;
-        text-align: center;
-        max-width: 1000px;
+    .gadget-sale__container {
+        max-width: 1600px;
         margin: 0 auto;
-        position: relative;
-        z-index: 5;
-        box-shadow: 0 50px 120px rgba(0, 0, 0, 0.4);
+        padding: 0 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
-    .gadget-sale__panel h2 {
-        font-size: 48px;
+    .gadget-sale__header {
+        text-align: center;
+        margin-bottom: 70px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .gadget-sale__title {
+        font-size: 52px;
         font-weight: 950;
-        color: #ffffff;
-        margin-bottom: 60px;
-        letter-spacing: -0.05em;
-        line-height: 1.1;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: -0.04em;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .gadget-sale__title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 6px;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        border-radius: 10px;
     }
 
     .gadget-sale__timer-wrap {
         display: flex;
-        justify-content: center;
         align-items: center;
-        gap: 24px;
-        margin-bottom: 70px;
+        gap: 25px;
+        background: #f8fafc;
+        padding: 15px 40px;
+        border-radius: 100px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    }
+
+    .gadget-sale__timer-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 900;
+        color: #ef4444;
+        text-transform: uppercase;
+        font-size: 14px;
+        border-right: 2px solid #e2e8f0;
+        padding-right: 25px;
     }
 
     .gadget-sale__digit-box {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        width: 140px;
-        height: 160px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
-        border-radius: 32px;
-        position: relative;
-        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .gadget-sale__digit-box:hover {
-        transform: translateY(-10px);
-        border-color: #3b82f6;
-        background: rgba(59, 130, 246, 0.1);
-        box-shadow: 0 20px 50px rgba(59, 130, 246, 0.3);
+        min-width: 50px;
     }
 
     .gadget-sale__number {
-        font-size: 64px;
+        font-size: 28px;
         font-weight: 950;
+        color: #0f172a;
         line-height: 1;
-        color: #ffffff;
-        text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-        margin: 0;
     }
 
     .gadget-sale__label {
-        font-size: 13px;
+        font-size: 10px;
         color: #94a3b8;
         text-transform: uppercase;
-        font-weight: 900;
-        margin-top: 15px;
-        letter-spacing: 0.2em;
+        font-weight: 800;
+        margin-top: 6px;
     }
 
     .gadget-sale__colon {
-        font-size: 48px;
-        font-weight: 950;
-        color: #3b82f6;
-        padding-bottom: 40px;
-        animation: neonPulse 2s infinite;
-    }
-
-    @keyframes neonPulse {
-        0%, 100% { opacity: 1; text-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
-        50% { opacity: 0.4; text-shadow: none; }
-    }
-
-    .btn-sale-aura {
-        background: #3b82f6;
-        color: #ffffff !important;
-        padding: 24px 70px;
-        border-radius: 20px;
+        font-size: 24px;
         font-weight: 900;
+        color: #cbd5e1;
+        margin-bottom: 18px;
+    }
+
+    /* Grid Layout */
+    .gadget-sale__grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 24px;
+        margin-bottom: 60px;
+        width: 100%;
+        justify-items: center;
+    }
+
+    /* Premium Product Card */
+    .sale-card {
+        background: #ffffff;
+        border-radius: 32px;
+        padding: 20px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         text-decoration: none !important;
-        font-size: 20px;
-        transition: 0.4s;
-        display: inline-flex;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .sale-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.08);
+        border-color: #3b82f6;
+    }
+
+    .sale-card__media {
+        aspect-ratio: 1;
+        background: #f8fafc;
+        border-radius: 24px;
+        overflow: hidden;
+        margin-bottom: 24px;
+        position: relative;
+        display: flex;
         align-items: center;
-        gap: 15px;
-        box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+        justify-content: center;
     }
 
-    .btn-sale-aura:hover {
-        background: #2563eb;
-        transform: scale(1.05);
-        box-shadow: 0 25px 50px rgba(59, 130, 246, 0.6);
+    .sale-card__media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: 0.8s ease;
     }
 
-    @media (max-width: 991px) {
-        .gadget-sale__panel { padding: 60px 30px; }
-        .gadget-sale__timer-wrap { gap: 15px; flex-wrap: wrap; }
-        .gadget-sale__digit-box { width: 110px; height: 130px; }
-        .gadget-sale__number { font-size: 44px; }
-        .gadget-sale__colon { display: none; }
-        .gadget-sale__panel h2 { font-size: 32px; }
+    .sale-card:hover .sale-card__media img {
+        transform: scale(1.1);
+    }
+
+    .sale-card__badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        padding: 6px 16px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #ffffff;
+        z-index: 10;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .badge--sale { background: #3b82f6; }
+    .badge--hot { background: #ef4444; }
+
+    .sale-card__info h3 {
+        font-size: 18px;
+        font-weight: 850;
+        color: #0f172a;
+        margin-bottom: 12px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 50px;
+    }
+
+    .sale-card__rating {
+        display: flex;
+        gap: 3px;
+        margin-bottom: 15px;
+    }
+
+    .sale-card__prices {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-top: auto;
+        transition: 0.4s;
+    }
+
+    .price--final { font-size: 24px; font-weight: 950; color: #2563eb; }
+    .price--regular { font-size: 16px; color: #94a3b8; text-decoration: line-through; }
+
+    /* Hover Buy Now Button */
+    .sale-card__actions {
+        position: absolute;
+        bottom: -70px;
+        left: 20px;
+        right: 20px;
+        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        opacity: 0;
+    }
+
+    .sale-card:hover .sale-card__actions {
+        bottom: 20px;
+        opacity: 1;
+    }
+
+    .sale-card:hover .sale-card__prices {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    .btn-buy-now {
+        width: 100%;
+        background: #0f172a;
+        color: #ffffff !important;
+        padding: 16px;
+        border-radius: 16px;
+        font-weight: 900;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    .btn-buy-now:hover {
+        background: #3b82f6;
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-load-more {
+        background: #ffffff;
+        color: #0f172a;
+        padding: 18px 50px;
+        border-radius: 16px;
+        font-weight: 900;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border: 2px solid #e2e8f0;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 20px;
+    }
+
+    .btn-load-more:hover {
+        background: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
+    }
+
+    @media (max-width: 1600px) {
+        .gadget-sale__grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 1100px) {
+        .gadget-sale__grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        .gadget-sale__grid { grid-template-columns: repeat(2, 1fr); }
+        .gadget-sale__title { font-size: 38px; }
+        .gadget-sale__timer-wrap { padding: 12px 25px; gap: 15px; }
+        .gadget-sale__timer-label { display: none; }
+    }
+
+    @media (max-width: 480px) {
+        .gadget-sale__grid { grid-template-columns: 1fr; }
     }
 </style>
-@endpush
+@endpushOnce
 
 <section class="gadget-sale">
-    <!-- Animated Background Aura -->
-    <div class="sale-aura">
-        <div class="sale-blob sale-blob-1"></div>
-        <div class="sale-blob sale-blob-2"></div>
-    </div>
-
-    <div class="gadget-container">
-        <div class="gadget-sale__panel">
-            <h2>Flash Sale Ending Soon — Don't Miss Out!</h2>
-
-            <v-gadget-timer end-date="{{ now()->addDays(7)->toIso8601String() }}"></v-gadget-timer>
-
-            <a href="{{ route('shop.search.index') }}" class="btn-sale-aura">
-                <span>Explore the Sale</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-            </a>
+    <div class="gadget-sale__container">
+        <div class="gadget-sale__header">
+            <h2 class="gadget-sale__title">Limited Sale</h2>
+            <v-gadget-timer end-date="{{ now()->addDays(2)->toIso8601String() }}"></v-gadget-timer>
         </div>
+
+        <v-limited-sale-grid></v-limited-sale-grid>
     </div>
 </section>
 
 @pushOnce('scripts')
 <script type="text/x-template" id="v-gadget-timer-template">
     <div class="gadget-sale__timer-wrap">
+        <div class="gadget-sale__timer-label">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Ends In:</span>
+        </div>
         <div class="gadget-sale__digit-box">
             <span class="gadget-sale__number">@{{ timeLeft.days }}</span>
             <span class="gadget-sale__label">Days</span>
@@ -180,18 +312,58 @@
         <div class="gadget-sale__colon">:</div>
         <div class="gadget-sale__digit-box">
             <span class="gadget-sale__number">@{{ timeLeft.hours }}</span>
-            <span class="gadget-sale__label">Hours</span>
+            <span class="gadget-sale__label">Hr</span>
         </div>
         <div class="gadget-sale__colon">:</div>
         <div class="gadget-sale__digit-box">
             <span class="gadget-sale__number">@{{ timeLeft.minutes }}</span>
-            <span class="gadget-sale__label">Mins</span>
+            <span class="gadget-sale__label">Min</span>
         </div>
         <div class="gadget-sale__colon">:</div>
         <div class="gadget-sale__digit-box">
             <span class="gadget-sale__number">@{{ timeLeft.seconds }}</span>
-            <span class="gadget-sale__label">Secs</span>
+            <span class="gadget-sale__label">Sc</span>
         </div>
+    </div>
+</script>
+
+<script type="text/x-template" id="v-limited-sale-grid-template">
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <div class="gadget-sale__grid">
+            <div v-for="product in visibleProducts" :key="product.id" class="sale-card">
+                <a :href="product.url" class="sale-card__media">
+                    <span :class="['sale-card__badge', product.badge === 'Hot' ? 'badge--hot' : 'badge--sale']">
+                        @{{ product.badge }}
+                    </span>
+                    <img :src="product.image" :alt="product.name">
+                </a>
+                <div class="sale-card__info">
+                    <h3>
+                        <a :href="product.url" style="color: inherit; text-decoration: none;">@{{ product.name }}</a>
+                    </h3>
+                    <div class="sale-card__rating">
+                        <svg v-for="i in 5" :key="i" style="color: #fbbf24; fill: #fbbf24;" width="14" height="14" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    </div>
+                    
+                    <div class="sale-card__prices">
+                        <span class="price--regular">@{{ product.regular_price }}</span>
+                        <span class="price--final">@{{ product.final_price }}</span>
+                    </div>
+
+                    <div class="sale-card__actions">
+                        <button type="button" class="btn-buy-now">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                            <span>Buy Now</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button v-if="hasMore" type="button" class="btn-load-more" @click="loadMore" :disabled="loading">
+            <span v-if="!loading">Load More Products</span>
+            <span v-else>Loading...</span>
+        </button>
     </div>
 </script>
 
@@ -207,14 +379,10 @@
         },
         mounted() {
             this.updateTimer();
-            this.interval = setInterval(() => {
-                this.updateTimer();
-            }, 1000);
+            this.interval = setInterval(() => this.updateTimer(), 1000);
         },
         beforeUnmount() {
-            if (this.interval) {
-                clearInterval(this.interval);
-            }
+            if (this.interval) clearInterval(this.interval);
         },
         methods: {
             updateTimer() {
@@ -224,21 +392,63 @@
 
                 if (diff <= 0) {
                     this.timeLeft = { days: '00', hours: '00', minutes: '00', seconds: '00' };
-                    if (this.interval) clearInterval(this.interval);
                     return;
                 }
 
-                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((diff % (1000 * 60)) / 1000);
-
                 this.timeLeft = {
-                    days: d.toString().padStart(2, '0'),
-                    hours: h.toString().padStart(2, '0'),
-                    minutes: m.toString().padStart(2, '0'),
-                    seconds: s.toString().padStart(2, '0')
+                    days: Math.floor(diff / (1000 * 60 * 60 * 24)).toString().padStart(2, '0'),
+                    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0'),
+                    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0'),
+                    seconds: Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0')
                 };
+            }
+        }
+    });
+
+    app.component('v-limited-sale-grid', {
+        template: '#v-limited-sale-grid-template',
+        data() {
+            return {
+                products: [
+                    { id: 1, name: 'Premium TWS Earbuds Pro', url: '#', image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600&auto=format&fit=crop', regular_price: '৳4,100.00', final_price: '৳3,750.00', badge: 'Sale' },
+                    { id: 2, name: 'Ultra High Capacity Power Bank', url: '#', image: 'https://images.unsplash.com/photo-1619145121943-2405d4a5da91?q=80&w=600&auto=format&fit=crop', regular_price: '৳6,900.00', final_price: '৳4,899.00', badge: 'Sale' },
+                    { id: 3, name: 'Fast Charging Power Bank 10K', url: '#', image: 'https://images.unsplash.com/photo-1625517431411-3007ca5f8f3c?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,350.00', final_price: '৳1,050.00', badge: 'Hot' },
+                    { id: 4, name: 'Portable Handheld USB Fan', url: '#', image: 'https://images.unsplash.com/photo-1616140323382-7201b174780d?q=80&w=600&auto=format&fit=crop', regular_price: '৳799.00', final_price: '৳545.00', badge: 'Sale' },
+                    { id: 5, name: 'Magnetic Wireless Power Bank', url: '#', image: 'https://images.unsplash.com/photo-1629131726692-1accd0c93fd0?q=80&w=600&auto=format&fit=crop', regular_price: '৳3,550.00', final_price: '৳2,750.00', badge: 'Sale' },
+                    { id: 6, name: 'ANC Wireless Earbuds Melo', url: '#', image: 'https://images.unsplash.com/photo-1599666505327-7758b44a9985?q=80&w=600&auto=format&fit=crop', regular_price: '৳2,240.00', final_price: '৳2,240.00', badge: 'Sale' },
+                    // Load more items
+                    { id: 7, name: 'Smart Watch Series 9 Elite', url: '#', image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=600&auto=format&fit=crop', regular_price: '৳12,000.00', final_price: '৳9,500.00', badge: 'Hot' },
+                    { id: 8, name: 'Mechanical Gaming Keyboard', url: '#', image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=600&auto=format&fit=crop', regular_price: '৳4,500.00', final_price: '৳3,200.00', badge: 'Sale' },
+                    { id: 9, name: 'Wireless Gaming Mouse Pro', url: '#', image: 'https://images.unsplash.com/photo-1527690191606-405492d5fdad?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,800.00', final_price: '৳1,400.00', badge: 'Sale' },
+                    { id: 10, name: 'Bluetooth Speaker RGB Glow', url: '#', image: 'https://images.unsplash.com/photo-1608156639585-34052e81bd9a?q=80&w=600&auto=format&fit=crop', regular_price: '৳3,200.00', final_price: '৳2,600.00', badge: 'Hot' },
+                    { id: 11, name: 'Multiport USB-C Hub 8-in-1', url: '#', image: 'https://images.unsplash.com/photo-1586949679242-4623744dec01?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,500.00', final_price: '৳1,100.00', badge: 'Sale' },
+                    { id: 12, name: 'Premium Laptop Stand Alu', url: '#', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=600&auto=format&fit=crop', regular_price: '৳2,800.00', final_price: '৳2,200.00', badge: 'New' },
+                    { id: 13, name: 'Webcam 4K Ultra Sharp', url: '#', image: 'https://images.unsplash.com/photo-1587829741301-dc798b83dadc?q=80&w=600&auto=format&fit=crop', regular_price: '৳6,000.00', final_price: '৳4,500.00', badge: 'Sale' },
+                    { id: 14, name: 'External SSD 2TB High Speed', url: '#', image: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=600&auto=format&fit=crop', regular_price: '৳15,000.00', final_price: '৳12,000.00', badge: 'Hot' },
+                    { id: 15, name: 'RGB Gaming Mouse Pad XL', url: '#', image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,200.00', final_price: '৳950.00', badge: 'Sale' },
+                    { id: 16, name: 'MagSafe Compatible Charger 15W', url: '#', image: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,400.00', final_price: '৳1,100.00', badge: 'New' },
+                    { id: 17, name: 'Professional Studio Mic', url: '#', image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop', regular_price: '৳8,500.00', final_price: '৳6,800.00', badge: 'Hot' },
+                    { id: 18, name: 'Smart Home LED Bulb Pack', url: '#', image: 'https://images.unsplash.com/photo-1550985616-10810253b84d?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,800.00', final_price: '৳1,350.00', badge: 'Sale' },
+                ],
+                visibleCount: 6,
+                loading: false
+            }
+        },
+        computed: {
+            visibleProducts() {
+                return this.products.slice(0, this.visibleCount);
+            },
+            hasMore() {
+                return this.visibleCount < this.products.length;
+            }
+        },
+        methods: {
+            loadMore() {
+                this.loading = true;
+                setTimeout(() => {
+                    this.visibleCount += 12; // 2 lines
+                    this.loading = false;
+                }, 600);
             }
         }
     });
