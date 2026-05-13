@@ -103,7 +103,7 @@
     .gadget-sale__grid {
         display: grid;
         grid-template-columns: repeat(6, 1fr);
-        gap: 24px;
+        gap: 20px;
         margin-bottom: 60px;
         width: 100%;
         justify-items: center;
@@ -123,6 +123,8 @@
         position: relative;
         overflow: hidden;
         width: 100%;
+        min-height: 380px;
+        /* Reduced from 480px */
     }
 
     .sale-card:hover {
@@ -136,7 +138,8 @@
         background: #f8fafc;
         border-radius: 24px;
         overflow: hidden;
-        margin-bottom: 24px;
+        margin-bottom: 14px;
+        /* Reduced from 24px */
         position: relative;
         display: flex;
         align-items: center;
@@ -165,14 +168,26 @@
         text-transform: uppercase;
         color: #ffffff;
         z-index: 10;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    .badge--sale { background: #3b82f6; }
-    .badge--hot { background: #ef4444; }
+    .badge--sale {
+        background: #3b82f6;
+    }
+
+    .badge--hot {
+        background: #ef4444;
+    }
+
+    .sale-card__info {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        width: 100%;
+    }
 
     .sale-card__info h3 {
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 850;
         color: #0f172a;
         margin-bottom: 12px;
@@ -181,25 +196,42 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 50px;
+        min-height: 48px;
     }
 
     .sale-card__rating {
         display: flex;
         gap: 3px;
         margin-bottom: 15px;
+        transition: opacity 0.3s;
     }
 
     .sale-card__prices {
         display: flex;
-        align-items: baseline;
-        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
         margin-top: auto;
-        transition: 0.4s;
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        padding-bottom: 5px;
+        width: 100%;
+        flex-wrap: wrap;
+        /* Prevent cutoff */
     }
 
-    .price--final { font-size: 24px; font-weight: 950; color: #2563eb; }
-    .price--regular { font-size: 16px; color: #94a3b8; text-decoration: line-through; }
+    .price--final {
+        font-size: 22px;
+        font-weight: 950;
+        color: #2563eb;
+        white-space: nowrap;
+    }
+
+    .price--regular {
+        font-size: 14px;
+        color: #94a3b8;
+        text-decoration: line-through;
+        white-space: nowrap;
+    }
 
     /* Hover Buy Now Button */
     .sale-card__actions {
@@ -207,25 +239,30 @@
         bottom: -70px;
         left: 20px;
         right: 20px;
-        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         opacity: 0;
+        z-index: 5;
     }
 
     .sale-card:hover .sale-card__actions {
-        bottom: 20px;
+        bottom: 25px;
         opacity: 1;
     }
 
     .sale-card:hover .sale-card__prices {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
+    }
+
+    .sale-card:hover .sale-card__rating {
+        opacity: 0.1;
     }
 
     .btn-buy-now {
         width: 100%;
         background: #0f172a;
         color: #ffffff !important;
-        padding: 16px;
+        padding: 14px;
         border-radius: 16px;
         font-weight: 900;
         text-align: center;
@@ -234,8 +271,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        font-size: 14px;
+        gap: 8px;
+        font-size: 13px;
         transition: 0.3s;
     }
 
@@ -244,9 +281,12 @@
         box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
     }
 
-    .btn-load-more {
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
         background: #ffffff;
-        color: #0f172a;
+        color: #0f172a !important;
         padding: 18px 50px;
         border-radius: 16px;
         font-weight: 900;
@@ -256,33 +296,51 @@
         border: 2px solid #e2e8f0;
         cursor: pointer;
         transition: 0.3s;
-        margin-top: 20px;
+        text-decoration: none !important;
     }
 
-    .btn-load-more:hover {
+    .btn-action:hover {
         background: #0f172a;
-        color: #ffffff;
+        color: #ffffff !important;
         border-color: #0f172a;
         box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
     }
 
     @media (max-width: 1600px) {
-        .gadget-sale__grid { grid-template-columns: repeat(4, 1fr); }
+        .gadget-sale__grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
     }
 
     @media (max-width: 1100px) {
-        .gadget-sale__grid { grid-template-columns: repeat(3, 1fr); }
+        .gadget-sale__grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
 
     @media (max-width: 768px) {
-        .gadget-sale__grid { grid-template-columns: repeat(2, 1fr); }
-        .gadget-sale__title { font-size: 38px; }
-        .gadget-sale__timer-wrap { padding: 12px 25px; gap: 15px; }
-        .gadget-sale__timer-label { display: none; }
+        .gadget-sale__grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .gadget-sale__title {
+            font-size: 38px;
+        }
+
+        .gadget-sale__timer-wrap {
+            padding: 12px 25px;
+            gap: 15px;
+        }
+
+        .gadget-sale__timer-label {
+            display: none;
+        }
     }
 
     @media (max-width: 480px) {
-        .gadget-sale__grid { grid-template-columns: 1fr; }
+        .gadget-sale__grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 @endpushOnce
@@ -335,7 +393,7 @@
                     <span :class="['sale-card__badge', product.badge === 'Hot' ? 'badge--hot' : 'badge--sale']">
                         @{{ product.badge }}
                     </span>
-                    <img :src="product.image" :alt="product.name">
+                    <img :src="product.image" :alt="product.name" onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600&auto=format&fit=crop'">
                 </a>
                 <div class="sale-card__info">
                     <h3>
@@ -352,7 +410,7 @@
 
                     <div class="sale-card__actions">
                         <button type="button" class="btn-buy-now">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                             <span>Buy Now</span>
                         </button>
                     </div>
@@ -360,10 +418,19 @@
             </div>
         </div>
 
-        <button v-if="hasMore" type="button" class="btn-load-more" @click="loadMore" :disabled="loading">
-            <span v-if="!loading">Load More Products</span>
-            <span v-else>Loading...</span>
-        </button>
+        <div v-if="hasMore">
+            <button type="button" class="btn-action" @click="loadMore" :disabled="loading">
+                <span v-if="!loading">Load More Products</span>
+                <span v-else>Loading...</span>
+            </button>
+        </div>
+        
+        <div v-else>
+            <a href="/shop" class="btn-action">
+                <span>Explore All Products</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
+        </div>
     </div>
 </script>
 
@@ -373,7 +440,12 @@
         props: ['endDate'],
         data() {
             return {
-                timeLeft: { days: '00', hours: '00', minutes: '00', seconds: '00' },
+                timeLeft: {
+                    days: '00',
+                    hours: '00',
+                    minutes: '00',
+                    seconds: '00'
+                },
                 interval: null
             }
         },
@@ -391,7 +463,12 @@
                 const diff = end - now;
 
                 if (diff <= 0) {
-                    this.timeLeft = { days: '00', hours: '00', minutes: '00', seconds: '00' };
+                    this.timeLeft = {
+                        days: '00',
+                        hours: '00',
+                        minutes: '00',
+                        seconds: '00'
+                    };
                     return;
                 }
 
@@ -409,26 +486,169 @@
         template: '#v-limited-sale-grid-template',
         data() {
             return {
-                products: [
-                    { id: 1, name: 'Premium TWS Earbuds Pro', url: '#', image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600&auto=format&fit=crop', regular_price: '৳4,100.00', final_price: '৳3,750.00', badge: 'Sale' },
-                    { id: 2, name: 'Ultra High Capacity Power Bank', url: '#', image: 'https://images.unsplash.com/photo-1619145121943-2405d4a5da91?q=80&w=600&auto=format&fit=crop', regular_price: '৳6,900.00', final_price: '৳4,899.00', badge: 'Sale' },
-                    { id: 3, name: 'Fast Charging Power Bank 10K', url: '#', image: 'https://images.unsplash.com/photo-1625517431411-3007ca5f8f3c?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,350.00', final_price: '৳1,050.00', badge: 'Hot' },
-                    { id: 4, name: 'Portable Handheld USB Fan', url: '#', image: 'https://images.unsplash.com/photo-1616140323382-7201b174780d?q=80&w=600&auto=format&fit=crop', regular_price: '৳799.00', final_price: '৳545.00', badge: 'Sale' },
-                    { id: 5, name: 'Magnetic Wireless Power Bank', url: '#', image: 'https://images.unsplash.com/photo-1629131726692-1accd0c93fd0?q=80&w=600&auto=format&fit=crop', regular_price: '৳3,550.00', final_price: '৳2,750.00', badge: 'Sale' },
-                    { id: 6, name: 'ANC Wireless Earbuds Melo', url: '#', image: 'https://images.unsplash.com/photo-1599666505327-7758b44a9985?q=80&w=600&auto=format&fit=crop', regular_price: '৳2,240.00', final_price: '৳2,240.00', badge: 'Sale' },
+                products: [{
+                        id: 1,
+                        name: 'Premium TWS Earbuds Pro',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳4,100.00',
+                        final_price: '৳3,750.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 2,
+                        name: 'Ultra High Capacity Power Bank',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1629131726692-1accd0c93fd0?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳6,900.00',
+                        final_price: '৳4,899.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 3,
+                        name: 'Fast Charging Power Bank 10K',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1585333120111-96531985392d?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳1,350.00',
+                        final_price: '৳1,050.00',
+                        badge: 'Hot'
+                    },
+                    {
+                        id: 4,
+                        name: 'Portable Handheld USB Fan',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳799.00',
+                        final_price: '৳545.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 5,
+                        name: 'Magnetic Wireless Power Bank',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳3,550.00',
+                        final_price: '৳2,750.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 6,
+                        name: 'ANC Wireless Earbuds Melo',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1599666505327-7758b44a9985?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳2,240.00',
+                        final_price: '৳2,240.00',
+                        badge: 'Sale'
+                    },
                     // Load more items
-                    { id: 7, name: 'Smart Watch Series 9 Elite', url: '#', image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=600&auto=format&fit=crop', regular_price: '৳12,000.00', final_price: '৳9,500.00', badge: 'Hot' },
-                    { id: 8, name: 'Mechanical Gaming Keyboard', url: '#', image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=600&auto=format&fit=crop', regular_price: '৳4,500.00', final_price: '৳3,200.00', badge: 'Sale' },
-                    { id: 9, name: 'Wireless Gaming Mouse Pro', url: '#', image: 'https://images.unsplash.com/photo-1527690191606-405492d5fdad?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,800.00', final_price: '৳1,400.00', badge: 'Sale' },
-                    { id: 10, name: 'Bluetooth Speaker RGB Glow', url: '#', image: 'https://images.unsplash.com/photo-1608156639585-34052e81bd9a?q=80&w=600&auto=format&fit=crop', regular_price: '৳3,200.00', final_price: '৳2,600.00', badge: 'Hot' },
-                    { id: 11, name: 'Multiport USB-C Hub 8-in-1', url: '#', image: 'https://images.unsplash.com/photo-1586949679242-4623744dec01?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,500.00', final_price: '৳1,100.00', badge: 'Sale' },
-                    { id: 12, name: 'Premium Laptop Stand Alu', url: '#', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=600&auto=format&fit=crop', regular_price: '৳2,800.00', final_price: '৳2,200.00', badge: 'New' },
-                    { id: 13, name: 'Webcam 4K Ultra Sharp', url: '#', image: 'https://images.unsplash.com/photo-1587829741301-dc798b83dadc?q=80&w=600&auto=format&fit=crop', regular_price: '৳6,000.00', final_price: '৳4,500.00', badge: 'Sale' },
-                    { id: 14, name: 'External SSD 2TB High Speed', url: '#', image: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=600&auto=format&fit=crop', regular_price: '৳15,000.00', final_price: '৳12,000.00', badge: 'Hot' },
-                    { id: 15, name: 'RGB Gaming Mouse Pad XL', url: '#', image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,200.00', final_price: '৳950.00', badge: 'Sale' },
-                    { id: 16, name: 'MagSafe Compatible Charger 15W', url: '#', image: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,400.00', final_price: '৳1,100.00', badge: 'New' },
-                    { id: 17, name: 'Professional Studio Mic', url: '#', image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop', regular_price: '৳8,500.00', final_price: '৳6,800.00', badge: 'Hot' },
-                    { id: 18, name: 'Smart Home LED Bulb Pack', url: '#', image: 'https://images.unsplash.com/photo-1550985616-10810253b84d?q=80&w=600&auto=format&fit=crop', regular_price: '৳1,800.00', final_price: '৳1,350.00', badge: 'Sale' },
+                    {
+                        id: 7,
+                        name: 'Smart Watch Series 9 Elite',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳12,000.00',
+                        final_price: '৳9,500.00',
+                        badge: 'Hot'
+                    },
+                    {
+                        id: 8,
+                        name: 'Mechanical Gaming Keyboard',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳4,500.00',
+                        final_price: '৳3,200.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 9,
+                        name: 'Wireless Gaming Mouse Pro',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1527690191606-405492d5fdad?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳1,800.00',
+                        final_price: '৳1,400.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 10,
+                        name: 'Bluetooth Speaker RGB Glow',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1608156639585-34052e81bd9a?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳3,200.00',
+                        final_price: '৳2,600.00',
+                        badge: 'Hot'
+                    },
+                    {
+                        id: 11,
+                        name: 'Multiport USB-C Hub 8-in-1',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1586949679242-4623744dec01?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳1,500.00',
+                        final_price: '৳1,100.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 12,
+                        name: 'Premium Laptop Stand Alu',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳2,800.00',
+                        final_price: '৳2,200.00',
+                        badge: 'New'
+                    },
+                    {
+                        id: 13,
+                        name: 'Webcam 4K Ultra Sharp',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1587829741301-dc798b83dadc?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳6,000.00',
+                        final_price: '৳4,500.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 14,
+                        name: 'External SSD 2TB High Speed',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳15,000.00',
+                        final_price: '৳12,000.00',
+                        badge: 'Hot'
+                    },
+                    {
+                        id: 15,
+                        name: 'RGB Gaming Mouse Pad XL',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳1,200.00',
+                        final_price: '৳950.00',
+                        badge: 'Sale'
+                    },
+                    {
+                        id: 16,
+                        name: 'MagSafe Compatible Charger 15W',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳1,400.00',
+                        final_price: '৳1,100.00',
+                        badge: 'New'
+                    },
+                    {
+                        id: 17,
+                        name: 'Professional Studio Mic',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳8,500.00',
+                        final_price: '৳6,800.00',
+                        badge: 'Hot'
+                    },
+                    {
+                        id: 18,
+                        name: 'Smart Home LED Bulb Pack',
+                        url: '#',
+                        image: 'https://images.unsplash.com/photo-1550985616-10810253b84d?q=80&w=600&auto=format&fit=crop',
+                        regular_price: '৳1,800.00',
+                        final_price: '৳1,350.00',
+                        badge: 'Sale'
+                    },
                 ],
                 visibleCount: 6,
                 loading: false
@@ -446,7 +666,7 @@
             loadMore() {
                 this.loading = true;
                 setTimeout(() => {
-                    this.visibleCount += 12; // 2 lines
+                    this.visibleCount += 12; // Load 2 more lines
                     this.loading = false;
                 }, 600);
             }
