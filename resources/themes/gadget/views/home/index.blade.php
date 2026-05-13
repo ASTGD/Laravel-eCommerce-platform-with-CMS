@@ -1,56 +1,55 @@
 @php
-    $channel = core()->getCurrentChannel();
-    $homepage = app(\Platform\ThemeDefault\ViewModels\StorefrontHomepageViewModel::class)->build();
+$channel = core()->getCurrentChannel();
+$homepage = app(\Platform\ThemeDefault\ViewModels\StorefrontHomepageViewModel::class)->build();
 @endphp
 
 @push('meta')
-    <meta name="title" content="{{ $channel->home_seo['meta_title'] ?? '' }}">
-    <meta name="description" content="{{ $channel->home_seo['meta_description'] ?? '' }}">
-    <meta name="keywords" content="{{ $channel->home_seo['meta_keywords'] ?? '' }}">
+<meta name="title" content="{{ $channel->home_seo['meta_title'] ?? '' }}">
+<meta name="description" content="{{ $channel->home_seo['meta_description'] ?? '' }}">
+<meta name="keywords" content="{{ $channel->home_seo['meta_keywords'] ?? '' }}">
 @endpush
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('themes/shop/gadget/gadget.css') }}">
+<link rel="stylesheet" href="{{ asset('themes/shop/gadget/gadget.css') }}">
 @endpush
 
 @push('scripts')
-    @if (! empty($categories))
-        <script>
-            localStorage.setItem('categories', JSON.stringify(@json($categories)));
-        </script>
-    @endif
+@if (! empty($categories))
+<script>
+    localStorage.setItem('categories', JSON.stringify(@json($categories)));
+</script>
+@endif
 @endpush
 
 <x-shop::layouts :has-header="false" :has-feature="false" :has-footer="false">
     <x-slot:title>
         {{ $channel->home_seo['meta_title'] ?? 'Homepage' }}
-    </x-slot>
+        </x-slot>
 
-    @include('shop::partials.gadget-header')
+        @include('shop::partials.gadget-header')
 
-    <div class="gadget-home">
-        @if (! empty($homepage['heroSliderImages']))
+        <div class="gadget-home">
+            @if (! empty($homepage['heroSliderImages']))
             <x-shop::carousel
                 :options="['images' => $homepage['heroSliderImages']]"
-                aria-label="Hero slider"
-            />
-        @else
+                aria-label="Hero slider" />
+            @else
             @include('shop::homepage.sections.hero', ['products' => $homepage['latestProducts']])
-        @endif
+            @endif
 
-        @include('shop::homepage.sections.promo-strip')
-        @include('shop::homepage.sections.limited-sale')
-        @include('shop::homepage.sections.products', ['products' => $homepage['saleProducts']])
-        @include('shop::homepage.sections.categories', ['categories' => $homepage['categories']])
-        @include('shop::homepage.sections.latest-products', ['products' => $homepage['latestProducts']])
-        @include('shop::homepage.sections.cta', ['products' => $homepage['latestProducts']])
-        @include('shop::homepage.sections.why-choose')
-        @include('shop::homepage.sections.testimonials')
-    </div>
+            @include('shop::homepage.sections.promo-strip')
+            @include('shop::homepage.sections.limited-sale')
+            @include('shop::homepage.sections.categories', ['categories' => $homepage['categories']])
+            @include('shop::homepage.sections.products', ['products' => $homepage['saleProducts']])
+            @include('shop::homepage.sections.latest-products', ['products' => $homepage['latestProducts']])
+            @include('shop::homepage.sections.cta', ['products' => $homepage['latestProducts']])
+            @include('shop::homepage.sections.why-choose')
+            @include('shop::homepage.sections.testimonials')
+        </div>
 
-    @include('shop::partials.gadget-footer')
+        @include('shop::partials.gadget-footer')
 
-    @pushOnce('scripts')
+        @pushOnce('scripts')
         <script>
             window.addEventListener('DOMContentLoaded', () => {
                 document.querySelectorAll('[data-gadget-add-to-cart]').forEach((button) => {
@@ -61,7 +60,7 @@
                         const productUrl = button.dataset.productUrl;
                         const token = '{{ csrf_token() }}';
 
-                        if (! productId || ! endpoint || ! token) {
+                        if (!productId || !endpoint || !token) {
                             window.location.href = productUrl || cartUrl || '/';
 
                             return;
@@ -101,5 +100,5 @@
                 });
             });
         </script>
-    @endPushOnce
+        @endPushOnce
 </x-shop::layouts>
