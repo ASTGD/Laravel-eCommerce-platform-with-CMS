@@ -92,8 +92,10 @@ Header Builder fields:
 
 Footer Builder fields:
 
-- footer name
-- footer logo URL
+- footer logo upload
+- existing logo path/URL stored internally
+- footer description
+- footer menu columns, each selecting a menu created in CMS Studio Navigation
 - newsletter enabled
 - newsletter heading
 - newsletter text
@@ -101,9 +103,10 @@ Footer Builder fields:
 - contact phone
 - social links
 - copyright text
-- footer variant
 
 Header and footer values are stored internally in the existing JSON storage on `header_configs` and `footer_configs`. The admin no longer exposes raw `settings_json` textareas for these builders.
+
+Navigation remains the place where admins create and edit reusable menus. Footer Builder does not create footer links directly; it selects up to four active saved menus as footer columns, with per-column display titles and sort order. Existing single `navigation.menu_id` settings remain readable as a backward-compatible one-column footer. If no footer columns or legacy footer menu are saved, storefront rendering falls back to active `footer` location menus or the active theme's safe fallback footer links.
 
 ## Homepage Sections
 

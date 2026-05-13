@@ -240,6 +240,57 @@ it('uploads a header logo through CMS Studio', function () {
     Storage::disk('public')->assertExists(str_replace('/storage/', '', data_get($header->settings_json, 'logo_url')));
 });
 
+it('shows footer logo upload controls without inactive identity and style fields', function () {
+    $this->loginAsAdmin();
+
+    $response = $this->get(route('admin.cms.index', ['area' => 'footer']));
+
+    $response->assertOk()
+        ->assertSeeText('Logo')
+        ->assertSeeText('Footer Description')
+        ->assertSeeText('Footer Menu Columns')
+        ->assertSeeText('Column 1')
+        ->assertSeeText('Column 2')
+        ->assertSee('name="footer_description"', false)
+        ->assertSee('name="footer_columns[0][menu_id]"', false)
+        ->assertSee('name="logo_file"', false)
+        ->assertDontSeeText('Identity')
+        ->assertDontSeeText('Footer variant')
+        ->assertDontSeeText('Use an image URL for now. Media picker will be added later.');
+});
+
+it('uploads a footer logo through CMS Studio', function () {
+    Storage::fake('public');
+
+    $this->loginAsAdmin();
+
+    FooterConfig::query()->update(['is_default' => false]);
+
+    $footer = FooterConfig::query()->create([
+        'code' => 'cms_studio_logo_footer_'.uniqid(),
+        'settings_json' => [
+            'logo_url' => 'https://example.com/old-footer-logo.svg',
+        ],
+        'is_default' => true,
+    ]);
+
+    $response = $this->post(route('admin.cms.footer.update'), [
+        'name' => 'Studio Footer',
+        'logo_url' => 'https://example.com/old-footer-logo.svg',
+        'logo_file' => UploadedFile::fake()->image('cms-footer-logo.png', 640, 240),
+        'newsletter_enabled' => '0',
+        'variant' => 'simple',
+    ]);
+
+    $response->assertRedirect(route('admin.cms.index', ['area' => 'footer']));
+
+    $footer->refresh();
+
+    expect(data_get($footer->settings_json, 'logo_url'))->toStartWith('/storage/cms/footer/');
+
+    Storage::disk('public')->assertExists(str_replace('/storage/', '', data_get($footer->settings_json, 'logo_url')));
+});
+
 it('saves structured footer settings through CMS Studio', function () {
     $this->loginAsAdmin();
 
@@ -250,10 +301,32 @@ it('saves structured footer settings through CMS Studio', function () {
         'settings_json' => [],
         'is_default' => true,
     ]);
+    $menu = cmsStudioMenu();
+    $supportMenu = cmsStudioMenu();
+    $supportMenu->update([
+        'name' => 'CMS Studio Support Menu '.uniqid(),
+        'code' => 'cms_studio_support_menu_'.uniqid(),
+        'location' => 'footer',
+    ]);
 
     $response = $this->post(route('admin.cms.footer.update'), [
         'name' => 'Studio Footer',
         'logo_url' => 'https://example.com/footer-logo.svg',
+        'footer_description' => 'A managed footer description.',
+        'footer_columns' => [
+            [
+                'enabled' => '1',
+                'title' => 'Company',
+                'menu_id' => $menu->id,
+                'sort_order' => 1,
+            ],
+            [
+                'enabled' => '1',
+                'title' => 'Support',
+                'menu_id' => $supportMenu->id,
+                'sort_order' => 2,
+            ],
+        ],
         'newsletter_enabled' => '1',
         'newsletter_heading' => 'Join our list',
         'newsletter_text' => 'Get new arrivals and offers.',
@@ -274,6 +347,13 @@ it('saves structured footer settings through CMS Studio', function () {
 
     expect(data_get($footer->settings_json, 'name'))->toBe('Studio Footer')
         ->and(data_get($footer->settings_json, 'logo_url'))->toBe('https://example.com/footer-logo.svg')
+        ->and(data_get($footer->settings_json, 'description'))->toBe('A managed footer description.')
+        ->and(data_get($footer->settings_json, 'navigation.menu_id'))->toBe($menu->id)
+        ->and(data_get($footer->settings_json, 'navigation.columns'))->toHaveCount(2)
+        ->and(data_get($footer->settings_json, 'navigation.columns.0.title'))->toBe('Company')
+        ->and(data_get($footer->settings_json, 'navigation.columns.0.menu_id'))->toBe($menu->id)
+        ->and(data_get($footer->settings_json, 'navigation.columns.1.title'))->toBe('Support')
+        ->and(data_get($footer->settings_json, 'navigation.columns.1.menu_id'))->toBe($supportMenu->id)
         ->and(data_get($footer->settings_json, 'newsletter.enabled'))->toBeTrue()
         ->and(data_get($footer->settings_json, 'newsletter.heading'))->toBe('Join our list')
         ->and(data_get($footer->settings_json, 'newsletter.text'))->toBe('Get new arrivals and offers.')

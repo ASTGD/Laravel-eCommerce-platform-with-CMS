@@ -141,7 +141,7 @@ CMS preview and CMS-aware theme views use dedicated services for structured glob
 - `HeaderResolver`
 - `FooterResolver`
 
-CMS-aware homepage theme partials build storefront header payloads through `StorefrontHeaderViewModel`. Gadget and Clothing keep their own visual header markup, but consume the same Header Builder values for uploaded logo path/URL, announcement bar, selected navigation menu, search/account/cart visibility, and sticky behavior. If CMS settings are missing, themes fall back to safe Bagisto/channel defaults.
+CMS-aware homepage theme partials build storefront header payloads through `StorefrontHeaderViewModel`. Gadget and Clothing keep their own visual header markup, but consume the same Header Builder values for uploaded logo path/URL, announcement bar, selected navigation menu, search/account/cart visibility, and sticky behavior. CMS-aware footer partials use `StorefrontFooterViewModel` for uploaded logo path/URL, footer description, newsletter content, contact details, social links, Footer Builder-selected navigation menu columns, and copyright text. If CMS footer columns are missing, themes fall back to active `footer` location menus and safe Bagisto/channel defaults.
 
 ## Asset Loading Rule
 
