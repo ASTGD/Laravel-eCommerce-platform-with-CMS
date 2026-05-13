@@ -99,21 +99,21 @@
         margin-bottom: 18px;
     }
 
-    /* Grid Layout */
+    /* Grid Layout - 5 Items Per Line */
     .gadget-sale__grid {
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 20px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 24px;
         margin-bottom: 60px;
         width: 100%;
         justify-items: center;
     }
 
-    /* Premium Product Card */
+    /* Premium Product Card - Increased Size */
     .sale-card {
         background: #ffffff;
-        border-radius: 32px;
-        padding: 20px;
+        border-radius: 36px;
+        padding: 24px;
         border: 1px solid #f1f5f9;
         transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         text-decoration: none !important;
@@ -123,8 +123,8 @@
         position: relative;
         overflow: hidden;
         width: 100%;
-        min-height: 380px;
-        /* Reduced from 480px */
+        min-height: 450px;
+        /* Increased from 380px for better proportion with 5 columns */
     }
 
     .sale-card:hover {
@@ -136,10 +136,9 @@
     .sale-card__media {
         aspect-ratio: 1;
         background: #f8fafc;
-        border-radius: 24px;
+        border-radius: 28px;
         overflow: hidden;
-        margin-bottom: 14px;
-        /* Reduced from 24px */
+        margin-bottom: 20px;
         position: relative;
         display: flex;
         align-items: center;
@@ -159,8 +158,8 @@
 
     .sale-card__badge {
         position: absolute;
-        top: 15px;
-        left: 15px;
+        top: 20px;
+        left: 20px;
         padding: 6px 16px;
         border-radius: 12px;
         font-size: 11px;
@@ -186,12 +185,13 @@
         width: 100%;
     }
 
+    /* Smaller Title, Normal Weight */
     .sale-card__info h3 {
-        font-size: 17px;
-        font-weight: 850;
+        font-size: 16px;
+        font-weight: 500;
         color: #0f172a;
         margin-bottom: 12px;
-        line-height: 1.4;
+        line-height: 1.5;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -216,18 +216,17 @@
         padding-bottom: 5px;
         width: 100%;
         flex-wrap: wrap;
-        /* Prevent cutoff */
     }
 
     .price--final {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 950;
         color: #2563eb;
         white-space: nowrap;
     }
 
     .price--regular {
-        font-size: 14px;
+        font-size: 15px;
         color: #94a3b8;
         text-decoration: line-through;
         white-space: nowrap;
@@ -237,15 +236,15 @@
     .sale-card__actions {
         position: absolute;
         bottom: -70px;
-        left: 20px;
-        right: 20px;
+        left: 24px;
+        right: 24px;
         transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         opacity: 0;
         z-index: 5;
     }
 
     .sale-card:hover .sale-card__actions {
-        bottom: 25px;
+        bottom: 30px;
         opacity: 1;
     }
 
@@ -262,8 +261,8 @@
         width: 100%;
         background: #0f172a;
         color: #ffffff !important;
-        padding: 14px;
-        border-radius: 16px;
+        padding: 16px;
+        border-radius: 18px;
         font-weight: 900;
         text-align: center;
         border: none;
@@ -271,8 +270,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        font-size: 13px;
+        gap: 10px;
+        font-size: 14px;
         transition: 0.3s;
     }
 
@@ -288,9 +287,9 @@
         background: #ffffff;
         color: #0f172a !important;
         padding: 18px 50px;
-        border-radius: 16px;
+        border-radius: 18px;
         font-weight: 900;
-        font-size: 15px;
+        font-size: 16px;
         text-transform: uppercase;
         letter-spacing: 0.1em;
         border: 2px solid #e2e8f0;
@@ -312,7 +311,7 @@
         }
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1200px) {
         .gadget-sale__grid {
             grid-template-columns: repeat(3, 1fr);
         }
@@ -325,15 +324,6 @@
 
         .gadget-sale__title {
             font-size: 38px;
-        }
-
-        .gadget-sale__timer-wrap {
-            padding: 12px 25px;
-            gap: 15px;
-        }
-
-        .gadget-sale__timer-label {
-            display: none;
         }
     }
 
@@ -540,7 +530,6 @@
                         final_price: '৳2,240.00',
                         badge: 'Sale'
                     },
-                    // Load more items
                     {
                         id: 7,
                         name: 'Smart Watch Series 9 Elite',
@@ -650,7 +639,7 @@
                         badge: 'Sale'
                     },
                 ],
-                visibleCount: 6,
+                visibleCount: 5,
                 loading: false
             }
         },
@@ -666,7 +655,7 @@
             loadMore() {
                 this.loading = true;
                 setTimeout(() => {
-                    this.visibleCount += 12; // Load 2 more lines
+                    this.visibleCount += 10; // Load 2 more lines (10 items)
                     this.loading = false;
                 }, 600);
             }

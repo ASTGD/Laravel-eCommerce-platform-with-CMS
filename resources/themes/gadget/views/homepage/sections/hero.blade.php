@@ -429,8 +429,8 @@ $heroSlides = [
     /* Badge floating card */
     .gh-badge {
         position: absolute;
-        bottom: 12%;
-        left: -4%;
+        top: 10%;
+        right: -5%;
         padding: 14px 22px;
         border-radius: 20px;
         backdrop-filter: blur(20px);
@@ -439,7 +439,7 @@ $heroSlides = [
         white-space: nowrap;
         z-index: 10;
         opacity: 0;
-        transform: translateX(-20px);
+        transform: translateX(20px);
         transition: opacity 0.5s 0.6s ease, transform 0.5s 0.6s ease;
         animation: badgeFloat 7s 1s infinite ease-in-out;
     }
