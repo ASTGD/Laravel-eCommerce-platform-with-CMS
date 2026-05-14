@@ -231,7 +231,7 @@ $displayProducts = $_realJfy->isNotEmpty()
                     $name = $product['name'];
                     $price = $product['formatted_price'];
                     $image = $product['image_url'];
-                    $url = $product['url_key'] !== '#' ? route('shop.product_or_category.index', $product['url_key']) : '#';
+                    $url = $product['url_key'];
                 @endphp
                 
                 <article class="jfy-product-card">
