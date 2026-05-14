@@ -29,9 +29,9 @@ The `My Website` area groups storefront website management into one parent menu:
 
 `My Website > Overview` opens the CMS dashboard route at `admin.cms.dashboard.index`. It acts as the website management overview for storefront content, theme, layout, and website settings.
 
-`My Website > CMS Studio` opens the central Studio workspace at `admin.cms.index`. CMS Studio is the main admin UX for safe website content areas: Header, Footer, Navigation, Homepage, Pages, Reusable Blocks, and Site Settings.
+`My Website > CMS Studio` opens the central Studio workspace at `admin.cms.index`. CMS Studio is the main admin UX for safe website content areas: Header, Footer, Navigation, and Homepage.
 
-`My Website > Themes` links to existing theme presets. `My Website > Site Settings` opens the Site Settings area inside CMS Studio.
+`My Website > Themes` links to existing theme presets. `My Website > Site Settings` opens a separate Site Settings section at `admin.cms.settings.index`.
 
 The old CMS entities and runtime services remain as backend foundation only. They support rendering, preview, validation, publishing, and future Studio workflows; they are not presented to normal store admins as standalone database-management screens.
 
@@ -371,7 +371,7 @@ CMS Studio is a single website content and layout workspace with:
 
 - left local navigation
 - center structured editor
-- right visual preview
+- full-width visual preview
 
 Studio areas:
 
@@ -379,9 +379,6 @@ Studio areas:
 - Footer
 - Navigation
 - Homepage
-- Pages
-- Reusable Blocks
-- Site Settings
 
 The old standalone CMS admin CRUD screens have been removed from the admin UI:
 
@@ -406,7 +403,7 @@ Footer Builder is implemented with structured fields and a preview panel. It sav
 
 Navigation Builder is implemented as a Studio-native flat menu workflow. Admins can create and edit business-friendly menus, choose the usage context, enable or disable menus, add flat menu links, set item order, mark links active or inactive, and open links in a new tab. It saves into the existing `menus` and `menu_items` storage and does not expose raw JSON editing.
 
-Homepage, Pages, Reusable Blocks, and Site Settings are Studio-native panels that summarize current backend content and describe the next business-friendly workflow. They do not link normal admins back to old CRUD pages or expose raw JSON editing.
+Homepage is a Studio-native Hero builder. Site Settings is separated into its own My Website section and is not shown as a CMS Studio tab. Normal admins do not get Pages or Reusable Blocks areas in CMS Studio, and no Studio navigation links normal admins back to old CRUD pages or raw JSON editing.
 
 ## Theme Area
 
@@ -435,8 +432,6 @@ CMS ACL entries now cover:
 - Footer Builder
 - Navigation
 - Homepage
-- Pages
-- Reusable Blocks
 - Site Settings
 
 Theme ACL remains centered on preset management in the current slice.
@@ -446,7 +441,7 @@ CMS Studio routes use explicit permission middleware for the root editor and for
 Recommended role split before frontend work begins:
 
 - Super Admin: full access
-- Website Manager: CMS Studio, header/footer, navigation, homepage, pages, reusable blocks, and site settings
+- Website Manager: CMS Studio, header/footer, navigation, homepage, and site settings
 - Theme Manager: theme presets
 - Catalog Manager: Bagisto catalog ownership only
 - SEO Manager: SEO and metadata workflows when that surface is hardened further
@@ -455,7 +450,8 @@ Recommended role split before frontend work begins:
 
 - Header, Footer, Navigation, and Homepage are implemented structured builders.
 - Homepage editing currently exposes one business-friendly Hero section only. Hero supports either one static image or an auto slider with up to five images; active themes render that same content through their own hero design. Below-Hero homepage content remains theme-owned. Legacy `hero_banner` and `hero_slider` storage remains readable but is no longer exposed as separate add choices.
-- Pages, Reusable Blocks, and Site Settings are Studio summary/staging panels in this pass.
+- Pages and Reusable Blocks are intentionally not exposed in CMS Studio. The current client workflow does not allow normal admins to create standalone website pages or reusable content blocks from this area.
+- Site Settings is a separate My Website section and no longer appears inside CMS Studio local navigation.
 - Customer portal pages are still outside CMS Studio editing.
 
 ## Sales Order Workflow

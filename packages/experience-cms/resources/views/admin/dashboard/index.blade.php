@@ -59,13 +59,10 @@
     ];
 
     $contentRows = [
-        ['label' => 'Total Pages', 'value' => $overview['pages']['total']],
-        ['label' => 'Published Pages', 'value' => $overview['pages']['published']],
-        ['label' => 'Draft Pages', 'value' => $overview['pages']['draft']],
-        ['label' => 'Content Entries', 'value' => $overview['content_entries']],
         ['label' => 'Menus', 'value' => $overview['menus']],
         ['label' => 'Header Builders', 'value' => $overview['header_configs']],
         ['label' => 'Footer Builders', 'value' => $overview['footer_configs']],
+        ['label' => 'Site Settings', 'value' => $overview['site_settings']],
     ];
 
     $quickActions = [
@@ -166,20 +163,20 @@
             <article class="{{ $cardClass }}">
                 <div class="flex items-start justify-between gap-4">
                     <h2 class="{{ $cardTitleClass }}">
-                        Published Pages
+                        Homepage
                     </h2>
 
-                    <span class="{{ $badgeBaseClass }} {{ $neutralBadgeClass }}">
-                        {{ $overview['pages']['total'] }} total
+                    <span class="{{ $badgeBaseClass }} {{ $homepageStatus['class'] }}">
+                        {{ $homepageStatus['label'] }}
                     </span>
                 </div>
 
-                <p class="mt-5 {{ $metricValueClass }}">
-                    {{ $overview['pages']['published'] }}
+                <p class="mt-5 break-words {{ $metricValueClass }}">
+                    {{ $overview['homepage']['label'] }}
                 </p>
 
                 <p class="mt-1 {{ $smallLabelClass }}">
-                    Live CMS pages available to storefront
+                    Hero content is edited in CMS Studio
                 </p>
             </article>
 
@@ -233,7 +230,7 @@
 
             <article class="{{ $cardClass }}">
                 <h2 class="{{ $cardTitleClass }}">
-                    Content Summary
+                    Website Assets
                 </h2>
 
                 <div class="mt-3">

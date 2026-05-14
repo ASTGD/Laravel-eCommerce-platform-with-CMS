@@ -9,9 +9,7 @@ The admin-facing CMS Studio controls:
 - header content and behavior
 - footer content and behavior
 - navigation menus
-- theme-supported homepage sections
-- reusable content blocks
-- static, landing, and policy content
+- homepage Hero content
 - global website and SEO-oriented content settings
 
 The CMS does not provide free-form visual editing for core commerce pages or transactional flows.
@@ -41,14 +39,18 @@ CMS Studio is a single editor workspace with:
 
 - left local navigation
 - center structured editor panel
-- right visual preview panel
+- full-width preview panel
 
-The first implemented structured builders are:
+The implemented structured builders are:
 
 - Header Builder
 - Footer Builder
+- Navigation Builder
+- Homepage Hero Builder
 
-The old standalone CMS admin CRUD screens for pages, templates, section types, component types, assignments, content entries, menus, header configs, footer configs, and site settings have been removed from the admin UI. Their storage models and runtime services remain because they power storefront rendering, preview payloads, and future Studio workflows.
+`My Website > Site Settings` opens a separate website settings section at `admin.cms.settings.index`. Site Settings is not part of the CMS Studio local tab navigation.
+
+The old standalone CMS admin CRUD screens for pages, templates, section types, component types, assignments, content entries, menus, header configs, footer configs, and raw site setting records have been removed from the admin UI. Their storage models and runtime services remain because they power storefront rendering, preview payloads, and future Studio workflows.
 
 ## Persisted Entities
 
@@ -132,21 +134,22 @@ The section and component registries remain the authority for:
 - supported data sources
 - renderer contracts
 
-## Reusable Blocks And Static Content
+## Internal Structured Content
 
-`content_entries`, `pages`, and `site_settings` remain available as storage for future Studio-native workflows.
+`content_entries`, `pages`, and `site_settings` remain available as internal storage and runtime foundation. Normal admins do not create standalone pages or reusable content blocks through CMS Studio in the current client workflow.
 
-Allowed CMS content:
+Allowed CMS Studio content:
 
-- homepage promotional content
-- reusable structured content blocks
-- landing pages
-- static pages
-- policy pages
+- homepage Hero content
+- header content and behavior
+- footer content and behavior
+- navigation menus
 - global metadata and shared storefront content
 
 Disallowed CMS content:
 
+- standalone page creation from CMS Studio
+- reusable block creation from CMS Studio
 - product page layout editing
 - category listing layout editing
 - checkout/cart/customer/order workflow editing
@@ -179,13 +182,13 @@ Rules:
 - normal admins should not edit raw JSON
 - header/footer settings are saved into JSON storage internally
 - homepage section editing validates predefined structured fields and stores them in existing `page_sections` JSON storage internally
-- future reusable block editing must validate against component/content schemas
 - commerce-critical flows must not be edited through CMS Studio
 
 ## Current Limitations
 
 - Navigation and homepage sections have structured Studio builders.
 - Header and footer have structured save actions and admin preview mocks.
-- Reusable blocks, static content, and site settings are Studio staging panels in this pass.
+- Pages and Reusable Blocks are intentionally not exposed in CMS Studio for the current client workflow.
+- Site settings are shown in a separate My Website section, not inside CMS Studio.
 - Full draft/publish versioning for homepage section edits remains a future Studio hardening workstream.
 - Product/category/cart/checkout/customer pages remain outside CMS Studio editing.

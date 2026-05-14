@@ -1,7 +1,7 @@
 @php
     $pageTitleClass = 'font-sans text-2xl leading-8 font-bold tracking-tight text-slate-950 dark:text-white';
     $pageSubtitleClass = 'mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400';
-    $navClass = 'rounded-[24px] border border-slate-200/70 bg-white p-4 shadow-none dark:border-gray-700 dark:bg-gray-800';
+    $navClass = 'rounded-[24px] border border-slate-200/70 bg-slate-50 p-3 shadow-none dark:border-gray-700 dark:bg-gray-900';
     $panelClass = 'rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-none dark:border-gray-700 dark:bg-gray-800';
     $panelTitleClass = 'font-sans text-lg leading-7 font-semibold tracking-normal text-slate-950 dark:text-white';
     $bodyTextClass = 'text-sm leading-6 text-slate-500 dark:text-gray-400';
@@ -17,9 +17,9 @@
     $toggleClass = 'h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-950';
     $secondaryButtonClass = 'inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 dark:hover:text-blue-300';
     $primaryButtonClass = 'inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700';
-    $navChipBaseClass = 'flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition';
-    $navChipActiveClass = 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300';
-    $navChipInactiveClass = 'text-slate-600 hover:bg-slate-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-blue-300';
+    $navChipBaseClass = 'inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-medium transition';
+    $navChipActiveClass = 'border-slate-200 bg-white text-blue-600 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-blue-300';
+    $navChipInactiveClass = 'border-transparent text-slate-600 hover:bg-white/70 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300';
     $values = $editor['values'] ?? [];
 @endphp
 
@@ -135,7 +135,7 @@
                 </h1>
 
                 <p class="{{ $pageSubtitleClass }}">
-                    Edit website header, footer, navigation, homepage content, reusable blocks, and site settings.
+                    Manage the website header, footer, navigation, and homepage hero in one place.
                 </p>
             </div>
 
@@ -163,30 +163,16 @@
 
         <section class="cms-studio-shell">
             <aside class="{{ $navClass }}">
-                <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 class="font-sans text-base font-semibold text-slate-950 dark:text-white">
-                        My Website / CMS Studio
-                    </h2>
-
-                    <p class="text-xs font-medium text-slate-400 dark:text-gray-500">
-                        Safe website areas only
-                    </p>
-                </div>
-
                 <div class="cms-studio-area-nav overflow-x-auto pb-1">
                 @foreach ($navigationGroups as $group)
                     <div>
-                        <div class="flex min-w-max flex-nowrap gap-2 sm:min-w-0 sm:flex-wrap">
+                        <div class="grid min-w-max grid-cols-4 gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900 sm:min-w-0">
                             @foreach ($group['items'] as $item)
                                 <a
                                     href="{{ $item['url'] }}"
                                     class="{{ $navChipBaseClass }} {{ $item['active'] ? $navChipActiveClass : $navChipInactiveClass }}"
                                 >
                                     <span>{{ $item['label'] }}</span>
-
-                                    @if ($item['active'])
-                                        <span class="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-300"></span>
-                                    @endif
                                 </a>
                             @endforeach
                         </div>
@@ -756,18 +742,18 @@
                             <span class="mt-3 block text-sm text-red-600">{{ $message }}</span>
                         @enderror
 
-                        <div class="mt-5 grid grid-cols-1 gap-4" data-homepage-sections>
+                        <div class="mt-6 space-y-6" data-homepage-sections>
                             @forelse ($homepageSections as $index => $section)
                                 @php
                                     $sectionSettings = array_replace($emptyHomepageSettings, $section['settings'] ?? []);
                                     $heroMode = in_array($sectionSettings['mode'] ?? 'static', ['static', 'slider'], true) ? $sectionSettings['mode'] : 'static';
                                 @endphp
 
-                                <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row data-homepage-active-slide="0">
+                                <div class="space-y-5" data-homepage-section-row data-homepage-active-slide="0">
                                     <input type="hidden" name="sections[{{ $index }}][id]" value="{{ $section['id'] ?? '' }}">
                                     <input type="hidden" name="sections[{{ $index }}][section_code]" value="hero" data-homepage-section-code>
 
-                                    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                    <div class="flex flex-wrap items-center justify-between gap-3">
                                         <div>
                                             <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
                                                 Hero
@@ -809,27 +795,27 @@
                                         <span class="mt-2 block text-sm text-red-600">{{ $message }}</span>
                                     @enderror
 
-                                    <div class="mt-5" data-homepage-fields="hero">
+                                    <div data-homepage-fields="hero">
                                         <input type="hidden" name="sections[{{ $index }}][settings][mode]" value="{{ $heroMode }}" data-homepage-hero-mode-value>
 
-                                        <div class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+                                        <div class="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900">
                                             <label class="cursor-pointer">
                                                 <input type="radio" name="sections[{{ $index }}][settings][mode_toggle]" value="static" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" @checked($heroMode === 'static')>
-                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
                                                     Static image
                                                 </span>
                                             </label>
 
                                             <label class="cursor-pointer">
                                                 <input type="radio" name="sections[{{ $index }}][settings][mode_toggle]" value="slider" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" @checked($heroMode === 'slider')>
-                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
                                                     Auto slider
                                                 </span>
                                             </label>
                                         </div>
 
-                                        <div class="{{ $heroMode === 'slider' ? '' : 'hidden' }} mb-4 rounded-2xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800" data-homepage-hero-slide-tabs>
-                                            <div class="flex flex-wrap items-center gap-2">
+                                        <div class="{{ $heroMode === 'slider' ? '' : 'hidden' }} mb-5 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900" data-homepage-hero-slide-tabs>
+                                            <div class="flex flex-wrap items-center gap-1">
                                                 @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
                                                     @php
                                                         $slide = $sectionSettings['slides'][$slideIndex] ?? [];
@@ -841,7 +827,7 @@
 
                                                     <button
                                                         type="button"
-                                                        class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300' : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-blue-200 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400 dark:hover:border-blue-900 dark:hover:text-blue-300' }} {{ $heroMode !== 'slider' ? 'hidden' : '' }}"
+                                                        class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-slate-200 bg-white text-blue-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-blue-300' : 'border-transparent bg-transparent text-slate-500 hover:bg-white/70 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-300' }} {{ $heroMode !== 'slider' ? 'hidden' : '' }}"
                                                         data-homepage-hero-slide-tab
                                                         data-slide-index="{{ $slideIndex }}"
                                                         onclick="window.cmsHomepageHeroSelectSlide?.(this)"
@@ -871,7 +857,7 @@
                                                 @endphp
 
                                                 <div
-                                                    class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 {{ ! $slidePanelVisible ? 'hidden' : '' }}"
+                                                    class="border-t border-slate-200/70 pt-5 dark:border-gray-700 {{ ! $slidePanelVisible ? 'hidden' : '' }}"
                                                     data-homepage-hero-slide-panel
                                                     data-slide-index="{{ $slideIndex }}"
                                                 >
@@ -974,17 +960,17 @@
                             @endforelse
                         </div>
 
-                        <div class="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300">
+                        <p class="mt-5 text-sm leading-6 text-slate-500 dark:text-gray-400">
                             Homepage content below the Hero is rendered by the active theme.
-                        </div>
+                        </p>
 
                         <template data-homepage-section-template>
                             <fieldset disabled class="contents" data-homepage-section-template-fields>
-                            <div class="rounded-2xl border border-slate-200/70 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-950" data-homepage-section-row data-homepage-active-slide="0">
+                            <div class="space-y-5" data-homepage-section-row data-homepage-active-slide="0">
                                 <input type="hidden" name="sections[__INDEX__][id]" value="">
                                 <input type="hidden" name="sections[__INDEX__][section_code]" value="hero" data-homepage-section-code>
 
-                                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-800 dark:text-gray-100">
                                             Hero
@@ -1016,31 +1002,31 @@
                                     </label>
                                 </div>
 
-                                <div class="mt-5" data-homepage-fields="hero">
+                                <div data-homepage-fields="hero">
                                     <input type="hidden" name="sections[__INDEX__][settings][mode]" value="static" data-homepage-hero-mode-value>
 
-                                    <div class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+                                    <div class="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900">
                                         <label class="cursor-pointer">
                                             <input type="radio" name="sections[__INDEX__][settings][mode_toggle]" value="static" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" checked>
-                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
                                                 Static image
                                             </span>
                                         </label>
 
                                         <label class="cursor-pointer">
                                             <input type="radio" name="sections[__INDEX__][settings][mode_toggle]" value="slider" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)">
-                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-blue-50 peer-checked:text-blue-600 dark:text-gray-400 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300">
+                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
                                                 Auto slider
                                             </span>
                                         </label>
                                     </div>
 
-                                    <div class="mb-4 hidden rounded-2xl border border-slate-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800" data-homepage-hero-slide-tabs>
-                                        <div class="flex flex-wrap items-center gap-2">
+                                    <div class="mb-5 hidden rounded-2xl bg-slate-100 p-1 dark:bg-gray-900" data-homepage-hero-slide-tabs>
+                                        <div class="flex flex-wrap items-center gap-1">
                                             @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
                                                 <button
                                                     type="button"
-                                                    class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300' : 'hidden border-slate-200 bg-slate-50 text-slate-500 hover:border-blue-200 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400 dark:hover:border-blue-900 dark:hover:text-blue-300' }}"
+                                                    class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-slate-200 bg-white text-blue-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-blue-300' : 'hidden border-transparent bg-transparent text-slate-500 hover:bg-white/70 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-300' }}"
                                                     data-homepage-hero-slide-tab
                                                     data-slide-index="{{ $slideIndex }}"
                                                     onclick="window.cmsHomepageHeroSelectSlide?.(this)"
@@ -1060,7 +1046,7 @@
                                                 $isExtraSlide = $slideIndex > 0;
                                             @endphp
 
-                                            <div class="rounded-2xl border border-slate-200/70 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 {{ $isExtraSlide ? 'hidden' : '' }}" data-homepage-hero-slide-panel data-slide-index="{{ $slideIndex }}">
+                                            <div class="border-t border-slate-200/70 pt-5 dark:border-gray-700 {{ $isExtraSlide ? 'hidden' : '' }}" data-homepage-hero-slide-panel data-slide-index="{{ $slideIndex }}">
                                                 <input type="hidden" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][enabled]" value="{{ $slideIndex === 0 ? 1 : 0 }}" data-homepage-hero-slide-enabled>
 
                                                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -1513,31 +1499,8 @@
                         </div>
                     @endif
 
-                    @if (! empty($summary['pages']) || ! empty($summary['blocks']))
-                        <div class="{{ $headerSectionClass }}">
-                            <h3 class="{{ $headerSectionTitleClass }}">
-                                {{ ! empty($summary['pages']) ? 'Current Pages' : 'Current Blocks' }}
-                            </h3>
-
-                            <div class="mt-4 divide-y divide-slate-200 dark:divide-gray-700">
-                                @foreach (($summary['pages'] ?? $summary['blocks']) as $item)
-                                    <div class="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                                        <div>
-                                            <p class="text-sm font-medium text-slate-800 dark:text-gray-100">{{ $item['title'] }}</p>
-                                            <p class="text-xs text-slate-500 dark:text-gray-400">{{ $item['slug'] }} · {{ $item['type'] }}</p>
-                                        </div>
-
-                                        <span class="text-xs font-medium text-slate-500 dark:text-gray-400">{{ ucfirst((string) $item['status']) }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
                     @foreach ([
                         'supported_sections' => 'Theme-Supported Sections',
-                        'allowed_types' => 'Allowed Page Types',
-                        'recommended_types' => 'Recommended Block Types',
                         'groups' => 'Setting Groups',
                     ] as $metaKey => $heading)
                         @if (! empty($meta[$metaKey]))
@@ -2147,23 +2110,22 @@
                         const addButton = homepageBuilder.querySelector('[data-add-homepage-section]');
 
                         const activeTabClasses = [
-                            'border-blue-200',
-                            'bg-blue-50',
+                            'border-slate-200',
+                            'bg-white',
                             'text-blue-700',
-                            'dark:border-blue-900',
-                            'dark:bg-blue-950/40',
+                            'shadow-sm',
+                            'dark:border-gray-700',
+                            'dark:bg-gray-800',
                             'dark:text-blue-300',
                         ];
                         const inactiveTabClasses = [
-                            'border-slate-200',
-                            'bg-slate-50',
+                            'border-transparent',
+                            'bg-transparent',
                             'text-slate-500',
-                            'hover:border-blue-200',
+                            'hover:bg-white/70',
                             'hover:text-blue-600',
-                            'dark:border-gray-700',
-                            'dark:bg-gray-950',
                             'dark:text-gray-400',
-                            'dark:hover:border-blue-900',
+                            'dark:hover:bg-gray-800',
                             'dark:hover:text-blue-300',
                         ];
 
