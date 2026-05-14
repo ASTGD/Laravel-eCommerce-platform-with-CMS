@@ -1,154 +1,330 @@
+@php
+    // Use passed products if available, otherwise use curated mock data for presentation
+    $displayProducts = !empty($products) && count($products) > 0 ? $products : [
+        (object)[
+            'name' => 'Quantum VR Headset', 
+            'formatted_price' => '$499.00', 
+            'image_url' => 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?auto=format&fit=crop&q=80&w=500',
+            'url_key' => '#'
+        ],
+        (object)[
+            'name' => 'Sonic ANC Earbuds', 
+            'formatted_price' => '$199.00', 
+            'image_url' => 'https://images.unsplash.com/photo-1590658268037-6f1164d5cd5a?auto=format&fit=crop&q=80&w=500',
+            'url_key' => '#'
+        ],
+        (object)[
+            'name' => 'Holographic Smartwatch', 
+            'formatted_price' => '$299.00', 
+            'image_url' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=500',
+            'url_key' => '#'
+        ],
+        (object)[
+            'name' => 'Aero Drone Pro', 
+            'formatted_price' => '$899.00', 
+            'image_url' => 'https://images.unsplash.com/photo-1507580461461-8f55e09f58ea?auto=format&fit=crop&q=80&w=500',
+            'url_key' => '#'
+        ],
+        (object)[
+            'name' => 'Nebula Smart Speaker', 
+            'formatted_price' => '$149.00', 
+            'image_url' => 'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&q=80&w=500',
+            'url_key' => '#'
+        ],
+        (object)[
+            'name' => 'Cyber Mechanical Keyboard', 
+            'formatted_price' => '$249.00', 
+            'image_url' => 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&q=80&w=500',
+            'url_key' => '#'
+        ],
+    ];
+@endphp
+
 @pushOnce('styles')
 <style>
-    .gadget-why {
-        padding: 120px 0;
+    .gadget-jfy {
+        padding: 100px 0;
         background: #f8fafc;
         position: relative;
-    }
-
-    .gadget-why__grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 32px;
-    }
-
-    .gadget-benefit-card {
-        background: #ffffff;
-        padding: 60px 40px;
-        border-radius: 40px;
-        border: 1px solid rgba(15, 23, 42, 0.05);
-        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.02);
+    }
+
+    .gadget-jfy-header {
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 60px;
+        position: relative;
+        z-index: 10;
     }
 
-    .gadget-benefit-card:hover {
-        transform: translateY(-12px);
-        border-color: #3b82f6;
-        box-shadow: 0 40px 80px rgba(59, 130, 246, 0.1);
+    .gadget-jfy-title p {
+        color: #3b82f6;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.35em;
+        font-size: 13px;
+        margin-bottom: 15px;
     }
 
-    .benefit-icon-wrap {
-        width: 70px;
-        height: 70px;
-        background: #eff6ff;
-        border-radius: 22px;
+    .gadget-jfy-title h2 {
+        font-size: 56px;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+        line-height: 1.1;
+        background: linear-gradient(135deg, #0f172a 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .gadget-jfy-controls {
+        display: flex;
+        gap: 15px;
+    }
+
+    .jfy-nav-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 35px;
-        position: relative;
-        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        color: #3b82f6;
+        cursor: pointer;
+        color: #0f172a;
+        transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
     }
 
-    .gadget-benefit-card:hover .benefit-icon-wrap {
+    .jfy-nav-btn:hover {
         background: #3b82f6;
         color: #ffffff;
-        transform: scale(1.1) rotate(5deg);
+        border-color: #3b82f6;
+        transform: translateY(-3px) scale(1.05);
         box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
     }
 
-    .benefit-icon-wrap svg {
-        width: 32px;
-        height: 32px;
-        transition: 0.5s;
+    /* Slider Track */
+    .jfy-slider-container {
+        position: relative;
+        width: 100%;
+        max-width: 1920px;
+        margin: 0 auto;
+        padding: 20px 5% 40px;
     }
 
-    .gadget-benefit-card:hover svg {
+    .jfy-slider-track {
+        display: flex;
+        gap: 30px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+        padding-bottom: 20px; /* Space for shadow */
+    }
+
+    .jfy-slider-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Product Card */
+    .jfy-product-card {
+        flex: 0 0 320px;
+        background: #ffffff;
+        border-radius: 30px;
+        padding: 20px;
+        border: 1px solid rgba(15, 23, 42, 0.05);
+        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.03);
+        display: flex;
+        flex-direction: column;
+        group;
+    }
+
+    .jfy-product-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.08);
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .jfy-product-img-wrap {
+        width: 100%;
+        height: 280px;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+        background: #f1f5f9;
+        margin-bottom: 20px;
+    }
+
+    .jfy-product-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .jfy-product-card:hover .jfy-product-img {
         transform: scale(1.1);
     }
 
-    .benefit-icon-glow {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: rgba(59, 130, 246, 0.3);
-        filter: blur(25px);
-        border-radius: 50%;
-        opacity: 0;
-        transition: 0.5s;
+    .jfy-product-info {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
     }
 
-    .gadget-benefit-card:hover .benefit-icon-glow {
-        opacity: 1;
-    }
-
-    .gadget-benefit-card h3 {
-        font-size: 22px;
-        font-weight: 950;
+    .jfy-product-title {
+        font-size: 20px;
+        font-weight: 800;
         color: #0f172a;
-        margin-bottom: 18px;
-        letter-spacing: -0.04em;
+        margin-bottom: 10px;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+        transition: 0.3s;
     }
 
-    .gadget-benefit-card p {
-        font-size: 16px;
-        color: #64748b;
-        line-height: 1.7;
-        font-weight: 500;
+    .jfy-product-title:hover {
+        color: #3b82f6;
     }
 
-    @media (max-width: 1200px) {
-        .gadget-why__grid { grid-template-columns: repeat(2, 1fr); }
+    .jfy-product-price {
+        font-size: 18px;
+        font-weight: 900;
+        color: #3b82f6;
+        margin-bottom: 20px;
     }
 
-    @media (max-width: 600px) {
-        .gadget-why__grid { grid-template-columns: 1fr; }
-        .gadget-benefit-card { padding: 45px 30px; }
+    .jfy-btn-add {
+        margin-top: auto;
+        background: #f8fafc;
+        color: #0f172a;
+        padding: 15px 0;
+        border-radius: 16px;
+        font-weight: 800;
+        font-size: 15px;
+        text-align: center;
+        text-decoration: none;
+        transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+    }
+
+    .jfy-product-card:hover .jfy-btn-add {
+        background: #0f172a;
+        color: #ffffff;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+    }
+
+    @media (max-width: 991px) {
+        .gadget-jfy-header { flex-direction: column; align-items: flex-start; gap: 30px; }
+        .gadget-jfy-title h2 { font-size: 42px; }
+        .jfy-product-card { flex: 0 0 280px; }
     }
 </style>
 @endpushOnce
 
-<section class="gadget-section gadget-why" aria-labelledby="gadget-why-title">
+<section class="gadget-section gadget-jfy" aria-labelledby="gadget-jfy-title">
     <div class="gadget-container">
-        <div class="gadget-section-heading" style="text-align: center; justify-content: center; flex-direction: column; align-items: center; margin-bottom: 120px; position: relative; z-index: 10;">
-            <!-- Title Aura -->
-            <div style="position: absolute; width: 400px; height: 120px; background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); filter: blur(50px); z-index: -1;"></div>
+        <!-- Header & Controls -->
+        <div class="gadget-jfy-header">
+            <div class="gadget-jfy-title">
+                <p>Personalized Picks</p>
+                <h2 id="gadget-jfy-title">Just For You</h2>
+            </div>
             
-            <p style="color: #3b82f6; font-weight: 900; text-transform: uppercase; letter-spacing: 0.35em; font-size: 13px; margin-bottom: 20px;">Advanced Ecosystem</p>
-            <h2 id="gadget-why-title" style="font-size: 56px; font-weight: 950; letter-spacing: -0.06em; line-height: 1; background: linear-gradient(135deg, #0f172a 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 10px 20px rgba(59, 130, 246, 0.1)); padding-bottom: 10px;">Engineered for Excellence</h2>
+            <div class="gadget-jfy-controls">
+                <button class="jfy-nav-btn" id="jfy-btn-prev" aria-label="Previous Products">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button class="jfy-nav-btn" id="jfy-btn-next" aria-label="Next Products">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
         </div>
+    </div> <!-- Break out of container -->
 
-        <div class="gadget-why__grid">
-            @php
-                $benefits = [
-                    [
-                        'title' => 'Elite Build Quality', 
-                        'text' => 'Every product is handpicked for durability and performance.', 
-                        'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"></path><path d="M11 3v18"></path><path d="M5 3l7 18 7-18"></path><path d="M2 9h20"></path></svg>'
-                    ],
-                    [
-                        'title' => 'Global Logistics', 
-                        'text' => 'Fast, secure, and trackable shipping to your doorstep.', 
-                        'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>'
-                    ],
-                    [
-                        'title' => 'Secure Payments', 
-                        'text' => 'Multi-layered encryption for a safe shopping experience.', 
-                        'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
-                    ],
-                    [
-                        'title' => 'Priority Support', 
-                        'text' => 'Dedicated tech experts ready to assist you 24/7.', 
-                        'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>'
-                    ],
-                ];
-            @endphp
-
-            @foreach ($benefits as $benefit)
-                <article class="gadget-benefit-card">
-                    <div class="benefit-icon-wrap">
-                        <div class="benefit-icon-glow"></div>
-                        {!! $benefit['icon'] !!}
+    <!-- Product Slider (Edge to Edge) -->
+    <div class="jfy-slider-container">
+        <div class="jfy-slider-track" id="jfy-slider-track">
+            @foreach ($displayProducts as $product)
+                @php
+                    // Handle both array (mock) and object (real product) access
+                    $name = is_object($product) ? ($product->name ?? 'Product Name') : ($product['name'] ?? 'Product Name');
+                    $price = is_object($product) ? ($product->formatted_price ?? $product->price ?? '$0.00') : ($product['formatted_price'] ?? $product['price'] ?? '$0.00');
+                    $image = is_object($product) ? ($product->image_url ?? $product->base_image_url ?? 'https://via.placeholder.com/500') : ($product['image_url'] ?? 'https://via.placeholder.com/500');
+                    $url = is_object($product) ? ($product->url_key ? route('shop.product_or_category.index', $product->url_key) : '#') : ($product['url_key'] ?? '#');
+                @endphp
+                
+                <article class="jfy-product-card">
+                    <a href="{{ $url }}" class="jfy-product-img-wrap">
+                        <img src="{{ $image }}" alt="{{ $name }}" class="jfy-product-img">
+                    </a>
+                    <div class="jfy-product-info">
+                        <a href="{{ $url }}" class="jfy-product-title">{{ $name }}</a>
+                        <span class="jfy-product-price">{{ $price }}</span>
+                        <a href="{{ $url }}" class="jfy-btn-add">View Details</a>
                     </div>
-                    <h3>{{ $benefit['title'] }}</h3>
-                    <p>{{ $benefit['text'] }}</p>
                 </article>
             @endforeach
         </div>
     </div>
 </section>
+
+@pushOnce('scripts')
+<script>
+    (function () {
+        let autoPlayInterval;
+
+        function getScrollAmount(track) {
+            const card = track.querySelector('.jfy-product-card');
+            return card ? card.offsetWidth + 30 : 350;
+        }
+
+        function startAutoPlay() {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(() => {
+                const track = document.getElementById('jfy-slider-track');
+                if (!track) return;
+                
+                const amt = getScrollAmount(track);
+                if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) {
+                    track.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    track.scrollBy({ left: amt, behavior: 'smooth' });
+                }
+            }, 4000);
+        }
+
+        // Initialize autoplay
+        startAutoPlay();
+
+        // Event Delegation for clicks (survives Vue re-renders)
+        document.addEventListener('click', (e) => {
+            const btnPrev = e.target.closest('#jfy-btn-prev');
+            const btnNext = e.target.closest('#jfy-btn-next');
+            
+            if (btnPrev || btnNext) {
+                const track = document.getElementById('jfy-slider-track');
+                if (!track) return;
+                
+                if (btnPrev) track.scrollBy({ left: -getScrollAmount(track), behavior: 'smooth' });
+                if (btnNext) track.scrollBy({ left: getScrollAmount(track), behavior: 'smooth' });
+                
+                startAutoPlay(); // Reset timer on manual navigation
+            }
+        });
+
+        // Pause on hover
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.closest('#jfy-slider-track')) clearInterval(autoPlayInterval);
+        });
+
+        // Resume on hover out
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.closest('#jfy-slider-track')) startAutoPlay();
+        });
+    })();
+</script>
+@endpushOnce
