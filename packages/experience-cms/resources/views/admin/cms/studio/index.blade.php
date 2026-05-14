@@ -703,6 +703,11 @@
                         'mode' => 'static',
                         'slides' => [],
                     ];
+
+                    $heroModeToggleButtonClass = 'inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500 shadow-sm transition peer-checked:border-blue-200 peer-checked:bg-blue-50 peer-checked:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:peer-checked:border-blue-900 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300';
+                    $heroSlideTabBaseClass = 'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition';
+                    $heroSlideTabActiveClass = 'border-slate-200 bg-blue-50 text-blue-700 shadow-sm dark:border-gray-700 dark:bg-blue-950/40 dark:text-blue-300';
+                    $heroSlideTabInactiveClass = 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-blue-300';
                 @endphp
 
                 <form
@@ -749,7 +754,7 @@
                                     $heroMode = in_array($sectionSettings['mode'] ?? 'static', ['static', 'slider'], true) ? $sectionSettings['mode'] : 'static';
                                 @endphp
 
-                                <div class="space-y-5" data-homepage-section-row data-homepage-active-slide="0">
+                                <div class="space-y-4" data-homepage-section-row data-homepage-active-slide="0">
                                     <input type="hidden" name="sections[{{ $index }}][id]" value="{{ $section['id'] ?? '' }}">
                                     <input type="hidden" name="sections[{{ $index }}][section_code]" value="hero" data-homepage-section-code>
 
@@ -798,24 +803,24 @@
                                     <div data-homepage-fields="hero">
                                         <input type="hidden" name="sections[{{ $index }}][settings][mode]" value="{{ $heroMode }}" data-homepage-hero-mode-value>
 
-                                        <div class="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900">
+                                        <div class="inline-flex flex-wrap items-center gap-2">
                                             <label class="cursor-pointer">
                                                 <input type="radio" name="sections[{{ $index }}][settings][mode_toggle]" value="static" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" @checked($heroMode === 'static')>
-                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
+                                                <span class="{{ $heroModeToggleButtonClass }}">
                                                     Static image
                                                 </span>
                                             </label>
 
                                             <label class="cursor-pointer">
                                                 <input type="radio" name="sections[{{ $index }}][settings][mode_toggle]" value="slider" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" @checked($heroMode === 'slider')>
-                                                <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
+                                                <span class="{{ $heroModeToggleButtonClass }}">
                                                     Auto slider
                                                 </span>
                                             </label>
                                         </div>
 
-                                        <div class="{{ $heroMode === 'slider' ? '' : 'hidden' }} mb-5 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900" data-homepage-hero-slide-tabs>
-                                            <div class="flex flex-wrap items-center gap-1">
+                                        <div class="{{ $heroMode === 'slider' ? '' : 'hidden' }} mt-4" data-homepage-hero-slide-tabs>
+                                            <div class="flex flex-wrap items-center gap-2">
                                                 @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
                                                     @php
                                                         $slide = $sectionSettings['slides'][$slideIndex] ?? [];
@@ -827,7 +832,7 @@
 
                                                     <button
                                                         type="button"
-                                                        class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-slate-200 bg-white text-blue-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-blue-300' : 'border-transparent bg-transparent text-slate-500 hover:bg-white/70 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-300' }} {{ $heroMode !== 'slider' ? 'hidden' : '' }}"
+                                                        class="{{ $heroSlideTabBaseClass }} {{ $slideIndex === 0 ? $heroSlideTabActiveClass : $heroSlideTabInactiveClass }} {{ $heroMode !== 'slider' ? 'hidden' : '' }}"
                                                         data-homepage-hero-slide-tab
                                                         data-slide-index="{{ $slideIndex }}"
                                                         onclick="window.cmsHomepageHeroSelectSlide?.(this)"
@@ -845,7 +850,7 @@
                                             </div>
                                         </div>
 
-                                        <div>
+                                        <div class="mt-5">
                                             @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
                                                 @php
                                                     $slide = $sectionSettings['slides'][$slideIndex] ?? [];
@@ -966,7 +971,7 @@
 
                         <template data-homepage-section-template>
                             <fieldset disabled class="contents" data-homepage-section-template-fields>
-                            <div class="space-y-5" data-homepage-section-row data-homepage-active-slide="0">
+                            <div class="space-y-4" data-homepage-section-row data-homepage-active-slide="0">
                                 <input type="hidden" name="sections[__INDEX__][id]" value="">
                                 <input type="hidden" name="sections[__INDEX__][section_code]" value="hero" data-homepage-section-code>
 
@@ -1005,28 +1010,28 @@
                                 <div data-homepage-fields="hero">
                                     <input type="hidden" name="sections[__INDEX__][settings][mode]" value="static" data-homepage-hero-mode-value>
 
-                                    <div class="mb-5 inline-flex flex-wrap items-center gap-1 rounded-2xl bg-slate-100 p-1 dark:bg-gray-900">
+                                    <div class="inline-flex flex-wrap items-center gap-2">
                                         <label class="cursor-pointer">
                                             <input type="radio" name="sections[__INDEX__][settings][mode_toggle]" value="static" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)" checked>
-                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
+                                            <span class="{{ $heroModeToggleButtonClass }}">
                                                 Static image
                                             </span>
                                         </label>
 
                                         <label class="cursor-pointer">
                                             <input type="radio" name="sections[__INDEX__][settings][mode_toggle]" value="slider" class="peer sr-only" data-homepage-hero-mode onchange="window.cmsHomepageHeroModeChanged?.(this)">
-                                            <span class="inline-flex rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition peer-checked:bg-white peer-checked:text-blue-600 peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-800 dark:peer-checked:text-blue-300">
+                                            <span class="{{ $heroModeToggleButtonClass }}">
                                                 Auto slider
                                             </span>
                                         </label>
                                     </div>
 
-                                    <div class="mb-5 hidden rounded-2xl bg-slate-100 p-1 dark:bg-gray-900" data-homepage-hero-slide-tabs>
-                                        <div class="flex flex-wrap items-center gap-1">
+                                    <div class="hidden mt-4" data-homepage-hero-slide-tabs>
+                                        <div class="flex flex-wrap items-center gap-2">
                                             @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
                                                 <button
                                                     type="button"
-                                                    class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition {{ $slideIndex === 0 ? 'border-slate-200 bg-white text-blue-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-blue-300' : 'hidden border-transparent bg-transparent text-slate-500 hover:bg-white/70 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-blue-300' }}"
+                                                    class="{{ $heroSlideTabBaseClass }} {{ $slideIndex === 0 ? $heroSlideTabActiveClass : $heroSlideTabInactiveClass }} {{ $slideIndex === 0 ? '' : 'hidden' }}"
                                                     data-homepage-hero-slide-tab
                                                     data-slide-index="{{ $slideIndex }}"
                                                     onclick="window.cmsHomepageHeroSelectSlide?.(this)"
@@ -1040,11 +1045,11 @@
                                         </div>
                                     </div>
 
-                                    <div>
-                                        @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
-                                            @php
-                                                $isExtraSlide = $slideIndex > 0;
-                                            @endphp
+                                        <div class="mt-5">
+                                            @for ($slideIndex = 0; $slideIndex < 5; $slideIndex++)
+                                                @php
+                                                    $isExtraSlide = $slideIndex > 0;
+                                                @endphp
 
                                             <div class="border-t border-slate-200/70 pt-5 dark:border-gray-700 {{ $isExtraSlide ? 'hidden' : '' }}" data-homepage-hero-slide-panel data-slide-index="{{ $slideIndex }}">
                                                 <input type="hidden" name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][enabled]" value="{{ $slideIndex === 0 ? 1 : 0 }}" data-homepage-hero-slide-enabled>
@@ -2111,21 +2116,23 @@
 
                         const activeTabClasses = [
                             'border-slate-200',
-                            'bg-white',
+                            'bg-blue-50',
                             'text-blue-700',
                             'shadow-sm',
                             'dark:border-gray-700',
-                            'dark:bg-gray-800',
+                            'dark:bg-blue-950/40',
                             'dark:text-blue-300',
                         ];
                         const inactiveTabClasses = [
-                            'border-transparent',
-                            'bg-transparent',
+                            'border-slate-200',
+                            'bg-white',
                             'text-slate-500',
-                            'hover:bg-white/70',
+                            'hover:border-slate-300',
                             'hover:text-blue-600',
+                            'dark:border-gray-700',
+                            'dark:bg-gray-800',
                             'dark:text-gray-400',
-                            'dark:hover:bg-gray-800',
+                            'dark:hover:border-gray-600',
                             'dark:hover:text-blue-300',
                         ];
 
