@@ -52,51 +52,52 @@ $homepage = app(\Platform\ThemeDefault\ViewModels\StorefrontHomepageViewModel::c
         @pushOnce('scripts')
         <script>
             window.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll('[data-gadget-add-to-cart]').forEach((button) => {
-                    button.addEventListener('click', async () => {
-                        const productId = button.dataset.productId;
-                        const endpoint = button.dataset.endpoint;
-                        const cartUrl = button.dataset.cartUrl;
-                        const productUrl = button.dataset.productUrl;
-                        const token = '{{ csrf_token() }}';
+                document.body.addEventListener('click', async (e) => {
+                    const button = e.target.closest('[data-gadget-add-to-cart]');
+                    if (!button) return;
+                    
+                    e.preventDefault();
 
-                        if (!productId || !endpoint || !token) {
-                            window.location.href = productUrl || cartUrl || '/';
+                    const productId = button.dataset.productId;
+                    const endpoint = button.dataset.endpoint;
+                    const cartUrl = button.dataset.cartUrl;
+                    const productUrl = button.dataset.productUrl;
+                    const token = '{{ csrf_token() }}';
 
+                    if (!productId || !endpoint || !token) {
+                        window.location.href = productUrl || cartUrl || '/';
+                        return;
+                    }
+
+                    button.disabled = true;
+
+                    const formData = new FormData();
+                    formData.append('product_id', productId);
+                    formData.append('quantity', '1');
+
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                Accept: 'application/json',
+                                'X-CSRF-TOKEN': token,
+                            },
+                            body: formData,
+                        });
+
+                        const payload = await response.json();
+
+                        if (response.ok) {
+                            window.location.href = cartUrl;
                             return;
                         }
 
-                        button.disabled = true;
-
-                        const formData = new FormData();
-                        formData.append('product_id', productId);
-                        formData.append('quantity', '1');
-
-                        try {
-                            const response = await fetch(endpoint, {
-                                method: 'POST',
-                                headers: {
-                                    Accept: 'application/json',
-                                    'X-CSRF-TOKEN': token,
-                                },
-                                body: formData,
-                            });
-
-                            const payload = await response.json();
-
-                            if (response.ok) {
-                                window.location.href = cartUrl;
-
-                                return;
-                            }
-
-                            window.location.href = payload.redirect_uri || payload.data || productUrl || cartUrl;
-                        } catch (error) {
-                            window.location.href = productUrl || cartUrl || '/';
-                        } finally {
-                            button.disabled = false;
-                        }
-                    });
+                        window.location.href = payload.redirect_uri || payload.data || productUrl || cartUrl;
+                    } catch (error) {
+                        window.location.href = productUrl || cartUrl || '/';
+                    } finally {
+                        button.disabled = false;
+                    }
                 });
             });
         </script>
