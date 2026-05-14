@@ -2,230 +2,230 @@
 
 @pushOnce('styles')
 <style>
-    .gadget-cta {
-        padding: 100px 0;
-        background: #0f172a;
+    .gadget-affiliate-banner {
+        width: 100%;
+        min-height: 550px;
         position: relative;
         overflow: hidden;
-        color: #ffffff;
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
     }
 
-    .cta-aura {
+    .affiliate-bg-image {
         position: absolute;
         inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         z-index: 1;
-        pointer-events: none;
+        opacity: 0.9;
+        filter: brightness(1.05) contrast(1.02);
     }
 
-    .cta-blob {
+    .affiliate-overlay {
         position: absolute;
-        width: 700px;
-        height: 700px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
-        border-radius: 50%;
-        filter: blur(100px);
-        animation: ctaAuraMove 20s infinite alternate ease-in-out;
+        inset: 0;
+        z-index: 2;
+        background: linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.2) 100%);
     }
 
-    .cta-blob-1 { top: -10%; left: -5%; background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%); }
-    .cta-blob-2 { bottom: -10%; right: -5%; }
-
-    @keyframes ctaAuraMove {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(-40px, 40px) scale(1.1); }
+    .affiliate-mesh {
+        position: absolute;
+        width: 120%;
+        height: 120%;
+        z-index: 3;
+        background: 
+            radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.2) 0%, transparent 40%),
+            radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.2) 0%, transparent 40%),
+            radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.15) 0%, transparent 60%);
+        filter: blur(80px);
+        animation: affiliateMesh 20s infinite alternate ease-in-out;
     }
 
-    .gadget-experience-card {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 48px;
-        padding: 80px;
-        display: flex;
-        align-items: center;
-        gap: 80px;
-        margin-bottom: 40px;
+    @keyframes affiliateMesh {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        100% { transform: translate(-5%, 5%) rotate(10deg); }
+    }
+
+    .affiliate-container {
         position: relative;
-        z-index: 5;
-        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        box-shadow: 0 50px 100px rgba(0,0,0,0.4);
-    }
-
-    .gadget-experience-card:hover {
-        transform: translateY(-10px);
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    .gadget-experience-card h2 {
-        font-size: 52px;
-        font-weight: 950;
-        color: #ffffff;
-        margin-bottom: 25px;
-        letter-spacing: -0.05em;
-        line-height: 1.1;
-    }
-
-    .gadget-experience-card p {
-        font-size: 20px;
-        color: #94a3b8;
-        margin-bottom: 45px;
-        max-width: 500px;
-        line-height: 1.7;
-    }
-
-    .gadget-cta-grid {
-        display: grid;
-        grid-template-columns: 1fr 1.5fr;
-        gap: 40px;
-        position: relative;
-        z-index: 5;
-    }
-
-    .gadget-cta-grid article {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(25px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 40px;
-        padding: 50px;
-        transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        z-index: 10;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 60px 40px;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 380px;
-    }
-
-    .gadget-cta-grid article:hover {
-        transform: translateY(-8px);
-        border-color: rgba(59, 130, 246, 0.3);
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .gadget-cta-grid p {
-        color: #3b82f6;
-        font-weight: 900;
-        text-transform: uppercase;
-        font-size: 13px;
-        margin-bottom: 16px;
-        letter-spacing: 0.15em;
-    }
-
-    .gadget-cta-grid h3 {
-        font-size: 32px;
-        font-weight: 900;
-        color: #ffffff;
-        margin-bottom: 35px;
-        letter-spacing: -0.03em;
-    }
-
-    .gadget-cta-grid__wide {
-        display: flex !important;
-        flex-direction: row !important;
         align-items: center;
         justify-content: space-between;
+        gap: 60px;
     }
 
-    .btn-cta-aura {
-        background: #3b82f6;
-        color: #ffffff !important;
-        padding: 18px 40px;
-        border-radius: 16px;
-        font-weight: 800;
-        text-decoration: none !important;
-        display: inline-flex;
+    .affiliate-left {
+        flex: 1.2;
+        text-align: left;
+    }
+
+    .affiliate-right {
+        flex: 0.8;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(20px);
+        padding: 40px;
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+    }
+
+    .affiliate-eyebrow {
+        display: inline-block;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: #3b82f6;
+        margin-bottom: 25px;
+        font-size: 14px;
+        background: rgba(59, 130, 246, 0.1);
+        padding: 8px 24px;
+        border-radius: 100px;
+        backdrop-filter: blur(10px);
+    }
+
+    .affiliate-left h2 {
+        font-size: clamp(40px, 6vw, 75px);
+        font-weight: 950;
+        color: #0f172a;
+        line-height: 1.1;
+        margin-bottom: 30px;
+        letter-spacing: -0.05em;
+        padding-bottom: 10px;
+    }
+
+    .affiliate-left h2 span {
+        display: block;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .affiliate-left p {
+        font-size: clamp(18px, 1.8vw, 22px);
+        color: #475569;
+        max-width: 650px;
+        line-height: 1.6;
+        font-weight: 500;
+    }
+
+    .affiliate-benefits {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 35px 0;
+    }
+
+    .affiliate-benefits li {
+        display: flex;
         align-items: center;
         gap: 12px;
-        transition: 0.4s;
-        box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 15px;
     }
 
-    .btn-cta-aura:hover {
-        background: #2563eb;
-        transform: scale(1.05);
-        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.5);
+    .affiliate-benefits li svg {
+        color: #3b82f6;
     }
 
-    .cta-product-img {
-        max-width: 100%;
-        filter: drop-shadow(0 30px 60px rgba(0,0,0,0.4));
-        animation: ctaFloat 8s infinite ease-in-out;
-        -webkit-mask-image: radial-gradient(circle, black 50%, transparent 95%);
-        mask-image: radial-gradient(circle, black 50%, transparent 95%);
+    .btn-affiliate-join {
+        display: inline-flex;
+        align-items: center;
+        gap: 15px;
+        background: #0f172a;
+        color: #ffffff !important;
+        padding: 20px 40px;
+        border-radius: 20px;
+        font-weight: 900;
+        text-decoration: none !important;
+        font-size: 18px;
+        transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+        border: 1px solid #0f172a;
+        width: 100%;
+        justify-content: center;
     }
 
-    @keyframes ctaFloat {
-        0%, 100% { transform: translateY(0) rotate(0deg); }
-        50% { transform: translateY(-25px) rotate(3deg); }
-    }
-
-    @media (max-width: 1200px) {
-        .gadget-experience-card { padding: 60px; gap: 40px; }
-        .gadget-experience-card h2 { font-size: 42px; }
+    .btn-affiliate-join:hover {
+        background: #3b82f6;
+        border-color: #3b82f6;
+        transform: translateY(-5px);
+        box-shadow: 0 30px 60px rgba(59, 130, 246, 0.4);
     }
 
     @media (max-width: 991px) {
-        .gadget-experience-card { flex-direction: column; padding: 50px 30px; text-align: center; }
-        .gadget-experience-card p { margin-inline: auto; }
-        .gadget-cta-grid { grid-template-columns: 1fr; }
-        .gadget-cta-grid__wide { flex-direction: column !important; text-align: center; gap: 40px; }
+        .affiliate-container { flex-direction: column; text-align: center; gap: 40px; padding: 60px 20px; }
+        .affiliate-left, .affiliate-right { text-align: center; align-items: center; }
+        .affiliate-left p { margin: 0 auto; }
+        .affiliate-benefits { margin-bottom: 25px; }
     }
 </style>
 @endpushOnce
 
-<section class="gadget-section gadget-cta" aria-label="Featured gadget promotions">
-    <div class="cta-aura">
-        <div class="cta-blob cta-blob-1"></div>
-        <div class="cta-blob cta-blob-2"></div>
-    </div>
+<section class="gadget-affiliate-banner" aria-label="Join our affiliate program">
+    <!-- Background Layer -->
+    <img 
+        src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=2000" 
+        alt="Modern Affiliate Tech" 
+        class="affiliate-bg-image"
+    >
 
-    <div class="gadget-container">
-        <div class="gadget-experience-card">
-            <div style="flex: 1.2;">
-                <h2>Future Reality Experience</h2>
-                <p>Unlock new dimensions of productivity and entertainment with the next generation of spatial tech.</p>
-                <a href="{{ route('shop.search.index') }}" class="btn-cta-aura">
-                    <span>Get Started</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
-            </div>
-
-            <div class="gadget-experience-card__image" style="flex: 0.8; text-align: center;">
-                <img 
-                    src="https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?auto=format&fit=crop&q=80&w=1000" 
-                    alt="VR Headset" 
-                    class="cta-product-img"
-                    onerror="this.src='https://via.placeholder.com/800x800/0f172a/3b82f6?text=VR+Experience'"
-                >
-            </div>
+    <!-- Visual Polish -->
+    <div class="affiliate-overlay"></div>
+    <div class="affiliate-mesh"></div>
+    
+    <div class="affiliate-container">
+        <!-- Left Column: Core Message -->
+        <div class="affiliate-left">
+            <span class="affiliate-eyebrow">Affiliate Opportunity</span>
+            
+            <h2>
+                EARN MONEY
+                <span>JOIN Affiliate Program</span>
+            </h2>
+            
+            <p>Partner with the industry leader in futuristic gadget tech and transform your network into a recurring revenue stream.</p>
         </div>
 
-        <div class="gadget-cta-grid">
-            <article>
-                <p>Trending Now</p>
-                <h3>Next-Gen Smart Gear</h3>
-                <a href="{{ route('shop.search.index') }}" class="btn-cta-aura">
-                    Browse Gear
-                </a>
-            </article>
+        <!-- Right Column: Call to Action + Benefits -->
+        <div class="affiliate-right">
+            <ul class="affiliate-benefits">
+                <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Up to 50% Commission</span>
+                </li>
+                <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Instant Payout System</span>
+                </li>
+                <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>Premium Marketing Kit</span>
+                </li>
+            </ul>
 
-            <article class="gadget-cta-grid__wide">
-                <div style="max-width: 350px;">
-                    <p>Sonic Tech</p>
-                    <h3>Pure Sound Fidelity</h3>
-                    <a href="{{ route('shop.search.index', ['query' => 'headphones']) }}" class="btn-cta-aura">
-                        View More
-                    </a>
-                </div>
-
-                <div style="flex: 1; text-align: right;">
-                    <img 
-                        src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=600" 
-                        alt="Headphones" 
-                        class="cta-product-img"
-                        style="max-width: 250px;"
-                        onerror="this.src='https://via.placeholder.com/600x600/0f172a/3b82f6?text=Headphones'"
-                    >
-                </div>
-            </article>
+            <a href="{{ route('shop.search.index') }}" class="btn-affiliate-join">
+                <span>Register Now</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
         </div>
     </div>
 </section>
+
+
+
+
+
+
+
