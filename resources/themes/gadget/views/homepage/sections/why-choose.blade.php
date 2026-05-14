@@ -1,43 +1,21 @@
 @php
-    // Use passed products if available, otherwise use curated mock data for presentation
-    $displayProducts = !empty($products) && count($products) > 0 ? $products : [
-        (object)[
-            'name' => 'Quantum VR Headset', 
-            'formatted_price' => '$499.00', 
-            'image_url' => 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?auto=format&fit=crop&q=80&w=500',
-            'url_key' => '#'
-        ],
-        (object)[
-            'name' => 'Sonic ANC Earbuds', 
-            'formatted_price' => '$199.00', 
-            'image_url' => 'https://images.unsplash.com/photo-1590658268037-6f1164d5cd5a?auto=format&fit=crop&q=80&w=500',
-            'url_key' => '#'
-        ],
-        (object)[
-            'name' => 'Holographic Smartwatch', 
-            'formatted_price' => '$299.00', 
-            'image_url' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=500',
-            'url_key' => '#'
-        ],
-        (object)[
-            'name' => 'Aero Drone Pro', 
-            'formatted_price' => '$899.00', 
-            'image_url' => 'https://images.unsplash.com/photo-1507580461461-8f55e09f58ea?auto=format&fit=crop&q=80&w=500',
-            'url_key' => '#'
-        ],
-        (object)[
-            'name' => 'Nebula Smart Speaker', 
-            'formatted_price' => '$149.00', 
-            'image_url' => 'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&q=80&w=500',
-            'url_key' => '#'
-        ],
-        (object)[
-            'name' => 'Cyber Mechanical Keyboard', 
-            'formatted_price' => '$249.00', 
-            'image_url' => 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&q=80&w=500',
-            'url_key' => '#'
-        ],
-    ];
+$_fallbackJfyProds = [
+    ['name' => 'Quantum VR Headset', 'formatted_price' => '$499.00', 'image_url' => 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?auto=format&fit=crop&q=80&w=500', 'url_key' => '#'],
+    ['name' => 'Sonic ANC Earbuds', 'formatted_price' => '$199.00', 'image_url' => 'https://images.unsplash.com/photo-1590658268037-6f1164d5cd5a?auto=format&fit=crop&q=80&w=500', 'url_key' => '#'],
+    ['name' => 'Holographic Smartwatch', 'formatted_price' => '$299.00', 'image_url' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=500', 'url_key' => '#'],
+    ['name' => 'Aero Drone Pro', 'formatted_price' => '$899.00', 'image_url' => 'https://images.unsplash.com/photo-1507580461461-8f55e09f58ea?auto=format&fit=crop&q=80&w=500', 'url_key' => '#'],
+    ['name' => 'Nebula Smart Speaker', 'formatted_price' => '$149.00', 'image_url' => 'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&q=80&w=500', 'url_key' => '#'],
+    ['name' => 'Cyber Mechanical Keyboard', 'formatted_price' => '$249.00', 'image_url' => 'https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&q=80&w=500', 'url_key' => '#'],
+];
+$_realJfy = collect($products ?? []);
+$displayProducts = $_realJfy->isNotEmpty()
+    ? $_realJfy->map(fn($p) => [
+        'name'            => $p['name'] ?? '',
+        'formatted_price' => $p['formatted_price'] ?? $p['final_price'] ?? $p['price'] ?? '',
+        'image_url'       => $p['image_url'] ?? $p['image'] ?? $p['base_image_url'] ?? 'https://via.placeholder.com/500',
+        'url_key'         => $p['url'] ?? $p['url_key'] ?? '#',
+    ])->values()->all()
+    : $_fallbackJfyProds;
 @endphp
 
 @pushOnce('styles')
@@ -250,11 +228,10 @@
         <div class="jfy-slider-track" id="jfy-slider-track">
             @foreach ($displayProducts as $product)
                 @php
-                    // Handle both array (mock) and object (real product) access
-                    $name = is_object($product) ? ($product->name ?? 'Product Name') : ($product['name'] ?? 'Product Name');
-                    $price = is_object($product) ? ($product->formatted_price ?? $product->price ?? '$0.00') : ($product['formatted_price'] ?? $product['price'] ?? '$0.00');
-                    $image = is_object($product) ? ($product->image_url ?? $product->base_image_url ?? 'https://via.placeholder.com/500') : ($product['image_url'] ?? 'https://via.placeholder.com/500');
-                    $url = is_object($product) ? ($product->url_key ? route('shop.product_or_category.index', $product->url_key) : '#') : ($product['url_key'] ?? '#');
+                    $name = $product['name'];
+                    $price = $product['formatted_price'];
+                    $image = $product['image_url'];
+                    $url = $product['url_key'] !== '#' ? route('shop.product_or_category.index', $product['url_key']) : '#';
                 @endphp
                 
                 <article class="jfy-product-card">

@@ -1,3 +1,29 @@
+@php
+$_fallbackCats = [
+    ['id'=>1,'name'=>'Headphones','url'=>route('shop.search.index',['query'=>'headphones']),'count'=>124,'image'=>'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>2,'name'=>'Smart Watches','url'=>route('shop.search.index',['query'=>'smartwatch']),'count'=>86,'image'=>'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>3,'name'=>'Laptops','url'=>route('shop.search.index',['query'=>'laptop']),'count'=>210,'image'=>'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>4,'name'=>'Smartphones','url'=>route('shop.search.index',['query'=>'smartphone']),'count'=>342,'image'=>'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>5,'name'=>'Keyboards','url'=>route('shop.search.index',['query'=>'keyboard']),'count'=>54,'image'=>'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>6,'name'=>'Power Banks','url'=>route('shop.search.index',['query'=>'power bank']),'count'=>72,'image'=>'https://images.unsplash.com/photo-1625517431411-3007ca5f8f3c?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>7,'name'=>'Cameras','url'=>route('shop.search.index',['query'=>'camera']),'count'=>43,'image'=>'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>8,'name'=>'Gaming Gear','url'=>route('shop.search.index',['query'=>'gaming']),'count'=>156,'image'=>'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>9,'name'=>'Audio Systems','url'=>route('shop.search.index',['query'=>'audio']),'count'=>89,'image'=>'https://images.unsplash.com/photo-1558089623-9030abfe53f1?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>10,'name'=>'Storage Devices','url'=>route('shop.search.index',['query'=>'storage']),'count'=>112,'image'=>'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>11,'name'=>'Monitors','url'=>route('shop.search.index',['query'=>'monitor']),'count'=>67,'image'=>'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>12,'name'=>'Tablets','url'=>route('shop.search.index',['query'=>'tablet']),'count'=>98,'image'=>'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=500&auto=format&fit=crop'],
+];
+$_realCats = collect($categories ?? []);
+$categoryData = $_realCats->isNotEmpty()
+    ? $_realCats->map(fn($c) => [
+        'id'    => $c['id'] ?? 0,
+        'name'  => $c['name'] ?? '',
+        'url'   => $c['url'] ?? route('shop.search.index'),
+        'count' => $c['products_count'] ?? $c['count'] ?? 0,
+        'image' => $c['image'] ?? $c['logo_path'] ?? 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop',
+    ])->values()->all()
+    : $_fallbackCats;
+@endphp
 @pushOnce('styles')
 <style>
     .gadget-categories {
@@ -294,7 +320,7 @@
             <p class="gadget-categories__subtitle">Explore our universe of premium tech solutions</p>
         </div>
 
-        <v-gadget-categories></v-gadget-categories>
+        <v-gadget-categories :categories="{{ json_encode($categoryData) }}"></v-gadget-categories>
 
         <div class="gadget-order-banner">
             <div class="banner-aura">
@@ -348,94 +374,11 @@
 <script type="module">
     app.component('v-gadget-categories', {
         template: '#v-gadget-categories-template',
+        props: {
+            categories: { type: Array, default: () => [] }
+        },
         data() {
             return {
-                categories: [{
-                        id: 1,
-                        name: 'Headphones',
-                        url: '#',
-                        count: 124,
-                        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 2,
-                        name: 'Smart Watches',
-                        url: '#',
-                        count: 86,
-                        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 3,
-                        name: 'Laptops',
-                        url: '#',
-                        count: 210,
-                        image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 4,
-                        name: 'Smartphones',
-                        url: '#',
-                        count: 342,
-                        image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 5,
-                        name: 'Keyboards',
-                        url: '#',
-                        count: 54,
-                        image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 6,
-                        name: 'Power Banks',
-                        url: '#',
-                        count: 72,
-                        image: 'https://images.unsplash.com/photo-1625517431411-3007ca5f8f3c?q=80&w=500&auto=format&fit=crop'
-                    },
-                    // Load more batch
-                    {
-                        id: 7,
-                        name: 'Cameras',
-                        url: '#',
-                        count: 43,
-                        image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 8,
-                        name: 'Gaming Gear',
-                        url: '#',
-                        count: 156,
-                        image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 9,
-                        name: 'Audio Systems',
-                        url: '#',
-                        count: 89,
-                        image: 'https://images.unsplash.com/photo-1558089623-9030abfe53f1?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 10,
-                        name: 'Storage Devices',
-                        url: '#',
-                        count: 112,
-                        image: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 11,
-                        name: 'Monitors',
-                        url: '#',
-                        count: 67,
-                        image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 12,
-                        name: 'Tablets',
-                        url: '#',
-                        count: 98,
-                        image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=500&auto=format&fit=crop'
-                    },
-                ],
                 visibleCount: 6,
                 loading: false
             }

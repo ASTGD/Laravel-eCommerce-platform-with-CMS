@@ -1,46 +1,51 @@
 @php
+$_heroProds = collect($products ?? [])->take(3)->values();
+$_searchUrl  = route('shop.search.index');
 $heroSlides = [
 [
-'theme' => 'dark',
-'tag' => 'Future Tech 2026',
-'headline' => 'See Beyond',
-'highlight' => 'Reality.',
-'sub' => 'Immerse yourself in next-generation VR. Experience worlds crafted for the bold and the visionary.',
-'cta_label' => 'Explore Now',
+'theme'      => 'dark',
+'tag'        => 'Future Tech 2026',
+'headline'   => 'See Beyond',
+'highlight'  => 'Reality.',
+'sub'        => 'Immerse yourself in next-generation VR. Experience worlds crafted for the bold and the visionary.',
+'cta_label'  => 'Explore Now',
 'cta2_label' => 'View Catalog',
-'badge' => '🏆 Editor\'s Choice',
-'image' => 'images/1.png',
-'bg_from' => '#0d0221',
-'bg_to' => '#1a0533',
-'accent' => '#a855f7',
+'badge'      => '🏆 Editor\'s Choice',
+'image'      => 'images/1.png',
+'url'        => $_heroProds->get(0)['url'] ?? $_searchUrl,
+'bg_from'    => '#0d0221',
+'bg_to'      => '#1a0533',
+'accent'     => '#a855f7',
 ],
 [
-'theme' => 'light',
-'tag' => 'Sonic Excellence',
-'headline' => 'Hear Every',
-'highlight' => 'Detail.',
-'sub' => 'Studio-grade audio meets everyday comfort. The pro headphones that redefine what music feels like.',
-'cta_label' => 'Shop Now',
+'theme'      => 'light',
+'tag'        => 'Sonic Excellence',
+'headline'   => 'Hear Every',
+'highlight'  => 'Detail.',
+'sub'        => 'Studio-grade audio meets everyday comfort. The pro headphones that redefine what music feels like.',
+'cta_label'  => 'Shop Now',
 'cta2_label' => 'Compare Models',
-'badge' => '⭐ #1 Bestseller',
-'image' => 'images/2.png',
-'bg_from' => '#f0f9ff',
-'bg_to' => '#dbeafe',
-'accent' => '#0ea5e9',
+'badge'      => '⭐ #1 Bestseller',
+'image'      => 'images/2.png',
+'url'        => $_heroProds->get(1)['url'] ?? $_searchUrl,
+'bg_from'    => '#f0f9ff',
+'bg_to'      => '#dbeafe',
+'accent'     => '#0ea5e9',
 ],
 [
-'theme' => 'dark',
-'tag' => 'Precision Wearables',
-'headline' => 'Time, Elevated',
-'highlight' => 'Differently.',
-'sub' => 'Track performance, monitor health, and stay connected — all from the most intelligent device on your wrist.',
-'cta_label' => 'Discover More',
+'theme'      => 'dark',
+'tag'        => 'Precision Wearables',
+'headline'   => 'Time, Elevated',
+'highlight'  => 'Differently.',
+'sub'        => 'Track performance, monitor health, and stay connected — all from the most intelligent device on your wrist.',
+'cta_label'  => 'Discover More',
 'cta2_label' => 'See Features',
-'badge' => '💎 Premium Pick',
-'image' => 'images/3.png',
-'bg_from' => '#0f172a',
-'bg_to' => '#1e293b',
-'accent' => '#38bdf8',
+'badge'      => '💎 Premium Pick',
+'image'      => 'images/3.png',
+'url'        => $_heroProds->get(2)['url'] ?? $_searchUrl,
+'bg_from'    => '#0f172a',
+'bg_to'      => '#1e293b',
+'accent'     => '#38bdf8',
 ],
 ];
 @endphp
@@ -597,7 +602,7 @@ $heroSlides = [
 
                             <div class="gh-cta-row">
                                 <a
-                                    :href="searchUrl"
+                                    :href="slide.url || searchUrl"
                                     class="gh-btn-primary"
                                     :style="primaryBtnStyle(slide)"
                                 >
@@ -610,7 +615,7 @@ $heroSlides = [
                                     </span>
                                 </a>
                                 <a
-                                    :href="searchUrl"
+                                    :href="slide.url || searchUrl"
                                     class="gh-btn-secondary"
                                     :style="secondaryBtnStyle(slide)"
                                 >
