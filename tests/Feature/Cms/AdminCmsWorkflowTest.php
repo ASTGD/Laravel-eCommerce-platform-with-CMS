@@ -113,15 +113,18 @@ it('renders the business friendly CMS Studio workspace', function () {
 
     $response->assertOk()
         ->assertSeeText('CMS Studio')
+        ->assertSeeText('Manage the website header, footer, navigation, and homepage hero in one place.')
         ->assertSeeText('My Website')
+        ->assertDontSeeText('Website Builder')
+        ->assertDontSeeText('Theme-safe content areas')
         ->assertSeeText('Header')
         ->assertSeeText('Footer')
         ->assertSeeText('Navigation')
         ->assertSeeText('Homepage')
-        ->assertSeeText('Pages')
-        ->assertSeeText('Reusable Blocks')
-        ->assertSeeText('Site Settings')
         ->assertSeeText('Header Builder')
+        ->assertDontSee('?area=settings', false)
+        ->assertDontSeeText('Pages')
+        ->assertDontSeeText('Reusable Blocks')
         ->assertDontSee('settings_json')
         ->assertDontSeeText('Section Types')
         ->assertDontSeeText('Component Types')
@@ -143,9 +146,49 @@ it('renders every CMS Studio local section without exposing raw JSON editing', f
     ['footer', 'Footer Builder'],
     ['navigation', 'Navigation'],
     ['homepage', 'Homepage Builder'],
-    ['pages', 'Pages'],
-    ['reusable-blocks', 'Reusable Blocks'],
-    ['settings', 'Site Settings'],
+]);
+
+it('renders site settings as a standalone My Website section', function () {
+    $this->loginAsAdmin();
+
+    $response = $this->get(route('admin.cms.settings.index'));
+
+    $response->assertOk()
+        ->assertSeeText('Site Settings')
+        ->assertSeeText('Website Settings')
+        ->assertSeeText('Store Identity')
+        ->assertSeeText('Contact')
+        ->assertSeeText('Social Links')
+        ->assertDontSeeText('Website Builder')
+        ->assertDontSeeText('Header Builder')
+        ->assertDontSeeText('Homepage Builder')
+        ->assertDontSee('settings_json')
+        ->assertDontSee('name="settings_json"', false);
+});
+
+it('keeps My Website sidebar routes isolated from CMS Studio active matching', function () {
+    $this->loginAsAdmin();
+
+    expect(route('admin.cms.index'))->toContain('/admin/cms/studio')
+        ->and(route('admin.cms.dashboard.index'))->not->toStartWith(route('admin.cms.index'))
+        ->and(route('admin.cms.settings.index'))->not->toStartWith(route('admin.cms.index'));
+
+    $this->get('/'.trim((string) config('app.admin_url'), '/').'/cms?area=homepage')
+        ->assertRedirect(route('admin.cms.index', ['area' => 'homepage']));
+});
+
+it('does not expose removed CMS Studio page or block authoring areas', function (string $area) {
+    $this->loginAsAdmin();
+
+    $this->get(route('admin.cms.index', ['area' => $area]))
+        ->assertOk()
+        ->assertSeeText('Header Builder')
+        ->assertDontSeeText('Pages')
+        ->assertDontSeeText('Reusable Blocks');
+})->with([
+    'legacy pages area' => 'pages',
+    'legacy reusable blocks area' => 'reusable-blocks',
+    'legacy static content alias' => 'static-content',
 ]);
 
 it('saves structured header settings through CMS Studio', function () {

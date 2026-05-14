@@ -17,7 +17,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
@@ -37,15 +36,10 @@ class CmsStudioController extends Controller
         'footer',
         'navigation',
         'homepage',
-        'pages',
-        'reusable-blocks',
-        'settings',
     ];
 
     private const AREA_ALIASES = [
         'homepage-sections' => 'homepage',
-        'static-content' => 'pages',
-        'site-settings' => 'settings',
     ];
 
     private const HOMEPAGE_SECTION_CODES = [
@@ -79,6 +73,15 @@ class CmsStudioController extends Controller
             'preview' => $this->previewPayload($area, $editor, $menus),
             'previewStorefrontUrl' => $this->previewStorefrontUrl(),
             'canSave' => in_array($area, ['header', 'footer', 'navigation', 'homepage'], true) && ($editor['storage_available'] ?? false),
+        ]);
+    }
+
+    public function settings(): View
+    {
+        return view('experience-cms::admin.site-settings.index', [
+            'summary' => $this->siteSettingsSummary(),
+            'groups' => $this->siteSettingsGroups(),
+            'previewStorefrontUrl' => $this->previewStorefrontUrl(),
         ]);
     }
 
@@ -505,9 +508,6 @@ class CmsStudioController extends Controller
                     ['key' => 'footer', 'label' => 'Footer'],
                     ['key' => 'navigation', 'label' => 'Navigation'],
                     ['key' => 'homepage', 'label' => 'Homepage'],
-                    ['key' => 'pages', 'label' => 'Pages'],
-                    ['key' => 'reusable-blocks', 'label' => 'Reusable Blocks'],
-                    ['key' => 'settings', 'label' => 'Site Settings'],
                 ],
             ],
         ];
@@ -532,33 +532,6 @@ class CmsStudioController extends Controller
             'footer' => $this->footerEditorPayload($menus),
             'navigation' => $this->navigationEditorPayload($request),
             'homepage' => $this->homepageEditorPayload(),
-            'reusable-blocks' => $this->placeholderPayload(
-                'Reusable Blocks',
-                'Manage reusable structured content blocks used by homepage sections, header, footer, and pages.',
-                null,
-                [
-                    'summary' => $this->contentEntrySummary(),
-                    'recommended_types' => ['FAQ block', 'Trust badges', 'Contact info block', 'Promo text block', 'Footer link group'],
-                ]
-            ),
-            'pages' => $this->placeholderPayload(
-                'Pages',
-                'Manage safe static, landing, and policy pages. Product, category, cart, checkout, and customer pages are not edited here.',
-                null,
-                [
-                    'summary' => $this->pageSummary(),
-                    'allowed_types' => ['About Us', 'Contact', 'Privacy Policy', 'Terms & Conditions', 'Return Policy', 'Landing / Campaign Page'],
-                ]
-            ),
-            'settings' => $this->placeholderPayload(
-                'Site Settings',
-                'Manage global website identity, SEO defaults, contact details, trust badges, and shared storefront content.',
-                null,
-                [
-                    'summary' => $this->siteSettingsSummary(),
-                    'groups' => ['Store Identity', 'Contact', 'Social Links', 'Trust / Footer Info', 'SEO Defaults'],
-                ]
-            ),
             default => $this->headerEditorPayload($menus),
         };
     }
@@ -1457,57 +1430,6 @@ class CmsStudioController extends Controller
             ->all();
     }
 
-    private function pageSummary(): array
-    {
-        if (! $this->modelTableExists(Page::class)) {
-            return ['total' => 0, 'published' => 0, 'draft' => 0, 'pages' => []];
-        }
-
-        $safePageQuery = fn ($query) => $query->whereNotIn('type', ['product_page', 'category_page']);
-
-        return [
-            'total' => $this->countModel(Page::class, $safePageQuery),
-            'published' => $this->countModel(Page::class, fn ($query) => $safePageQuery($query)->where('status', Page::STATUS_PUBLISHED)),
-            'draft' => $this->countModel(Page::class, fn ($query) => $safePageQuery($query)->where('status', Page::STATUS_DRAFT)),
-            'pages' => Page::query()
-                ->whereNotIn('type', ['product_page', 'category_page'])
-                ->orderBy('title')
-                ->limit(6)
-                ->get(['title', 'slug', 'type', 'status'])
-                ->map(fn (Page $page): array => [
-                    'title' => $page->title,
-                    'slug' => $page->slug,
-                    'type' => $page->type,
-                    'status' => $page->status,
-                ])
-                ->all(),
-        ];
-    }
-
-    private function contentEntrySummary(): array
-    {
-        if (! $this->modelTableExists(ContentEntry::class)) {
-            return ['total' => 0, 'published' => 0, 'draft' => 0, 'blocks' => []];
-        }
-
-        return [
-            'total' => $this->countModel(ContentEntry::class),
-            'published' => $this->countModel(ContentEntry::class, fn ($query) => $query->where('status', ContentEntry::STATUS_PUBLISHED)),
-            'draft' => $this->countModel(ContentEntry::class, fn ($query) => $query->where('status', ContentEntry::STATUS_DRAFT)),
-            'blocks' => ContentEntry::query()
-                ->orderBy('title')
-                ->limit(6)
-                ->get(['title', 'slug', 'type', 'status'])
-                ->map(fn (ContentEntry $entry): array => [
-                    'title' => $entry->title,
-                    'slug' => $entry->slug,
-                    'type' => $entry->type,
-                    'status' => $entry->status,
-                ])
-                ->all(),
-        ];
-    }
-
     private function siteSettingsSummary(): array
     {
         if (! $this->modelTableExists(SiteSetting::class)) {
@@ -1527,6 +1449,68 @@ class CmsStudioController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+    private function siteSettingsGroups(): array
+    {
+        $definitions = [
+            [
+                'name' => 'Store Identity',
+                'description' => 'Brand name, logo, favicon, and storefront identity defaults.',
+                'keys' => ['store.identity'],
+            ],
+            [
+                'name' => 'Contact',
+                'description' => 'Public contact details used by storefront theme surfaces.',
+                'keys' => ['store.contact'],
+            ],
+            [
+                'name' => 'Social Links',
+                'description' => 'Social profile links used by footer and website sections.',
+                'keys' => ['store.social_links'],
+            ],
+            [
+                'name' => 'Trust / Footer Info',
+                'description' => 'Payment, delivery, return, and footer trust messaging defaults.',
+                'keys' => ['store.trust', 'store.footer'],
+            ],
+            [
+                'name' => 'SEO Defaults',
+                'description' => 'Default metadata used when page-level SEO is not configured.',
+                'keys' => ['seo.defaults'],
+            ],
+        ];
+
+        if (! $this->modelTableExists(SiteSetting::class)) {
+            return collect($definitions)
+                ->map(fn (array $definition): array => [
+                    ...$definition,
+                    'status' => 'Missing',
+                    'configured_fields' => 0,
+                    'updated_at' => null,
+                ])
+                ->all();
+        }
+
+        $settings = SiteSetting::query()
+            ->whereIn('key', collect($definitions)->flatMap(fn (array $definition): array => $definition['keys'])->all())
+            ->get()
+            ->keyBy('key');
+
+        return collect($definitions)
+            ->map(function (array $definition) use ($settings): array {
+                $records = collect($definition['keys'])
+                    ->map(fn (string $key) => $settings->get($key))
+                    ->filter();
+
+                return [
+                    ...$definition,
+                    'status' => $records->isNotEmpty() ? 'Configured' : 'Missing',
+                    'configured_fields' => $records->sum(fn (SiteSetting $setting): int => collect($setting->value_json ?? [])->filter(fn (mixed $value): bool => filled($value))->count()),
+                    'updated_at' => $records->max(fn (SiteSetting $setting) => $setting->updated_at),
+                ];
+            })
+            ->all();
     }
 
     private function siteSettingValue(string $key, ?string $path = null): mixed

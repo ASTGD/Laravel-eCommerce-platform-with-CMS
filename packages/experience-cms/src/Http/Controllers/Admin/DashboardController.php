@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
-use Platform\ExperienceCms\Models\ContentEntry;
 use Platform\ExperienceCms\Models\FooterConfig;
 use Platform\ExperienceCms\Models\HeaderConfig;
 use Platform\ExperienceCms\Models\Menu;
@@ -58,12 +57,6 @@ class DashboardController extends Controller
                 'name' => $activeThemePreset?->name,
                 'code' => $activeThemePreset?->code,
             ],
-            'pages' => [
-                'total' => $this->countModel(Page::class),
-                'published' => $this->countModel(Page::class, fn ($query) => $query->where('status', Page::STATUS_PUBLISHED)),
-                'draft' => $this->countModel(Page::class, fn ($query) => $query->where('status', Page::STATUS_DRAFT)),
-            ],
-            'content_entries' => $this->countModel(ContentEntry::class),
             'menus' => $this->countModel(Menu::class),
             'header_configs' => $this->countModel(HeaderConfig::class),
             'footer_configs' => $this->countModel(FooterConfig::class),
