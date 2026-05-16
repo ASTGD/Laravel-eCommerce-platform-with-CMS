@@ -519,7 +519,7 @@ $saleProducts = $_realProds->isNotEmpty()
             loadMore() {
                 this.loading = true;
                 setTimeout(() => {
-                    this.visibleCount += 10;
+                    this.visibleCount += 5;
                     this.loading = false;
                 }, 600);
             }

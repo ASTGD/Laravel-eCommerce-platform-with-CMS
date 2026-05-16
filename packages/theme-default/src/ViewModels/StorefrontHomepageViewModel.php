@@ -13,12 +13,10 @@ class StorefrontHomepageViewModel
 {
     public function build(): array
     {
-        $saleProducts = $this->products('sale', 4);
+        $saleProducts = $this->products('sale', 20);
 
         return [
-            'saleProducts' => $saleProducts->isNotEmpty()
-                ? $saleProducts
-                : $this->products('featured', 4),
+            'saleProducts' => $saleProducts,
             'latestProducts' => $this->products('latest', 4),
             'categories' => $this->categories(24),
             'heroSliderImages' => $this->heroSliderImages(),
@@ -68,8 +66,9 @@ class StorefrontHomepageViewModel
 
         match ($mode) {
             'sale' => $query
-                ->whereNotNull('special_price')
-                ->where('special_price', '>', 0)
+                ->whereHas('product.categories.translations', function ($q) {
+                    $q->where('slug', 'limited-sale');
+                })
                 ->orderByDesc('product_id'),
             'featured' => $query
                 ->where('featured', 1)

@@ -379,7 +379,7 @@ $categoryData = $_realCats->isNotEmpty()
         },
         data() {
             return {
-                visibleCount: 6,
+                visibleCount: 12,
                 loading: false
             }
         },
