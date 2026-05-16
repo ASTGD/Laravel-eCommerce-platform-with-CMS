@@ -1,23 +1,23 @@
 @php
 $_fallbackSaleProducts = [
-    ['id'=>1,'name'=>'Premium TWS Earbuds Pro','url'=>'#','image'=>'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳4,100.00','final_price'=>'৳3,750.00','badge'=>'Sale'],
-    ['id'=>2,'name'=>'Ultra High Capacity Power Bank','url'=>'#','image'=>'https://images.unsplash.com/photo-1629131726692-1accd0c93fd0?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳6,900.00','final_price'=>'৳4,899.00','badge'=>'Sale'],
-    ['id'=>3,'name'=>'Fast Charging Power Bank 10K','url'=>'#','image'=>'https://images.unsplash.com/photo-1585333120111-96531985392d?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳1,350.00','final_price'=>'৳1,050.00','badge'=>'Hot'],
-    ['id'=>4,'name'=>'Portable Handheld USB Fan','url'=>'#','image'=>'https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳799.00','final_price'=>'৳545.00','badge'=>'Sale'],
-    ['id'=>5,'name'=>'Magnetic Wireless Power Bank','url'=>'#','image'=>'https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳3,550.00','final_price'=>'৳2,750.00','badge'=>'Sale'],
+['id'=>1,'name'=>'Premium TWS Earbuds Pro','url'=>'#','image'=>'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳4,100.00','final_price'=>'৳3,750.00','badge'=>'Sale'],
+['id'=>2,'name'=>'Ultra High Capacity Power Bank','url'=>'#','image'=>'https://images.unsplash.com/photo-1629131726692-1accd0c93fd0?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳6,900.00','final_price'=>'৳4,899.00','badge'=>'Sale'],
+['id'=>3,'name'=>'Fast Charging Power Bank 10K','url'=>'#','image'=>'https://images.unsplash.com/photo-1585333120111-96531985392d?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳1,350.00','final_price'=>'৳1,050.00','badge'=>'Hot'],
+['id'=>4,'name'=>'Portable Handheld USB Fan','url'=>'#','image'=>'https://images.unsplash.com/photo-1591123120675-6f7f1aae0e5b?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳799.00','final_price'=>'৳545.00','badge'=>'Sale'],
+['id'=>5,'name'=>'Magnetic Wireless Power Bank','url'=>'#','image'=>'https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop','regular_price'=>'৳3,550.00','final_price'=>'৳2,750.00','badge'=>'Sale'],
 ];
 $_realProds = collect($products ?? []);
 $saleProducts = $_realProds->isNotEmpty()
-    ? $_realProds->map(fn($p) => [
-        'id'            => $p['id'] ?? 0,
-        'name'          => $p['name'] ?? '',
-        'url'           => $p['url'] ?? '#',
-        'image'         => $p['image'] ?? '',
-        'regular_price' => $p['regular_price'] ?? $p['final_price'] ?? '',
-        'final_price'   => $p['final_price'] ?? '',
-        'badge'         => $p['badge'] ?? ($p['has_discount'] ?? false ? 'Sale' : 'New'),
-    ])->values()->all()
-    : $_fallbackSaleProducts;
+? $_realProds->map(fn($p) => [
+'id' => $p['id'] ?? 0,
+'name' => $p['name'] ?? '',
+'url' => $p['url'] ?? '#',
+'image' => $p['image'] ?? '',
+'regular_price' => $p['regular_price'] ?? $p['final_price'] ?? '',
+'final_price' => $p['final_price'] ?? '',
+'badge' => $p['badge'] ?? ($p['has_discount'] ?? false ? 'Sale' : 'New'),
+])->values()->all()
+: $_fallbackSaleProducts;
 @endphp
 @pushOnce('styles')
 <style>
@@ -437,7 +437,7 @@ $saleProducts = $_realProds->isNotEmpty()
         </div>
         
         <div v-else>
-            <a href="/shop" class="btn-action">
+            <a href="/search" class="btn-action">
                 <span>Explore All Products</span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </a>
@@ -496,7 +496,10 @@ $saleProducts = $_realProds->isNotEmpty()
     app.component('v-limited-sale-grid', {
         template: '#v-limited-sale-grid-template',
         props: {
-            products: { type: Array, default: () => [] }
+            products: {
+                type: Array,
+                default: () => []
+            }
         },
         data() {
             return {
