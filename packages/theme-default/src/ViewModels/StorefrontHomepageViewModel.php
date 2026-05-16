@@ -20,7 +20,7 @@ class StorefrontHomepageViewModel
                 ? $saleProducts
                 : $this->products('featured', 4),
             'latestProducts' => $this->products('latest', 4),
-            'categories' => $this->categories(4),
+            'categories' => $this->categories(24),
             'heroSliderImages' => $this->heroSliderImages(),
         ];
     }
@@ -87,6 +87,7 @@ class StorefrontHomepageViewModel
     protected function categories(int $limit): Collection
     {
         return Category::query()
+            ->withCount('products')
             ->where('status', 1)
             ->whereNotNull('parent_id')
             ->orderBy('position')
@@ -125,6 +126,7 @@ class StorefrontHomepageViewModel
             'name' => $category->name ?: 'Category',
             'url' => $category->slug ? url($category->slug) : '#',
             'image' => $imagePath ? url('cache/medium/'.$imagePath) : null,
+            'count' => $category->products_count ?? 0,
         ];
     }
 
