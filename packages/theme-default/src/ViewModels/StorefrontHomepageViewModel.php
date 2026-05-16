@@ -18,6 +18,8 @@ class StorefrontHomepageViewModel
         return [
             'saleProducts' => $saleProducts,
             'latestProducts' => $this->products('latest', 4),
+            'featuredPicks' => $this->products('featured_picks', 12),
+            'personalizedPicks' => $this->products('personalized_picks', 12),
             'categories' => $this->categories(24),
             'heroSliderImages' => $this->heroSliderImages(),
         ];
@@ -64,7 +66,7 @@ class StorefrontHomepageViewModel
             ->where('status', 1)
             ->where('visible_individually', 1);
 
-        match ($mode) {
+        $query = match ($mode) {
             'sale' => $query
                 ->whereHas('product.categories.translations', function ($q) {
                     $q->where('slug', 'limited-sale');
@@ -72,6 +74,27 @@ class StorefrontHomepageViewModel
                 ->orderByDesc('product_id'),
             'featured' => $query
                 ->where('featured', 1)
+                ->orderByDesc('product_id'),
+            'featured_picks' => $query
+                ->whereHas('product.categories', function ($q) {
+                    $q->whereHas('translations', function ($q2) {
+                        $q2->where('slug', 'featured-picks');
+                    });
+                })
+                ->orderByDesc('product_id'),
+            'latest' => $query
+                ->whereHas('product.categories', function ($q) {
+                    $q->whereHas('translations', function ($q2) {
+                        $q2->where('slug', 'new-arrivals');
+                    });
+                })
+                ->orderByDesc('product_id'),
+            'personalized_picks' => $query
+                ->whereHas('product.categories', function ($q) {
+                    $q->whereHas('translations', function ($q2) {
+                        $q2->where('slug', 'personalized-picks');
+                    });
+                })
                 ->orderByDesc('product_id'),
             default => $query->orderByDesc('product_id'),
         };

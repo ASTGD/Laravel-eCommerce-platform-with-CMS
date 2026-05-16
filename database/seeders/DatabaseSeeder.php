@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ThemeCoreSeeder::class,
             ExperienceCmsSeeder::class,
+            HomepageCategorySeeder::class,
         ]);
 
         if (app()->environment('local')) {
