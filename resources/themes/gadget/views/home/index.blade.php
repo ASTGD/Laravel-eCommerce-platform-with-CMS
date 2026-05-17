@@ -45,6 +45,8 @@ $homepage = app(\Platform\ThemeDefault\ViewModels\StorefrontHomepageViewModel::c
             @include('shop::homepage.sections.cta', ['products' => $homepage['latestProducts']])
             @include('shop::homepage.sections.why-choose', ['products' => $homepage['personalizedPicks']])
             @include('shop::homepage.sections.testimonials')
+            @include('shop::homepage.sections.full-width-text')
+            @include('shop::homepage.sections.feature-cards')
         </div>
 
         @include('shop::partials.gadget-footer')
