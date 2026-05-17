@@ -222,20 +222,10 @@ $displayProducts = $_realJfy->isNotEmpty()
 
 <section class="gadget-section gadget-jfy" aria-labelledby="gadget-jfy-title">
     <div class="gadget-container">
-        <!-- Header & Controls -->
         <div class="gadget-jfy-header">
             <div class="gadget-jfy-title">
                 <p>Personalized Picks</p>
                 <h2 id="gadget-jfy-title">Just For You</h2>
-            </div>
-            
-            <div class="gadget-jfy-controls">
-                <button class="jfy-nav-btn" id="jfy-btn-prev" aria-label="Previous Products">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
-                <button class="jfy-nav-btn" id="jfy-btn-next" aria-label="Next Products">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
             </div>
         </div>
 
