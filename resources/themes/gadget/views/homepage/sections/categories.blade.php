@@ -193,30 +193,43 @@ $categoryData = $_realCats->isNotEmpty()
         margin-top: 60px;
     }
 
-    .gadget-order-card {
+    .gadget-promo-card {
         position: relative;
         z-index: 5;
-        max-width: 500px;
-        background: transparent;
-        border: none;
-        padding: 0;
+        width: 100%;
+        max-width: 530px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 60px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
     }
 
-    .gadget-order-card p {
+    .gadget-promo-card p {
         color: #3b82f6;
-        font-weight: normal;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.15em;
         font-size: 14px;
         margin-bottom: 20px;
     }
 
-    .gadget-order-card h3 {
-        font-size: 48px;
+    .gadget-promo-card h3 {
+        font-size: 46px;
         font-weight: normal;
-        line-height: 1.1;
+        line-height: 1.15;
         margin-bottom: 40px;
-        letter-spacing: -0.04em;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+
+    .gadget-promo-card .text-gradient {
+        background: linear-gradient(135deg, #60a5fa, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 600;
     }
 
     .btn-order-now {
@@ -238,16 +251,15 @@ $categoryData = $_realCats->isNotEmpty()
         box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
     }
 
-    .banner-product-img {
-        max-width: 280px; /* Slightly smaller to fit perfectly above the text */
-        filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.4));
+    .promo-floating-img {
+        max-width: 280px;
+        filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.5));
         animation: floatBanner 6s infinite ease-in-out;
-        z-index: 2;
+        z-index: 10;
         position: absolute;
-        left: 20px;
-        top: -70px;
+        right: -180px; /* Pushed into the gap to prevent text overlap */
+        top: -50px;
         pointer-events: none;
-        opacity: 1;
     }
 
     @keyframes floatBanner {
@@ -342,22 +354,22 @@ $categoryData = $_realCats->isNotEmpty()
         </div>
 
         <div class="gadget-seamless-content">
-            <div class="gadget-order-card">
-            <p>Seamless Experience</p>
-            <h3>Order Premium Tech Without Any Hassle.</h3>
-            <a href="{{ route('shop.search.index') }}" class="btn-order-now">
-                <span>Shop Now</span>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </a>
-        </div>
+            <div class="gadget-promo-card">
+                <p>Seamless Experience</p>
+                <h3>Order Premium Tech <br><span class="text-gradient">Without Any Hassle.</span></h3>
+                <a href="{{ route('shop.search.index') }}" class="btn-order-now">
+                    <span>Shop Now</span>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+                
+                <!-- Big Floating Product Image breaking out of the card -->
+                <img src="images/1.png" alt="Premium Tech" class="promo-floating-img">
+            </div>
 
-        <!-- Big Floating Product Image -->
-        <img src="images/1.png" alt="Premium Tech" class="banner-product-img">
-
-        <div class="gadget-banner-products">
+            <div class="gadget-banner-products">
             @php
                 // Use real products if available, or fallbacks
                 $_bannerProds = isset($products) && count($products) > 0 ? $products : [
