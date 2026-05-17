@@ -39,7 +39,7 @@ $homepage = app(\Platform\ThemeDefault\ViewModels\StorefrontHomepageViewModel::c
 
             @include('shop::homepage.sections.promo-strip')
             @include('shop::homepage.sections.limited-sale', ['products' => $homepage['saleProducts']])
-            @include('shop::homepage.sections.categories', ['categories' => $homepage['categories']])
+            @include('shop::homepage.sections.categories', ['categories' => $homepage['categories'], 'products' => $homepage['featuredPicks']])
             @include('shop::homepage.sections.products', ['products' => $homepage['featuredPicks']])
             @include('shop::homepage.sections.latest-products', ['products' => $homepage['latestProducts']])
             @include('shop::homepage.sections.cta', ['products' => $homepage['latestProducts']])

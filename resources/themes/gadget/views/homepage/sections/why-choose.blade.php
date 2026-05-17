@@ -227,6 +227,13 @@ $displayProducts = $_realJfy->isNotEmpty()
                 <p>Personalized Picks</p>
                 <h2 id="gadget-jfy-title">Just For You</h2>
             </div>
+            <a href="{{ route('shop.search.index') }}" style="color: #3b82f6; text-decoration: none; font-size: 18px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; transition: 0.3s;" onmouseover="this.style.color='#1d4ed8'" onmouseout="this.style.color='#3b82f6'">
+                View all product
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
         </div>
 
     <!-- Product Slider -->
