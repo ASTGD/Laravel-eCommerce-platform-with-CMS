@@ -10,12 +10,29 @@ $_fallbackJfyProds = [
 $_realJfy = collect($products ?? []);
 $displayProducts = $_realJfy->isNotEmpty()
     ? $_realJfy->map(fn($p) => [
-        'name'            => $p['name'] ?? '',
-        'formatted_price' => $p['formatted_price'] ?? $p['final_price'] ?? $p['price'] ?? '',
-        'image_url'       => $p['image_url'] ?? $p['image'] ?? $p['base_image_url'] ?? 'https://via.placeholder.com/500',
-        'url_key'         => $p['url'] ?? $p['url_key'] ?? '#',
+        'id'            => $p['id'] ?? 0,
+        'name'          => $p['name'] ?? '',
+        'short_name'    => $p['short_name'] ?? $p['name'] ?? '',
+        'url'           => $p['url'] ?? $p['url_key'] ?? '#',
+        'image'         => $p['image_url'] ?? $p['image'] ?? $p['base_image_url'] ?? 'https://via.placeholder.com/500',
+        'regular_price' => $p['regular_price'] ?? '',
+        'final_price'   => $p['final_price'] ?? $p['formatted_price'] ?? $p['price'] ?? '',
+        'has_discount'  => $p['has_discount'] ?? false,
+        'badge'         => $p['badge'] ?? '',
+        'is_saleable'   => $p['is_saleable'] ?? true,
     ])->values()->all()
-    : $_fallbackJfyProds;
+    : array_map(fn($p) => [
+        'id'            => 0,
+        'name'          => $p['name'],
+        'short_name'    => $p['name'],
+        'url'           => $p['url_key'],
+        'image'         => $p['image_url'],
+        'regular_price' => '',
+        'final_price'   => $p['formatted_price'],
+        'has_discount'  => false,
+        'badge'         => '',
+        'is_saleable'   => true,
+    ], $_fallbackJfyProds);
 @endphp
 
 @pushOnce('styles')
@@ -38,7 +55,7 @@ $displayProducts = $_realJfy->isNotEmpty()
 
     .gadget-jfy-title p {
         color: #3b82f6;
-        font-weight: 900;
+        font-weight: normal;
         text-transform: uppercase;
         letter-spacing: 0.35em;
         font-size: 13px;
@@ -47,7 +64,7 @@ $displayProducts = $_realJfy->isNotEmpty()
 
     .gadget-jfy-title h2 {
         font-size: 56px;
-        font-weight: 950;
+        font-weight: normal;
         letter-spacing: -0.05em;
         line-height: 1.1;
         background: linear-gradient(135deg, #0f172a 0%, #3b82f6 100%);
@@ -221,31 +238,35 @@ $displayProducts = $_realJfy->isNotEmpty()
                 </button>
             </div>
         </div>
-    </div> <!-- Break out of container -->
 
-    <!-- Product Slider (Edge to Edge) -->
-    <div class="jfy-slider-container">
-        <div class="jfy-slider-track" id="jfy-slider-track">
-            @foreach ($displayProducts as $product)
-                @php
-                    $name = $product['name'];
-                    $price = $product['formatted_price'];
-                    $image = $product['image_url'];
-                    $url = $product['url_key'];
-                @endphp
-                
-                <article class="jfy-product-card">
-                    <a href="{{ $url }}" class="jfy-product-img-wrap">
-                        <img src="{{ $image }}" alt="{{ $name }}" class="jfy-product-img">
-                    </a>
-                    <div class="jfy-product-info">
-                        <a href="{{ $url }}" class="jfy-product-title">{{ $name }}</a>
-                        <span class="jfy-product-price">{{ $price }}</span>
-                        <a href="{{ $url }}" class="jfy-btn-add">View Details</a>
+    <!-- Product Slider -->
+    <v-gadget-product-carousel :item-count="{{ count($displayProducts) }}">
+        <template v-slot:default="{ currentIndex, next, prev, maxIndex, showNav, translateStyle, stopAutoplay, startAutoplay }">
+            <div class="carousel-container" @mouseenter="stopAutoplay" @mouseleave="startAutoplay">
+                <button v-if="showNav" class="carousel-nav-btn btn-prev" @click="prev" :disabled="currentIndex === 0" aria-label="Previous">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+
+                <div class="carousel-track-wrap">
+                    <div class="carousel-track" :style="[translateStyle, { '--items-per-view': itemsPerView }]">
+                        @foreach ($displayProducts as $product)
+                            <div class="carousel-item">
+                                @include('shop::homepage.partials.product-card', ['product' => $product, 'mode' => 'jfy', 'showAction' => true])
+                            </div>
+                        @endforeach
                     </div>
-                </article>
-            @endforeach
-        </div>
+                </div>
+
+                <button v-if="showNav" class="carousel-nav-btn btn-next" @click="next" :disabled="currentIndex >= maxIndex" aria-label="Next">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </v-gadget-product-carousel>
     </div>
 </section>
 

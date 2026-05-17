@@ -63,7 +63,7 @@
         padding: 6px 14px;
         border-radius: 12px;
         font-size: 11px;
-        font-weight: 900;
+        font-weight: normal;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: #ffffff;
@@ -105,7 +105,7 @@
 
     .gadget-product-card__body h3 {
         font-size: 17px;
-        font-weight: 800;
+        font-weight: normal;
         margin-bottom: 14px;
         line-height: 1.4;
     }
@@ -126,7 +126,7 @@
 
     .gadget-price--final {
         font-size: 22px;
-        font-weight: 950;
+        font-weight: normal;
         color: #2563eb;
     }
 
@@ -165,7 +165,7 @@
         color: #ffffff !important;
         padding: 16px;
         border-radius: 14px;
-        font-weight: 850;
+        font-weight: normal;
         border: none;
         cursor: pointer;
         display: flex;
