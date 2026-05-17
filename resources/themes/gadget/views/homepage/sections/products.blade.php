@@ -2,7 +2,7 @@
 <style>
     .gadget-featured-dark {
         background: #0f172a !important;
-        padding: 100px 0 !important;
+        padding: 0 0 100px 0 !important;
         position: relative;
         overflow: hidden;
         color: #ffffff !important;
@@ -106,19 +106,7 @@
 
 <section class="gadget-featured-dark" aria-labelledby="gadget-featured-title">
     <div class="gadget-container">
-        <div class="gadget-section-heading">
-            <div>
-                <h2 id="gadget-featured-title">Featured Picks</h2>
-            </div>
 
-            <a href="{{ route('shop.search.index') }}" class="gadget-text-link">
-                Explore All
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </a>
-        </div>
 
         @php
             $displayProducts = count($products) > 0 ? $products : array_fill(0, 8, [

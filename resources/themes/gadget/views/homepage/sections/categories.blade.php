@@ -171,72 +171,40 @@ $categoryData = $_realCats->isNotEmpty()
         box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
     }
 
-    /* Promo Banner */
-    .gadget-order-banner {
+    /* Full Width Promo Banner */
+    .gadget-seamless-dark {
         background: #0f172a;
-        border-radius: 56px;
-        padding: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        padding: 100px 0 50px 0;
         color: #ffffff;
         position: relative;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        width: 100%;
     }
 
-    .banner-aura {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
+    .gadget-seamless-dark .gadget-container {
+        display: block;
     }
 
-    .aura-blob {
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-        border-radius: 50%;
-        filter: blur(80px);
-        animation: auraMove 15s infinite alternate ease-in-out;
-    }
-
-    .aura-1 {
-        top: -20%;
-        right: -10%;
-    }
-
-    .aura-2 {
-        bottom: -20%;
-        left: -10%;
-    }
-
-    @keyframes auraMove {
-        0% {
-            transform: translate(0, 0) scale(1);
-        }
-
-        100% {
-            transform: translate(50px, 30px) scale(1.1);
-        }
+    .gadget-seamless-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 50px;
+        position: relative;
+        margin-top: 60px;
     }
 
     .gadget-order-card {
         position: relative;
         z-index: 5;
-        max-width: 550px;
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(20px);
-        padding: 60px;
-        border-radius: 40px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 500px;
+        background: transparent;
+        border: none;
+        padding: 0;
     }
 
     .gadget-order-card p {
         color: #3b82f6;
-        font-weight: 900;
+        font-weight: normal;
         text-transform: uppercase;
         letter-spacing: 0.15em;
         font-size: 14px;
@@ -245,7 +213,7 @@ $categoryData = $_realCats->isNotEmpty()
 
     .gadget-order-card h3 {
         font-size: 48px;
-        font-weight: 950;
+        font-weight: normal;
         line-height: 1.1;
         margin-bottom: 40px;
         letter-spacing: -0.04em;
@@ -265,23 +233,54 @@ $categoryData = $_realCats->isNotEmpty()
         transition: 0.4s;
     }
 
+    .btn-order-now:hover {
+        background: #1d4ed8;
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+
     .banner-product-img {
-        max-width: 450px;
+        max-width: 280px; /* Slightly smaller to fit perfectly above the text */
         filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.4));
         animation: floatBanner 6s infinite ease-in-out;
-        z-index: 5;
-        position: relative;
+        z-index: 2;
+        position: absolute;
+        left: 20px;
+        top: -70px;
+        pointer-events: none;
+        opacity: 1;
     }
 
     @keyframes floatBanner {
-
-        0%,
-        100% {
+        0%, 100% {
             transform: translateY(0) rotate(-2deg);
         }
-
         50% {
             transform: translateY(-20px) rotate(2deg);
+        }
+    }
+
+    .gadget-banner-products {
+        display: flex;
+        gap: 30px;
+        flex: 1;
+        justify-content: flex-end;
+        max-width: 650px;
+    }
+
+    .gadget-banner-products > div {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    @media (max-width: 991px) {
+        .gadget-seamless-dark .gadget-container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .gadget-banner-products {
+            justify-content: center;
+            width: 100%;
         }
     }
 
@@ -322,25 +321,81 @@ $categoryData = $_realCats->isNotEmpty()
 
         <v-gadget-categories :categories="{{ json_encode($categoryData) }}"></v-gadget-categories>
 
-        <div class="gadget-order-banner">
-            <div class="banner-aura">
-                <div class="aura-blob aura-1"></div>
-                <div class="aura-blob aura-2"></div>
-            </div>
+    </div>
+</section>
 
+<!-- Full Width Seamless Experience Banner -->
+<section class="gadget-seamless-dark">
+    <div class="gadget-container">
+        <!-- Moved Featured Picks Header -->
+        <div class="gadget-section-heading" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <div>
+                <h2 id="gadget-featured-title" style="color: #ffffff; font-size: 48px; font-weight: normal; letter-spacing: -0.04em; margin: 0;">Featured Picks</h2>
+            </div>
+            <a href="{{ route('shop.search.index') }}" class="gadget-text-link" style="color: #3b82f6; text-decoration: none; font-size: 18px;">
+                Explore All
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 5px; vertical-align: text-bottom;">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </div>
+
+        <div class="gadget-seamless-content">
             <div class="gadget-order-card">
-                <p>Seamless Experience</p>
-                <h3>Order Premium Tech Without Any Hassle.</h3>
-                <a href="{{ route('shop.search.index') }}" class="btn-order-now">
-                    <span>Shop Now</span>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                        <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
-                </a>
-            </div>
+            <p>Seamless Experience</p>
+            <h3>Order Premium Tech Without Any Hassle.</h3>
+            <a href="{{ route('shop.search.index') }}" class="btn-order-now">
+                <span>Shop Now</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </div>
 
-            <img src="images/1.png" alt="Premium Tech" class="banner-product-img">
+        <!-- Big Floating Product Image -->
+        <img src="images/1.png" alt="Premium Tech" class="banner-product-img">
+
+        <div class="gadget-banner-products">
+            @php
+                // Use real products if available, or fallbacks
+                $_bannerProds = isset($products) && count($products) > 0 ? $products : [
+                    [
+                        'id' => 1,
+                        'name' => 'Premium Headset',
+                        'short_name' => 'Premium Headset',
+                        'url' => '#',
+                        'image' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop',
+                        'regular_price' => '$1,350.00',
+                        'final_price' => '$1,000.00',
+                        'has_discount' => true,
+                        'badge' => 'New',
+                        'is_saleable' => true,
+                    ],
+                    [
+                        'id' => 2,
+                        'name' => 'Smart Watch Pro',
+                        'short_name' => 'Smart Watch Pro',
+                        'url' => '#',
+                        'image' => 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500&auto=format&fit=crop',
+                        'regular_price' => '$450.00',
+                        'final_price' => '$350.00',
+                        'has_discount' => true,
+                        'badge' => 'Hot',
+                        'is_saleable' => true,
+                    ]
+                ];
+                
+                $bannerProducts = collect($_bannerProds)->take(2);
+            @endphp
+
+            @foreach ($bannerProducts as $product)
+                <div>
+                    @include('shop::homepage.partials.product-card', ['product' => $product, 'mode' => 'banner', 'showAction' => true])
+                </div>
+            @endforeach
+        </div>
         </div>
     </div>
 </section>
