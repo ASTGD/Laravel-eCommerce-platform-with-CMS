@@ -47,6 +47,7 @@ $homepage = app(\Platform\ThemeDefault\ViewModels\StorefrontHomepageViewModel::c
             @include('shop::homepage.sections.testimonials')
             @include('shop::homepage.sections.full-width-text')
             @include('shop::homepage.sections.feature-cards')
+            @include('shop::homepage.sections.faq')
         </div>
 
         @include('shop::partials.gadget-footer')
