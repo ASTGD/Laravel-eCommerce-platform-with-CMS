@@ -32,13 +32,16 @@
         @include('shop::homepage.sections.hero', ['products' => $homepage['latestProducts'], 'hero' => $homepage['hero'] ?? null])
 
         @include('shop::homepage.sections.promo-strip')
-        @include('shop::homepage.sections.limited-sale')
-        @include('shop::homepage.sections.products', ['products' => $homepage['saleProducts']])
-        @include('shop::homepage.sections.categories', ['categories' => $homepage['categories']])
+        @include('shop::homepage.sections.limited-sale', ['products' => $homepage['saleProducts']])
+        @include('shop::homepage.sections.categories', ['categories' => $homepage['categories'], 'products' => $homepage['featuredPicks']])
+        @include('shop::homepage.sections.products', ['products' => $homepage['featuredPicks']])
         @include('shop::homepage.sections.latest-products', ['products' => $homepage['latestProducts']])
         @include('shop::homepage.sections.cta', ['products' => $homepage['latestProducts']])
-        @include('shop::homepage.sections.why-choose')
+        @include('shop::homepage.sections.why-choose', ['products' => $homepage['personalizedPicks']])
         @include('shop::homepage.sections.testimonials')
+        @include('shop::homepage.sections.full-width-text')
+        @include('shop::homepage.sections.feature-cards')
+        @include('shop::homepage.sections.faq')
     </div>
 
     @include('shop::partials.gadget-footer')

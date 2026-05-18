@@ -2,7 +2,7 @@
 <style>
     .gadget-featured-dark {
         background: #0f172a !important;
-        padding: 100px 0 !important;
+        padding: 0 0 100px 0 !important;
         position: relative;
         overflow: hidden;
         color: #ffffff !important;
@@ -11,13 +11,13 @@
     .gadget-featured-dark .gadget-section-heading h2 {
         color: #ffffff !important;
         font-size: 48px !important;
-        font-weight: 950 !important;
+        font-weight: normal !important;
         letter-spacing: -0.04em !important;
     }
 
     .gadget-featured-dark .gadget-text-link {
         color: #3b82f6 !important;
-        font-weight: 700;
+        font-weight: normal;
         text-decoration: none;
     }
 
@@ -50,7 +50,7 @@
         .carousel-track { --items-per-view: 3; }
     }
     @media (min-width: 1201px) {
-        .carousel-track { --items-per-view: 4; }
+        .carousel-track { --items-per-view: 5; }
     }
     @media (max-width: 991px) {
         .carousel-track { --items-per-view: 2; }
@@ -106,19 +106,7 @@
 
 <section class="gadget-featured-dark" aria-labelledby="gadget-featured-title">
     <div class="gadget-container">
-        <div class="gadget-section-heading">
-            <div>
-                <h2 id="gadget-featured-title">Featured Picks</h2>
-            </div>
 
-            <a href="{{ route('shop.search.index') }}" class="gadget-text-link">
-                Explore All
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-            </a>
-        </div>
 
         @php
             $displayProducts = count($products) > 0 ? $products : array_fill(0, 8, [
@@ -136,8 +124,8 @@
         @endphp
 
         <v-gadget-product-carousel :item-count="{{ count($displayProducts) }}">
-            <template v-slot:default="{ currentIndex, next, prev, maxIndex, showNav, translateStyle }">
-                <div class="carousel-container">
+            <template v-slot:default="{ currentIndex, next, prev, maxIndex, showNav, translateStyle, stopAutoplay, startAutoplay }">
+                <div class="carousel-container" @mouseenter="stopAutoplay" @mouseleave="startAutoplay">
                     <button v-if="showNav" class="carousel-nav-btn btn-prev" @click="prev" :disabled="currentIndex === 0" aria-label="Previous">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="15 18 9 12 15 6"></polyline>
@@ -172,7 +160,8 @@
         data() {
             return {
                 currentIndex: 0,
-                itemsPerView: 4,
+                itemsPerView: 5,
+                autoplayInterval: null
             }
         },
         computed: {
@@ -192,25 +181,45 @@
         mounted() {
             this.updateItemsPerView();
             window.addEventListener('resize', this.updateItemsPerView);
+            this.startAutoplay();
         },
         unmounted() {
             window.removeEventListener('resize', this.updateItemsPerView);
+            this.stopAutoplay();
         },
         methods: {
+            startAutoplay() {
+                this.autoplayInterval = setInterval(() => {
+                    if (this.currentIndex < this.maxIndex) {
+                        this.currentIndex++;
+                    } else {
+                        this.currentIndex = 0;
+                    }
+                }, 3000);
+            },
+            stopAutoplay() {
+                if (this.autoplayInterval) {
+                    clearInterval(this.autoplayInterval);
+                }
+            },
             updateItemsPerView() {
                 const width = window.innerWidth;
                 if (width < 600) this.itemsPerView = 1;
                 else if (width < 991) this.itemsPerView = 2;
                 else if (width < 1200) this.itemsPerView = 3;
-                else this.itemsPerView = 4;
+                else this.itemsPerView = 5;
                 
                 if (this.currentIndex > this.maxIndex) this.currentIndex = this.maxIndex;
             },
             next() {
+                this.stopAutoplay();
                 if (this.currentIndex < this.maxIndex) this.currentIndex++;
+                this.startAutoplay();
             },
             prev() {
+                this.stopAutoplay();
                 if (this.currentIndex > 0) this.currentIndex--;
+                this.startAutoplay();
             }
         },
         render() {
@@ -221,7 +230,9 @@
                 showNav: this.showNav,
                 translateStyle: this.translateStyle,
                 next: this.next,
-                prev: this.prev
+                prev: this.prev,
+                stopAutoplay: this.stopAutoplay,
+                startAutoplay: this.startAutoplay
             });
         }
     });

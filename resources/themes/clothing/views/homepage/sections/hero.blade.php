@@ -7,6 +7,109 @@
     $heroImageUrl = fn (string $path): string => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])
         ? $path
         : asset($path);
+    $buildHeadlinePayload = function (string $headline, string $highlight): array {
+        $headline = trim($headline);
+        $highlight = trim($highlight);
+        $inlineMatch = false;
+
+        if ($headline !== '' && $highlight !== '') {
+            $position = mb_stripos($headline, $highlight);
+
+            if ($position !== false) {
+                $before = mb_substr($headline, 0, $position);
+                $match = mb_substr($headline, $position, mb_strlen($highlight));
+                $after = mb_substr($headline, $position + mb_strlen($highlight));
+                $inlineMatch = true;
+
+                $parts = array_values(array_filter([
+                    ['text' => $before, 'accent' => false, 'stacked' => false],
+                    ['text' => $match, 'accent' => true, 'stacked' => false],
+                    ['text' => $after, 'accent' => false, 'stacked' => false],
+                ], fn (array $part): bool => $part['text'] !== ''));
+
+                return [
+                    'parts' => $parts,
+                    'alt' => $headline,
+                ];
+            }
+        }
+
+        $parts = [];
+
+        if ($headline !== '') {
+            $parts[] = ['text' => $headline, 'accent' => false, 'stacked' => false];
+        }
+
+        if ($highlight !== '') {
+            $parts[] = ['text' => $highlight, 'accent' => true, 'stacked' => true];
+        }
+
+        return [
+            'parts' => $parts,
+            'alt' => trim($headline.' '.$highlight),
+        ];
+    };
+    $defaultHeroSlides = [
+        [
+            'theme' => 'light',
+            'tag' => 'New season drop',
+            'headline' => 'Wear the',
+            'highlight' => 'bright side.',
+            'sub' => 'Build a wardrobe that feels fresh, expressive, and easy to wear. Start with the featured collection and make every day look styled.',
+            'cta_label' => 'Shop the Look',
+            'cta2_label' => 'Browse Collection',
+            'badge' => 'Shop Now',
+            'image' => 'images/1.png',
+            'bg_from' => '#fffdfa',
+            'bg_to' => '#fff1f3',
+            'accent' => '#ff4f70',
+            'primary_url' => route('shop.search.index'),
+            'secondary_url' => route('shop.search.index'),
+        ],
+        [
+            'theme' => 'dark',
+            'tag' => 'Seasonal Styling',
+            'headline' => 'Tailored for',
+            'highlight' => 'Everyday Ease.',
+            'sub' => 'Soft textures, crisp tailoring, and modern silhouettes that keep your wardrobe refined and wearable.',
+            'cta_label' => 'Discover Looks',
+            'cta2_label' => 'View Collection',
+            'badge' => 'Featured',
+            'image' => 'images/2.png',
+            'bg_from' => '#171114',
+            'bg_to' => '#33253d',
+            'accent' => '#7c5cff',
+            'primary_url' => route('shop.search.index'),
+            'secondary_url' => route('shop.search.index'),
+        ],
+        [
+            'theme' => 'light',
+            'tag' => 'Weekend Edit',
+            'headline' => 'Style the',
+            'highlight' => 'moment.',
+            'sub' => 'A clean, modern edit that makes dressing simple without losing the feel of a polished, fashion-first storefront.',
+            'cta_label' => 'Shop New In',
+            'cta2_label' => 'Browse Collection',
+            'badge' => 'New',
+            'image' => 'images/3.png',
+            'bg_from' => '#fffdfa',
+            'bg_to' => '#fff1f3',
+            'accent' => '#ff4f70',
+            'primary_url' => route('shop.search.index'),
+            'secondary_url' => route('shop.search.index'),
+        ],
+    ];
+    $defaultHeroSlides = array_map(function (array $slide) use ($buildHeadlinePayload): array {
+        $headlinePayload = $buildHeadlinePayload(
+            (string) ($slide['headline'] ?? ''),
+            (string) ($slide['highlight'] ?? '')
+        );
+
+        $slide['headline_parts'] = $headlinePayload['parts'];
+        $slide['headline_alt'] = $headlinePayload['alt'];
+
+        return $slide;
+    }, $defaultHeroSlides);
     $placeholderImages = [
         'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1400',
         'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1400',
@@ -22,32 +125,39 @@
     }
 
     $heroData = $cmsHeroSlides->isNotEmpty()
-        ? $cmsHeroSlides->map(function (array $slide, int $index) use ($heroImageUrl) {
-            $theme = data_get($slide, 'theme', $index % 2 === 0 ? 'light' : 'dark');
-            $accent = data_get($slide, 'accent', $theme === 'dark' ? '#7c5cff' : '#ff4f70');
+        ? $cmsHeroSlides->map(function (array $slide, int $index) use ($heroImageUrl, $defaultHeroSlides, $buildHeadlinePayload) {
+            $template = $defaultHeroSlides[$index % count($defaultHeroSlides)];
+            $headlinePayload = $buildHeadlinePayload(
+                trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: $template['headline'])),
+                trim((string) (data_get($slide, 'highlight') ?: $template['highlight']))
+            );
 
             return [
                 'cms' => true,
-                'name' => trim((string) (data_get($slide, 'title') ?: data_get($slide, 'headline') ?: 'Hero slide')),
+                'name' => trim((string) (data_get($slide, 'title') ?: data_get($slide, 'headline') ?: $template['headline'])),
                 'image' => $heroImageUrl(trim((string) data_get($slide, 'image'))),
-                'url' => trim((string) (data_get($slide, 'primary_cta_url') ?: route('shop.search.index'))),
+                'url' => trim((string) (data_get($slide, 'primary_cta_url') ?: $template['primary_url'])),
                 'price' => trim((string) (data_get($slide, 'primary_cta_label') ?: 'Shop Now')),
-                'tag' => trim((string) (data_get($slide, 'tag') ?: 'New season drop')),
-                'headline' => trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: 'Featured collection')),
-                'highlight' => trim((string) data_get($slide, 'highlight', '')),
-                'sub' => trim((string) data_get($slide, 'body', '')),
-                'primary_label' => trim((string) (data_get($slide, 'primary_cta_label') ?: 'Shop the Look')),
-                'primary_url' => trim((string) (data_get($slide, 'primary_cta_url') ?: route('shop.search.index'))),
-                'secondary_label' => trim((string) (data_get($slide, 'secondary_cta_label') ?: 'Browse Collection')),
-                'secondary_url' => trim((string) (data_get($slide, 'secondary_cta_url') ?: route('shop.search.index'))),
-                'badge' => trim((string) (data_get($slide, 'badge') ?: data_get($slide, 'primary_cta_label') ?: '')),
-                'theme' => $theme === 'dark' ? 'dark' : 'light',
-                'bg_from' => trim((string) data_get($slide, 'bg_from', $theme === 'dark' ? '#171114' : '#fffdfa')),
-                'bg_to' => trim((string) data_get($slide, 'bg_to', $theme === 'dark' ? '#33253d' : '#fff1f3')),
-                'accent' => trim((string) $accent),
+                'tag' => trim((string) (data_get($slide, 'tag') ?: $template['tag'])),
+                'headline' => trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: $template['headline'])),
+                'highlight' => trim((string) (data_get($slide, 'highlight') ?: $template['highlight'])),
+                'sub' => trim((string) (data_get($slide, 'body') ?: $template['sub'])),
+                'primary_label' => trim((string) (data_get($slide, 'primary_cta_label') ?: $template['cta_label'])),
+                'primary_url' => trim((string) (data_get($slide, 'primary_cta_url') ?: $template['primary_url'])),
+                'secondary_label' => trim((string) (data_get($slide, 'secondary_cta_label') ?: $template['cta2_label'])),
+                'secondary_url' => trim((string) (data_get($slide, 'secondary_cta_url') ?: $template['secondary_url'])),
+                'badge' => trim((string) (data_get($slide, 'badge') ?: data_get($slide, 'primary_cta_label') ?: $template['badge'])),
+                'theme' => $template['theme'],
+                'bg_from' => $template['bg_from'],
+                'bg_to' => $template['bg_to'],
+                'accent' => $template['accent'],
+                'headline_parts' => $headlinePayload['parts'],
+                'headline_alt' => $headlinePayload['alt'],
             ];
         })->values()->all()
-        : $heroProducts->map(function($product, $index) use ($placeholderImages) {
+        : $heroProducts->map(function($product, $index) use ($placeholderImages, $buildHeadlinePayload) {
+            $headlinePayload = $buildHeadlinePayload('Wear the', 'bright side.');
+
             return [
                 'cms' => false,
                 'name' => $product['name'] ?? 'Color Pop Collection',
@@ -67,6 +177,8 @@
                 'bg_from' => '#fffdfa',
                 'bg_to' => '#fff1f3',
                 'accent' => '#ff4f70',
+                'headline_parts' => $headlinePayload['parts'],
+                'headline_alt' => $headlinePayload['alt'],
             ];
         })->values();
 @endphp
@@ -143,6 +255,10 @@
         color: #ff4f70;
         text-shadow: 4px 4px 0 #c8ff4d;
         transform: rotate(-1.5deg);
+    }
+
+    .highlight-text.highlight-text--stacked {
+        display: block;
     }
 
     .hero-description {
@@ -243,11 +359,14 @@
                         <div class="hero-text-content">
                             <span class="hero-tag">@{{ p.tag || 'New season drop' }}</span>
                             <h1 class="hero-main-title">
-                                <span v-if="p.cms">
-                                    @{{ p.headline }}
-                                    <span v-if="p.highlight" class="highlight-text">@{{ p.highlight }}</span>
-                                </span>
-                                <span v-else>Wear the<br><span class="highlight-text">bright side.</span></span>
+                                <template v-for="(part, partIndex) in (p.headline_parts || [])" :key="partIndex">
+                                    <span
+                                        v-if="part.accent"
+                                        class="highlight-text"
+                                        :class="{ 'highlight-text--stacked': part.stacked }"
+                                    >@{{ part.text }}</span>
+                                    <span v-else>@{{ part.text }}</span>
+                                </template>
                             </h1>
                             <p class="hero-description">
                                 <span v-if="p.cms">@{{ p.sub || 'Homepage Hero is controlled through CMS Studio and rendered by the active theme.' }}</span>
@@ -260,7 +379,7 @@
                         </div>
                         <div class="hero-image-content">
                             <div class="image-stage">
-                                <img :src="p.image" :alt="p.name" class="product-hero-img">
+                                <img :src="p.image" :alt="p.headline_alt || p.name" class="product-hero-img">
                                 <div class="hero-price-chip" v-if="p.badge">@{{ p.badge }}</div>
                                 <div class="hero-stat-card"><div class="stat-icon">✦</div><div>@{{ p.cms ? 'CMS Hero' : 'Fresh arrival' }}</div></div>
                             </div>

@@ -527,6 +527,9 @@ it('renders the structured homepage section builder without raw JSON editing', f
         ->assertSeeText('Homepage Hero')
         ->assertSeeText('Open Storefront')
         ->assertSeeText('Hero')
+        ->assertSeeText('Tag / eyebrow')
+        ->assertSeeText('Highlight')
+        ->assertSeeText('Badge')
         ->assertSeeText('Homepage content below the Hero is rendered by the active theme.')
         ->assertDontSeeText('Homepage Status')
         ->assertDontSeeText('Open Signed Preview')
@@ -587,8 +590,11 @@ it('saves and reorders structured homepage sections through CMS Studio', functio
                         [
                             'current_image' => 'storage/cms/homepage/hero/static.jpg',
                             'title' => 'Launch hero image',
+                            'tag' => 'Launch Tag',
                             'headline' => 'Updated homepage hero',
+                            'highlight' => 'with highlight',
                             'body' => 'A safer structured homepage section.',
+                            'badge' => 'Hero badge',
                             'primary_cta_label' => 'Shop now',
                             'primary_cta_url' => '/catalog',
                             'secondary_cta_label' => 'Learn more',
@@ -609,7 +615,10 @@ it('saves and reorders structured homepage sections through CMS Studio', functio
         ->and($hero->sort_order)->toBe(2)
         ->and($hero->sectionType?->code)->toBe('hero')
         ->and(data_get($hero->settings_json, 'mode'))->toBe('static')
+        ->and(data_get($hero->settings_json, 'slides.0.tag'))->toBe('Launch Tag')
         ->and(data_get($hero->settings_json, 'slides.0.headline'))->toBe('Updated homepage hero')
+        ->and(data_get($hero->settings_json, 'slides.0.highlight'))->toBe('with highlight')
+        ->and(data_get($hero->settings_json, 'slides.0.badge'))->toBe('Hero badge')
         ->and($featured->is_active)->toBeTrue()
         ->and($featured->data_source_type)->toBe('featured_products')
         ->and(data_get($featured->settings_json, 'limit'))->toBe(8)
