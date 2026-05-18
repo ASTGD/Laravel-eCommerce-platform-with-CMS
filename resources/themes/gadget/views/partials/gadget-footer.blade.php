@@ -27,6 +27,99 @@
     ]);
 @endphp
 
+@pushOnce('styles')
+<style>
+    .gadget-footer {
+        background: linear-gradient(135deg, #0f172a 0%, #2e1065 100%) !important; /* Premium Blue to Purple dark gradient */
+        color: #cbd5e1;
+        padding: 80px 0 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gadget-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+    }
+
+    .gadget-footer__inner {
+        max-width: 1600px !important;
+        margin: 0 auto;
+        padding: 0 40px;
+    }
+
+    .gadget-footer__legal {
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        margin-top: 60px;
+        padding-top: 30px;
+        color: #64748b;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .gadget-footer a {
+        color: #94a3b8;
+        transition: color 0.3s ease;
+        text-decoration: none;
+    }
+
+    .gadget-footer a:hover {
+        color: #3b82f6;
+    }
+
+    .gadget-footer h2 {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .gadget-footer__newsletter {
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 30px;
+    }
+
+    .gadget-footer__newsletter input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px;
+        color: #ffffff !important;
+        padding: 12px 20px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .gadget-footer__newsletter button {
+        background: #3b82f6 !important;
+        color: #ffffff !important;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 30px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .gadget-footer__newsletter button:hover {
+        background: #2563eb !important;
+    }
+</style>
+@endpushOnce
+
 <footer class="gadget-footer">
     <div class="gadget-footer__inner">
         <div class="gadget-footer__top">
