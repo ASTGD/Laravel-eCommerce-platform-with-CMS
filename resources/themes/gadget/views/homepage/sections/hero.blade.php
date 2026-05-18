@@ -1,356 +1,713 @@
 @php
-    $heroProducts = collect($products)->take(5)->values();
     $cmsHeroSlides = collect(data_get($hero ?? null, 'slides', []))
-        ->filter(fn ($slide) => ! empty($slide['image']))
+        ->filter(fn ($slide): bool => filled(data_get($slide, 'image')))
         ->take(5)
         ->values();
-    $heroImageUrl = fn ($path) => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/']) ? $path : asset($path);
-    
-    // Premium Light-Themed Gadget Images from Unsplash
-    $placeholderImages = [
-        'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&q=80&w=1200', // Apple Watch
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=1200', // Headphones
-        'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?auto=format&fit=crop&q=80&w=1200', // VR
-        'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&q=80&w=1200', // Controller
-        'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&q=80&w=1200', // Laptop
+
+    $heroImageUrl = fn (string $path): string => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])
+        ? $path
+        : asset($path);
+
+    $defaultHeroSlides = [
+        [
+            'theme' => 'dark',
+            'tag' => 'Future Tech 2026',
+            'headline' => 'See Beyond',
+            'highlight' => 'Reality.',
+            'sub' => 'Immerse yourself in next-generation VR. Experience worlds crafted for the bold and the visionary.',
+            'cta_label' => 'Explore Now',
+            'cta2_label' => 'View Catalog',
+            'badge' => '🏆 Editor\'s Choice',
+            'image' => 'images/1.png',
+            'bg_from' => '#0d0221',
+            'bg_to' => '#1a0533',
+            'accent' => '#a855f7',
+            'primary_url' => route('shop.search.index'),
+            'secondary_url' => route('shop.search.index'),
+        ],
+        [
+            'theme' => 'light',
+            'tag' => 'Sonic Excellence',
+            'headline' => 'Hear Every',
+            'highlight' => 'Detail.',
+            'sub' => 'Studio-grade audio meets everyday comfort. The pro headphones that redefine what music feels like.',
+            'cta_label' => 'Shop Now',
+            'cta2_label' => 'Compare Models',
+            'badge' => '⭐ #1 Bestseller',
+            'image' => 'images/2.png',
+            'bg_from' => '#f0f9ff',
+            'bg_to' => '#dbeafe',
+            'accent' => '#0ea5e9',
+            'primary_url' => route('shop.search.index'),
+            'secondary_url' => route('shop.search.index'),
+        ],
+        [
+            'theme' => 'dark',
+            'tag' => 'Precision Wearables',
+            'headline' => 'Time, Elevated',
+            'highlight' => 'Differently.',
+            'sub' => 'Track performance, monitor health, and stay connected — all from the most intelligent device on your wrist.',
+            'cta_label' => 'Discover More',
+            'cta2_label' => 'See Features',
+            'badge' => '💎 Premium Pick',
+            'image' => 'images/3.png',
+            'bg_from' => '#0f172a',
+            'bg_to' => '#1e293b',
+            'accent' => '#38bdf8',
+            'primary_url' => route('shop.search.index'),
+            'secondary_url' => route('shop.search.index'),
+        ],
     ];
 
-    $heroData = $cmsHeroSlides->isNotEmpty()
-        ? $cmsHeroSlides->map(function ($slide) use ($heroImageUrl) {
+    $heroSlides = $cmsHeroSlides->isNotEmpty()
+        ? $cmsHeroSlides->map(function (array $slide, int $index) use ($heroImageUrl): array {
+            $theme = data_get($slide, 'theme', $index % 2 === 0 ? 'dark' : 'light');
+            $accent = data_get($slide, 'accent', $theme === 'dark' ? '#38bdf8' : '#0ea5e9');
+
             return [
                 'cms' => true,
-                'name' => $slide['title'] ?: ($slide['headline'] ?: 'Hero slide'),
-                'image' => $heroImageUrl($slide['image']),
-                'url' => $slide['primary_cta_url'] ?: '#',
-                'headline' => $slide['headline'] ?: ($slide['title'] ?: 'Featured collection'),
-                'body' => $slide['body'] ?: '',
-                'primary_label' => $slide['primary_cta_label'] ?: 'Explore Now',
-                'primary_url' => $slide['primary_cta_url'] ?: '#',
-                'secondary_label' => $slide['secondary_cta_label'] ?: '',
-                'secondary_url' => $slide['secondary_cta_url'] ?: '#',
+                'theme' => $theme === 'dark' ? 'dark' : 'light',
+                'tag' => trim((string) (data_get($slide, 'tag') ?: 'Future Tech 2026')),
+                'headline' => trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: 'Featured collection')),
+                'highlight' => trim((string) data_get($slide, 'highlight', '')),
+                'sub' => trim((string) data_get($slide, 'body', '')),
+                'cta_label' => trim((string) (data_get($slide, 'primary_cta_label') ?: 'Shop Now')),
+                'cta2_label' => trim((string) (data_get($slide, 'secondary_cta_label') ?: 'Browse Collection')),
+                'badge' => trim((string) (data_get($slide, 'badge') ?: data_get($slide, 'primary_cta_label') ?: '')),
+                'image' => $heroImageUrl(trim((string) data_get($slide, 'image'))),
+                'bg_from' => trim((string) data_get($slide, 'bg_from', $theme === 'dark' ? '#0d0221' : '#f8fafc')),
+                'bg_to' => trim((string) data_get($slide, 'bg_to', $theme === 'dark' ? '#1a0533' : '#dbeafe')),
+                'accent' => trim((string) $accent),
+                'primary_url' => trim((string) (data_get($slide, 'primary_cta_url') ?: route('shop.search.index'))),
+                'secondary_url' => trim((string) (data_get($slide, 'secondary_cta_url') ?: route('shop.search.index'))),
             ];
         })
-        : $heroProducts->map(function($product, $index) use ($placeholderImages) {
-            return [
-                'cms' => false,
-                'name' => $product['name'] ?? 'Next-Gen Gadget',
-                'image' => $placeholderImages[$index % count($placeholderImages)],
-                'url_key' => $product['url_key'] ?? '#',
-                'formatted_price' => $product['formatted_price'] ?? '$199.00',
-            ];
-        });
+            ->values()
+            ->all()
+        : $defaultHeroSlides;
 @endphp
 
 @push('styles')
 <style>
-    /* LIGHT FUTURISTIC DESIGN - "AURA" */
-    .gadget-hero-wrapper {
-        position: relative !important;
-        min-height: 800px !important;
-        background: #f8fafc !important;
-        overflow: hidden !important;
-        display: flex !important;
-        align-items: center !important;
-        width: 100% !important;
-        color: #0f172a !important;
+    /* ── HERO WRAPPER ── */
+    .gh-wrapper {
+        position: relative;
+        min-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        transition: background 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Inter', system-ui, sans-serif;
     }
 
-    .hero-mesh {
+    /* ── NOISE TEXTURE OVERLAY ── */
+    .gh-noise {
         position: absolute;
         inset: 0;
-        z-index: 1;
-        opacity: 0.4;
+        opacity: 0.04;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
         pointer-events: none;
+        z-index: 1;
     }
-    .mesh-blob {
+
+    /* ── GRADIENT ORBS ── */
+    .gh-orbs {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .gh-orb {
         position: absolute;
         border-radius: 50%;
-        filter: blur(100px);
-        animation: meshMove 25s infinite alternate ease-in-out;
-    }
-    .mesh-1 { width: 700px; height: 700px; background: radial-gradient(circle, #60a5fa 0%, transparent 70%); top: -10%; right: -5%; opacity: 0.4; }
-    .mesh-2 { width: 500px; height: 500px; background: radial-gradient(circle, #a78bfa 0%, transparent 70%); bottom: -5%; left: -5%; opacity: 0.3; }
-    .mesh-3 { width: 400px; height: 400px; background: radial-gradient(circle, #fcd34d 0%, transparent 70%); top: 30%; left: 20%; opacity: 0.2; }
-
-    @keyframes meshMove {
-        0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-        100% { transform: translate(60px, 30px) scale(1.1) rotate(10deg); }
+        filter: blur(120px);
+        opacity: 0;
+        transition: opacity 0.9s ease, background 0.9s ease;
+        animation: orbDrift 20s infinite alternate ease-in-out;
     }
 
-    .gadget-hero-slider { 
-        position: relative !important; 
-        z-index: 2 !important; 
-        width: 100% !important;
+    .gh-orb-1 {
+        width: 600px;
+        height: 600px;
+        top: -15%;
+        right: -5%;
     }
 
-    .hero-slides-inner {
+    .gh-orb-2 {
+        width: 400px;
+        height: 400px;
+        bottom: -10%;
+        left: -5%;
+        animation-delay: -8s;
+    }
+
+    .gh-orbs.active .gh-orb {
+        opacity: 1;
+    }
+
+    @keyframes orbDrift {
+        0% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        100% {
+            transform: translate(40px, 30px) scale(1.15);
+        }
+    }
+
+    /* ── SLIDE CONTAINER ── */
+    .gh-slider {
         position: relative;
+        z-index: 10;
         width: 100%;
-        min-height: 650px;
+    }
+
+    .gh-slides-track {
+        position: relative;
+        min-height: 600px;
         display: flex;
         align-items: center;
     }
 
-    .hero-slide {
-        width: 100%;
-        flex-shrink: 0;
-    }
-
-    .slide-fade-enter-active, .slide-fade-leave-active { 
-        position: absolute !important;
-        top: 50%;
+    /* ── INDIVIDUAL SLIDE ── */
+    .gh-slide {
+        position: absolute;
+        top: 0;
         left: 0;
-        transform: translateY(-50%);
         width: 100%;
-        transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1); 
+        height: 100%;
+        display: flex;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0s;
     }
-    
-    .slide-fade-enter-from { opacity: 0; transform: translateY(-50%) translateX(100px); }
-    .slide-fade-leave-to { opacity: 0; transform: translateY(-50%) translateX(-100px); }
 
-    .hero-inner-grid {
-        display: grid !important;
-        grid-template-columns: 1.1fr 0.9fr !important;
-        align-items: center !important;
-        gap: 80px !important;
+    .gh-slide.is-active {
+        opacity: 1;
+        position: relative;
+        pointer-events: auto;
+        transition: opacity 0.5s ease;
+    }
+
+    /* ── GRID ── */
+    .gh-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        gap: 60px;
         width: 100%;
-        max-width: 1320px !important;
-        margin: 0 auto !important;
-        padding: 0 40px !important;
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 80px 48px;
     }
 
     @media (max-width: 991px) {
-        .gadget-hero-wrapper { min-height: auto !important; padding-block: 80px !important; }
-        .hero-slides-inner { min-height: auto !important; }
-        .hero-inner-grid { grid-template-columns: 1fr !important; text-align: center !important; gap: 50px !important; padding: 0 24px !important; }
-        .hero-image-content { order: -1 !important; }
-        .hero-main-title { font-size: 42px !important; }
-        .hero-description { margin-inline: auto !important; }
+        .gh-wrapper {
+            min-height: auto;
+        }
+
+        .gh-grid {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 40px;
+            padding: 60px 24px;
+        }
+
+        .gh-img-col {
+            order: -1;
+        }
+
+        .gh-cta-row {
+            justify-content: center;
+        }
     }
 
-    /* Text Content */
-    .hero-tag-wrap { margin-bottom: 28px; }
-    .hero-tag {
-        background: rgba(59, 130, 246, 0.08);
-        color: #2563eb;
-        padding: 8px 20px;
+    /* ── TEXT COLUMN ANIMATIONS ── */
+    .gh-tag-wrap {
+        margin-bottom: 20px;
+    }
+
+    .gh-tag {
+        display: inline-block;
+        padding: 6px 18px;
         border-radius: 100px;
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 800;
-        text-transform: uppercase;
         letter-spacing: 0.2em;
-        border: 1px solid rgba(59, 130, 246, 0.15);
+        text-transform: uppercase;
+        border: 1px solid currentColor;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s 0.1s ease, transform 0.5s 0.1s ease;
     }
 
-    .hero-main-title {
-        font-size: clamp(54px, 7vw, 92px);
+    .gh-slide.is-active .gh-tag {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .gh-headline {
+        font-size: clamp(48px, 6vw, 88px);
         font-weight: 900;
         line-height: 0.95;
-        color: #0f172a !important;
-        margin-bottom: 35px;
-        letter-spacing: -0.05em;
+        letter-spacing: -0.04em;
+        margin: 0 0 12px;
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.55s 0.2s ease, transform 0.55s 0.2s ease;
     }
 
-    .gradient-title {
-        background: linear-gradient(135deg, #0f172a 30%, #475569 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+    .gh-slide.is-active .gh-headline {
+        opacity: 1;
+        transform: translateY(0);
     }
 
-    .highlight-text {
-        color: #3b82f6 !important;
+    .gh-highlight {
+        display: block;
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.55s 0.3s ease, transform 0.55s 0.3s ease;
+    }
+
+    .gh-slide.is-active .gh-highlight {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .gh-sub {
+        font-size: 18px;
+        line-height: 1.75;
+        max-width: 520px;
+        margin-bottom: 40px;
+        font-weight: 400;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.55s 0.4s ease, transform 0.55s 0.4s ease;
+    }
+
+    .gh-slide.is-active .gh-sub {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ── CTA ROW ── */
+    .gh-cta-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.55s 0.5s ease, transform 0.55s 0.5s ease;
+    }
+
+    .gh-slide.is-active .gh-cta-row {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* PRIMARY BUTTON */
+    .gh-btn-primary {
         position: relative;
-    }
-    .highlight-text::after {
-        content: "";
-        position: absolute;
-        bottom: 15%;
-        left: 0;
-        width: 100%;
-        height: 12px;
-        background: rgba(59, 130, 246, 0.1);
-        z-index: -1;
-    }
-
-    .hero-description {
-        font-size: 20px;
-        color: #475569;
-        max-width: 560px;
-        line-height: 1.7;
-        margin-bottom: 45px;
-        font-weight: 450;
-    }
-
-    .hero-cta-row { display: flex; gap: 20px; flex-wrap: wrap; }
-    @media (max-width: 991px) { .hero-cta-row { justify-content: center; } }
-
-    .btn-aura {
-        background: #3b82f6;
-        color: #ffffff !important;
-        padding: 20px 44px;
-        border-radius: 18px;
-        font-weight: 800;
-        text-decoration: none !important;
-        font-size: 17px;
-        box-shadow: 0 12px 30px -5px rgba(59, 130, 246, 0.35);
-        transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         display: inline-flex;
         align-items: center;
-        gap: 12px;
-    }
-    .btn-aura:hover { transform: translateY(-5px); box-shadow: 0 25px 40px -10px rgba(59, 130, 246, 0.4); background: #2563eb; }
-
-    .btn-glass-light {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        color: #1e293b !important;
-        padding: 20px 40px;
-        border-radius: 18px;
+        gap: 10px;
+        padding: 18px 40px;
+        border-radius: 16px;
+        font-size: 16px;
         font-weight: 800;
         text-decoration: none !important;
-        font-size: 17px;
-        border: 1px solid rgba(226, 232, 240, 1);
-        transition: 0.3s;
+        overflow: hidden;
+        border: none;
+        cursor: pointer;
+        color: #fff !important;
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s ease;
+        z-index: 1;
     }
-    .btn-glass-light:hover { background: #ffffff; border-color: #3b82f6; transform: translateY(-3px); }
 
-    .hero-image-content { position: relative; z-index: 5; }
-    .image-stage {
+    .gh-btn-primary::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+        z-index: 2;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .gh-btn-primary::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: 18px;
+        background: inherit;
+        filter: blur(20px);
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.4s ease;
+    }
+
+    .gh-btn-primary:hover {
+        transform: translateY(-4px);
+    }
+
+    .gh-btn-primary:hover::before {
+        opacity: 1;
+    }
+
+    .gh-btn-primary:hover::after {
+        opacity: 0.5;
+    }
+
+    .gh-btn-arrow {
+        display: inline-flex;
+        align-items: center;
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gh-btn-primary:hover .gh-btn-arrow {
+        transform: translateX(6px);
+    }
+
+    /* SECONDARY BUTTON */
+    .gh-btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 17px 36px;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        text-decoration: none !important;
+        border: 1.5px solid currentColor;
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .gh-btn-secondary:hover {
+        transform: translateY(-3px);
+    }
+
+    /* ── IMAGE COLUMN ── */
+    .gh-img-col {
         position: relative;
-        width: 100%;
-        max-width: 600px;
-        aspect-ratio: 1;
         display: flex;
         justify-content: center;
         align-items: center;
     }
 
-    .stage-glow {
+    .gh-img-stage {
+        position: relative;
+        width: 100%;
+        max-width: 560px;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Animated glow ring */
+    .gh-img-ring {
         position: absolute;
         width: 80%;
         height: 80%;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
-        filter: blur(60px);
         border-radius: 50%;
-        animation: glowPulse 8s infinite ease-in-out;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: opacity 0.7s 0.3s ease, transform 0.7s 0.3s ease;
+        animation: ringPulse 6s infinite ease-in-out;
     }
 
-    @keyframes glowPulse { 0%, 100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.2); opacity: 0.7; } }
+    .gh-slide.is-active .gh-img-ring {
+        opacity: 1;
+        transform: scale(1);
+    }
 
-    .product-hero-img {
-        width: 100%;
-        height: 100%;
+    @keyframes ringPulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 0.5;
+        }
+
+        50% {
+            transform: scale(1.12);
+            opacity: 0.9;
+        }
+    }
+
+    /* The product image */
+    .gh-img {
+        width: 88%;
+        height: 88%;
         object-fit: contain;
-        filter: drop-shadow(0 30px 60px rgba(0,0,0,0.12));
-        transition: 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-        animation: floatImg 7s infinite ease-in-out;
-        z-index: 2;
+        position: relative;
+        z-index: 3;
+        opacity: 0;
+        transform: translateX(60px) scale(0.9);
+        transition: opacity 0.65s 0.25s cubic-bezier(0.23, 1, 0.32, 1), transform 0.65s 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+        animation: imgFloat 8s infinite ease-in-out;
     }
 
-    @keyframes floatImg { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(3deg); } }
+    .gh-slide.is-active .gh-img {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
 
-    .hero-stat-card {
+    @keyframes imgFloat {
+
+        0%,
+        100% {
+            transform: translateY(0) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-24px) rotate(2deg);
+        }
+    }
+
+    /* Badge floating card */
+    .gh-badge {
         position: absolute;
-        top: 15%;
-        right: -10%;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(25px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        padding: 18px 28px;
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        box-shadow: 0 15px 45px rgba(0,0,0,0.06);
-        animation: floatStat 8s ease-in-out infinite;
+        top: 10%;
+        right: -5%;
+        padding: 14px 22px;
+        border-radius: 20px;
+        backdrop-filter: blur(20px);
+        font-weight: 800;
+        font-size: 14px;
+        white-space: nowrap;
         z-index: 10;
+        opacity: 0;
+        transform: translateX(20px);
+        transition: opacity 0.5s 0.6s ease, transform 0.5s 0.6s ease;
+        animation: badgeFloat 7s 1s infinite ease-in-out;
     }
-    @keyframes floatStat { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-15px, -20px); } }
 
-    .stat-icon { font-size: 22px; background: #eff6ff; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
-    .stat-text { color: #1e293b; font-weight: 800; font-size: 15px; }
+    .gh-slide.is-active .gh-badge {
+        opacity: 1;
+        transform: translateX(0);
+    }
 
-    .hero-dots {
+    @keyframes badgeFloat {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    /* ── PROGRESS/DOTS ── */
+    .gh-nav {
         position: absolute;
-        bottom: 50px;
+        bottom: 32px;
         left: 50%;
         transform: translateX(-50%);
         display: flex;
-        gap: 14px;
-        z-index: 100;
+        align-items: center;
+        gap: 12px;
+        z-index: 50;
     }
-    .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #cbd5e1;
+
+    .gh-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.3);
         border: none;
         cursor: pointer;
-        transition: 0.4s;
+        padding: 0;
+        transition: width 0.4s ease, background 0.4s ease;
     }
-    .dot.active { background: #3b82f6; width: 40px; border-radius: 6px; }
 
-    .hero-ssr-placeholder { min-height: 800px; display: flex; align-items: center; background: #f8fafc; }
+    .gh-dot.is-active {
+        width: 36px;
+    }
+
+    /* ── PREV / NEXT ARROWS ── */
+    .gh-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 50;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(16px);
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .gh-arrow:hover {
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .gh-arrow-prev {
+        left: 24px;
+    }
+
+    .gh-arrow-next {
+        right: 24px;
+    }
+
+    @media (max-width: 768px) {
+        .gh-arrow {
+            display: none;
+        }
+    }
+
+    /* ── PROGRESS BAR ── */
+    .gh-progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        width: 0%;
+        z-index: 50;
+        transition: none;
+    }
+
+    .gh-progress-bar.animating {
+        width: 100%;
+        transition: width 4s linear;
+    }
+
+    /* SSR placeholder */
+    .gh-ssr {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f172a;
+    }
 </style>
 @endpush
 
-<v-gadget-hero :products='@json($heroData)'>
-    <div class="hero-ssr-placeholder">
-        <div class="gadget-container">
-            <h1 style="color: #1e293b; font-size: 60px; font-weight: 900; opacity: 0.5; text-align: center; width: 100%;">Innovating...</h1>
-        </div>
+<v-gadget-hero :slides="{{ json_encode($heroSlides) }}" search-url="{{ route('shop.search.index') }}">
+    <div class="gh-ssr">
+        <p style="color:rgba(255,255,255,0.3);font-size:18px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;">Loading Experience...</p>
     </div>
 </v-gadget-hero>
 
 @pushOnce('scripts')
 <script type="text/x-template" id="v-gadget-hero-template">
-    <div class="gadget-hero-wrapper" @mouseenter="pause" @mouseleave="start">
-        <div class="hero-mesh">
-            <div class="mesh-blob mesh-1"></div>
-            <div class="mesh-blob mesh-2"></div>
-            <div class="mesh-blob mesh-3"></div>
+    <div class="gh-wrapper" :style="wrapperStyle" @mouseenter="pause" @mouseleave="resume">
+
+        <!-- Noise texture -->
+        <div class="gh-noise"></div>
+
+        <!-- Animated orbs -->
+        <div class="gh-orbs" :class="{ active: ready }">
+            <div class="gh-orb gh-orb-1" :style="{ background: currentSlide.accent + '55' }"></div>
+            <div class="gh-orb gh-orb-2" :style="{ background: currentSlide.accent + '33' }"></div>
         </div>
 
-        <div class="gadget-hero-slider">
-            <transition-group name="slide-fade" tag="div" class="hero-slides-inner">
-                <div class="hero-slide" v-for="(p, i) in products" :key="i" v-show="currentIndex === i">
-                    <div class="hero-inner-grid">
-                        <div class="hero-text-content">
-                            <div class="hero-tag-wrap"><span class="hero-tag">Future Tech 2026</span></div>
-                            <h1 v-if="p.cms" class="hero-main-title">
-                                <span class="gradient-title">@{{ p.headline }}</span>
+        <!-- SLIDES -->
+        <div class="gh-slider">
+            <div class="gh-slides-track" :style="{ minHeight: trackHeight + 'px' }">
+                <div
+                    v-for="(slide, i) in slides"
+                    :key="i"
+                    class="gh-slide"
+                    :class="{ 'is-active': current === i }"
+                    :ref="'slide' + i"
+                >
+                    <div class="gh-grid">
+
+                        <!-- LEFT: TEXT -->
+                        <div class="gh-text-col">
+                            <div class="gh-tag-wrap">
+                                <span class="gh-tag" :style="tagStyle(slide)">@{{ slide.tag || 'Featured collection' }}</span>
+                            </div>
+
+                            <h1 class="gh-headline" :style="{ color: textColor(slide) }">
+                                @{{ slide.headline }}
+                                <span v-if="slide.highlight" class="gh-highlight" :style="{ color: slide.accent }">@{{ slide.highlight }}</span>
                             </h1>
-                            <h1 v-else class="hero-main-title">
-                                <span class="gradient-title">Limitless</span><br/>
-                                <span class="highlight-text">Innovation.</span>
-                            </h1>
-                            <p class="hero-description">@{{ p.body || `The future is here with ${p.name}. Designed for those who demand excellence, precision, and unparalleled style.` }}</p>
-                            <div class="hero-cta-row">
-                                <a :href="p.primary_url || ('{{ url('/') }}/products/' + p.url_key)" class="btn-aura">
-                                    @{{ p.primary_label || 'Explore Now' }}
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+
+                            <p class="gh-sub" :style="{ color: subColor(slide) }">
+                                @{{ slide.sub || 'This hero is powered by the CMS homepage builder and rendered in the active theme.' }}
+                            </p>
+
+                            <div class="gh-cta-row">
+                                <a
+                                    :href="slide.primary_url || searchUrl"
+                                    class="gh-btn-primary"
+                                    :style="primaryBtnStyle(slide)"
+                                >
+                                    @{{ slide.cta_label || 'Explore Now' }}
+                                    <span class="gh-btn-arrow">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                            <polyline points="12 5 19 12 12 19"/>
+                                        </svg>
+                                    </span>
                                 </a>
-                                <a :href="p.secondary_url || '{{ route('shop.search.index') }}'" class="btn-glass-light">@{{ p.secondary_label || 'View Catalog' }}</a>
+                                <a
+                                    :href="slide.secondary_url || searchUrl"
+                                    class="gh-btn-secondary"
+                                    :style="secondaryBtnStyle(slide)"
+                                >
+                                    @{{ slide.cta2_label || 'View Catalog' }}
+                                </a>
                             </div>
                         </div>
-                        <div class="hero-image-content">
-                            <div class="image-stage">
-                                <div class="stage-glow"></div>
-                                <img :src="p.image" :alt="p.name" class="product-hero-img">
-                                <div class="hero-stat-card">
-                                    <div class="stat-icon">✨</div>
-                                    <div class="stat-text">Certified Premium</div>
-                                </div>
+
+                        <!-- RIGHT: IMAGE -->
+                        <div class="gh-img-col">
+                            <div class="gh-img-stage">
+                                <div class="gh-img-ring" :style="ringStyle(slide)"></div>
+                                <img
+                                    :src="slide.image"
+                                    :alt="slide.headline + (slide.highlight ? ' ' + slide.highlight : '')"
+                                    class="gh-img"
+                                    :style="imgBlend(slide)"
+                                    loading="lazy"
+                                />
+                                <div class="gh-badge" :style="badgeStyle(slide)">@{{ slide.badge || slide.tag || 'Featured' }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </transition-group>
-
-            <div class="hero-dots">
-                <button v-for="(p, i) in products" :key="i" @click="currentIndex = i" :class="{ active: currentIndex === i }" class="dot"></button>
             </div>
+
+            <!-- PROGRESS BAR -->
+            <div class="gh-progress-bar" :class="{ animating: progressing }" :style="{ background: currentSlide.accent }"></div>
+        </div>
+
+        <!-- ARROWS -->
+        <button class="gh-arrow gh-arrow-prev" :style="arrowStyle" @click="prev" aria-label="Previous">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <button class="gh-arrow gh-arrow-next" :style="arrowStyle" @click="next" aria-label="Next">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 6 15 12 9 18"/>
+            </svg>
+        </button>
+
+        <!-- DOTS -->
+        <div class="gh-nav">
+            <button
+                v-for="(slide, i) in slides"
+                :key="i"
+                class="gh-dot"
+                :class="{ 'is-active': current === i }"
+                :style="dotStyle(i)"
+                @click="goTo(i)"
+                :aria-label="'Slide ' + (i + 1)"
+            ></button>
         </div>
     </div>
 </script>
@@ -358,12 +715,143 @@
 <script type="module">
     app.component('v-gadget-hero', {
         template: '#v-gadget-hero-template',
-        props: ['products'],
-        data() { return { currentIndex: 0, timer: null } },
-        mounted() { this.start(); },
+        props: {
+            slides: {
+                type: Array,
+                required: true
+            },
+            searchUrl: {
+                type: String,
+                default: '#'
+            }
+        },
+        data() {
+            return {
+                current: 0,
+                timer: null,
+                progressing: false,
+                ready: false,
+                trackHeight: 600,
+            };
+        },
+        computed: {
+            currentSlide() {
+                return this.slides[this.current];
+            },
+            wrapperStyle() {
+                const s = this.currentSlide;
+                return {
+                    background: `linear-gradient(135deg, ${s.bg_from} 0%, ${s.bg_to} 100%)`,
+                };
+            },
+            arrowStyle() {
+                const s = this.currentSlide;
+                const isDark = s.theme === 'dark';
+                return {
+                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    color: isDark ? '#fff' : '#0f172a',
+                    boxShadow: `0 4px 24px ${s.accent}22`,
+                };
+            },
+        },
         methods: {
-            start() { this.timer = setInterval(() => { this.currentIndex = (this.currentIndex + 1) % this.products.length; }, 7000); },
-            pause() { clearInterval(this.timer); }
+            textColor(slide) {
+                return slide.theme === 'dark' ? '#ffffff' : '#0f172a';
+            },
+            subColor(slide) {
+                return slide.theme === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(15,23,42,0.65)';
+            },
+            tagStyle(slide) {
+                const isDark = slide.theme === 'dark';
+                return {
+                    color: slide.accent,
+                    borderColor: slide.accent + '55',
+                    background: slide.accent + '15',
+                };
+            },
+            primaryBtnStyle(slide) {
+                return {
+                    background: `linear-gradient(135deg, ${slide.accent}, ${slide.accent}cc)`,
+                    boxShadow: `0 12px 40px -8px ${slide.accent}66`,
+                };
+            },
+            secondaryBtnStyle(slide) {
+                const isDark = slide.theme === 'dark';
+                return {
+                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.85)',
+                    borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.15)',
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                };
+            },
+            ringStyle(slide) {
+                return {
+                    background: `radial-gradient(circle, ${slide.accent}40 0%, ${slide.accent}00 70%)`,
+                    filter: 'blur(40px)',
+                };
+            },
+            imgBlend(slide) {
+                return {
+                    filter: `drop-shadow(0 40px 80px ${slide.accent}55)`,
+                    mixBlendMode: slide.theme === 'light' ? 'multiply' : 'normal',
+                };
+            },
+            badgeStyle(slide) {
+                const isDark = slide.theme === 'dark';
+                return {
+                    background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.85)',
+                    color: isDark ? '#fff' : '#0f172a',
+                    border: `1px solid ${slide.accent}33`,
+                    boxShadow: `0 8px 32px ${slide.accent}22`,
+                };
+            },
+            dotStyle(i) {
+                const s = this.currentSlide;
+                const isDark = s.theme === 'dark';
+                return {
+                    background: i === this.current ?
+                        s.accent : isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
+                };
+            },
+            goTo(i) {
+                this.current = i;
+                this.resetProgress();
+            },
+            next() {
+                this.current = (this.current + 1) % this.slides.length;
+                this.resetProgress();
+            },
+            prev() {
+                this.current = (this.current - 1 + this.slides.length) % this.slides.length;
+                this.resetProgress();
+            },
+            resetProgress() {
+                this.progressing = false;
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        this.progressing = true;
+                    }, 50);
+                });
+            },
+            start() {
+                this.resetProgress();
+                this.timer = setInterval(() => {
+                    this.next();
+                }, 3000);
+            },
+            pause() {
+                clearInterval(this.timer);
+                this.progressing = false;
+            },
+            resume() {
+                this.start();
+            },
+        },
+        mounted() {
+            this.ready = true;
+            this.start();
+        },
+        beforeUnmount() {
+            clearInterval(this.timer);
         }
     });
 </script>

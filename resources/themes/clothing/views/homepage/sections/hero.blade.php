@@ -1,10 +1,12 @@
 @php
     $heroProducts = collect($products)->take(5)->values();
     $cmsHeroSlides = collect(data_get($hero ?? null, 'slides', []))
-        ->filter(fn ($slide) => ! empty($slide['image']))
+        ->filter(fn ($slide): bool => filled(data_get($slide, 'image')))
         ->take(5)
         ->values();
-    $heroImageUrl = fn ($path) => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/']) ? $path : asset($path);
+    $heroImageUrl = fn (string $path): string => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])
+        ? $path
+        : asset($path);
     $placeholderImages = [
         'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1400',
         'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&q=80&w=1400',
@@ -20,21 +22,31 @@
     }
 
     $heroData = $cmsHeroSlides->isNotEmpty()
-        ? $cmsHeroSlides->map(function ($slide) use ($heroImageUrl) {
+        ? $cmsHeroSlides->map(function (array $slide, int $index) use ($heroImageUrl) {
+            $theme = data_get($slide, 'theme', $index % 2 === 0 ? 'light' : 'dark');
+            $accent = data_get($slide, 'accent', $theme === 'dark' ? '#7c5cff' : '#ff4f70');
+
             return [
                 'cms' => true,
-                'name' => $slide['title'] ?: ($slide['headline'] ?: 'Hero slide'),
-                'image' => $heroImageUrl($slide['image']),
-                'url' => $slide['primary_cta_url'] ?: route('shop.search.index'),
-                'price' => $slide['primary_cta_label'] ?: 'Shop Now',
-                'headline' => $slide['headline'] ?: ($slide['title'] ?: 'Color Pop Collection'),
-                'body' => $slide['body'] ?: '',
-                'primary_label' => $slide['primary_cta_label'] ?: 'Shop the Look',
-                'primary_url' => $slide['primary_cta_url'] ?: route('shop.search.index'),
-                'secondary_label' => $slide['secondary_cta_label'] ?: '',
-                'secondary_url' => $slide['secondary_cta_url'] ?: route('shop.search.index'),
+                'name' => trim((string) (data_get($slide, 'title') ?: data_get($slide, 'headline') ?: 'Hero slide')),
+                'image' => $heroImageUrl(trim((string) data_get($slide, 'image'))),
+                'url' => trim((string) (data_get($slide, 'primary_cta_url') ?: route('shop.search.index'))),
+                'price' => trim((string) (data_get($slide, 'primary_cta_label') ?: 'Shop Now')),
+                'tag' => trim((string) (data_get($slide, 'tag') ?: 'New season drop')),
+                'headline' => trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: 'Featured collection')),
+                'highlight' => trim((string) data_get($slide, 'highlight', '')),
+                'sub' => trim((string) data_get($slide, 'body', '')),
+                'primary_label' => trim((string) (data_get($slide, 'primary_cta_label') ?: 'Shop the Look')),
+                'primary_url' => trim((string) (data_get($slide, 'primary_cta_url') ?: route('shop.search.index'))),
+                'secondary_label' => trim((string) (data_get($slide, 'secondary_cta_label') ?: 'Browse Collection')),
+                'secondary_url' => trim((string) (data_get($slide, 'secondary_cta_url') ?: route('shop.search.index'))),
+                'badge' => trim((string) (data_get($slide, 'badge') ?: data_get($slide, 'primary_cta_label') ?: '')),
+                'theme' => $theme === 'dark' ? 'dark' : 'light',
+                'bg_from' => trim((string) data_get($slide, 'bg_from', $theme === 'dark' ? '#171114' : '#fffdfa')),
+                'bg_to' => trim((string) data_get($slide, 'bg_to', $theme === 'dark' ? '#33253d' : '#fff1f3')),
+                'accent' => trim((string) $accent),
             ];
-        })
+        })->values()->all()
         : $heroProducts->map(function($product, $index) use ($placeholderImages) {
             return [
                 'cms' => false,
@@ -42,6 +54,19 @@
                 'image' => $placeholderImages[$index % count($placeholderImages)],
                 'url' => $product['url'] ?? route('shop.search.index'),
                 'price' => $product['final_price'] ?? ($product['formatted_price'] ?? 'Shop Now'),
+                'tag' => 'New season drop',
+                'headline' => 'Wear the',
+                'highlight' => 'bright side.',
+                'sub' => 'Build a wardrobe that feels fresh, expressive, and easy to wear. Start with '.$product['name'].' and make every day look styled.',
+                'primary_label' => 'Shop the Look',
+                'primary_url' => $product['url'] ?? route('shop.search.index'),
+                'secondary_label' => 'Browse Collection',
+                'secondary_url' => route('shop.search.index'),
+                'badge' => $product['final_price'] ?? 'Shop Now',
+                'theme' => 'light',
+                'bg_from' => '#fffdfa',
+                'bg_to' => '#fff1f3',
+                'accent' => '#ff4f70',
             ];
         })->values();
 @endphp
@@ -216,20 +241,28 @@
                 <div class="hero-slide" v-for="(p, i) in products" :key="i" v-show="currentIndex === i">
                     <div class="hero-inner-grid">
                         <div class="hero-text-content">
-                            <span class="hero-tag">New season drop</span>
-                            <h1 v-if="p.cms" class="hero-main-title">@{{ p.headline }}</h1>
-                            <h1 v-else class="hero-main-title">Wear the<br><span class="highlight-text">bright side.</span></h1>
-                            <p class="hero-description">@{{ p.body || `Build a wardrobe that feels fresh, expressive, and easy to wear. Start with ${p.name} and make every day look styled.` }}</p>
+                            <span class="hero-tag">@{{ p.tag || 'New season drop' }}</span>
+                            <h1 class="hero-main-title">
+                                <span v-if="p.cms">
+                                    @{{ p.headline }}
+                                    <span v-if="p.highlight" class="highlight-text">@{{ p.highlight }}</span>
+                                </span>
+                                <span v-else>Wear the<br><span class="highlight-text">bright side.</span></span>
+                            </h1>
+                            <p class="hero-description">
+                                <span v-if="p.cms">@{{ p.sub || 'Homepage Hero is controlled through CMS Studio and rendered by the active theme.' }}</span>
+                                <span v-else>Build a wardrobe that feels fresh, expressive, and easy to wear. Start with @{{ p.name }} and make every day look styled.</span>
+                            </p>
                             <div class="hero-cta-row">
-                                <a :href="p.primary_url || p.url" class="fashion-button fashion-button--color">@{{ p.primary_label || 'Shop the Look' }}</a>
+                                <a :href="p.primary_url || p.url || '{{ route('shop.search.index') }}'" class="fashion-button fashion-button--color">@{{ p.primary_label || 'Shop the Look' }}</a>
                                 <a :href="p.secondary_url || '{{ route('shop.search.index') }}'" class="btn-glass-light">@{{ p.secondary_label || 'Browse Collection' }}</a>
                             </div>
                         </div>
                         <div class="hero-image-content">
                             <div class="image-stage">
                                 <img :src="p.image" :alt="p.name" class="product-hero-img">
-                                <div class="hero-price-chip">@{{ p.price }}</div>
-                                <div class="hero-stat-card"><div class="stat-icon">✦</div><div>Fresh arrival</div></div>
+                                <div class="hero-price-chip" v-if="p.badge">@{{ p.badge }}</div>
+                                <div class="hero-stat-card"><div class="stat-icon">✦</div><div>@{{ p.cms ? 'CMS Hero' : 'Fresh arrival' }}</div></div>
                             </div>
                         </div>
                     </div>
