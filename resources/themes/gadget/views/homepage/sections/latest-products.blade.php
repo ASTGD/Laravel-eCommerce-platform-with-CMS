@@ -5,6 +5,13 @@
         background: #ffffff;
     }
 
+    .gadget-latest .gadget-container {
+        max-width: 1600px !important;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .gadget-section-heading {
         display: flex;
         justify-content: space-between;

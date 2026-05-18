@@ -44,6 +44,13 @@ $displayProducts = $_realJfy->isNotEmpty()
         overflow: hidden;
     }
 
+    .gadget-jfy .gadget-container {
+        max-width: 1600px !important;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .gadget-jfy-header {
         display: flex;
         justify-content: space-between;

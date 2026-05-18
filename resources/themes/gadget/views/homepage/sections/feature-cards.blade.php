@@ -4,6 +4,13 @@
         padding: 40px 0 80px 0;
     }
 
+    .gadget-feature-cards .gadget-container {
+        max-width: 1600px !important;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .feature-cards-wrapper {
         display: flex;
         gap: 30px;

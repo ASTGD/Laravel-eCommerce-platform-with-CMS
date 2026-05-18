@@ -21,6 +21,13 @@
         text-decoration: none;
     }
 
+    .gadget-featured-dark .gadget-container {
+        max-width: 1600px !important;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .carousel-container {
         position: relative;
         margin-top: 50px;

@@ -241,7 +241,7 @@ $saleProducts = $_realProds->isNotEmpty()
 
     .price--final {
         font-size: 24px;
-        font-weight: 950;
+        font-weight: 550;
         color: #2563eb;
         white-space: nowrap;
     }
@@ -326,19 +326,13 @@ $saleProducts = $_realProds->isNotEmpty()
         box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
     }
 
-    @media (max-width: 1600px) {
-        .gadget-sale__grid {
-            grid-template-columns: repeat(4, 1fr);
-        }
-    }
-
     @media (max-width: 1200px) {
         .gadget-sale__grid {
             grid-template-columns: repeat(3, 1fr);
         }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 991px) {
         .gadget-sale__grid {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -348,7 +342,7 @@ $saleProducts = $_realProds->isNotEmpty()
         }
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
         .gadget-sale__grid {
             grid-template-columns: 1fr;
         }
