@@ -776,14 +776,17 @@ $heroSlides = [
             goTo(i) {
                 this.current = i;
                 this.resetProgress();
+                this.scheduleNext();
             },
             next() {
                 this.current = (this.current + 1) % this.slides.length;
                 this.resetProgress();
+                this.scheduleNext();
             },
             prev() {
                 this.current = (this.current - 1 + this.slides.length) % this.slides.length;
                 this.resetProgress();
+                this.scheduleNext();
             },
             resetProgress() {
                 this.progressing = false;
@@ -795,12 +798,16 @@ $heroSlides = [
             },
             start() {
                 this.resetProgress();
-                this.timer = setInterval(() => {
+                this.scheduleNext();
+            },
+            scheduleNext() {
+                clearTimeout(this.timer);
+                this.timer = setTimeout(() => {
                     this.next();
-                }, 3000);
+                }, 4000);
             },
             pause() {
-                clearInterval(this.timer);
+                clearTimeout(this.timer);
                 this.progressing = false;
             },
             resume() {
@@ -812,7 +819,7 @@ $heroSlides = [
             this.start();
         },
         beforeUnmount() {
-            clearInterval(this.timer);
+            clearTimeout(this.timer);
         }
     });
 </script>
