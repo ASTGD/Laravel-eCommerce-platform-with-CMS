@@ -7,6 +7,48 @@
     $heroImageUrl = fn (string $path): string => \Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])
         ? $path
         : asset($path);
+    $buildHeadlinePayload = function (string $headline, string $highlight): array {
+        $headline = trim($headline);
+        $highlight = trim($highlight);
+        $inlineMatch = false;
+
+        if ($headline !== '' && $highlight !== '') {
+            $position = mb_stripos($headline, $highlight);
+
+            if ($position !== false) {
+                $before = mb_substr($headline, 0, $position);
+                $match = mb_substr($headline, $position, mb_strlen($highlight));
+                $after = mb_substr($headline, $position + mb_strlen($highlight));
+                $inlineMatch = true;
+
+                $parts = array_values(array_filter([
+                    ['text' => $before, 'accent' => false, 'stacked' => false],
+                    ['text' => $match, 'accent' => true, 'stacked' => false],
+                    ['text' => $after, 'accent' => false, 'stacked' => false],
+                ], fn (array $part): bool => $part['text'] !== ''));
+
+                return [
+                    'parts' => $parts,
+                    'alt' => $headline,
+                ];
+            }
+        }
+
+        $parts = [];
+
+        if ($headline !== '') {
+            $parts[] = ['text' => $headline, 'accent' => false, 'stacked' => false];
+        }
+
+        if ($highlight !== '') {
+            $parts[] = ['text' => $highlight, 'accent' => true, 'stacked' => true];
+        }
+
+        return [
+            'parts' => $parts,
+            'alt' => trim($headline.' '.$highlight),
+        ];
+    };
 
     $defaultHeroSlides = [
         [
@@ -59,27 +101,45 @@
         ],
     ];
 
+    $defaultHeroSlides = array_map(function (array $slide) use ($buildHeadlinePayload): array {
+        $headlinePayload = $buildHeadlinePayload(
+            (string) ($slide['headline'] ?? ''),
+            (string) ($slide['highlight'] ?? '')
+        );
+
+        $slide['headline_parts'] = $headlinePayload['parts'];
+        $slide['headline_alt'] = $headlinePayload['alt'];
+
+        return $slide;
+    }, $defaultHeroSlides);
+
     $heroSlides = $cmsHeroSlides->isNotEmpty()
-        ? $cmsHeroSlides->map(function (array $slide, int $index) use ($heroImageUrl): array {
-            $theme = data_get($slide, 'theme', $index % 2 === 0 ? 'dark' : 'light');
-            $accent = data_get($slide, 'accent', $theme === 'dark' ? '#38bdf8' : '#0ea5e9');
+        ? $cmsHeroSlides->map(function (array $slide, int $index) use ($heroImageUrl, $defaultHeroSlides, $buildHeadlinePayload): array {
+            $template = $defaultHeroSlides[$index % count($defaultHeroSlides)];
+            $headlinePayload = $buildHeadlinePayload(
+                trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: $template['headline'])),
+                trim((string) (data_get($slide, 'highlight') ?: $template['highlight']))
+            );
+            $headlineParts = $headlinePayload['parts'];
 
             return [
                 'cms' => true,
-                'theme' => $theme === 'dark' ? 'dark' : 'light',
-                'tag' => trim((string) (data_get($slide, 'tag') ?: 'Future Tech 2026')),
-                'headline' => trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: 'Featured collection')),
-                'highlight' => trim((string) data_get($slide, 'highlight', '')),
-                'sub' => trim((string) data_get($slide, 'body', '')),
-                'cta_label' => trim((string) (data_get($slide, 'primary_cta_label') ?: 'Shop Now')),
-                'cta2_label' => trim((string) (data_get($slide, 'secondary_cta_label') ?: 'Browse Collection')),
-                'badge' => trim((string) (data_get($slide, 'badge') ?: data_get($slide, 'primary_cta_label') ?: '')),
-                'image' => $heroImageUrl(trim((string) data_get($slide, 'image'))),
-                'bg_from' => trim((string) data_get($slide, 'bg_from', $theme === 'dark' ? '#0d0221' : '#f8fafc')),
-                'bg_to' => trim((string) data_get($slide, 'bg_to', $theme === 'dark' ? '#1a0533' : '#dbeafe')),
-                'accent' => trim((string) $accent),
-                'primary_url' => trim((string) (data_get($slide, 'primary_cta_url') ?: route('shop.search.index'))),
-                'secondary_url' => trim((string) (data_get($slide, 'secondary_cta_url') ?: route('shop.search.index'))),
+                'theme' => $template['theme'],
+                'tag' => trim((string) (data_get($slide, 'tag') ?: data_get($slide, 'eyebrow') ?: $template['tag'])),
+                'headline' => trim((string) (data_get($slide, 'headline') ?: data_get($slide, 'title') ?: $template['headline'])),
+                'highlight' => trim((string) (data_get($slide, 'highlight') ?: $template['highlight'])),
+                'sub' => trim((string) (data_get($slide, 'body') ?: $template['sub'])),
+                'cta_label' => trim((string) (data_get($slide, 'primary_cta_label') ?: $template['cta_label'])),
+                'cta2_label' => trim((string) (data_get($slide, 'secondary_cta_label') ?: $template['cta2_label'])),
+                'badge' => trim((string) (data_get($slide, 'badge') ?: data_get($slide, 'primary_cta_label') ?: $template['badge'])),
+                'image' => $heroImageUrl(trim((string) (data_get($slide, 'image') ?: $template['image']))),
+                'bg_from' => $template['bg_from'],
+                'bg_to' => $template['bg_to'],
+                'accent' => $template['accent'],
+                'primary_url' => trim((string) (data_get($slide, 'primary_cta_url') ?: $template['primary_url'])),
+                'secondary_url' => trim((string) (data_get($slide, 'secondary_cta_url') ?: $template['secondary_url'])),
+                'headline_parts' => $headlineParts,
+                'headline_alt' => $headlinePayload['alt'],
             ];
         })
             ->values()
@@ -266,10 +326,14 @@
     }
 
     .gh-highlight {
-        display: block;
+        display: inline-block;
         opacity: 0;
         transform: translateY(30px);
         transition: opacity 0.55s 0.3s ease, transform 0.55s 0.3s ease;
+    }
+
+    .gh-highlight.gh-highlight--stacked {
+        display: block;
     }
 
     .gh-slide.is-active .gh-highlight {
@@ -627,16 +691,23 @@
                         <!-- LEFT: TEXT -->
                         <div class="gh-text-col">
                             <div class="gh-tag-wrap">
-                                <span class="gh-tag" :style="tagStyle(slide)">@{{ slide.tag || 'Featured collection' }}</span>
+                                <span class="gh-tag" :style="tagStyle(slide)">@{{ slide.tag || 'Future Tech 2026' }}</span>
                             </div>
 
                             <h1 class="gh-headline" :style="{ color: textColor(slide) }">
-                                @{{ slide.headline }}
-                                <span v-if="slide.highlight" class="gh-highlight" :style="{ color: slide.accent }">@{{ slide.highlight }}</span>
+                                <template v-for="(part, partIndex) in (slide.headline_parts || [])" :key="partIndex">
+                                    <span
+                                        v-if="part.accent"
+                                        class="gh-highlight"
+                                        :class="{ 'gh-highlight--stacked': part.stacked }"
+                                        :style="{ color: slide.accent }"
+                                    >@{{ part.text }}</span>
+                                    <span v-else>@{{ part.text }}</span>
+                                </template>
                             </h1>
 
                             <p class="gh-sub" :style="{ color: subColor(slide) }">
-                                @{{ slide.sub || 'This hero is powered by the CMS homepage builder and rendered in the active theme.' }}
+                                @{{ slide.sub || 'Immerse yourself in next-generation VR. Experience worlds crafted for the bold and the visionary.' }}
                             </p>
 
                             <div class="gh-cta-row">
@@ -669,7 +740,7 @@
                                 <div class="gh-img-ring" :style="ringStyle(slide)"></div>
                                 <img
                                     :src="slide.image"
-                                    :alt="slide.headline + (slide.highlight ? ' ' + slide.highlight : '')"
+                                    :alt="slide.headline_alt || slide.headline"
                                     class="gh-img"
                                     :style="imgBlend(slide)"
                                     loading="lazy"

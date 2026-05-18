@@ -127,7 +127,7 @@ it('renders CMS hero slider slides through the signed homepage preview', functio
         ->assertSee('<v-carousel', false);
 });
 
-it('renders the CMS hero through the active storefront theme', function (string $theme, string $themeText) {
+it('renders the CMS hero through the active storefront theme', function (string $theme) {
     $channel = core()->getCurrentChannel();
     $channel->update(['theme' => $theme]);
     core()->setCurrentChannel($channel->fresh());
@@ -163,10 +163,15 @@ it('renders the CMS hero through the active storefront theme', function (string 
                 [
                     'image' => 'storage/cms/homepage/hero/cms-theme-hero.jpg',
                     'title' => 'CMS active theme hero',
-                    'headline' => 'CMS hero headline',
+                    'tag' => 'CMS Launch',
+                    'headline' => 'Build your',
+                    'highlight' => 'next hero.',
                     'body' => 'CMS hero body copy',
+                    'badge' => 'CMS badge',
                     'primary_cta_label' => 'Shop CMS',
                     'primary_cta_url' => '/cms-sale',
+                    'secondary_cta_label' => 'Learn more',
+                    'secondary_cta_url' => '/cms-story',
                 ],
             ],
         ],
@@ -175,13 +180,77 @@ it('renders the CMS hero through the active storefront theme', function (string 
 
     $this->get(route('shop.home.index'))
         ->assertOk()
-        ->assertSee($themeText, false)
-        ->assertSee('CMS hero headline', false)
+        ->assertSee('CMS Launch', false)
+        ->assertSee('Build your', false)
+        ->assertSee('next hero.', false)
+        ->assertSee('CMS hero body copy', false)
         ->assertSee('cms-theme-hero.jpg', false)
-        ->assertSee('Shop CMS', false);
+        ->assertSee('CMS badge', false)
+        ->assertSee('Shop CMS', false)
+        ->assertSee('Learn more', false);
 })->with([
-    ['gadget', 'Future Tech 2026'],
-    ['clothing', 'New season drop'],
+    ['gadget'],
+    ['clothing'],
+]);
+
+it('renders highlighted CMS hero text inline without duplicating the highlighted words', function (string $theme) {
+    $channel = core()->getCurrentChannel();
+    $channel->update(['theme' => $theme]);
+    core()->setCurrentChannel($channel->fresh());
+
+    $homePage = Page::query()->where('slug', 'home')->firstOrFail();
+    $heroAreaId = $homePage->template?->areas()->where('code', 'hero')->value('id')
+        ?? $homePage->template?->areas()->orderBy('sort_order')->value('id');
+
+    $sectionType = SectionType::query()->updateOrCreate(
+        ['code' => 'hero'],
+        [
+            'name' => 'Hero',
+            'category' => 'hero',
+            'config_schema_json' => [],
+            'supports_components' => false,
+            'allowed_data_sources_json' => [],
+            'renderer_class' => null,
+            'is_active' => true,
+        ]
+    );
+
+    $homePage->sections()->whereHas('sectionType', fn ($query) => $query->whereIn('code', ['hero', 'hero_slider', 'hero_banner']))->delete();
+
+    PageSection::query()->create([
+        'page_id' => $homePage->id,
+        'template_area_id' => $heroAreaId,
+        'section_type_id' => $sectionType->id,
+        'sort_order' => 0,
+        'title' => 'Homepage Hero',
+        'settings_json' => [
+            'mode' => 'static',
+            'slides' => [
+                [
+                    'image' => 'storage/cms/homepage/hero/cms-inline-highlight.jpg',
+                    'title' => 'Best Gadget Home Online',
+                    'headline' => 'Best Gadget Home Online',
+                    'highlight' => 'Gadget Home',
+                    'body' => 'CMS hero body copy',
+                    'badge' => 'CMS badge',
+                    'primary_cta_label' => 'Shop CMS',
+                    'primary_cta_url' => '/cms-sale',
+                    'secondary_cta_label' => 'Learn more',
+                    'secondary_cta_url' => '/cms-story',
+                ],
+            ],
+        ],
+        'is_active' => true,
+    ]);
+
+    $this->get(route('shop.home.index'))
+        ->assertOk()
+        ->assertSee('Best Gadget Home Online', false)
+        ->assertSee('Gadget Home', false)
+        ->assertDontSee('Best Gadget Home Online Gadget Home', false);
+})->with([
+    ['gadget'],
+    ['clothing'],
 ]);
 
 it('renders CMS header builder settings through active storefront themes', function (string $theme) {

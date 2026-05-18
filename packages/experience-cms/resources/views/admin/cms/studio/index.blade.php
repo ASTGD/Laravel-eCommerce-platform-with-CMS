@@ -702,6 +702,9 @@
                     $emptyHomepageSettings = [
                         'mode' => 'static',
                         'slides' => [],
+                        'tag' => '',
+                        'highlight' => '',
+                        'badge' => '',
                     ];
 
                     $heroModeToggleButtonClass = 'inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500 shadow-sm transition peer-checked:border-blue-200 peer-checked:bg-blue-50 peer-checked:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:peer-checked:border-blue-900 dark:peer-checked:bg-blue-950/40 dark:peer-checked:text-blue-300';
@@ -728,7 +731,7 @@
                                 </h3>
 
                                 <p class="{{ $headerSectionDescriptionClass }}">
-                                    Configure one theme-neutral Hero. The active storefront theme controls how it is rendered.
+                                    Configure the homepage hero copy and images. The active storefront theme controls how it is rendered.
                                 </p>
                             </div>
 
@@ -914,8 +917,23 @@
                                                         </label>
 
                                                         <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Tag / eyebrow</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][tag]" value="{{ $slide['tag'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Badge</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][badge]" value="{{ $slide['badge'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
                                                             <span class="{{ $headerLabelClass }}">Headline</span>
                                                             <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][headline]" value="{{ $slide['headline'] ?? '' }}" class="{{ $headerInputClass }}">
+                                                        </label>
+
+                                                        <label class="block">
+                                                            <span class="{{ $headerLabelClass }}">Highlight</span>
+                                                            <input name="sections[{{ $index }}][settings][slides][{{ $slideIndex }}][highlight]" value="{{ $slide['highlight'] ?? '' }}" class="{{ $headerInputClass }}">
                                                         </label>
 
                                                         <label class="block">
@@ -1089,8 +1107,23 @@
                                                     </label>
 
                                                     <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Tag / eyebrow</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][tag]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Badge</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][badge]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
                                                         <span class="{{ $headerLabelClass }}">Headline</span>
                                                         <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][headline]" class="{{ $headerInputClass }}">
+                                                    </label>
+
+                                                    <label class="block">
+                                                        <span class="{{ $headerLabelClass }}">Highlight</span>
+                                                        <input name="sections[__INDEX__][settings][slides][{{ $slideIndex }}][highlight]" class="{{ $headerInputClass }}">
                                                     </label>
 
                                                     <label class="block">
@@ -1824,18 +1857,70 @@
                                                 $previewSlides = collect($previewSectionSettings['slides'] ?? [])
                                                     ->filter(fn ($slide) => ! empty($slide['image']))
                                                     ->values();
+                                                $buildPreviewHeadlinePayload = function (string $headline, string $highlight): array {
+                                                    $headline = trim($headline);
+                                                    $highlight = trim($highlight);
+
+                                                    if ($headline !== '' && $highlight !== '') {
+                                                        $position = mb_stripos($headline, $highlight);
+
+                                                        if ($position !== false) {
+                                                            $before = mb_substr($headline, 0, $position);
+                                                            $match = mb_substr($headline, $position, mb_strlen($highlight));
+                                                            $after = mb_substr($headline, $position + mb_strlen($highlight));
+
+                                                            return array_values(array_filter([
+                                                                ['text' => $before, 'accent' => false, 'stacked' => false],
+                                                                ['text' => $match, 'accent' => true, 'stacked' => false],
+                                                                ['text' => $after, 'accent' => false, 'stacked' => false],
+                                                            ], fn (array $part): bool => $part['text'] !== ''));
+                                                        }
+                                                    }
+
+                                                    $parts = [];
+
+                                                    if ($headline !== '') {
+                                                        $parts[] = ['text' => $headline, 'accent' => false, 'stacked' => false];
+                                                    }
+
+                                                    if ($highlight !== '') {
+                                                        $parts[] = ['text' => $highlight, 'accent' => true, 'stacked' => true];
+                                                    }
+
+                                                    return $parts;
+                                                };
                                             @endphp
 
                                             <section class="overflow-hidden rounded-[24px] bg-white dark:bg-gray-800">
                                                 @if ($previewSlides->isNotEmpty())
+                                                    @php
+                                                        $previewHeadlineParts = $buildPreviewHeadlinePayload(
+                                                            trim((string) ($previewSlides->first()['headline'] ?: ($previewSlides->first()['title'] ?? ($section['title'] ?? 'Hero')))),
+                                                            trim((string) ($previewSlides->first()['highlight'] ?? ''))
+                                                        );
+                                                    @endphp
                                                     <div class="grid grid-cols-1 gap-5 p-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                                                         <div class="flex flex-col justify-center">
                                                             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
                                                                 {{ ($previewSectionSettings['mode'] ?? 'static') === 'slider' ? 'Auto Slider' : 'Static Hero' }}
                                                             </p>
 
+                                                            @if (! empty($previewSlides->first()['tag']))
+                                                                <p class="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-gray-400">
+                                                                    {{ $previewSlides->first()['tag'] }}
+                                                                </p>
+                                                            @endif
+
                                                             <h3 class="mt-3 max-w-2xl font-sans text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
-                                                                {{ $previewSlides->first()['headline'] ?: ($previewSlides->first()['title'] ?? ($section['title'] ?? 'Hero')) }}
+                                                                @foreach ($previewHeadlineParts as $part)
+                                                                    @if ($part['accent'])
+                                                                        <span class="{{ $part['stacked'] ? 'block' : 'inline-block' }} text-blue-600 dark:text-blue-300">
+                                                                            {{ $part['text'] }}
+                                                                        </span>
+                                                                    @else
+                                                                        <span>{{ $part['text'] }}</span>
+                                                                    @endif
+                                                                @endforeach
                                                             </h3>
 
                                                             @if (! empty($previewSlides->first()['body']))
@@ -1865,6 +1950,12 @@
                                                                 alt="{{ $previewSlides->first()['title'] ?? '' }}"
                                                                 class="aspect-[16/9] w-full object-cover"
                                                             >
+
+                                                            @if (! empty($previewSlides->first()['badge']))
+                                                                <span class="absolute right-4 top-4 rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-slate-950/20 dark:bg-white dark:text-slate-950">
+                                                                    {{ $previewSlides->first()['badge'] }}
+                                                                </span>
+                                                            @endif
 
                                                             @if ($previewSlides->count() > 1)
                                                                 <div class="absolute bottom-4 left-0 flex w-full justify-center gap-2">

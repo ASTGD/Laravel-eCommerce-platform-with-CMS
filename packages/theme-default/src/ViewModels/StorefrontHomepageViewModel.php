@@ -82,6 +82,9 @@ class StorefrontHomepageViewModel
             'hero' => [
                 'mode' => in_array($settings['mode'] ?? 'static', ['static', 'slider'], true) ? $settings['mode'] : 'static',
                 'slides' => $settings['slides'] ?? [],
+                'tag' => trim((string) ($settings['tag'] ?? '')),
+                'highlight' => trim((string) ($settings['highlight'] ?? '')),
+                'badge' => trim((string) ($settings['badge'] ?? '')),
             ],
             'hero_slider' => [
                 'mode' => 'slider',
@@ -92,8 +95,11 @@ class StorefrontHomepageViewModel
                 'slides' => [[
                     'image' => $settings['image'] ?? '',
                     'title' => $settings['title'] ?? $settings['headline'] ?? '',
+                    'tag' => $settings['tag'] ?? $settings['eyebrow'] ?? '',
                     'headline' => $settings['headline'] ?? '',
+                    'highlight' => $settings['highlight'] ?? '',
                     'body' => $settings['body'] ?? '',
+                    'badge' => $settings['badge'] ?? '',
                     'primary_cta_label' => $settings['primary_cta_label'] ?? '',
                     'primary_cta_url' => $settings['primary_cta_url'] ?? '',
                     'secondary_cta_label' => $settings['secondary_cta_label'] ?? '',
@@ -112,8 +118,11 @@ class StorefrontHomepageViewModel
             ->map(fn (array $slide): array => [
                 'image' => trim((string) ($slide['image'] ?? '')),
                 'title' => trim((string) ($slide['title'] ?? '')),
+                'tag' => trim((string) ($slide['tag'] ?? $slide['eyebrow'] ?? '')),
                 'headline' => trim((string) ($slide['headline'] ?? $slide['title'] ?? '')),
+                'highlight' => trim((string) ($slide['highlight'] ?? '')),
                 'body' => trim((string) ($slide['body'] ?? '')),
+                'badge' => trim((string) ($slide['badge'] ?? '')),
                 'primary_cta_label' => trim((string) ($slide['primary_cta_label'] ?? '')),
                 'primary_cta_url' => trim((string) ($slide['primary_cta_url'] ?? $slide['link'] ?? '')),
                 'secondary_cta_label' => trim((string) ($slide['secondary_cta_label'] ?? '')),
