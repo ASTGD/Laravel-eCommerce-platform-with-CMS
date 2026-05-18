@@ -1,3 +1,29 @@
+@php
+$_fallbackCats = [
+    ['id'=>1,'name'=>'Headphones','url'=>route('shop.search.index',['query'=>'headphones']),'count'=>124,'image'=>'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>2,'name'=>'Smart Watches','url'=>route('shop.search.index',['query'=>'smartwatch']),'count'=>86,'image'=>'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>3,'name'=>'Laptops','url'=>route('shop.search.index',['query'=>'laptop']),'count'=>210,'image'=>'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>4,'name'=>'Smartphones','url'=>route('shop.search.index',['query'=>'smartphone']),'count'=>342,'image'=>'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>5,'name'=>'Keyboards','url'=>route('shop.search.index',['query'=>'keyboard']),'count'=>54,'image'=>'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>6,'name'=>'Power Banks','url'=>route('shop.search.index',['query'=>'power bank']),'count'=>72,'image'=>'https://images.unsplash.com/photo-1625517431411-3007ca5f8f3c?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>7,'name'=>'Cameras','url'=>route('shop.search.index',['query'=>'camera']),'count'=>43,'image'=>'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>8,'name'=>'Gaming Gear','url'=>route('shop.search.index',['query'=>'gaming']),'count'=>156,'image'=>'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>9,'name'=>'Audio Systems','url'=>route('shop.search.index',['query'=>'audio']),'count'=>89,'image'=>'https://images.unsplash.com/photo-1558089623-9030abfe53f1?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>10,'name'=>'Storage Devices','url'=>route('shop.search.index',['query'=>'storage']),'count'=>112,'image'=>'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>11,'name'=>'Monitors','url'=>route('shop.search.index',['query'=>'monitor']),'count'=>67,'image'=>'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=500&auto=format&fit=crop'],
+    ['id'=>12,'name'=>'Tablets','url'=>route('shop.search.index',['query'=>'tablet']),'count'=>98,'image'=>'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=500&auto=format&fit=crop'],
+];
+$_realCats = collect($categories ?? []);
+$categoryData = $_realCats->isNotEmpty()
+    ? $_realCats->map(fn($c) => [
+        'id'    => $c['id'] ?? 0,
+        'name'  => $c['name'] ?? '',
+        'url'   => $c['url'] ?? route('shop.search.index'),
+        'count' => $c['products_count'] ?? $c['count'] ?? 0,
+        'image' => $c['image'] ?? $c['logo_path'] ?? 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop',
+    ])->values()->all()
+    : $_fallbackCats;
+@endphp
 @pushOnce('styles')
 <style>
     .gadget-categories {
@@ -145,84 +171,65 @@
         box-shadow: 0 15px 30px rgba(15, 23, 42, 0.2);
     }
 
-    /* Promo Banner */
-    .gadget-order-banner {
+    /* Full Width Promo Banner */
+    .gadget-seamless-dark {
         background: #0f172a;
-        border-radius: 56px;
-        padding: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        padding: 100px 0 50px 0;
         color: #ffffff;
         position: relative;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        width: 100%;
     }
 
-    .banner-aura {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
+    .gadget-seamless-dark .gadget-container {
+        display: block;
     }
 
-    .aura-blob {
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-        border-radius: 50%;
-        filter: blur(80px);
-        animation: auraMove 15s infinite alternate ease-in-out;
+    .gadget-seamless-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 50px;
+        position: relative;
+        margin-top: 60px;
     }
 
-    .aura-1 {
-        top: -20%;
-        right: -10%;
-    }
-
-    .aura-2 {
-        bottom: -20%;
-        left: -10%;
-    }
-
-    @keyframes auraMove {
-        0% {
-            transform: translate(0, 0) scale(1);
-        }
-
-        100% {
-            transform: translate(50px, 30px) scale(1.1);
-        }
-    }
-
-    .gadget-order-card {
+    .gadget-promo-card {
         position: relative;
         z-index: 5;
-        max-width: 550px;
-        background: rgba(255, 255, 255, 0.03);
+        width: 100%;
+        max-width: 530px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
         backdrop-filter: blur(20px);
-        padding: 60px;
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 40px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 60px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
     }
 
-    .gadget-order-card p {
+    .gadget-promo-card p {
         color: #3b82f6;
-        font-weight: 900;
+        font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.15em;
         font-size: 14px;
         margin-bottom: 20px;
     }
 
-    .gadget-order-card h3 {
-        font-size: 48px;
-        font-weight: 950;
-        line-height: 1.1;
+    .gadget-promo-card h3 {
+        font-size: 46px;
+        font-weight: normal;
+        line-height: 1.15;
         margin-bottom: 40px;
-        letter-spacing: -0.04em;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+    }
+
+    .gadget-promo-card .text-gradient {
+        background: linear-gradient(135deg, #60a5fa, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 600;
     }
 
     .btn-order-now {
@@ -239,23 +246,53 @@
         transition: 0.4s;
     }
 
-    .banner-product-img {
-        max-width: 450px;
-        filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.4));
+    .btn-order-now:hover {
+        background: #1d4ed8;
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .promo-floating-img {
+        max-width: 280px;
+        filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.5));
         animation: floatBanner 6s infinite ease-in-out;
-        z-index: 5;
-        position: relative;
+        z-index: 10;
+        position: absolute;
+        right: -180px; /* Pushed into the gap to prevent text overlap */
+        top: -50px;
+        pointer-events: none;
     }
 
     @keyframes floatBanner {
-
-        0%,
-        100% {
+        0%, 100% {
             transform: translateY(0) rotate(-2deg);
         }
-
         50% {
             transform: translateY(-20px) rotate(2deg);
+        }
+    }
+
+    .gadget-banner-products {
+        display: flex;
+        gap: 30px;
+        flex: 1;
+        justify-content: flex-end;
+        max-width: 650px;
+    }
+
+    .gadget-banner-products > div {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    @media (max-width: 991px) {
+        .gadget-seamless-dark .gadget-container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .gadget-banner-products {
+            justify-content: center;
+            width: 100%;
         }
     }
 
@@ -294,17 +331,32 @@
             <p class="gadget-categories__subtitle">Explore our universe of premium tech solutions</p>
         </div>
 
-        <v-gadget-categories></v-gadget-categories>
+        <v-gadget-categories :categories="{{ json_encode($categoryData) }}"></v-gadget-categories>
 
-        <div class="gadget-order-banner">
-            <div class="banner-aura">
-                <div class="aura-blob aura-1"></div>
-                <div class="aura-blob aura-2"></div>
+    </div>
+</section>
+
+<!-- Full Width Seamless Experience Banner -->
+<section class="gadget-seamless-dark">
+    <div class="gadget-container">
+        <!-- Moved Featured Picks Header -->
+        <div class="gadget-section-heading" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <div>
+                <h2 id="gadget-featured-title" style="color: #ffffff; font-size: 48px; font-weight: normal; letter-spacing: -0.04em; margin: 0;">Featured Picks</h2>
             </div>
+            <a href="{{ route('shop.search.index') }}" class="gadget-text-link" style="color: #3b82f6; text-decoration: none; font-size: 18px;">
+                Explore All
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 5px; vertical-align: text-bottom;">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </div>
 
-            <div class="gadget-order-card">
+        <div class="gadget-seamless-content">
+            <div class="gadget-promo-card">
                 <p>Seamless Experience</p>
-                <h3>Order Premium Tech Without Any Hassle.</h3>
+                <h3>Order Premium Tech <br><span class="text-gradient">Without Any Hassle.</span></h3>
                 <a href="{{ route('shop.search.index') }}" class="btn-order-now">
                     <span>Shop Now</span>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -312,9 +364,50 @@
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </a>
+                
+                <!-- Big Floating Product Image breaking out of the card -->
+                <img src="images/1.png" alt="Premium Tech" class="promo-floating-img">
             </div>
 
-            <img src="images/1.png" alt="Premium Tech" class="banner-product-img">
+            <div class="gadget-banner-products">
+            @php
+                // Use real products if available, or fallbacks
+                $_bannerProds = isset($products) && count($products) > 0 ? $products : [
+                    [
+                        'id' => 1,
+                        'name' => 'Premium Headset',
+                        'short_name' => 'Premium Headset',
+                        'url' => '#',
+                        'image' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop',
+                        'regular_price' => '$1,350.00',
+                        'final_price' => '$1,000.00',
+                        'has_discount' => true,
+                        'badge' => 'New',
+                        'is_saleable' => true,
+                    ],
+                    [
+                        'id' => 2,
+                        'name' => 'Smart Watch Pro',
+                        'short_name' => 'Smart Watch Pro',
+                        'url' => '#',
+                        'image' => 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500&auto=format&fit=crop',
+                        'regular_price' => '$450.00',
+                        'final_price' => '$350.00',
+                        'has_discount' => true,
+                        'badge' => 'Hot',
+                        'is_saleable' => true,
+                    ]
+                ];
+                
+                $bannerProducts = collect($_bannerProds)->take(2);
+            @endphp
+
+            @foreach ($bannerProducts as $product)
+                <div>
+                    @include('shop::homepage.partials.product-card', ['product' => $product, 'mode' => 'banner', 'showAction' => true])
+                </div>
+            @endforeach
+        </div>
         </div>
     </div>
 </section>
@@ -348,95 +441,12 @@
 <script type="module">
     app.component('v-gadget-categories', {
         template: '#v-gadget-categories-template',
+        props: {
+            categories: { type: Array, default: () => [] }
+        },
         data() {
             return {
-                categories: [{
-                        id: 1,
-                        name: 'Headphones',
-                        url: '#',
-                        count: 124,
-                        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 2,
-                        name: 'Smart Watches',
-                        url: '#',
-                        count: 86,
-                        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 3,
-                        name: 'Laptops',
-                        url: '#',
-                        count: 210,
-                        image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 4,
-                        name: 'Smartphones',
-                        url: '#',
-                        count: 342,
-                        image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 5,
-                        name: 'Keyboards',
-                        url: '#',
-                        count: 54,
-                        image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 6,
-                        name: 'Power Banks',
-                        url: '#',
-                        count: 72,
-                        image: 'https://images.unsplash.com/photo-1625517431411-3007ca5f8f3c?q=80&w=500&auto=format&fit=crop'
-                    },
-                    // Load more batch
-                    {
-                        id: 7,
-                        name: 'Cameras',
-                        url: '#',
-                        count: 43,
-                        image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 8,
-                        name: 'Gaming Gear',
-                        url: '#',
-                        count: 156,
-                        image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 9,
-                        name: 'Audio Systems',
-                        url: '#',
-                        count: 89,
-                        image: 'https://images.unsplash.com/photo-1558089623-9030abfe53f1?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 10,
-                        name: 'Storage Devices',
-                        url: '#',
-                        count: 112,
-                        image: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 11,
-                        name: 'Monitors',
-                        url: '#',
-                        count: 67,
-                        image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=500&auto=format&fit=crop'
-                    },
-                    {
-                        id: 12,
-                        name: 'Tablets',
-                        url: '#',
-                        count: 98,
-                        image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=500&auto=format&fit=crop'
-                    },
-                ],
-                visibleCount: 6,
+                visibleCount: 12,
                 loading: false
             }
         },

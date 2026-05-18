@@ -13,16 +13,16 @@ class StorefrontHomepageViewModel
 {
     public function build(): array
     {
-        $saleProducts = $this->products('sale', 4);
+        $saleProducts = $this->products('sale', 20);
 
         $hero = $this->heroSection();
 
         return [
-            'saleProducts' => $saleProducts->isNotEmpty()
-                ? $saleProducts
-                : $this->products('featured', 4),
+            'saleProducts' => $saleProducts,
             'latestProducts' => $this->products('latest', 4),
-            'categories' => $this->categories(4),
+            'featuredPicks' => $this->products('featured_picks', 12),
+            'personalizedPicks' => $this->products('personalized_picks', 12),
+            'categories' => $this->categories(24),
             'hero' => $hero,
             'heroSliderImages' => $this->heroSliderImages($hero),
         ];
@@ -141,13 +141,32 @@ class StorefrontHomepageViewModel
             ->where('status', 1)
             ->where('visible_individually', 1);
 
-        match ($mode) {
+        $query = match ($mode) {
             'sale' => $query
-                ->whereNotNull('special_price')
-                ->where('special_price', '>', 0)
+                ->whereHas('product.categories.translations', function ($q) {
+                    $q->where('slug', 'limited-sale');
+                })
                 ->orderByDesc('product_id'),
-            'featured' => $query
-                ->where('featured', 1)
+            'featured_picks' => $query
+                ->whereHas('product.categories', function ($q) {
+                    $q->whereHas('translations', function ($q2) {
+                        $q2->where('slug', 'featured-picks');
+                    });
+                })
+                ->orderByDesc('product_id'),
+            'latest' => $query
+                ->whereHas('product.categories', function ($q) {
+                    $q->whereHas('translations', function ($q2) {
+                        $q2->where('slug', 'new-arrivals');
+                    });
+                })
+                ->orderByDesc('product_id'),
+            'personalized_picks' => $query
+                ->whereHas('product.categories', function ($q) {
+                    $q->whereHas('translations', function ($q2) {
+                        $q2->where('slug', 'personalized-picks');
+                    });
+                })
                 ->orderByDesc('product_id'),
             default => $query->orderByDesc('product_id'),
         };
@@ -162,6 +181,7 @@ class StorefrontHomepageViewModel
     protected function categories(int $limit): Collection
     {
         return Category::query()
+            ->withCount('products')
             ->where('status', 1)
             ->whereNotNull('parent_id')
             ->orderBy('position')
@@ -200,6 +220,7 @@ class StorefrontHomepageViewModel
             'name' => $category->name ?: 'Category',
             'url' => $category->slug ? url($category->slug) : '#',
             'image' => $imagePath ? url('cache/medium/'.$imagePath) : null,
+            'count' => $category->products_count ?? 0,
         ];
     }
 
